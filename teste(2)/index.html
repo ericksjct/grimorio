@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"/>
+<title>Grimório · Spellbook</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="description" content="Grimório de magias de D&D 5e — prepare, marque e compartilhe a lista de magias do seu personagem."/>
+<meta name="theme-color" content="#1e1e2e"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Hi-fi display font (Texturina) + mono numerics -->
+<link href="https://fonts.googleapis.com/css2?family=Texturina:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Hi-fi design tokens (Catppuccin + alt themes) + Marauder @font-face -->
+<link rel="stylesheet" href="hifi-tokens.css">
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #1e1e2e; }
+  * { box-sizing: border-box; }
+  #root { width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; }
+  /* the V11 components own their own background via the .hifi theme classes */
+  body.hifi-light { background: #eff1f5; }
+  .od-boot {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', ui-monospace, monospace; color: #9399b2;
+    font-size: 13px; letter-spacing: 0.06em;
+  }
+</style>
+</head>
+<body>
+<div id="root"><div class="od-boot">carregando grimório…</div></div>
+
+<!-- React + Babel standalone. The build step strips Babel and compiles the
+     .jsx below to plain .js, so this same file works in dev and in production. -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<!-- Production dependency set — ONLY what the V11 (hi-fi) product needs.
+     No design-canvas, no tweaks-panel, no wireframes (v7 / v9 / ios-frame). -->
+<script type="text/babel" src="spells-data-loader.jsx"></script>
+<script type="text/babel" src="v11-character-editor.jsx"></script>
+<script type="text/babel" src="v10-hifi.jsx"></script>
+
+<script type="text/babel">
+// ── UI prefs persistence (dark mode + active character survive a refresh) ──
+const UI_PREFS_KEY = 'spellbook-ui-prefs';
+function loadPrefs() {
+  try { return JSON.parse(localStorage.getItem(UI_PREFS_KEY)) || {}; } catch (e) { return {}; }
+}
+function savePrefs(p) {
+  try { localStorage.setItem(UI_PREFS_KEY, JSON.stringify(p)); } catch (e) {}
+}
+
+// Track viewport so we can swap desktop ⇆ mobile layout responsively.
+function useViewport() {
+  const [size, setSize] = React.useState({ w: window.innerWidth, h: window.innerHeight });
+  React.useEffect(() => {
+    let raf = 0;
+    const onResize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setSize({ w: window.innerWidth, h: window.innerHeight }));
+    };
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+  return size;
+}
+
+function App() {
+  const initial = React.useRef(loadPrefs()).current;
+  const [dark, setDark] = React.useState(initial.dark ?? false);
+  const [theme] = React.useState(initial.theme || 'catppuccin');
+  const [charName, setCharName] = React.useState(initial.characterName || null);
+
+  const { chars } = useCharacters();
+  const { w, h } = useViewport();
+  const isMobile = w < 768;
+
+  const character = chars.find(c => c.name === charName) || chars[0];
+
+  // Persist prefs whenever they change.
+  React.useEffect(() => {
+    savePrefs({ dark, theme, characterName: character ? character.name : null });
+  }, [dark, theme, character]);
+
+  // Paint the page background with the active theme so there's no flash of
+  // the wrong color around the app (matters on overscroll / safe areas).
+  React.useEffect(() => {
+    document.body.className =
+      `hifi ${dark ? 'hifi-dark' : 'hifi-light'}` +
+      (theme && theme !== 'catppuccin' ? ' hifi-theme-' + theme : '');
+  }, [dark, theme]);
+
+  // Wire up the global hooks the V11 components call (dark toggle, character
+  // switch after create/edit/delete, share-build link).
+  React.useEffect(() => {
+    window.__setCharacterByName = (name) => setCharName(name);
+    window.__toggleDark = () => setDark(d => !d);
+    window.__setDark = (v) => setDark(!!v);
+    window.__shareBuild = () => {
+      const c = chars.find(x => x.name === (character ? character.name : null)) || chars[0];
+      if (!c) return;
+      const payload = btoa(unescape(encodeURIComponent(JSON.stringify({
+        name: c.name, accentId: c.accentId,
+        prepared: c.prepared || [], bookmarked: c.bookmarked || [],
+      }))));
+      const url = `${window.location.origin}${window.location.pathname}?build=${payload}`;
+      if (navigator.share) {
+        navigator.share({ title: `Grimório · ${c.name}`, url }).catch(() => {});
+      } else if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(url).then(
+          () => window.dispatchEvent(new CustomEvent('hifi-toast', { detail: { msg: 'Link da build copiado' } })),
+          () => {},
+        );
+      }
+    };
+    return () => {
+      window.__setCharacterByName = null;
+      window.__toggleDark = null;
+      window.__setDark = null;
+      window.__shareBuild = null;
+    };
+  }, [chars, character]);
+
+  // If the active character is deleted, fall back to the first one.
+  React.useEffect(() => {
+    if (chars.length && !chars.find(c => c.name === charName)) {
+      setCharName(chars[0].name);
+    }
+  }, [chars, charName]);
+
+  if (!character) return null;
+
+  return (
+    <>
+      {isMobile
+        ? <HifiMobile lang="ptbr" dark={dark} theme={theme} character={character} />
+        : <HifiDesktop lang="ptbr" dark={dark} theme={theme} character={character} width={w} height={h} />}
+      <HifiPrintRoot />
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

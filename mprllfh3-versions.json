@@ -1,0 +1,26 @@
+[
+  {
+    "file": "spells-5E-2024-PTBR",
+    "lang": "ptbr",
+    "version": "D&D 5.5E (Heróis Anônimos, 2024)",
+    "credits": "Livro do Jogador 5E 2024 (Heróis Anônimos) traduzidas para o Português Brasileiro por Heróis Anônimos."
+  },
+  {
+    "file": "spells-5E-2014-PTBR",
+    "lang": "ptbr",
+    "version": "D&D 5E (Versão Oficial, 2014)",
+    "credits": "App de grimório de magias do didiraja https://github.com/didiraja/dnd-5e-magias."
+  },
+  {
+    "file": "spells-5E-2024-EN",
+    "lang": "en",
+    "version": "Player's Handbook 5E 2024",
+    "credits": "Player's Handbook 5E 2024 - http://dnd2024.wikidot.com/spell:freedom-of-movement"
+  },
+  {
+    "file": "spells-5E-2014-EN",
+    "lang": "en",
+    "version": "Player's Handbook 5E 2014",
+    "credits": "Player's Handbook 5E 2014 - http://dnd2024.wikidot.com/spell:freedom-of-movement"
+  }
+]

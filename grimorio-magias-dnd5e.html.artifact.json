@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "Grimório de Magias — D&D 5E",
+  "entry": "grimorio-magias-dnd5e.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-05-30T00:20:31.097Z",
+  "updatedAt": "2026-05-30T00:20:31.101Z",
+  "metadata": {
+    "identifier": "grimorio-magias-dnd5e",
+    "artifactType": "text/html",
+    "inferred": false
+  }
+}

@@ -1,0 +1,436 @@
+/* ── Fontes ── */
+@font-face {
+    font-family: 'Marauder';
+    src: url('../marauder/webfonts/Marauder-Text-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Marauder';
+    src: url('../marauder/webfonts/Marauder-Text-Italic.woff2') format('woff2');
+    font-weight: 400;
+    font-style: italic;
+}
+@font-face {
+    font-family: 'Marauder';
+    src: url('../marauder/webfonts/Marauder-Text-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Marauder';
+    src: url('../marauder/webfonts/Marauder-Text-BoldItalic.woff2') format('woff2');
+    font-weight: 700;
+    font-style: italic;
+}
+@font-face {
+    font-family: 'Marauder Display';
+    src: url('../marauder/webfonts/Marauder-Display-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Marauder Display';
+    src: url('../marauder/webfonts/Marauder-Display-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+}
+
+/* ── Geometria dos cards ── */
+:root {
+    /* Shell */
+    --card-padding:         10px;  /* padding interno do .spell-body */
+    --card-margin:          10px;  /* margem vertical entre cards */
+
+    /* Dentro do título */
+    --gap-name-to-school:    5px;  /* nome → escola */
+    --gap-school-to-sep:     3px;  /* escola → separador (padding-bottom do .name) */
+
+    /* Entre blocos */
+    --gap-sep-to-meta:       5px;  /* separador → meta-line (margin-bottom do .title) */
+    --gap-meta-to-desc:      5px;  /* meta-line → description */
+    --gap-meta-to-note:      5px;  /* meta-line → material-note */
+    --gap-note-to-desc:      0.3em;  /* material-note → description */
+    --gap-desc-to-upgrade:   0.3em;  /* description → upgrade-description */
+    --gap-desc-to-classnote: 5px; /* upgrade/description → class-note */
+    --gap-desc-to-source:    5px;  /* último bloco → source */
+}
+
+/* ── Base ── */
+body {
+    font-family: 'Marauder', Helvetica, Arial, sans-serif;
+    font-size: 11pt;
+    margin: 0;
+}
+button, input, select, textarea {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+/* ── Sort control ── */
+.sort-control {
+    display: flex;
+    border: 1px solid #ccc;
+    border-radius: 999px;
+    padding: 2px;
+    height: 30px;
+    box-sizing: border-box;
+    position: relative;
+}
+.sort-btn {
+    min-width: 60px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    position: relative;
+    z-index: 1;
+}
+.sort-btn.active { font-weight: bold; }
+
+/* ── Legenda ── */
+.legenda-table { display: block; }
+.legenda-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 1px 2px;
+}
+.legenda-item img { height: 1.2em; width: auto; }
+
+/* ── Empty message ── */
+#empty-message {
+    padding: 1em;
+    box-sizing: border-box;
+    background: gray;
+    color: white;
+    border-color: gray;
+    border-radius: 10px;
+    text-align: center;
+    display: none;
+}
+
+/* ── Spell item ── */
+.spell-item {
+    width: 100%;
+    font-size: 11pt;
+    box-sizing: border-box;
+    background: transparent;
+    margin-bottom: var(--card-margin);
+    border-radius: 8px;
+    page-break-inside: avoid;
+    box-shadow: 0 6px 16px rgba(0,0,0,0);
+    transition: opacity 0.2s ease, transform 0.3s ease-out, box-shadow 0.3s ease-out;
+}
+.spell-item:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+    z-index: 2;
+}
+.spell-item.fading { opacity: 0; }
+
+/* ── Level separator ── */
+.level-separator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 12px 0;
+    color: #666;
+    user-select: none;
+    transition: opacity 0.2s ease;
+}
+.level-separator.fading { opacity: 0; }
+.level-separator::before,
+.level-separator::after {
+    content: '';
+    flex: 1;
+    border-top: 1px dotted #aaa;
+}
+
+/* ── Spell body ── */
+.spell-body {
+    margin: 0;
+    padding: var(--card-padding);
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+/* ── Title block ── */
+.title {
+    display: flex;
+    align-items: flex-start;
+    margin-top: -5px; /* compensa leading do Texturina */
+}
+.spell-sep {
+    border: none;
+    border-top: 1px dotted;
+    margin: var(--gap-school-to-sep) 0 var(--gap-sep-to-meta);
+}
+.name {
+    flex-grow: 1;
+    margin: 0;
+    min-width: 0;
+}
+.name p {
+    margin: 0;
+    line-height: 1.2;
+}
+.name p:not(.school) {
+    font-size: 15pt;
+    font-weight: bold;
+    font-family: 'Texturina', serif;
+    font-variant: small-caps;
+    line-height: 1;
+}
+.name p.school {
+    font-size: 8pt;
+    font-weight: normal;
+    font-variant: normal;
+    font-style: italic;
+    margin: var(--gap-name-to-school) 0 0 0;
+}
+.known {
+    cursor: pointer;
+    transform-origin: center;
+    flex-shrink: 0;
+    align-self: stretch;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 5px; /* compensa o margin-top: -5px do .title (leading do Texturina) */
+}
+.known img {
+    display: block;
+    user-select: none;
+    height: 1.2em;
+    width: auto;
+}
+@keyframes known-pop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.4); }
+    100% { transform: scale(1); }
+}
+.known-popping { animation: known-pop 0.22s ease-out; }
+
+/* ── Meta line ── */
+.meta-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 4px;
+    margin: 0 0 var(--gap-meta-to-desc) 0;
+    font-size: 9pt;
+    line-height: 1.5;
+}
+.meta-sep { user-select: none; }
+.meta-pill {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 2px;
+}
+.conc-badge {
+    font-size: 9pt;
+    margin-left: 3px;
+}
+
+/* ── Notes ── */
+.material-note {
+    font-size: 9pt;
+    margin: var(--gap-meta-to-note) 0 var(--gap-note-to-desc);
+}
+.class-note {
+    font-size: 9pt;
+    margin: var(--gap-desc-to-classnote) 0 0;
+}
+.spell-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: var(--gap-desc-to-source);
+}
+.spell-source {
+    margin: 0;
+    font-size: 8pt;
+    font-style: italic;
+    line-height: 1;
+}
+
+/* ── Description ── */
+.description { font-size: 9pt; }
+.description p {
+    margin: 0;
+    padding-top: 0.3em;
+    padding-bottom: 0.4em;
+}
+.description p:first-child { padding-top: 0; }
+.description p:last-child  { padding-bottom: 0; }
+.description ul { padding-left: 1.5em; }
+.description table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    border: none;
+    border-top: 1px dotted var(--surface2, #ccc);
+    border-bottom: 1px dotted var(--surface2, #ccc);
+}
+.description th,
+.description td { border: none !important; padding: 4px 8px; text-align: left; }
+.description th { font-weight: bold; background: var(--surface0, #eee); color: var(--subtext1, #555); }
+.description tbody tr:nth-child(even) { background: var(--mantle, #f5f5f5); }
+.upgrade-description { margin-top: var(--gap-desc-to-upgrade); }
+
+/* ── Bookmark flash ── */
+@keyframes bookmark-flash {
+    0%   { box-shadow: 0 0 0 0px var(--accent); }
+    50%  { box-shadow: 0 0 0 4px var(--accent); }
+    100% { box-shadow: 0 0 0 0px var(--accent); }
+}
+.bookmark-flash .spell-body { animation: bookmark-flash 0.4s ease-out; }
+
+/* ── Tier badge ── */
+.tier-badge {
+    font-size: 8pt;
+    color: var(--accent, #888);
+    opacity: 0.9;
+    white-space: nowrap;
+    letter-spacing: 1px;
+    user-select: none;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+/* ── Statblock indicator ── */
+.statblock-indicator {
+    display: inline-block;
+    width: 16px;
+    height: 11px;
+    background: linear-gradient(135deg, var(--mauve), var(--sapphire), var(--teal));
+    -webkit-mask-image: url('../img/summon.svg');
+    mask-image: url('../img/summon.svg');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    vertical-align: 1px;
+    margin-left: 5px;
+    opacity: 0.75;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* ── Modal (desktop only) ── */
+@media (pointer: fine) and (min-width: 700px) {
+    .spell-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        background: rgba(0, 0, 0, 0.55);
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+    .spell-modal-overlay.open { display: flex; }
+    .spell-modal-card {
+        width: min(680px, 90vw);
+        max-height: 88vh;
+        overflow-y: auto;
+        border-radius: 12px;
+        position: relative;
+        cursor: default;
+        background: var(--base, white);
+        animation: modal-in 0.15s ease-out;
+    }
+    .spell-modal-overlay.closing .spell-modal-card { animation: modal-out 0.12s ease-in forwards; }
+    @keyframes modal-in {
+        from { transform: scale(0.88); opacity: 0; }
+        to   { transform: scale(1);    opacity: 1; }
+    }
+    @keyframes modal-out {
+        from { transform: scale(1);    opacity: 1; }
+        to   { transform: scale(0.88); opacity: 0; }
+    }
+    .spell-modal-close {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        background: none;
+        border: none;
+        font-size: 1em;
+        cursor: pointer;
+        color: var(--subtext1, #777);
+        z-index: 1;
+        padding: 0;
+        line-height: 1;
+    }
+    .spell-modal-close:hover { color: var(--text, #333); }
+    .spell-modal-body .spell-body {
+        border-radius: 12px;
+        font-size: 13pt;
+        padding: 1em 1.2em 2em 1.2em;
+    }
+    .spell-modal-body .description,
+    .spell-modal-body .material-note,
+    .spell-modal-body .spell-source { font-size: 10pt; }
+    .spell-modal-body .name p:not(.school) { font-size: 18pt; }
+}
+
+/* ── Stat block ── */
+.stat-block {
+    margin-top: 1.2em;
+    border: 1px solid var(--accent, var(--overlay1, #888));
+    border-radius: 6px;
+    padding: 0.75em 1em;
+    background: var(--mantle, #f0f0f0);
+    line-height: 1.5;
+    break-inside: avoid;
+}
+.stat-block h3 {
+    margin: 0 0 0.1em 0;
+    font-family: 'Texturina', serif;
+    font-size: 1.1em;
+    color: var(--accent, var(--text));
+    font-variant: small-caps;
+}
+.sb-type { font-style: italic; color: var(--subtext1, #777); margin-bottom: 0.5em; font-size: 0.85em; }
+.sb-defenses {
+    margin-bottom: 0.5em;
+    padding-bottom: 0.5em;
+    border-bottom: 1px solid var(--overlay0, #ccc);
+    font-size: 0.9em;
+}
+.sb-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.2em;
+    text-align: center;
+    margin-bottom: 0.5em;
+    padding-bottom: 0.5em;
+    border-bottom: 1px solid var(--overlay0, #ccc);
+}
+.sb-stat { display: flex; flex-direction: column; align-items: center; font-size: 0.85em; }
+.sb-stat-name { font-weight: bold; font-size: 0.75em; color: var(--subtext1, #777); letter-spacing: 0.05em; text-transform: uppercase; }
+.sb-meta > div { margin-bottom: 0.2em; font-size: 0.9em; }
+.stat-block section { margin-top: 0.5em; }
+.stat-block section h4 {
+    margin: 0 0 0.2em 0;
+    font-size: 0.85em;
+    font-variant: small-caps;
+    font-weight: bold;
+    color: var(--accent, var(--text));
+    border-bottom: 1px solid var(--overlay0, #ccc);
+    padding-bottom: 0.15em;
+}
+.stat-block section p { margin: 0.15em 0; font-size: 0.9em; }
+
+/* ── Print (página) ── */
+@page { size: A4 portrait; margin: 5mm; }

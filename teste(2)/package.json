@@ -1,0 +1,17 @@
+{
+  "name": "spellbook",
+  "version": "1.0.0",
+  "description": "Spellbook - D&D 5e Spell Manager",
+  "private": true,
+  "scripts": {
+    "build": "node build.js",
+    "deploy": "npm run build && gh-pages -d dist",
+    "deploy:local": "npm run build && npx serve dist"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "@babel/preset-react": "^7.23.3",
+    "gh-pages": "^6.1.1",
+    "serve": "^14.2.1"
+  }
+}
