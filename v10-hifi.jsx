@@ -1156,6 +1156,26 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
   const [charSheetOpen, setCharSheetOpen] = React.useState(false);
   const [editor, setEditor] = React.useState(null);
 
+  // Swipe pra abrir/fechar o drawer. Fechado: arrastar pra cima abre. Aberto:
+  // arrastar pra baixo fecha, mas só quando o gesto começa no topo (~64px, zona
+  // do puxador/busca) — assim o scroll do conteúdo do drawer aberto não dispara
+  // o fechamento por engano.
+  const drawerRef = React.useRef(null);
+  const drawerSwipe = React.useRef(null);
+  function onDrawerTouchStart(e) {
+    const y = e.touches[0].clientY;
+    const top = drawerRef.current ? drawerRef.current.getBoundingClientRect().top : 0;
+    drawerSwipe.current = { y, fromHandle: (y - top) < 64 };
+  }
+  function onDrawerTouchEnd(e) {
+    const s = drawerSwipe.current;
+    drawerSwipe.current = null;
+    if (!s) return;
+    const dy = e.changedTouches[0].clientY - s.y;
+    if (!drawerOpen && dy < -40) setDrawerOpen(true);
+    else if (drawerOpen && dy > 50 && s.fromHandle) setDrawerOpen(false);
+  }
+
   React.useEffect(() => {
     if (detailIdx !== null) setSelectedIdx(detailIdx);
   }, [detailIdx, setSelectedIdx]);
@@ -1236,7 +1256,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
   }
 
   return (
-    <div className={`hifi ${themeClass}`} style={{ ...containerStyle, height: '100%', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', paddingTop: 52, paddingBottom: 34 }}>
+    <div className={`hifi ${themeClass}`} style={{ ...containerStyle, height: '100%', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', paddingTop: 52, paddingBottom: 0 }}>
       <header style={{ padding: '12px 16px', borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span className="hifi-display" style={{ fontSize: 22, color: 'var(--text)' }}>Grimório</span>
@@ -1300,8 +1320,12 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
       {drawerOpen && (
         <div onClick={() => setDrawerOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 4 }}/>
       )}
-      <div style={{
-        position: 'absolute', left: 0, right: 0, bottom: 34,
+      <div
+        ref={drawerRef}
+        onTouchStart={onDrawerTouchStart}
+        onTouchEnd={onDrawerTouchEnd}
+        style={{
+        position: 'absolute', left: 0, right: 0, bottom: 0,
         height: drawerOpen ? 480 : 56,
         background: 'var(--mantle)',
         borderTop: '1px solid var(--surface1)',

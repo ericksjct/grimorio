@@ -21,7 +21,7 @@
 <!-- V11 design tokens (Catppuccin / Nord / Monokai / Solarized) + Marauder @font-face -->
 <link rel="stylesheet" href="hifi-tokens.css">
 <style>
-  html, body { margin: 0; padding: 0; height: 100%; background: #f8f7f3; }
+  html, body { margin: 0; padding: 0; height: 100%; background: #f8f7f3; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   * { box-sizing: border-box; }
   #root { width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; }
   /* Fundo do body segue o --base do tema ativo (claro ou escuro), pra não
@@ -123,7 +123,11 @@ function App() {
 
   const { chars } = useCharacters();
   const { w, h } = useViewport();
-  const isMobile = w < 768;
+  // Mobile pela MENOR dimensão: assim um celular usa o layout mobile nas duas
+  // orientações (em paisagem a largura passa de 768, mas a altura ~390 não — o
+  // layout desktop com zoom deixaria o card maior que a tela). Tablets/desktop,
+  // com a menor dimensão >= 768, seguem no layout desktop.
+  const isMobile = Math.min(w, h) < 768;
 
   const character = chars.find(c => c.name === charName) || chars[0];
 
