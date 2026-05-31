@@ -279,7 +279,7 @@ function VersionSelector({ current, versions, onChange, lang = 'ptbr', dark = fa
         <button
           onClick={() => setOpen(o => !o)}
           className="hifi-filter-chip"
-          style={{ padding: '4px 8px', gap: 5, fontSize: 11 }}
+          style={{ padding: '0 8px', gap: 5, fontSize: 11 }}
           title={lang === 'ptbr' ? 'trocar versão das magias' : 'switch spell version'}
         >
           <span style={langDot(currentVer)}/>

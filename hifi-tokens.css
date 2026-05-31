@@ -285,7 +285,12 @@
 .hifi-dark .hifi-card {
   box-shadow: 0 1px 2px rgba(0,0,0,0.25), 0 4px 12px rgba(0,0,0,0.18);
 }
-.hifi-card.compact { min-height: 280px; height: 280px; }
+/* Mobile (coluna única, .compact): card de altura FLEXÍVEL — envolve a
+   descrição inteira. Sem altura fixa: descrição curta = card baixo (sem espaço
+   morto); descrição longa = card cresce e mostra o texto todo. */
+.hifi-card.compact { min-height: 0; height: auto; }
+.hifi-card.compact .hifi-card-desc { flex: 0 0 auto; overflow: visible; }
+.hifi-card.compact .hifi-card-desc::after { display: none; }
 .hifi-card:hover {
   border-color: var(--accent, var(--subtext1));
   box-shadow: 0 2px 6px rgba(0,0,0,0.07), 0 6px 16px rgba(0,0,0,0.06);
@@ -456,7 +461,7 @@
 .hifi-btn-ghost:hover { color: var(--text); background: var(--surface0); }
 
 .hifi-icon-btn {
-  width: 30px; height: 30px;
+  width: 25px; height: 25px;
   border-radius: 50%;
   background: var(--surface0);
   color: var(--text);
@@ -523,6 +528,37 @@
   padding: 1px 6px;
   border-radius: 999px;
 }
+
+/* ──────────────────────────────────────────────────────────
+   CANON DE TAMANHO — todos os botões / filtros / seletores têm 25px de
+   altura, pra uma faixa de controles uniforme. Exceção: a barra de busca
+   (.hifi-input). Os itens de menu dropdown usam .hifi-btn-ghost e ficam de
+   fora de propósito (são linhas de lista, não controles da faixa).
+   padding-block: 0 zera só o padding vertical; o horizontal de cada classe
+   é preservado. inline-flex centraliza o conteúdo na altura fixa.
+   ────────────────────────────────────────────────────────── */
+.hifi-pill,
+.hifi-filter-chip,
+.hifi-btn-primary,
+.hifi-btn-secondary {
+  height: 25px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: 0;
+  line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Desktop: canon em 30px (mobile fica em 25px). O marcador .hifi-desktop está
+   no container raiz do layout desktop (HifiDesktop). */
+.hifi-desktop .hifi-pill,
+.hifi-desktop .hifi-filter-chip,
+.hifi-desktop .hifi-btn-primary,
+.hifi-desktop .hifi-btn-secondary { height: 30px; }
+.hifi-desktop .hifi-icon-btn { width: 30px; height: 30px; }
 
 /* Chrome da UI (busca, filtros, botões) usa sans-serif do sistema — a Marauder
    serifada fica reservada pro conteúdo (nomes/descrições das magias).

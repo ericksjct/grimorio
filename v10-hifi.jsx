@@ -384,7 +384,7 @@ function HifiThemeToggle({ dark, lang = 'ptbr', style }) {
       title={dark
         ? (lang === 'ptbr' ? 'mudar para tema claro' : 'switch to light theme')
         : (lang === 'ptbr' ? 'mudar para tema escuro' : 'switch to dark theme')}
-      style={{ width: 30, height: 30, background: 'var(--surface1)', fontSize: 15, lineHeight: 1, ...style }}
+      style={{ width: 25, height: 25, background: 'var(--surface1)', fontSize: 14, lineHeight: 1, ...style }}
     >
       <span aria-hidden="true">{dark ? '🌙' : '☀️'}</span>
     </button>
@@ -527,6 +527,26 @@ function remapClassFilter(set, fromLang, toLang) {
   return out;
 }
 
+// Config de filtros — fonte única usada pelo motor (accessor `get`) e pela UI
+// (label + valores). `base: true` = sempre visível; o resto entra via "+ mais".
+// `derive: true` = os valores selecionáveis vêm dos próprios dados (JSON).
+function hifiFilterConfig(lang) {
+  const pt = lang === 'ptbr';
+  const bool = b => (b ? (pt ? 'sim' : 'yes') : (pt ? 'não' : 'no'));
+  return {
+    level:  { label: pt ? 'nível' : 'level',   base: true, get: s => [s.lvl === 0 ? 'truque' : String(s.lvl)] },
+    school: { label: pt ? 'escola' : 'school',  base: true, get: s => [schoolKey(s.school)] },
+    class:  { label: pt ? 'classe' : 'class',   base: true, get: s => (s.classes || []) },
+    comp:   { label: pt ? 'componente' : 'component', get: s => (s.comp || '').split(/\s+/).filter(Boolean), values: ['V', 'S', 'M'] },
+    conc:   { label: pt ? 'concentração' : 'concentration', get: s => [bool(s.conc)], values: [bool(true), bool(false)] },
+    rit:    { label: pt ? 'ritual' : 'ritual',  get: s => [bool(s.rit)], values: [bool(true), bool(false)] },
+    time:   { label: pt ? 'execução' : 'cast time', derive: true, get: s => (s.time ? [s.time] : []) },
+    dur:    { label: pt ? 'duração' : 'duration', derive: true, get: s => (s.dur ? [s.dur] : []) },
+    range:  { label: pt ? 'alcance' : 'range',  derive: true, get: s => (s.range ? [s.range] : []) },
+    src:    { label: pt ? 'fonte' : 'source',   derive: true, get: s => (s.src ? [s.src] : []) },
+  };
+}
+
 function useHifiAppState(preparedKeys, initialFilters) {
   const spellVersions = window.useSpellVersions ? window.useSpellVersions() : null;
   const allSpells = spellVersions?.spells || [];
@@ -578,15 +598,17 @@ function useHifiAppState(preparedKeys, initialFilters) {
         return name.toLowerCase().includes(q) || en.toLowerCase().includes(q);
       });
     }
-    if (filters.class && filters.class.size) {
-      out = out.filter(s => (s.classes || []).some(c => filters.class.has(c)));
-    }
-    if (filters.level && filters.level.size) {
-      out = out.filter(s => filters.level.has(s.lvl === 0 ? 'truque' : String(s.lvl)));
-    }
-    if (filters.school && filters.school.size) {
-      out = out.filter(s => filters.school.has(schoolKey(s.school)));
-    }
+    // Aplica todo filtro ativo genericamente: a magia passa se algum dos seus
+    // valores (def.get) estiver na seleção. Cobre os filtros base (classe/nível/
+    // escola) e quaisquer filtros extras adicionados via "+ mais".
+    const cfg = hifiFilterConfig(versionLang);
+    Object.keys(filters).forEach(key => {
+      const sel = filters[key];
+      const def = cfg[key];
+      if (sel && sel.size && def) {
+        out = out.filter(s => def.get(s).some(v => sel.has(v)));
+      }
+    });
     if (onlyPrepared && preparedKeys) {
       out = out.filter(s => preparedKeys.has(hifiSpellKey(s)));
     }
@@ -747,8 +769,38 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
     { key: 'class',  label: lang === 'ptbr' ? 'classe' : 'class',  values: ['mago','clérigo','druida','bardo','feiticeiro','bruxo'] },
   ];
 
+  // Filtros extras (desktop): além de classe/nível/escola, o usuário adiciona
+  // outros campos dos JSONs via "+ mais". `extraFilters` = chaves ativas (ordem).
+  const [extraFilters, setExtraFilters] = React.useState([]);
+  const filterCfg = React.useMemo(() => hifiFilterConfig(versionLang), [versionLang]);
+  // Valores selecionáveis de cada extra: estáticos (config) ou derivados
+  // (distintos + ordenados) dos próprios dados quando `derive`.
+  const extraValues = React.useMemo(() => {
+    const out = {};
+    Object.keys(filterCfg).forEach(key => {
+      const def = filterCfg[key];
+      if (def.base) return;
+      if (def.values) out[key] = def.values;
+      else if (def.derive) {
+        const set = new Set();
+        (allSpells || []).forEach(s => def.get(s).forEach(v => v && set.add(v)));
+        out[key] = [...set].sort((a, b) => String(a).localeCompare(String(b), versionLang === 'ptbr' ? 'pt' : 'en', { numeric: true }));
+      }
+    });
+    return out;
+  }, [filterCfg, allSpells, versionLang]);
+  const addExtraFilter = (key) => {
+    setExtraFilters(list => list.includes(key) ? list : [...list, key]);
+    setFilters(p => (p[key] ? p : { ...p, [key]: new Set() }));
+  };
+  const removeExtraFilter = (key) => {
+    setExtraFilters(list => list.filter(k => k !== key));
+    setFilters(p => { const n = { ...p }; delete n[key]; return n; });
+  };
+  const availableExtras = Object.keys(filterCfg).filter(k => !filterCfg[k].base && !extraFilters.includes(k));
+
   return (
-    <div className={`hifi ${themeClass}`} style={{ ...containerStyle, width, height, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+    <div className={`hifi hifi-desktop ${themeClass}`} style={{ ...containerStyle, width, height, display: 'flex', flexDirection: 'column', position: 'relative' }}>
       {/* Header */}
       <header style={{ padding: '18px 28px', borderBottom: '1px solid var(--surface1)', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
@@ -873,6 +925,23 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
             />
           </div>
         ))}
+        {extraFilters.map(key => (
+          <div key={key} style={{ position: 'relative' }}>
+            <FilterChipDropdown
+              label={filterCfg[key].label}
+              count={filters[key]?.size || 0}
+              values={extraValues[key] || []}
+              selected={filters[key] || new Set()}
+              onToggle={(v) => toggleFilter(key, v)}
+              onClear={() => setFilters(p => ({ ...p, [key]: new Set() }))}
+              onRemove={() => removeExtraFilter(key)}
+              lang={lang}
+            />
+          </div>
+        ))}
+        {availableExtras.length > 0 && (
+          <HifiAddFilter available={availableExtras} cfg={filterCfg} onAdd={addExtraFilter} lang={lang}/>
+        )}
         <span style={{ width: 1, height: 22, background: 'var(--surface1)' }}/>
         {window.VersionSelector && (
           <window.VersionSelector
@@ -890,8 +959,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
           title={lang === 'ptbr' ? 'mostrar só as magias preparadas' : 'show only prepared spells'}
         >
-          <span style={{ color: onlyPrepared ? 'var(--accent)' : 'inherit', display: 'inline-flex' }}><HifiBookmarkIcon size={12}/></span>
-          <span>{lang === 'ptbr' ? 'preparadas' : 'prepared'}</span>
+          <span style={{ color: onlyPrepared ? 'var(--accent)' : 'inherit', display: 'inline-flex' }}><HifiBookmarkIcon size={14}/></span>
         </button>
         <div style={{ flex: 1 }}/>
         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'var(--subtext0)' }}>
@@ -1044,7 +1112,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
           <a href="https://www.jetbrains.com/lp/mono/" target="_blank" rel="noopener" style={hifiFooterLink}>JetBrains Mono</a>
         </span>
         <div style={{ flex: 1, minWidth: 14 }}/>
-        <HifiThemeToggle dark={dark} lang={lang} style={{ width: 26, height: 26, fontSize: 13 }}/>
+        <HifiThemeToggle dark={dark} lang={lang} style={{ width: 30, height: 30, fontSize: 15 }}/>
       </footer>
 
       {/* Character editor — slide-in panel from the right */}
@@ -1084,7 +1152,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
   );
 }
 
-function FilterChipDropdown({ label, count, values, selected, onToggle, onClear, lang }) {
+function FilterChipDropdown({ label, count, values, selected, onToggle, onClear, onRemove, lang }) {
   const [open, setOpen] = React.useState(false);
   const active = count > 0;
   return (
@@ -1100,7 +1168,7 @@ function FilterChipDropdown({ label, count, values, selected, onToggle, onClear,
           <div style={{
             position: 'absolute', top: '100%', left: 0, marginTop: 6,
             background: 'var(--mantle)', border: '1px solid var(--surface1)', borderRadius: 4,
-            minWidth: 200, padding: '6px 0', zIndex: 12,
+            minWidth: 200, maxHeight: 360, overflowY: 'auto', padding: '6px 0', zIndex: 12,
             boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
           }}>
             {count > 0 && (
@@ -1109,6 +1177,13 @@ function FilterChipDropdown({ label, count, values, selected, onToggle, onClear,
                 {lang === 'ptbr' ? 'limpar' : 'clear'}
               </button>
             )}
+            {onRemove && (
+              <button onClick={() => { onRemove(); setOpen(false); }} className="hifi-btn-ghost"
+                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 12px', color: 'var(--red)', fontSize: 12 }}>
+                {lang === 'ptbr' ? '✕ remover filtro' : '✕ remove filter'}
+              </button>
+            )}
+            {(count > 0 || onRemove) && <div style={{ height: 1, background: 'var(--surface1)', margin: '4px 0' }}/>}
             {values.map(v => {
               const sel = selected.has(v);
               return (
@@ -1129,6 +1204,45 @@ function FilterChipDropdown({ label, count, values, selected, onToggle, onClear,
         </>
       )}
     </>
+  );
+}
+
+// Botão tracejado "+ mais" — abre um menu dos campos filtráveis dos JSONs ainda
+// não adicionados; clicar adiciona um novo chip de filtro à faixa.
+function HifiAddFilter({ available, cfg, onAdd, lang }) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="hifi-filter-chip"
+        style={{ borderStyle: 'dashed', borderColor: 'var(--surface1)', color: 'var(--subtext0)', background: 'transparent' }}
+        title={lang === 'ptbr' ? 'adicionar filtro personalizado' : 'add custom filter'}
+      >+ {lang === 'ptbr' ? 'mais' : 'more'}</button>
+      {open && (
+        <>
+          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 11 }}/>
+          <div style={{
+            position: 'absolute', top: '100%', left: 0, marginTop: 6,
+            background: 'var(--mantle)', border: '1px solid var(--surface1)', borderRadius: 4,
+            minWidth: 180, maxHeight: 360, overflowY: 'auto', padding: '6px 0', zIndex: 12,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+          }}>
+            <div style={{ padding: '4px 12px 6px' }}>
+              <span className="hifi-section-label">{lang === 'ptbr' ? 'adicionar filtro' : 'add filter'}</span>
+            </div>
+            {available.map(key => (
+              <button key={key}
+                onClick={() => { onAdd(key); setOpen(false); }}
+                className="hifi-btn-ghost"
+                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '7px 12px', color: 'var(--text)', textTransform: 'capitalize' }}>
+                {cfg[key].label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -1267,7 +1381,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
             className="hifi-icon-btn"
             title={lang === 'ptbr' ? 'mostrar só as preparadas' : 'show only prepared'}
             aria-pressed={onlyPrepared}
-            style={{ width: 30, height: 30, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            style={{ width: 25, height: 25, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               color: onlyPrepared ? 'var(--base)' : 'var(--text)',
               background: onlyPrepared ? 'var(--accent)' : 'var(--surface1)',
               borderColor: onlyPrepared ? 'var(--accent)' : undefined }}
@@ -1280,18 +1394,18 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
             }}
             className="hifi-icon-btn"
             title={lang === 'ptbr' ? 'imprimir preparadas' : 'print prepared'}
-            style={{ width: 30, height: 30, fontSize: 13, background: 'var(--surface1)' }}
+            style={{ width: 25, height: 25, fontSize: 13, background: 'var(--surface1)' }}
           >⎙</button>
           <button
             onClick={() => window.__shareBuild && window.__shareBuild()}
             className="hifi-icon-btn"
             title={lang === 'ptbr' ? 'compartilhar build' : 'share build'}
-            style={{ width: 30, height: 30, fontSize: 13, background: 'var(--surface1)' }}
+            style={{ width: 25, height: 25, fontSize: 13, background: 'var(--surface1)' }}
           >↗</button>
           <button
             onClick={() => setCharSheetOpen(true)}
             className="hifi-filter-chip"
-            style={{ height: 30, background: 'var(--surface1)', padding: '0 10px', cursor: 'pointer' }}
+            style={{ height: 25, background: 'var(--surface1)', padding: '0 10px', cursor: 'pointer' }}
             title={lang === 'ptbr' ? 'trocar / editar personagem' : 'switch / edit character'}
           >
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: accent }}/>
