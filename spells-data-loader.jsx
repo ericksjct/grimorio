@@ -385,6 +385,9 @@ const _originalV7BuildSpells = window.v7BuildSpells;
 
 window.v7BuildSpells = buildSpellsFromRealData;
 window.SPELL_VERSIONS = SPELL_VERSIONS;
+// Mapas de classe en↔pt — usados pra remapear o filtro de classe ao trocar de idioma.
+window.CLASS_PT = CLASS_PT; // en → pt  (bard → bardo)
+window.CLASS_EN = CLASS_EN; // pt → en  (bardo → bard)
 window.getCurrentSpellVersion = getCurrentVersion;
 window.setCurrentSpellVersion = setCurrentVersion;
 window.loadSpellVersion = loadVersion;

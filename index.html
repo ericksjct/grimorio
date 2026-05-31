@@ -5,8 +5,8 @@
 <title>Grimório · Magias de D&D 5e</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <meta name="description" content="Grimório de magias de D&D 5e — prepare, marque como favorita, filtre por classe / nível / escola e imprima a lista de magias do seu personagem. PT-BR e EN, edições 2014 e 2024."/>
-<meta name="theme-color" content="#1e1e2e"/>
-<meta name="color-scheme" content="light dark"/>
+<meta name="theme-color" content="#f8f7f3"/>
+<meta name="color-scheme" content="light"/>
 
 <!-- Open Graph / share-build previews -->
 <meta property="og:type" content="website"/>
@@ -21,34 +21,36 @@
 <!-- V11 design tokens (Catppuccin / Nord / Monokai / Solarized) + Marauder @font-face -->
 <link rel="stylesheet" href="hifi-tokens.css">
 <style>
-  html, body { margin: 0; padding: 0; height: 100%; background: #1e1e2e; }
+  html, body { margin: 0; padding: 0; height: 100%; background: #f8f7f3; }
   * { box-sizing: border-box; }
   #root { width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; }
-  /* the V11 components own their own background via the .hifi theme classes */
-  body.hifi-light { background: #eff1f5; }
+  /* Fundo do body segue o --base do tema ativo (claro ou escuro), pra não
+     deixar faixa de cor errada no overscroll / safe-area. #f8f7f3 é só o
+     fallback antes do React montar e aplicar a classe do tema. */
+  body.hifi { background: var(--base, #f8f7f3); }
 
   /* Boot / loading state — shown until React mounts (and while the first
      spell JSON is fetched). Uses the mono face so it matches the chrome. */
   .od-boot {
     position: fixed; inset: 0; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 14px;
-    font-family: 'JetBrains Mono', ui-monospace, monospace; color: #9399b2;
+    font-family: 'JetBrains Mono', ui-monospace, monospace; color: #5a5747;
     font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
-    background: #1e1e2e;
+    background: #f8f7f3;
   }
   .od-boot__mark {
     font-family: 'Texturina', Georgia, serif; font-weight: 700;
     font-variant: small-caps; letter-spacing: 0.06em;
-    font-size: 26px; color: #cdd6f4; text-transform: none;
+    font-size: 26px; color: #272822; text-transform: none;
   }
   .od-boot__dots { display: inline-flex; gap: 5px; }
   .od-boot__dots i {
-    width: 6px; height: 6px; border-radius: 50%; background: #585b70;
+    width: 6px; height: 6px; border-radius: 50%; background: #c5bca6;
     animation: od-pulse 1s ease-in-out infinite;
   }
   .od-boot__dots i:nth-child(2) { animation-delay: 0.15s; }
   .od-boot__dots i:nth-child(3) { animation-delay: 0.3s; }
-  @keyframes od-pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; background: #cba6f7; } }
+  @keyframes od-pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; background: #8e63d6; } }
   @media (prefers-reduced-motion: reduce) { .od-boot__dots i { animation: none; } }
 
   /* Fallback shown only if React/Babel fail to load (e.g. offline CDN). */
@@ -113,8 +115,10 @@ function useViewport() {
 
 function App() {
   const initial = React.useRef(loadPrefs()).current;
+  // Design system canônico: tema "Claro (carta)" = 'daylight'. Só o modo
+  // claro/escuro alterna (toggle da vela); o modo é persistido.
   const [dark, setDark] = React.useState(initial.dark ?? false);
-  const [theme] = React.useState(initial.theme || 'catppuccin');
+  const [theme, setTheme] = React.useState('daylight');
   const [charName, setCharName] = React.useState(initial.characterName || null);
 
   const { chars } = useCharacters();
@@ -123,7 +127,7 @@ function App() {
 
   const character = chars.find(c => c.name === charName) || chars[0];
 
-  // Persist prefs whenever they change.
+  // Persist prefs whenever they change (tema, modo e personagem ativo).
   React.useEffect(() => {
     savePrefs({ dark, theme, characterName: character ? character.name : null });
   }, [dark, theme, character]);
@@ -134,6 +138,13 @@ function App() {
     document.body.className =
       `hifi ${dark ? 'hifi-dark' : 'hifi-light'}` +
       (theme && theme !== 'catppuccin' ? ' hifi-theme-' + theme : '');
+    // Acompanha o chrome do navegador (mobile) e o color-scheme ao tema ativo.
+    try {
+      const base = getComputedStyle(document.body).getPropertyValue('--base').trim();
+      const tc = document.querySelector('meta[name="theme-color"]');
+      if (tc && base) tc.setAttribute('content', base);
+      document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+    } catch (e) {}
   }, [dark, theme]);
 
   // Wire up the global hooks the V11 components call (dark toggle, character
@@ -142,6 +153,9 @@ function App() {
     window.__setCharacterByName = (name) => setCharName(name);
     window.__toggleDark = () => setDark(d => !d);
     window.__setDark = (v) => setDark(!!v);
+    window.__setTheme = (t) => setTheme(t);
+    // Seletor de temas: aplica tema + modo de uma vez.
+    window.__setThemePreset = (t, d) => { setTheme(t); setDark(!!d); };
     window.__shareBuild = () => {
       const c = chars.find(x => x.name === (character ? character.name : null)) || chars[0];
       if (!c) return;
@@ -163,6 +177,8 @@ function App() {
       window.__setCharacterByName = null;
       window.__toggleDark = null;
       window.__setDark = null;
+      window.__setTheme = null;
+      window.__setThemePreset = null;
       window.__shareBuild = null;
     };
   }, [chars, character]);

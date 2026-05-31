@@ -55,5 +55,27 @@ function v8Upgrade(s, lang) {
     : `When cast using a spell slot of level ${s.lvl + 1} or higher, the effect scales with the slot level.`;
 }
 
+// ── HTML variants ──
+// As magias do JSON trazem a descrição com marcação (<p>, <ul>, <em>…). As
+// funções acima devolvem texto já "achatado" (stripHtml) — bom pro teaser dos
+// cards, mas perde as quebras de parágrafo. Estas devolvem o HTML cru pra o
+// painel de detalhe renderizar com a formatação original. Retornam '' quando
+// não há HTML (a fonte só tinha texto), e aí o chamador cai no texto puro.
+function v8DescriptionHtml(s, lang) {
+  if (s && s.descHtml) {
+    if (typeof s.descHtml === 'string') return s.descHtml;
+    return s.descHtml[lang] || s.descHtml.pt || s.descHtml.en || '';
+  }
+  return '';
+}
+
+function v8UpgradeHtml(s, lang) {
+  if (s && s.upgradeHtml) {
+    if (typeof s.upgradeHtml === 'string') return s.upgradeHtml;
+    return s.upgradeHtml[lang] || s.upgradeHtml.pt || s.upgradeHtml.en || '';
+  }
+  return '';
+}
+
 // Expose on window too — v10-hifi.jsx guards some calls with `window.v8Description ? …`.
-Object.assign(window, { spellName, schoolKey, levelKey, SCHOOL_KEYS, v8Description, v8Upgrade, V8_DESCRIPTIONS_PT });
+Object.assign(window, { spellName, schoolKey, levelKey, SCHOOL_KEYS, v8Description, v8Upgrade, v8DescriptionHtml, v8UpgradeHtml, V8_DESCRIPTIONS_PT });

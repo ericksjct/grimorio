@@ -49,6 +49,28 @@ const THEME_PALETTES = {
     purple: { light: '#6c71c4', dark: '#6c71c4' },
     pink:   { light: '#d33682', dark: '#d33682' },
   },
+  // Tons joia legíveis sobre pergaminho (tema só-claro: light = dark).
+  parchment: {
+    red:    { light: '#a02020', dark: '#a02020' },
+    orange: { light: '#c2600f', dark: '#c2600f' },
+    yellow: { light: '#9c7a10', dark: '#9c7a10' },
+    green:  { light: '#4a7a22', dark: '#4a7a22' },
+    teal:   { light: '#1c8a8a', dark: '#1c8a8a' },
+    blue:   { light: '#2b5fa0', dark: '#2b5fa0' },
+    purple: { light: '#6e3fa0', dark: '#6e3fa0' },
+    pink:   { light: '#a83a78', dark: '#a83a78' },
+  },
+  // Claro (carta): acentos vivos no claro, versões luminosas à luz de vela (escuro).
+  daylight: {
+    red:    { light: '#dc2626', dark: '#f06a6a' },
+    orange: { light: '#ea580c', dark: '#f0944e' },
+    yellow: { light: '#ca8a04', dark: '#e0b84a' },
+    green:  { light: '#16a34a', dark: '#7bc96f' },
+    teal:   { light: '#0d9488', dark: '#4fc4c0' },
+    blue:   { light: '#2563eb', dark: '#6aa0f0' },
+    purple: { light: '#7c3aed', dark: '#b48af0' },
+    pink:   { light: '#db2777', dark: '#ee82c0' },
+  },
 };
 
 // Compat: nomes antigos (Catppuccin) → slots semânticos atuais.
