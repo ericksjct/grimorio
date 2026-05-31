@@ -164,6 +164,66 @@
   --level-8: #d31760; --level-9: #6f9a14;
 }
 
+/* Pergaminho — papel envelhecido + tinta sépia (tema autoral, só claro).
+   Hierarquia de contraste de verdade: card (surface0) destaca do fundo (base). */
+.hifi-theme-parchment.hifi-light {
+  --base: #f2e9d0; --mantle: #ece1c4; --crust: #ddcfa8;
+  --surface0: #e6d9b8; --surface1: #d4c298; --surface2: #c0aa7a;
+  --overlay0: #9c8a64; --overlay1: #84714f; --overlay2: #6b5a3d;
+  --subtext0: #5c4d34; --subtext1: #4a3d28; --text: #34291a;
+  --rosewater: #b5651d; --flamingo: #a02020; --pink: #a83a78;
+  --mauve: #6e3fa0; --red: #a02020; --maroon: #8a2f2f; --peach: #c2600f;
+  --yellow: #9c7a10; --green: #4a7a22; --teal: #1c8a8a;
+  --sky: #1c8a8a; --sapphire: #2b5fa0; --blue: #2b5fa0; --lavender: #6e3fa0;
+  --level-0: #9c8a64; --level-1: #1c8a8a; --level-2: #2b5fa0; --level-3: #2b5fa0;
+  --level-4: #6e3fa0; --level-5: #a83a78; --level-6: #c2600f; --level-7: #9c7a10;
+  --level-8: #a02020; --level-9: #4a7a22;
+}
+
+/* Claro limpo (carta) — quase-branco levemente amarelado, "ar de papel",
+   alto contraste mantido. Acentos vivos. Textura sutil nos cards (abaixo). */
+.hifi-theme-daylight.hifi-light {
+  --base: #fbfaf6; --mantle: #f4f2ea; --crust: #ebe7da;
+  --surface0: #f6f3ea; --surface1: #e5e0d2; --surface2: #cfc8b5;
+  --overlay0: #a39a85; --overlay1: #7f7563; --overlay2: #5e5648;
+  --subtext0: #5a5346; --subtext1: #3a352c; --text: #1a1712;
+  --rosewater: #d2691e; --flamingo: #e11d48; --pink: #db2777;
+  --mauve: #7c3aed; --red: #dc2626; --maroon: #be123c; --peach: #ea580c;
+  --yellow: #ca8a04; --green: #16a34a; --teal: #0d9488;
+  --sky: #0284c7; --sapphire: #0369a1; --blue: #2563eb; --lavender: #7c3aed;
+  --level-0: #9a9aa8; --level-1: #0284c7; --level-2: #0369a1; --level-3: #2563eb;
+  --level-4: #7c3aed; --level-5: #db2777; --level-6: #ea580c; --level-7: #ca8a04;
+  --level-8: #dc2626; --level-9: #16a34a;
+}
+/* Claro (carta) — ESCURO: Monokai Pro (Filter Octagon). Fundo azul-ardósia
+   frio (#282a3a) com os 6 acentos do Octagon — vermelho/laranja/amarelo/
+   verde/ciano/roxo. Par escuro do tema "carta". */
+.hifi-theme-daylight.hifi-dark {
+  --base: #282a3a; --mantle: #1e1f2b; --crust: #161821;
+  --surface0: #3a3d4b; --surface1: #4a4d5c; --surface2: #535763;
+  --overlay0: #696d77; --overlay1: #888d94; --overlay2: #9ca2a8;
+  --subtext0: #b2b9bd; --subtext1: #cdd4d6; --text: #eaf2f1;
+  --rosewater: #ff9b5e; --flamingo: #ff657a; --pink: #c39ac9;
+  --mauve: #c39ac9; --red: #ff657a; --maroon: #ff657a; --peach: #ff9b5e;
+  --yellow: #ffd76d; --green: #bad761; --teal: #9cd1bb;
+  --sky: #9cd1bb; --sapphire: #9cd1bb; --blue: #9cd1bb; --lavender: #c39ac9;
+  --level-0: #696d77; --level-1: #9cd1bb; --level-2: #afd583; --level-3: #cbd764;
+  --level-4: #f6d76c; --level-5: #ffb965; --level-6: #ff9461; --level-7: #ff7273;
+  --level-8: #e87998; --level-9: #c39ac9;
+}
+
+/* Textura leve de papel nos cards do tema "carta" (granulado sutil sobre o
+   surface0), nos dois modos. É background-image (não pseudo), então fica
+   sempre atrás do texto. mix-blend pra render bem no claro e no escuro. */
+.hifi-theme-daylight .hifi-card {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+/* No escuro (Monokai Octagon) o card é superfície lisa de editor — sem papel.
+   Remover o granulado garante que o fade-out (sólido em --surface0) case
+   exatamente com o fundo do card, sem a "caixinha" visível na base. */
+.hifi-theme-daylight.hifi-dark .hifi-card { background-image: none; }
+
 /* Shared base */
 .hifi {
   font-family: 'Marauder Text', Georgia, serif;
@@ -218,14 +278,14 @@
   border: 1px solid var(--surface1);
   border-radius: 6px;
   transition: border-color 160ms, transform 160ms, box-shadow 160ms;
-  min-height: 168px;
-  height: 168px;
+  min-height: 336px;
+  height: 336px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 2px 6px rgba(0,0,0,0.03);
 }
 .hifi-dark .hifi-card {
   box-shadow: 0 1px 2px rgba(0,0,0,0.25), 0 4px 12px rgba(0,0,0,0.18);
 }
-.hifi-card.compact { min-height: 140px; height: 140px; }
+.hifi-card.compact { min-height: 280px; height: 280px; }
 .hifi-card:hover {
   border-color: var(--accent, var(--subtext1));
   box-shadow: 0 2px 6px rgba(0,0,0,0.07), 0 6px 16px rgba(0,0,0,0.06);
@@ -242,9 +302,65 @@
   box-shadow: 0 0 0 1px var(--accent, var(--text)), 0 4px 12px rgba(0,0,0,0.4);
 }
 
+/* Rich text vindo do HTML da fonte (descrição/upgrade no painel de detalhe).
+   Herda font-size/cor do container inline; aqui só o ritmo de parágrafos/listas. */
+.hifi-rich > :first-child { margin-top: 0; }
+.hifi-rich > :last-child { margin-bottom: 0; }
+.hifi-rich p { margin: 0 0 0.7em; text-wrap: pretty; }
+.hifi-rich ul, .hifi-rich ol { margin: 0.5em 0; padding-left: 1.4em; }
+.hifi-rich li { margin: 0.2em 0; }
+.hifi-rich em, .hifi-rich i { font-style: italic; }
+.hifi-rich strong, .hifi-rich b { font-weight: 700; }
+.hifi-rich a { color: var(--accent, var(--blue)); text-decoration: underline; }
+.hifi-rich table { border-collapse: collapse; margin: 0.5em 0; font-size: 0.95em; }
+.hifi-rich th, .hifi-rich td { border: 1px solid var(--surface1); padding: 3px 8px; text-align: left; }
+
+/* Descrição do card: ocupa todo o espaço livre entre o meta e o rodapé.
+   O texto que ultrapassa é clipado (overflow) e dissolvido por um fade-out:
+   um gradiente até a cor do card (--surface0) — invisível sobre espaço vazio
+   (descrição curta) e visível só quando há texto sendo cortado. O gap do card
+   (4px) já garante o respiro antes da borda pontilhada do rodapé. */
+.hifi-card-desc {
+  position: relative;
+  /* basis 0 → tamanho vem do espaço livre, não do conteúdo. Sem isso, uma
+     descrição longa empurra o meta e o rodapé pra fora do card. */
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.hifi-card-desc::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1.8em;
+  background: linear-gradient(to bottom, transparent, var(--surface0));
+  pointer-events: none;
+}
+
+/* Ribbon de "preparada" no topo do card — clicável (toggle).
+   .on = preparada (cheio, cor de acento). .off = não preparada (fantasma sutil
+   que vira acento no hover, indicando o ponto de clique). */
+.hifi-card-ribbon {
+  position: absolute;
+  /* top: 0 alinha a fita com a borda interna do topo (1px abaixo da borda externa). */
+  top: 0; right: 16px;
+  width: 18px; height: 26px;
+  line-height: 0;
+  cursor: pointer;
+  z-index: 3;
+}
+.hifi-card-ribbon svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.hifi-card-ribbon path { transition: fill 140ms, stroke 140ms; }
+/* Preparada: fita cheia na cor de acento. */
+.hifi-card-ribbon.on path { fill: var(--accent); stroke: none; }
+/* Não preparada: transparente (cor do card) com contorno pontilhado. */
+.hifi-card-ribbon.off path { fill: transparent; stroke: var(--surface1); stroke-width: 1; stroke-dasharray: 0 0; }
+.hifi-card-ribbon.off:hover path { stroke: var(--accent); }
+
 /* Spell card footer (V/S/M · range · source · flags) */
 .hifi-card-footer {
   margin-top: auto;
+  flex-shrink: 0;
   padding-top: 8px;
   border-top: 1px dashed var(--surface1);
   display: flex; align-items: center; gap: 6px;
@@ -392,7 +508,13 @@
   box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
 .hifi-filter-chip:hover { border-color: var(--overlay1); }
-.hifi-filter-chip.active { border-color: var(--accent, var(--text)); background: color-mix(in oklab, var(--accent, var(--text)) 8%, transparent); }
+/* Ativo: tratamento discreto — leve tinta da accent no fundo, texto e borda
+   na accent. Indica "selecionado" sem competir com os cards. */
+.hifi-filter-chip.active {
+  background: color-mix(in oklab, var(--accent, var(--text)) 14%, var(--surface0));
+  border-color: var(--accent, var(--text));
+  color: var(--accent, var(--text));
+}
 .hifi-filter-chip-count {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 10px;
@@ -400,6 +522,18 @@
   color: var(--base);
   padding: 1px 6px;
   border-radius: 999px;
+}
+
+/* Chrome da UI (busca, filtros, botões) usa sans-serif do sistema — a Marauder
+   serifada fica reservada pro conteúdo (nomes/descrições das magias).
+   Regra após as definições acima pra sobrescrever o font-family delas. */
+.hifi-input,
+.hifi-filter-chip,
+.hifi-btn-primary,
+.hifi-btn-secondary,
+.hifi-btn-ghost,
+.hifi-icon-btn {
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 /* Detail panel */
@@ -601,6 +735,29 @@
     color: #111;
   }
   #hifi-print-sheet[data-mode="single"] .hifi-print-spell-name { font-size: 22pt; }
+  /* Nome + badge de nível lado a lado, pra deixar o nível bem óbvio. */
+  .hifi-print-spell-headrow {
+    display: flex; align-items: center; gap: 7px;
+  }
+  /* Caixa contornada igual pra todos — número (nível) ou T/C (truque). */
+  .hifi-print-spell-level {
+    flex-shrink: 0;
+    box-sizing: border-box;
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 22px; height: 22px; padding: 0 4px;
+    border-radius: 4px;
+    background: #fff; color: #111; border: 1.5px solid #111;
+    font-family: 'Texturina', serif; font-weight: 700;
+    font-size: 12pt; line-height: 1;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  #hifi-print-sheet[data-mode="pack"] .hifi-print-spell-level {
+    min-width: 18px; height: 18px; font-size: 10pt; border-radius: 3px;
+  }
+  #hifi-print-sheet[data-mode="single"] .hifi-print-spell-headrow { gap: 10px; }
+  #hifi-print-sheet[data-mode="single"] .hifi-print-spell-level {
+    min-width: 32px; height: 32px; font-size: 17pt; border-radius: 6px;
+  }
   .hifi-print-spell-meta {
     margin-top: 2px;
     font-size: 8.5pt;
@@ -637,6 +794,21 @@
     font-size: 11pt;
     line-height: 1.5;
   }
+  /* Descrição em HTML rico na impressão: restaura parágrafos/listas que o
+     texto achatado perdia, com margens enxutas pra densidade de página. */
+  .hifi-print-spell-desc.hifi-rich > :first-child { margin-top: 0; }
+  .hifi-print-spell-desc.hifi-rich > :last-child { margin-bottom: 0; }
+  .hifi-print-spell-desc.hifi-rich p { margin: 0 0 0.5em; }
+  .hifi-print-spell-desc.hifi-rich ul,
+  .hifi-print-spell-desc.hifi-rich ol { margin: 0.3em 0; padding-left: 1.25em; }
+  .hifi-print-spell-desc.hifi-rich li { margin: 0.1em 0; }
+  .hifi-print-spell-desc.hifi-rich a { color: #111; }
+  .hifi-print-spell-desc.hifi-rich table { border-collapse: collapse; margin: 0.3em 0; font-size: 0.95em; }
+  .hifi-print-spell-desc.hifi-rich th,
+  .hifi-print-spell-desc.hifi-rich td { border: 1px solid #bbb; padding: 2px 6px; text-align: left; }
+  /* Bloco "em níveis superiores" com HTML: mantém o texto na mesma linha do rótulo. */
+  .hifi-print-spell-upgrade .hifi-rich,
+  .hifi-print-spell-upgrade .hifi-rich p { display: inline; margin: 0; }
   .hifi-print-spell-upgrade {
     margin: 6px 0 0; font-size: 8.5pt; line-height: 1.35; color: #333;
     text-wrap: pretty;
