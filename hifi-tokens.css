@@ -474,6 +474,21 @@
 }
 .hifi-icon-btn:hover { background: var(--surface1); box-shadow: 0 2px 6px rgba(0,0,0,0.07); }
 
+/* No painel de detalhe da magia os botões de ícone ficam "flat" — sem o círculo
+   (borda/fundo/sombra) que os envolve. O hover só esmaece o ícone pra manter a
+   pista de que é clicável. Escopado a .hifi-panel-header pra não mexer no resto
+   da UI (toolbar, etc.), que segue com os círculos. */
+.hifi-panel-header .hifi-icon-btn {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+.hifi-panel-header .hifi-icon-btn:hover {
+  background: transparent;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
 /* Input */
 .hifi-input {
   background: var(--mantle);
@@ -525,8 +540,19 @@
   font-size: 10px;
   background: var(--accent, var(--text));
   color: var(--base);
-  padding: 1px 6px;
+  padding: 1px 5px;
   border-radius: 999px;
+  /* Largura mínima fixa (cabe 1–2 dígitos) e texto centrado: o badge não muda
+     de tamanho conforme a contagem, então o shape do botão fica estável. */
+  box-sizing: border-box;
+  min-width: 18px;
+  text-align: center;
+}
+/* Estado sem contagem: "0" apagado — sem fundo e em cor mais clara que o texto
+   do botão, só pra reservar o espaço sem chamar atenção. */
+.hifi-filter-chip-count.empty {
+  background: transparent;
+  color: var(--overlay0);
 }
 
 /* ──────────────────────────────────────────────────────────
@@ -559,6 +585,14 @@
 .hifi-desktop .hifi-btn-primary,
 .hifi-desktop .hifi-btn-secondary { height: 30px; }
 .hifi-desktop .hifi-icon-btn { width: 30px; height: 30px; }
+
+/* Filter chip só com ícone (ex.: toggle de "preparadas"): largura = altura no
+   desktop pra fechar um círculo perfeito. Zera o padding horizontal pra centrar
+   o ícone; o border-radius: 999px herdado já arredonda. */
+.hifi-desktop .hifi-filter-chip.icon-only {
+  width: 30px;
+  padding-inline: 0;
+}
 
 /* Chrome da UI (busca, filtros, botões) usa sans-serif do sistema — a Marauder
    serifada fica reservada pro conteúdo (nomes/descrições das magias).

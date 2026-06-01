@@ -373,6 +373,20 @@ function HifiBookmarkIcon({ size = 13, filled = true, style }) {
   );
 }
 
+// Ícone clássico de "link" (corrente). Usa currentColor — herda a cor do pai.
+function HifiLinkIcon({ size = 15, style }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 24 24" aria-hidden="true"
+      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      style={{ display: 'block', ...style }}
+    >
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+    </svg>
+  );
+}
+
 // Toggle claro/escuro. Mostra o estado atual: ☀️ quando o tema claro está
 // vigente, 🌙 quando o escuro está. Clicar alterna.
 function HifiThemeToggle({ dark, lang = 'ptbr', style }) {
@@ -433,14 +447,20 @@ function HifiSpellCard({ s, lang, prepared, bookmarked, selected, onClick, onTog
              "preparada") fecha o contorno sozinho, então a fita cheia fica igual. */}
           <path d="M0 0 L0 27 L10 20 L20 27 L20 0"/>
         </svg>
+        {/* Marca de "favorita": estrela centrada dentro do ribbon. É só
+            indicador — o clique no ribbon continua sendo o toggle de preparada
+            (pointer-events: none deixa o clique passar pro div pai).
+            Preparada: cor do fundo do card (recorte na fita de acento).
+            Só favoritada: amarela, visível sobre o ribbon fantasma. */}
+        {bookmarked && (
+          <span aria-hidden="true" style={{
+            position: 'absolute', top: 4, left: 0, right: 0, textAlign: 'center',
+            fontSize: 10, lineHeight: 1, pointerEvents: 'none',
+            color: prepared ? 'var(--surface0)' : 'var(--yellow)',
+          }}>★</span>
+        )}
       </div>
-      {bookmarked && (
-        <div title={lang==='ptbr'?'favorita':'bookmarked'} style={{
-          position: 'absolute', top: 7, right: prepared ? 42 : 12,
-          color: 'var(--yellow)', fontSize: 13, lineHeight: 1, zIndex: 3,
-        }}>★</div>
-      )}
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, paddingRight: prepared ? 42 : (bookmarked ? 22 : 0), minWidth: 0, flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, paddingRight: prepared ? 42 : 0, minWidth: 0, flexShrink: 0 }}>
         <HifiSpellName size={compact ? 16 : 17} style={{
           display: '-webkit-box',
           WebkitLineClamp: 1,
@@ -669,9 +689,9 @@ function HifiDetailContent({ s, lang }) {
       {/* Classes */}
       <div>
         <HifiSectionLabel>{lang === 'ptbr' ? 'classes' : 'classes'}</HifiSectionLabel>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-          {(s.classes || []).map(c => <HifiPill key={c}>{c}</HifiPill>)}
-        </div>
+        <p style={{ margin: '8px 0 0', fontSize: 15, lineHeight: 1.6, color: 'var(--text)' }}>
+          {(s.classes || []).join(', ')}
+        </p>
       </div>
 
       {/* Source */}
@@ -721,7 +741,6 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
   const { toast, show: showToast } = useHifiToast();
 
   const [charMenuOpen, setCharMenuOpen] = React.useState(false);
-  const [charPickerOpen, setCharPickerOpen] = React.useState(false);
   // Editor state: null | { charId } where charId === null means create mode
   const [editor, setEditor] = React.useState(null);
 
@@ -955,7 +974,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
         <span style={{ width: 1, height: 22, background: 'var(--surface1)' }}/>
         <button
           onClick={() => setOnlyPrepared(v => !v)}
-          className={`hifi-filter-chip${onlyPrepared ? ' active' : ''}`}
+          className={`hifi-filter-chip icon-only${onlyPrepared ? ' active' : ''}`}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
           title={lang === 'ptbr' ? 'mostrar só as magias preparadas' : 'show only prepared spells'}
         >
@@ -1004,16 +1023,31 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
           {open && (
             <>
               <div className="hifi-panel-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                  <button className="hifi-icon-btn" onClick={() => setSelectedIdx(i => (i - 1 + filtered.length) % filtered.length)} title={lang==='ptbr'?'anterior (←)':'previous (←)'}>‹</button>
-                  <button className="hifi-icon-btn" onClick={() => setSelectedIdx(i => (i + 1) % filtered.length)} title={lang==='ptbr'?'próxima (→)':'next (→)'}>›</button>
-                  <HifiMono style={{ marginLeft: 4 }}>{selectedIdx + 1} / {filtered.length}</HifiMono>
-                  <div style={{ flex: 1 }}/>
-                  <button className="hifi-icon-btn" onClick={() => setSelectedIdx(null)} title={lang==='ptbr'?'fechar (esc)':'close (esc)'}>×</button>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <span className={`hifi-level-bar hifi-level-${sel.lvl}`} style={{ width: 4, height: 30 }}/>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <HifiSpellName size={26}>{spellName(sel, lang)}</HifiSpellName>
+                  <div style={{ flex: 1 }}/>
+                  {/* Botões deslocados ~6px pra baixo: alinhamento óptico com o
+                      título serifado (o centro matemático fica visualmente alto). */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginTop: 6 }}>
+                    <button
+                      className="hifi-icon-btn"
+                      onClick={() => toggleBook(sel)}
+                      title={lang === 'ptbr' ? 'favoritar magia' : 'bookmark spell'}
+                      style={{ flexShrink: 0, fontSize: 16, color: bookmarked.has(hifiSpellKey(sel)) ? 'var(--yellow)' : 'var(--subtext0)' }}
+                    >{bookmarked.has(hifiSpellKey(sel)) ? '★' : '☆'}</button>
+                    <button
+                      className="hifi-icon-btn"
+                      onClick={() => hifiCopyLink(sel, lang, showToast)}
+                      title={lang === 'ptbr' ? 'copiar link da magia' : 'copy spell link'}
+                      style={{ flexShrink: 0, color: 'var(--subtext0)' }}
+                    ><HifiLinkIcon size={15}/></button>
+                    <button
+                      className="hifi-icon-btn"
+                      onClick={() => setSelectedIdx(null)}
+                      title={lang==='ptbr'?'fechar (esc)':'close (esc)'}
+                      style={{ flexShrink: 0 }}
+                    >×</button>
+                  </div>
                 </div>
                 <div style={{ marginTop: 4, fontSize: 13, color: 'var(--subtext0)', fontStyle: 'italic' }}>
                   {schoolKey(sel.school)} · {sel.lvl === 0 ? (lang === 'ptbr' ? 'truque' : 'cantrip') : `${lang === 'ptbr' ? 'nível' : 'level'} ${sel.lvl}`}
@@ -1024,58 +1058,13 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
               <div style={{ flex: 1, overflow: 'auto' }}>
                 <HifiDetailContent s={sel} lang={lang}/>
               </div>
-              <div className="hifi-panel-action-bar" style={{ display: 'flex', gap: 6 }}>
-                <button
-                  className="hifi-btn-primary"
-                  onClick={() => togglePrep(sel)}
-                  style={prepared.has(hifiSpellKey(sel))
-                    ? {}
-                    : { background: 'transparent', color: 'var(--accent)' }}
-                >{prepared.has(hifiSpellKey(sel))
-                  ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><HifiBookmarkIcon size={13}/>{lang==='ptbr'?'preparada':'prepared'}</span>
-                  : (lang==='ptbr'?'preparar':'prepare')}</button>
-                <button
-                  className="hifi-icon-btn"
-                  onClick={() => toggleBook(sel)}
-                  style={{ width: 'auto', padding: '0 12px', color: bookmarked.has(hifiSpellKey(sel)) ? 'var(--yellow)' : 'var(--text)' }}
-                  title={lang === 'ptbr' ? 'favorita' : 'bookmark'}
-                >{bookmarked.has(hifiSpellKey(sel)) ? '★' : '☆'}</button>
-                <button className="hifi-btn-secondary" onClick={() => setCharPickerOpen(true)}>+ {lang === 'ptbr' ? 'personagem' : 'character'}</button>
-                <div style={{ flex: 1 }}/>
-                <button className="hifi-btn-ghost"
-                  onClick={() => hifiCopyLink(sel, lang, showToast)}
-                  title={lang === 'ptbr' ? 'copiar link' : 'copy link'}>{lang === 'ptbr' ? 'link' : 'link'}</button>
+              {/* Rodapé: marcador de posição da magia na lista filtrada. */}
+              <div style={{
+                flexShrink: 0, padding: '8px 16px',
+                display: 'flex', justifyContent: 'flex-end',
+              }}>
+                <HifiMono>{selectedIdx + 1} / {filtered.length}</HifiMono>
               </div>
-
-              {charPickerOpen && (
-                <div onClick={() => setCharPickerOpen(false)}
-                  style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 20, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: 20 }}>
-                  <div onClick={(e) => e.stopPropagation()}
-                    style={{ width: '100%', maxWidth: 320, background: 'var(--mantle)', border: '1px solid var(--surface1)', borderRadius: 6, padding: '8px 0' }}>
-                    <div className="hifi-section-label" style={{ padding: '6px 14px 8px', borderBottom: '1px solid var(--surface1)' }}>
-                      {lang === 'ptbr' ? 'adicionar a' : 'add to'}
-                    </div>
-                    {chars.map(c => {
-                      const ca = hifiAccentsFor(c, theme);
-                      const k = hifiSpellKey(sel);
-                      const has = (c.prepared || []).includes(k);
-                      return (
-                        <button key={c.id}
-                          onClick={() => {
-                            togglePreparedFor(c.id, k, update);
-                            setCharPickerOpen(false);
-                          }}
-                          className="hifi-btn-ghost"
-                          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', textAlign: 'left' }}>
-                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: dark ? ca.accent_dark : ca.accent }}/>
-                          <span style={{ flex: 1 }}>{c.name}</span>
-                          {has && <span style={{ color: dark ? ca.accent_dark : ca.accent, fontSize: 12 }}>✓</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </>
           )}
         </div>
@@ -1159,7 +1148,10 @@ function FilterChipDropdown({ label, count, values, selected, onToggle, onClear,
     <>
       <button onClick={() => setOpen(o => !o)} className={`hifi-filter-chip${active ? ' active' : ''}`}>
         <span>{label}</span>
-        {count > 0 && <span className="hifi-filter-chip-count">{count}</span>}
+        {/* Badge sempre presente pra reservar o espaço e manter o shape do botão
+            estável. Com contagem: pílula cheia na accent. Sem contagem: mostra um
+            "0" apagado (.empty), sem fundo e em cor mais clara que o texto. */}
+        <span className={`hifi-filter-chip-count${count > 0 ? '' : ' empty'}`}>{count > 0 ? count : 0}</span>
         <span style={{ color: 'var(--subtext0)', fontSize: 10 }}>▾</span>
       </button>
       {open && (
@@ -1329,7 +1321,8 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
           <div style={{ flex: 1 }}/>
           <button className="hifi-icon-btn"
             onClick={() => hifiCopyLink(sel, lang, showToast)}
-            title={lang === 'ptbr' ? 'copiar link' : 'copy link'}>⎘</button>
+            title={lang === 'ptbr' ? 'copiar link' : 'copy link'}
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><HifiLinkIcon size={15}/></button>
           <button className="hifi-icon-btn"
             onClick={() => toggleBook(sel)}
             style={{ color: bookmarked.has(hifiSpellKey(sel)) ? 'var(--yellow)' : 'var(--text)' }}>

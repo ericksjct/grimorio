@@ -106,9 +106,7 @@ function accentOf(c, dark, theme = 'catppuccin') {
 const HIFI_PALETTE = paletteForTheme('catppuccin');
 
 const HIFI_DEFAULT_CHARS = [
-  { id: 'tharion',  name: 'Tharion',  accentId: 'purple',
-    prepared: ['evoc-3-Hexbind', 'evoc-0-Ember Spark'],
-    bookmarked: ['conj-1-Soothe Wounds'] },
+  { id: 'tharion',  name: 'Tharion',  accentId: 'purple', prepared: [], bookmarked: [] },
   { id: 'lyra',     name: 'Lyra',     accentId: 'teal',   prepared: [], bookmarked: [] },
   { id: 'berthold', name: 'Berthold', accentId: 'orange', prepared: [], bookmarked: [] },
   { id: 'sigrid',   name: 'Sigrid',   accentId: 'blue',   prepared: [], bookmarked: [] },
@@ -372,7 +370,7 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
             <HifiSectionLabel>{T('magias', 'spells')}</HifiSectionLabel>
             <div style={{ flex: 1 }}/>
             <HifiMono>
-              <span style={{ color: 'var(--accent)' }}>✓ {prepared.size}</span>
+              <span style={{ color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', gap: 4 }}><HifiBookmarkIcon size={11}/>{prepared.size}</span>
               <span style={{ color: 'var(--overlay0)', margin: '0 6px' }}>·</span>
               <span style={{ color: 'var(--yellow)' }}>★ {bookmarked.size}</span>
             </HifiMono>
@@ -430,10 +428,10 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
                     style={{
                       width: 36, border: 'none', background: 'transparent', cursor: 'pointer',
                       color: isPrep ? 'var(--accent)' : 'var(--overlay1)',
-                      fontWeight: isPrep ? 700 : 400, fontSize: 14,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}
                     title={T('preparar', 'prepare')}>
-                    {isPrep ? '✓' : '○'}
+                    <HifiBookmarkIcon size={14} filled={isPrep}/>
                   </button>
                   <button onClick={() => toggleBook(s)}
                     style={{
