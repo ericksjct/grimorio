@@ -105,11 +105,10 @@ function accentOf(c, dark, theme = 'catppuccin') {
 // Legado — alguns componentes ainda importam HIFI_PALETTE; mantém o Catppuccin.
 const HIFI_PALETTE = paletteForTheme('catppuccin');
 
+// Único personagem padrão: genérico, pra convidar o usuário a clicar no título
+// ("Grimório de Aventureiro Desconhecido") e personalizar/criar o seu.
 const HIFI_DEFAULT_CHARS = [
-  { id: 'tharion',  name: 'Tharion',  accentId: 'purple', prepared: [], bookmarked: [] },
-  { id: 'lyra',     name: 'Lyra',     accentId: 'teal',   prepared: [], bookmarked: [] },
-  { id: 'berthold', name: 'Berthold', accentId: 'orange', prepared: [], bookmarked: [] },
-  { id: 'sigrid',   name: 'Sigrid',   accentId: 'blue',   prepared: [], bookmarked: [] },
+  { id: 'aventureiro', name: 'Aventureiro Desconhecido', accentId: 'blue', prepared: [], bookmarked: [] },
 ];
 
 const HIFI_CHARS_KEY = 'hifi_chars_v1';
@@ -179,6 +178,56 @@ function toggleBookmarkedFor(charId, key, update) {
   }));
 }
 
+// ── Favoritas GLOBAIS ───────────────────────────────────────────────
+// Favoritas não pertencem a um personagem: é uma lista única, compartilhada,
+// independente de quem está selecionado. Store próprio em localStorage + evento
+// (mesmo padrão do useCharacters), pra todos os componentes ficarem em sincronia.
+const HIFI_BOOKMARKS_KEY = 'hifi_bookmarks_v1';
+const HIFI_BOOKMARKS_EVENT = 'hifi-bookmarks-changed';
+
+function loadBookmarks() {
+  try {
+    const s = localStorage.getItem(HIFI_BOOKMARKS_KEY);
+    if (s !== null) {
+      const parsed = JSON.parse(s);
+      if (Array.isArray(parsed)) return parsed;
+    } else {
+      // Migração única: junta as favoritas que estavam salvas por personagem
+      // (modelo antigo) numa lista global, pra ninguém perder o que marcou.
+      const migrated = new Set();
+      try {
+        const cs = JSON.parse(localStorage.getItem(HIFI_CHARS_KEY) || '[]');
+        if (Array.isArray(cs)) cs.forEach(c => (c.bookmarked || []).forEach(k => migrated.add(k)));
+      } catch (e) {}
+      const arr = [...migrated];
+      try { localStorage.setItem(HIFI_BOOKMARKS_KEY, JSON.stringify(arr)); } catch (e) {}
+      return arr;
+    }
+  } catch (e) {}
+  return [];
+}
+
+function persistBookmarks(keys) {
+  try { localStorage.setItem(HIFI_BOOKMARKS_KEY, JSON.stringify(keys)); } catch (e) {}
+  window.dispatchEvent(new CustomEvent(HIFI_BOOKMARKS_EVENT, { detail: keys }));
+}
+
+function toggleBookmark(key) {
+  const s = new Set(loadBookmarks());
+  s.has(key) ? s.delete(key) : s.add(key);
+  persistBookmarks([...s]);
+}
+
+function useBookmarks() {
+  const [keys, setKeys] = React.useState(loadBookmarks);
+  React.useEffect(() => {
+    const onChange = (e) => setKeys(e.detail);
+    window.addEventListener(HIFI_BOOKMARKS_EVENT, onChange);
+    return () => window.removeEventListener(HIFI_BOOKMARKS_EVENT, onChange);
+  }, []);
+  return { bookmarks: keys, toggleBookmark };
+}
+
 // ──────────────────────────────────────────────────────────────────
 // CHARACTER EDITOR
 // ──────────────────────────────────────────────────────────────────
@@ -192,7 +241,9 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
   const [name, setName] = React.useState(existing?.name || '');
   const [accentId, setAccentId] = React.useState(normalizeAccentId(existing?.accentId) || 'purple');
   const [prepared, setPrepared] = React.useState(() => new Set(existing?.prepared || []));
-  const [bookmarked, setBookmarked] = React.useState(() => new Set(existing?.bookmarked || []));
+  // Favoritas são globais (independentes do personagem) — vêm do store global.
+  const { bookmarks } = useBookmarks();
+  const bookmarked = React.useMemo(() => new Set(bookmarks), [bookmarks]);
   const [query, setQuery] = React.useState('');
   const [tab, setTab] = React.useState('all'); // all | prepared | bookmarked
   const [confirmDelete, setConfirmDelete] = React.useState(false);
@@ -240,8 +291,8 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
     setPrepared(prev => { const n = new Set(prev); n.has(k) ? n.delete(k) : n.add(k); return n; });
   }
   function toggleBook(s) {
-    const k = hifiSpellKey(s);
-    setBookmarked(prev => { const n = new Set(prev); n.has(k) ? n.delete(k) : n.add(k); return n; });
+    // Favoritar afeta a lista global na hora (não depende de salvar o personagem).
+    toggleBookmark(hifiSpellKey(s));
   }
 
   function save() {
@@ -249,7 +300,7 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
     const id = charId || `char-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,6)}`;
     const next = {
       id, name: trimmed, accentId,
-      prepared: [...prepared], bookmarked: [...bookmarked],
+      prepared: [...prepared],
     };
     update(prev => isNew ? [...prev, next] : prev.map(c => c.id === charId ? next : c));
     onClose?.({ action: isNew ? 'created' : 'updated', character: next });
