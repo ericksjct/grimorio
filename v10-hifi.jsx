@@ -580,9 +580,11 @@ function useHifiAppState(preparedKeys, initialFilters) {
     return v?.lang || 'ptbr';
   }, [versionKey, versions]);
 
+  // Começa sem nenhum filtro aplicado (mostra todas as magias) — o usuário
+  // (Aventureiro Desconhecido por padrão) refina a partir do conjunto completo.
   const [filters, setFilters] = React.useState(initialFilters || ({
-    class: new Set(['mago']),
-    level: new Set(['truque', '1', '2', '3']),
+    class: new Set(),
+    level: new Set(),
     school: new Set(),
   }));
   const [query, setQuery] = React.useState('');
@@ -719,6 +721,7 @@ function HifiStat({ label, value }) {
 // ──────────────────────────────────────────────────────────────────
 function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', character, width = 1280, height = 820 }) {
   const { chars, update } = useCharacters();
+  const { bookmarks } = useBookmarks();
   // Pick the live character from the store (matched by id or name from prop fallback)
   const liveChar = React.useMemo(() => {
     if (!character) return chars[0];
@@ -729,10 +732,11 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
   const charWithAccent = hifiAccentsFor(liveChar, theme);
   const accent = dark ? charWithAccent.accent_dark : charWithAccent.accent;
 
-  // Prepared / bookmarked come from the active character (store-backed).
-  // Computados antes do hook pra alimentar o filtro "só preparadas".
+  // Preparadas: por personagem (store-backed). Favoritas: lista GLOBAL,
+  // independente do personagem ativo. Computados antes do hook pra alimentar o
+  // filtro "só preparadas".
   const prepared = React.useMemo(() => new Set(liveChar?.prepared || []), [liveChar]);
-  const bookmarked = React.useMemo(() => new Set(liveChar?.bookmarked || []), [liveChar]);
+  const bookmarked = React.useMemo(() => new Set(bookmarks), [bookmarks]);
 
   const state = useHifiAppState(prepared);
   const { allSpells, filtered, filters, setFilters, query, setQuery,
@@ -767,8 +771,8 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
     togglePreparedFor(liveChar.id, hifiSpellKey(s), update);
   }
   function toggleBook(s) {
-    if (!liveChar) return;
-    toggleBookmarkedFor(liveChar.id, hifiSpellKey(s), update);
+    // Favoritas são globais — não dependem do personagem ativo.
+    toggleBookmark(hifiSpellKey(s));
   }
   function toggleFilter(category, value) {
     setFilters(prev => {
@@ -822,62 +826,32 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
     <div className={`hifi hifi-desktop ${themeClass}`} style={{ ...containerStyle, width, height, display: 'flex', flexDirection: 'column', position: 'relative' }}>
       {/* Header */}
       <header style={{ padding: '18px 28px', borderBottom: '1px solid var(--surface1)', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+        {/* Identidade + seletor: "Grimório de <nome>" onde o nome (na accent) é
+            clicável e abre o menu de trocar / editar / novo. O título continua
+            sendo o herói — agora também é a navegação de personagem. */}
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'baseline', gap: 10 }}>
           <span className="hifi-display" style={{ fontSize: 26, color: 'var(--text)' }}>Grimório</span>
           {liveChar?.name && (
-            <span className="hifi-display" style={{
-              fontSize: 26, color: accent,
-              letterSpacing: '0.04em',
-            }}>de {liveChar.name}</span>
+            <button
+              onClick={() => setCharMenuOpen(o => !o)}
+              className="hifi-char-title hifi-display"
+              title={lang === 'ptbr' ? 'trocar / editar personagem' : 'switch / edit character'}
+              style={{
+                background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                fontSize: 26, color: accent, letterSpacing: '0.04em',
+              }}
+            >de {liveChar.name} <span style={{ fontSize: 15 }}>▾</span></button>
           )}
-        </div>
-        <div style={{ flex: 1 }}/>
-        <button
-          onClick={() => {
-            const preparedSet = new Set(liveChar?.prepared || []);
-            const preparedSpells = allSpells.filter(s => preparedSet.has(hifiSpellKey(s)));
-            hifiPrintPrepared(preparedSpells, lang, showToast, { character: liveChar });
-          }}
-          className="hifi-btn-secondary"
-          title={lang === 'ptbr' ? 'imprimir magias preparadas' : 'print prepared spells'}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
-        >
-          <span style={{ fontSize: 13 }}>⎙</span>
-          <span>{lang === 'ptbr' ? 'imprimir preparadas' : 'print prepared'}</span>
-        </button>
-        <button
-          onClick={() => window.__shareBuild && window.__shareBuild()}
-          className="hifi-btn-secondary"
-          title={lang === 'ptbr' ? 'compartilhar build do personagem' : 'share character build'}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
-        >
-          <span style={{ fontSize: 13 }}>↗</span>
-          <span>{lang === 'ptbr' ? 'compartilhar build' : 'share build'}</span>
-        </button>
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 4 }}>
-          <button
-            onClick={() => setCharMenuOpen(o => !o)}
-            className="hifi-btn-secondary"
-            style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-          >
-            <span style={{ width: 10, height: 10, borderRadius: '50%', background: accent }}/>
-            {liveChar?.name}
-            <span style={{ color: 'var(--subtext0)', fontSize: 11 }}>▾</span>
-          </button>
-          <button
-            onClick={() => setEditor({ charId: liveChar?.id })}
-            className="hifi-btn-ghost"
-            title={lang === 'ptbr' ? 'editar personagem' : 'edit character'}
-            style={{ padding: '6px 8px', fontSize: 13 }}
-          >{lang === 'ptbr' ? 'editar' : 'edit'}</button>
           {charMenuOpen && (
-            <>
-              <div onClick={() => setCharMenuOpen(false)} style={{ position: 'absolute', inset: -1000, zIndex: 9 }}/>
-              <div style={{
-                position: 'absolute', right: 0, top: '100%', marginTop: 6,
-                background: 'var(--mantle)', border: '1px solid var(--surface1)', borderRadius: 4,
-                minWidth: 240, padding: '4px 0', zIndex: 10,
-                boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+            <div onClick={() => setCharMenuOpen(false)} style={{
+              position: 'fixed', inset: 0, zIndex: 70,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(0,0,0,0.4)',
+            }}>
+              <div onClick={(e) => e.stopPropagation()} style={{
+                background: 'var(--mantle)', border: '1px solid var(--surface1)', borderRadius: 8,
+                minWidth: 280, padding: '4px 0',
+                boxShadow: '0 16px 48px rgba(0,0,0,0.3)',
               }}>
                 {chars.map(c => {
                   const ca = hifiAccentsFor(c, theme);
@@ -916,9 +890,26 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
                   <span>{lang === 'ptbr' ? 'novo personagem' : 'new character'}</span>
                 </button>
               </div>
-            </>
+            </div>
           )}
         </div>
+        <div style={{ flex: 1 }}/>
+        {/* Ações do personagem ativo — texto puro (sem ícone, sem invólucro de
+            botão), pra não competir com o título. */}
+        <button
+          onClick={() => {
+            const preparedSet = new Set(liveChar?.prepared || []);
+            const preparedSpells = allSpells.filter(s => preparedSet.has(hifiSpellKey(s)));
+            hifiPrintPrepared(preparedSpells, lang, showToast, { character: liveChar });
+          }}
+          className="hifi-link-action"
+          title={lang === 'ptbr' ? 'imprimir magias preparadas' : 'print prepared spells'}
+        >{lang === 'ptbr' ? 'imprimir preparadas' : 'print prepared'}</button>
+        <button
+          onClick={() => window.__shareBuild && window.__shareBuild()}
+          className="hifi-link-action"
+          title={lang === 'ptbr' ? 'compartilhar build do personagem' : 'share character build'}
+        >{lang === 'ptbr' ? 'compartilhar build' : 'share build'}</button>
       </header>
 
       {/* Filter bar */}
@@ -1243,6 +1234,7 @@ function HifiAddFilter({ available, cfg, onAdd, lang }) {
 // ──────────────────────────────────────────────────────────────────
 function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', character, drawerOpen: initialDrawerOpen = false, detailIdx = null }) {
   const { chars, update } = useCharacters();
+  const { bookmarks } = useBookmarks();
   const liveChar = React.useMemo(() => {
     if (!character) return chars[0];
     return chars.find(c => c.id === character.id)
@@ -1252,7 +1244,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
   const charWithAccent = hifiAccentsFor(liveChar, theme);
   const accent = dark ? charWithAccent.accent_dark : charWithAccent.accent;
   const prepared = React.useMemo(() => new Set(liveChar?.prepared || []), [liveChar]);
-  const bookmarked = React.useMemo(() => new Set(liveChar?.bookmarked || []), [liveChar]);
+  const bookmarked = React.useMemo(() => new Set(bookmarks), [bookmarks]); // favoritas globais
   const state = useHifiAppState(prepared);
   const { allSpells, filtered, filters, setFilters, query, setQuery,
     selectedIdx, setSelectedIdx, onlyPrepared, setOnlyPrepared,
@@ -1292,8 +1284,8 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
     togglePreparedFor(liveChar.id, hifiSpellKey(s), update);
   }
   function toggleBook(s) {
-    if (!liveChar) return;
-    toggleBookmarkedFor(liveChar.id, hifiSpellKey(s), update);
+    // Favoritas são globais — não dependem do personagem ativo.
+    toggleBookmark(hifiSpellKey(s));
   }
   function toggleFilter(category, value) {
     setFilters(prev => {
@@ -1316,25 +1308,23 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
   if (sel) {
     return (
       <div className={`hifi ${themeClass}`} style={{ ...containerStyle, height: '100%', display: 'flex', flexDirection: 'column', paddingTop: 52, paddingBottom: 34 }}>
-        <header style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}>
-          <button className="hifi-icon-btn" onClick={() => setSelectedIdx(null)}>‹</button>
+        <header className="hifi-flat-icons" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}>
+          <button className="hifi-icon-btn" onClick={() => setSelectedIdx(null)} title={lang==='ptbr'?'voltar':'back'}>‹</button>
           <div style={{ flex: 1 }}/>
           <button className="hifi-icon-btn"
-            onClick={() => hifiCopyLink(sel, lang, showToast)}
-            title={lang === 'ptbr' ? 'copiar link' : 'copy link'}
-            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><HifiLinkIcon size={15}/></button>
-          <button className="hifi-icon-btn"
             onClick={() => toggleBook(sel)}
-            style={{ color: bookmarked.has(hifiSpellKey(sel)) ? 'var(--yellow)' : 'var(--text)' }}>
+            title={lang === 'ptbr' ? 'favoritar magia' : 'bookmark spell'}
+            style={{ fontSize: 16, color: bookmarked.has(hifiSpellKey(sel)) ? 'var(--yellow)' : 'var(--subtext0)' }}>
             {bookmarked.has(hifiSpellKey(sel)) ? '★' : '☆'}
           </button>
+          <button className="hifi-icon-btn"
+            onClick={() => hifiCopyLink(sel, lang, showToast)}
+            title={lang === 'ptbr' ? 'copiar link da magia' : 'copy spell link'}
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--subtext0)' }}><HifiLinkIcon size={15}/></button>
         </header>
         <div style={{ flex: 1, overflow: 'auto' }}>
           <div style={{ padding: '20px 18px 14px' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-              <span className={`hifi-level-bar hifi-level-${sel.lvl}`} style={{ width: 4, height: 36 }}/>
-              <HifiSpellName size={32}>{spellName(sel, lang)}</HifiSpellName>
-            </div>
+            <HifiSpellName size={32}>{spellName(sel, lang)}</HifiSpellName>
             <div style={{ marginTop: 6, fontSize: 14, color: 'var(--subtext0)', fontStyle: 'italic' }}>
               {schoolKey(sel.school)} · {sel.lvl === 0 ? (lang === 'ptbr' ? 'truque' : 'cantrip') : `${lang === 'ptbr' ? 'nível' : 'level'} ${sel.lvl}`}
               {sel.conc && <span> · <span style={{ color: 'var(--yellow)' }}>conc.</span></span>}
@@ -1349,13 +1339,8 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
             onClick={() => togglePrep(sel)}
             style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, ...(prepared.has(hifiSpellKey(sel)) ? {} : { background: 'transparent', color: 'var(--accent)' }) }}
           >{prepared.has(hifiSpellKey(sel))
-            ? <><HifiBookmarkIcon size={13}/>{lang==='ptbr'?'preparada':'prepared'}</>
+            ? <><HifiBookmarkIcon size={13} filled/>{lang==='ptbr'?'preparada':'prepared'}</>
             : (lang==='ptbr'?'preparar':'prepare')}</button>
-          <button
-            className="hifi-btn-secondary"
-            onClick={() => setCharSheetOpen(true)}
-            title={lang === 'ptbr' ? 'adicionar a personagem' : 'add to character'}
-          >+ char</button>
         </div>
         <HifiToast toast={toast} accent={accent}/>
       </div>

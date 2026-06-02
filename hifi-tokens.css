@@ -292,9 +292,11 @@
 .hifi-card.compact .hifi-card-desc { flex: 0 0 auto; overflow: visible; }
 .hifi-card.compact .hifi-card-desc::after { display: none; }
 .hifi-card:hover {
-  border-color: var(--accent, var(--subtext1));
+  /* Hover neutro (sem accent) — o accent fica reservado ao card selecionado.
+     Sem translateY: o "pulinho" fazia a fita do topo parecer crescer pra fora
+     do card. O realce de borda + sombra já dão o feedback de hover. */
+  border-color: var(--overlay1, var(--subtext1));
   box-shadow: 0 2px 6px rgba(0,0,0,0.07), 0 6px 16px rgba(0,0,0,0.06);
-  transform: translateY(-1px);
 }
 .hifi-dark .hifi-card:hover {
   box-shadow: 0 4px 10px rgba(0,0,0,0.4), 0 12px 28px rgba(0,0,0,0.28);
@@ -347,7 +349,7 @@
    que vira acento no hover, indicando o ponto de clique). */
 .hifi-card-ribbon {
   position: absolute;
-  /* top: 0 alinha a fita com a borda interna do topo (1px abaixo da borda externa). */
+  /* top: 0 alinha a fita com a borda interna do topo do card */
   top: 0; right: 16px;
   width: 18px; height: 26px;
   line-height: 0;
@@ -360,7 +362,7 @@
 .hifi-card-ribbon.on path { fill: var(--accent); stroke: none; }
 /* Não preparada: transparente (cor do card) com contorno pontilhado. */
 .hifi-card-ribbon.off path { fill: transparent; stroke: var(--surface1); stroke-width: 1; stroke-dasharray: 0 0; }
-.hifi-card-ribbon.off:hover path { stroke: var(--accent); }
+.hifi-card-ribbon.off:hover path { stroke: var(--overlay1); }
 
 /* Spell card footer (V/S/M · range · source · flags) */
 .hifi-card-footer {
@@ -412,8 +414,14 @@
   background: transparent;
   white-space: nowrap;
   cursor: pointer;
+  transition: color 160ms, border-color 160ms, transform 200ms ease-out, box-shadow 200ms ease-out;
 }
-.hifi-pill:hover { color: var(--text); border-color: var(--overlay1); }
+.hifi-pill:hover {
+  color: var(--text);
+  border-color: var(--overlay1);
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+}
 .hifi-pill.active {
   background: var(--accent, var(--text));
   border-color: var(--accent, var(--text));
@@ -474,16 +482,41 @@
 }
 .hifi-icon-btn:hover { background: var(--surface1); box-shadow: 0 2px 6px rgba(0,0,0,0.07); }
 
+/* Nome do personagem no título = seletor clicável. Sem sublinhado — a cor de
+   accent (azul, ar de hyperlink) e o ▾ já sinalizam que é interativo. */
+
+/* Ações em texto puro (imprimir preparadas / compartilhar build): sem fundo,
+   borda ou padding. Mesmo formato do texto do rodapé — JetBrains Mono, 10px,
+   maiúsculas, espaçado — com sublinhado igual ao dos links do rodapé. */
+.hifi-link-action {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--subtext0);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--surface2);
+  transition: color 120ms;
+}
+.hifi-link-action:hover { color: var(--text); }
+
 /* No painel de detalhe da magia os botões de ícone ficam "flat" — sem o círculo
    (borda/fundo/sombra) que os envolve. O hover só esmaece o ícone pra manter a
    pista de que é clicável. Escopado a .hifi-panel-header pra não mexer no resto
    da UI (toolbar, etc.), que segue com os círculos. */
-.hifi-panel-header .hifi-icon-btn {
+.hifi-panel-header .hifi-icon-btn,
+.hifi-flat-icons .hifi-icon-btn {
   background: transparent;
   border-color: transparent;
   box-shadow: none;
 }
-.hifi-panel-header .hifi-icon-btn:hover {
+.hifi-panel-header .hifi-icon-btn:hover,
+.hifi-flat-icons .hifi-icon-btn:hover {
   background: transparent;
   box-shadow: none;
   opacity: 0.6;
@@ -585,6 +618,10 @@
 .hifi-desktop .hifi-btn-primary,
 .hifi-desktop .hifi-btn-secondary { height: 30px; }
 .hifi-desktop .hifi-icon-btn { width: 30px; height: 30px; }
+/* No desktop a barra de busca também entra no canon (30px), alinhando-a aos
+   filtros/botões da mesma faixa. Zera só o padding vertical; o horizontal fica.
+   No mobile ela continua maior (mais confortável pro toque). */
+.hifi-desktop .hifi-input { height: 30px; padding-block: 0; }
 
 /* Filter chip só com ícone (ex.: toggle de "preparadas"): largura = altura no
    desktop pra fechar um círculo perfeito. Zera o padding horizontal pra centrar
