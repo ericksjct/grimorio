@@ -1307,7 +1307,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
   // Detail screen
   if (sel) {
     return (
-      <div className={`hifi ${themeClass}`} style={{ ...containerStyle, height: '100%', display: 'flex', flexDirection: 'column', paddingTop: 52, paddingBottom: 34 }}>
+      <div className={`hifi ${themeClass}`} style={{ ...containerStyle, height: '100%', display: 'flex', flexDirection: 'column', paddingTop: 24, paddingBottom: 34 }}>
         <header className="hifi-flat-icons" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}>
           <button className="hifi-icon-btn" onClick={() => setSelectedIdx(null)} title={lang==='ptbr'?'voltar':'back'}>‹</button>
           <div style={{ flex: 1 }}/>
@@ -1348,48 +1348,35 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
   }
 
   return (
-    <div className={`hifi ${themeClass}`} style={{ ...containerStyle, height: '100%', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', paddingTop: 52, paddingBottom: 0 }}>
-      <header style={{ padding: '12px 16px', borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span className="hifi-display" style={{ fontSize: 22, color: 'var(--text)' }}>Grimório</span>
-          <div style={{ flex: 1 }}/>
-          <HifiThemeToggle dark={dark} lang={lang}/>
+    <div className={`hifi ${themeClass}`} style={{ ...containerStyle, height: '100%', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', paddingTop: 24, paddingBottom: 0 }}>
+      {/* Header: título + botão de preparadas */}
+      <header style={{ padding: '10px 16px', borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span className="hifi-display" style={{ fontSize: 22, color: 'var(--text)', lineHeight: 1 }}>Grimório</span>
+            {liveChar?.name && (
+              <button
+                onClick={() => setCharSheetOpen(true)}
+                className="hifi-char-title hifi-display"
+                title={lang === 'ptbr' ? 'trocar / editar personagem' : 'switch / edit character'}
+                style={{
+                  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                  fontSize: 22, color: accent, letterSpacing: '0.04em', lineHeight: 1,
+                }}
+              >de {liveChar.name} <span style={{ fontSize: 13 }}>▾</span></button>
+            )}
+          </div>
           <button
             onClick={() => setOnlyPrepared(v => !v)}
-            className="hifi-icon-btn"
+            className={`hifi-icon-btn${onlyPrepared ? ' active' : ''}`}
             title={lang === 'ptbr' ? 'mostrar só as preparadas' : 'show only prepared'}
             aria-pressed={onlyPrepared}
-            style={{ width: 25, height: 25, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            style={{
+              width: 25, height: 25, marginTop: 2,
               color: onlyPrepared ? 'var(--base)' : 'var(--text)',
               background: onlyPrepared ? 'var(--accent)' : 'var(--surface1)',
               borderColor: onlyPrepared ? 'var(--accent)' : undefined }}
           ><HifiBookmarkIcon size={14}/></button>
-          <button
-            onClick={() => {
-              const preparedSet = new Set(liveChar?.prepared || []);
-              const preparedSpells = allSpells.filter(s => preparedSet.has(hifiSpellKey(s)));
-              hifiPrintPrepared(preparedSpells, lang, showToast, { character: liveChar });
-            }}
-            className="hifi-icon-btn"
-            title={lang === 'ptbr' ? 'imprimir preparadas' : 'print prepared'}
-            style={{ width: 25, height: 25, fontSize: 13, background: 'var(--surface1)' }}
-          >⎙</button>
-          <button
-            onClick={() => window.__shareBuild && window.__shareBuild()}
-            className="hifi-icon-btn"
-            title={lang === 'ptbr' ? 'compartilhar build' : 'share build'}
-            style={{ width: 25, height: 25, fontSize: 13, background: 'var(--surface1)' }}
-          >↗</button>
-          <button
-            onClick={() => setCharSheetOpen(true)}
-            className="hifi-filter-chip"
-            style={{ height: 25, background: 'var(--surface1)', padding: '0 10px', cursor: 'pointer' }}
-            title={lang === 'ptbr' ? 'trocar / editar personagem' : 'switch / edit character'}
-          >
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: accent }}/>
-            <span style={{ fontSize: 12 }}>{liveChar?.name}</span>
-            <span style={{ color: 'var(--subtext0)', fontSize: 10 }}>▾</span>
-          </button>
         </div>
       </header>
 
@@ -1499,6 +1486,29 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
                     {v.short}
                   </HifiPill>
                 ))}
+              </div>
+            </div>
+
+            <div>
+              <HifiSectionLabel style={{ marginBottom: 6 }}>{lang === 'ptbr' ? 'ferramentas' : 'tools'}</HifiSectionLabel>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <HifiThemeToggle dark={dark} lang={lang}/>
+                <button
+                  onClick={() => {
+                    const preparedSet = new Set(liveChar?.prepared || []);
+                    const preparedSpells = allSpells.filter(s => preparedSet.has(hifiSpellKey(s)));
+                    hifiPrintPrepared(preparedSpells, lang, showToast, { character: liveChar });
+                  }}
+                  className="hifi-icon-btn"
+                  title={lang === 'ptbr' ? 'imprimir preparadas' : 'print prepared'}
+                  style={{ fontSize: 13, background: 'var(--surface1)' }}
+                >⎙</button>
+                <button
+                  onClick={() => window.__shareBuild && window.__shareBuild()}
+                  className="hifi-icon-btn"
+                  title={lang === 'ptbr' ? 'compartilhar build' : 'share build'}
+                  style={{ fontSize: 13, background: 'var(--surface1)' }}
+                >↗</button>
               </div>
             </div>
 
