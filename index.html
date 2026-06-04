@@ -17,11 +17,10 @@
 <meta property="og:description" content="Prepare, favorite e imprima as magias do seu personagem de D&D 5e."/>
 <meta property="og:locale" content="pt_BR"/>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Display font (Texturina) + mono numerics (JetBrains Mono) -->
-<link href="https://fonts.googleapis.com/css2?family=Texturina:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<!-- V11 design tokens (Catppuccin / Nord / Monokai / Solarized) + Marauder @font-face -->
+<!-- Fontes (Texturina display + JetBrains Mono) agora são self-hosted nos
+     @font-face de hifi-tokens.css → fonts/*.woff2. Sem <link> pro Google Fonts:
+     evita render-blocking, vazamento de IP pro Google e funciona offline. -->
+<!-- V11 design tokens (Catppuccin / Nord / Monokai / Solarized) + @font-face (Marauder, Texturina, JetBrains Mono) -->
 <link rel="stylesheet" href="hifi-tokens.css">
 <style>
   html, body { margin: 0; padding: 0; height: 100%; background: #f8f7f3; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }

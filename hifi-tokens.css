@@ -43,6 +43,44 @@
   font-display: swap;
 }
 
+/* Texturina + JetBrains Mono self-hosted (antes vinham do <link> do Google
+   Fonts em index.html — removido). São fontes VARIÁVEIS: um único .woff2 por
+   subset cobre toda a faixa de peso, por isso declaramos `font-weight` como
+   range (400 800) e os pesos 600/700 renderizam nativos, sem faux-bold.
+   Subsets latin + latin-ext cobrem PT-BR/EN. font-display: swap. */
+@font-face {
+  font-family: 'Texturina';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('fonts/texturina-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Texturina';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('fonts/texturina-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('fonts/jetbrainsmono-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('fonts/jetbrainsmono-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 /* Catppuccin — Latte (light) */
 .hifi-light {
   --base: #eff1f5; --mantle: #e6e9ef; --crust: #dce0e8;
@@ -276,10 +314,15 @@
 .hifi-card {
   background: var(--surface0);
   border: 1px solid var(--surface1);
-  border-radius: 6px;
+  /* --z = fator de escala da UI (substitui o antigo `zoom: 1.2` do grid, que
+     era CSS não-padrão). O grid desktop seta --z:1.2; mobile não seta, então o
+     fallback (1) mantém os tamanhos originais. calc() não sofre o "compounding"
+     do em, e por escalar largura e altura pelo mesmo fator, preserva o aspect
+     ratio do card e faz as colunas refluírem. */
+  border-radius: calc(6px * var(--z, 1));
   transition: border-color 160ms, transform 160ms, box-shadow 160ms;
-  min-height: 336px;
-  height: 336px;
+  min-height: calc(336px * var(--z, 1));
+  height: calc(336px * var(--z, 1));
   box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 2px 6px rgba(0,0,0,0.03);
 }
 .hifi-dark .hifi-card {
@@ -350,8 +393,8 @@
 .hifi-card-ribbon {
   position: absolute;
   /* top: 0 alinha a fita com a borda interna do topo do card */
-  top: 0; right: 16px;
-  width: 18px; height: 26px;
+  top: 0; right: calc(16px * var(--z, 1));
+  width: calc(18px * var(--z, 1)); height: calc(26px * var(--z, 1));
   line-height: 0;
   cursor: pointer;
   z-index: 3;
@@ -368,24 +411,24 @@
 .hifi-card-footer {
   margin-top: auto;
   flex-shrink: 0;
-  padding-top: 8px;
+  padding-top: calc(8px * var(--z, 1));
   border-top: 1px dashed var(--surface1);
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; gap: calc(6px * var(--z, 1));
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 10px;
+  font-size: calc(10px * var(--z, 1));
   color: var(--subtext0);
   letter-spacing: 0.04em;
   white-space: nowrap;
   overflow: hidden;
 }
-.hifi-comp-chips { display: inline-flex; gap: 3px; align-items: center; }
+.hifi-comp-chips { display: inline-flex; gap: calc(3px * var(--z, 1)); align-items: center; }
 .hifi-comp-chip {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 16px; height: 16px;
+  width: calc(16px * var(--z, 1)); height: calc(16px * var(--z, 1));
   border-radius: 50%;
   border: 1px solid var(--surface2);
   color: var(--overlay0);
-  font-size: 9px; font-weight: 600;
+  font-size: calc(9px * var(--z, 1)); font-weight: 600;
   background: transparent;
 }
 .hifi-comp-chip.on {
@@ -398,10 +441,10 @@
 .hifi-card-meta-text { color: var(--subtext0); overflow: hidden; text-overflow: ellipsis; }
 .hifi-card-flag {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 16px; height: 16px;
+  width: calc(16px * var(--z, 1)); height: calc(16px * var(--z, 1));
   border-radius: 50%;
   border: 1px solid currentColor;
-  font-size: 9px; font-weight: 700;
+  font-size: calc(9px * var(--z, 1)); font-weight: 700;
   opacity: 0.85;
 }
 
@@ -535,7 +578,9 @@
   transition: border-color 160ms, box-shadow 160ms;
 }
 .hifi-input:focus { border-color: var(--accent, var(--text)); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent, var(--text)) 18%, transparent); }
-.hifi-input::placeholder { color: var(--overlay1); }
+/* overlay2 (não overlay1) pro placeholder passar no WCAG AA também no tema
+   claro — continua claramente mais fraco que o texto digitado (--text). */
+.hifi-input::placeholder { color: var(--overlay2); }
 
 /* Section labels */
 .hifi-section-label {

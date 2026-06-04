@@ -395,6 +395,9 @@ function HifiThemeToggle({ dark, lang = 'ptbr', style }) {
       onClick={() => window.__toggleDark && window.__toggleDark()}
       className="hifi-icon-btn"
       aria-pressed={!dark}
+      aria-label={dark
+        ? (lang === 'ptbr' ? 'mudar para tema claro' : 'switch to light theme')
+        : (lang === 'ptbr' ? 'mudar para tema escuro' : 'switch to dark theme')}
       title={dark
         ? (lang === 'ptbr' ? 'mudar para tema claro' : 'switch to light theme')
         : (lang === 'ptbr' ? 'mudar para tema escuro' : 'switch to dark theme')}
@@ -427,8 +430,10 @@ function HifiSpellCard({ s, lang, prepared, bookmarked, selected, onClick, onTog
         // visible (não hidden) pra o ribbon poder cobrir a borda do topo.
         // O texto/descrição têm seu próprio overflow:hidden, então nada vaza.
         overflow: 'visible',
-        padding: compact ? '10px 12px' : '12px 14px',
-        display: 'flex', flexDirection: 'column', gap: 4,
+        padding: compact
+          ? 'calc(10px * var(--z, 1)) calc(12px * var(--z, 1))'
+          : 'calc(12px * var(--z, 1)) calc(14px * var(--z, 1))',
+        display: 'flex', flexDirection: 'column', gap: 'calc(4px * var(--z, 1))',
       }}
     >
       {/* Ribbon = toggle de "preparada". Sempre clicável; o clique não abre o
@@ -454,14 +459,14 @@ function HifiSpellCard({ s, lang, prepared, bookmarked, selected, onClick, onTog
             Só favoritada: amarela, visível sobre o ribbon fantasma. */}
         {bookmarked && (
           <span aria-hidden="true" style={{
-            position: 'absolute', top: 4, left: 0, right: 0, textAlign: 'center',
-            fontSize: 10, lineHeight: 1, pointerEvents: 'none',
+            position: 'absolute', top: 'calc(4px * var(--z, 1))', left: 0, right: 0, textAlign: 'center',
+            fontSize: 'calc(10px * var(--z, 1))', lineHeight: 1, pointerEvents: 'none',
             color: prepared ? 'var(--surface0)' : 'var(--yellow)',
           }}>★</span>
         )}
       </div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, paddingRight: prepared ? 42 : 0, minWidth: 0, flexShrink: 0 }}>
-        <HifiSpellName size={compact ? 16 : 17} style={{
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 'calc(8px * var(--z, 1))', paddingRight: prepared ? 'calc(42px * var(--z, 1))' : 0, minWidth: 0, flexShrink: 0 }}>
+        <HifiSpellName size={compact ? 'calc(16px * var(--z, 1))' : 'calc(17px * var(--z, 1))'} style={{
           display: '-webkit-box',
           WebkitLineClamp: 1,
           WebkitBoxOrient: 'vertical',
@@ -469,9 +474,9 @@ function HifiSpellCard({ s, lang, prepared, bookmarked, selected, onClick, onTog
         }}>{spellName(s, lang)}</HifiSpellName>
       </div>
       <div style={{
-        fontStyle: 'italic', fontSize: 12, color: 'var(--subtext0)',
+        fontStyle: 'italic', fontSize: 'calc(12px * var(--z, 1))', color: 'var(--subtext0)',
         fontFamily: "'Marauder Text', Georgia, serif",
-        display: 'flex', alignItems: 'center', gap: 6,
+        display: 'flex', alignItems: 'center', gap: 'calc(6px * var(--z, 1))',
         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
         flexShrink: 0,
       }}>
@@ -484,7 +489,7 @@ function HifiSpellCard({ s, lang, prepared, bookmarked, selected, onClick, onTog
             fontFamily: "'JetBrains Mono', ui-monospace, monospace",
             fontStyle: 'normal',
             letterSpacing: '0.06em',
-            fontSize: 11,
+            fontSize: 'calc(11px * var(--z, 1))',
             fontWeight: 600,
           }}>{tier}</span>
       </div>
@@ -492,7 +497,7 @@ function HifiSpellCard({ s, lang, prepared, bookmarked, selected, onClick, onTog
         // Preenche todo o espaço livre entre o meta e o rodapé; o texto que
         // ultrapassa é clipado e dissolvido pelo fade-out (::after no CSS).
         <div className="hifi-card-desc" style={{
-          fontSize: compact ? 11.5 : 12.5,
+          fontSize: compact ? 'calc(11.5px * var(--z, 1))' : 'calc(12.5px * var(--z, 1))',
           lineHeight: 1.4,
           color: 'var(--subtext1)',
         }}>
@@ -648,6 +653,35 @@ function useHifiAppState(preparedKeys, initialFilters) {
     selectedIdx, setSelectedIdx, onlyPrepared, setOnlyPrepared,
     versionKey, switchVersion, versions, loaded, versionLang,
   };
+}
+
+// ──────────────────────────────────────────────────────────────────
+// EMPTY STATE (shared) — mostrado quando busca + filtros não retornam nada.
+// Composto (não só um vazio em branco) e indica como popular: limpar filtros.
+// ──────────────────────────────────────────────────────────────────
+function HifiEmptyState({ lang, onClear }) {
+  return (
+    <div style={{
+      height: '100%', minHeight: 240,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      textAlign: 'center', gap: 12, padding: '40px 24px',
+    }}>
+      <div aria-hidden="true" style={{ fontSize: 32, lineHeight: 1, color: 'var(--overlay0)' }}>✦</div>
+      <div className="hifi-display" style={{ fontSize: 22, color: 'var(--subtext1)' }}>
+        {lang === 'ptbr' ? 'Nenhuma magia encontrada' : 'No spells found'}
+      </div>
+      <p style={{ margin: 0, fontSize: 14, maxWidth: '40ch', lineHeight: 1.5, color: 'var(--subtext0)' }}>
+        {lang === 'ptbr'
+          ? 'Nenhuma magia corresponde à busca e aos filtros atuais. Tente ajustar ou limpar os filtros.'
+          : 'No spell matches the current search and filters. Try adjusting or clearing them.'}
+      </p>
+      {onClear && (
+        <button className="hifi-btn-secondary" onClick={onClear}>
+          {lang === 'ptbr' ? 'limpar filtros' : 'clear filters'}
+        </button>
+      )}
+    </div>
+  );
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -967,6 +1001,8 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
           onClick={() => setOnlyPrepared(v => !v)}
           className={`hifi-filter-chip icon-only${onlyPrepared ? ' active' : ''}`}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          aria-pressed={onlyPrepared}
+          aria-label={lang === 'ptbr' ? 'mostrar só as magias preparadas' : 'show only prepared spells'}
           title={lang === 'ptbr' ? 'mostrar só as magias preparadas' : 'show only prepared spells'}
         >
           <span style={{ color: onlyPrepared ? 'var(--accent)' : 'inherit', display: 'inline-flex' }}><HifiBookmarkIcon size={14}/></span>
@@ -980,13 +1016,29 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
       {/* Grid + panel */}
       <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
         <div style={{ flex: 1, overflow: 'auto', padding: '20px 28px' }}>
+          {filtered.length === 0 ? (
+            <HifiEmptyState lang={lang} onClear={() => {
+              setQuery('');
+              setOnlyPrepared(false);
+              setFilters(prev => {
+                const next = {};
+                Object.keys(prev).forEach(k => { next[k] = new Set(); });
+                return next;
+              });
+            }}/>
+          ) : (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: open ? 'repeat(auto-fill, minmax(253px, 1fr))' : 'repeat(auto-fill, minmax(307px, 1fr))',
-            gap: 12,
-            // Zoom de 20% só nos tokens: escala fontes, paddings, barra de nível
-            // e tamanho dos cards de forma uniforme, refluindo as colunas.
-            zoom: 1.2,
+            // Escala de 20% via custom property `--z` + calc() (substitui o antigo
+            // `zoom: 1.2`, que era CSS não-padrão). `--z` cascateia pros cards;
+            // como largura (minmax) e altura (no CSS) escalam pelo mesmo fator,
+            // o aspect ratio é preservado e as colunas refluem — igual ao zoom.
+            // Valores-base em px: 253 / 307 (coluna), 12 (gap).
+            '--z': 1.2,
+            gridTemplateColumns: open
+              ? 'repeat(auto-fill, minmax(calc(253px * var(--z)), 1fr))'
+              : 'repeat(auto-fill, minmax(calc(307px * var(--z)), 1fr))',
+            gap: 'calc(12px * var(--z))',
           }}>
             {filtered.map((s, i) => (
               <HifiSpellCard
@@ -999,6 +1051,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
               />
             ))}
           </div>
+          )}
         </div>
 
         {/* Side panel */}
@@ -1023,21 +1076,25 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
                     <button
                       className="hifi-icon-btn"
                       onClick={() => toggleBook(sel)}
+                      aria-pressed={bookmarked.has(hifiSpellKey(sel))}
+                      aria-label={lang === 'ptbr' ? 'favoritar magia' : 'bookmark spell'}
                       title={lang === 'ptbr' ? 'favoritar magia' : 'bookmark spell'}
                       style={{ flexShrink: 0, fontSize: 16, color: bookmarked.has(hifiSpellKey(sel)) ? 'var(--yellow)' : 'var(--subtext0)' }}
-                    >{bookmarked.has(hifiSpellKey(sel)) ? '★' : '☆'}</button>
+                    ><span aria-hidden="true">{bookmarked.has(hifiSpellKey(sel)) ? '★' : '☆'}</span></button>
                     <button
                       className="hifi-icon-btn"
                       onClick={() => hifiCopyLink(sel, lang, showToast)}
+                      aria-label={lang === 'ptbr' ? 'copiar link da magia' : 'copy spell link'}
                       title={lang === 'ptbr' ? 'copiar link da magia' : 'copy spell link'}
                       style={{ flexShrink: 0, color: 'var(--subtext0)' }}
                     ><HifiLinkIcon size={15}/></button>
                     <button
                       className="hifi-icon-btn"
                       onClick={() => setSelectedIdx(null)}
+                      aria-label={lang==='ptbr'?'fechar (esc)':'close (esc)'}
                       title={lang==='ptbr'?'fechar (esc)':'close (esc)'}
                       style={{ flexShrink: 0 }}
-                    >×</button>
+                    ><span aria-hidden="true">×</span></button>
                   </div>
                 </div>
                 <div style={{ marginTop: 4, fontSize: 13, color: 'var(--subtext0)', fontStyle: 'italic' }}>
@@ -1309,16 +1366,19 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
     return (
       <div className={`hifi ${themeClass}`} style={{ ...containerStyle, height: '100%', display: 'flex', flexDirection: 'column', paddingTop: 24, paddingBottom: 34 }}>
         <header className="hifi-flat-icons" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}>
-          <button className="hifi-icon-btn" onClick={() => setSelectedIdx(null)} title={lang==='ptbr'?'voltar':'back'}>‹</button>
+          <button className="hifi-icon-btn" onClick={() => setSelectedIdx(null)} aria-label={lang==='ptbr'?'voltar':'back'} title={lang==='ptbr'?'voltar':'back'}><span aria-hidden="true">‹</span></button>
           <div style={{ flex: 1 }}/>
           <button className="hifi-icon-btn"
             onClick={() => toggleBook(sel)}
+            aria-pressed={bookmarked.has(hifiSpellKey(sel))}
+            aria-label={lang === 'ptbr' ? 'favoritar magia' : 'bookmark spell'}
             title={lang === 'ptbr' ? 'favoritar magia' : 'bookmark spell'}
             style={{ fontSize: 16, color: bookmarked.has(hifiSpellKey(sel)) ? 'var(--yellow)' : 'var(--subtext0)' }}>
-            {bookmarked.has(hifiSpellKey(sel)) ? '★' : '☆'}
+            <span aria-hidden="true">{bookmarked.has(hifiSpellKey(sel)) ? '★' : '☆'}</span>
           </button>
           <button className="hifi-icon-btn"
             onClick={() => hifiCopyLink(sel, lang, showToast)}
+            aria-label={lang === 'ptbr' ? 'copiar link da magia' : 'copy spell link'}
             title={lang === 'ptbr' ? 'copiar link da magia' : 'copy spell link'}
             style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--subtext0)' }}><HifiLinkIcon size={15}/></button>
         </header>
@@ -1370,6 +1430,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
             onClick={() => setOnlyPrepared(v => !v)}
             className={`hifi-icon-btn${onlyPrepared ? ' active' : ''}`}
             title={lang === 'ptbr' ? 'mostrar só as preparadas' : 'show only prepared'}
+            aria-label={lang === 'ptbr' ? 'mostrar só as preparadas' : 'show only prepared'}
             aria-pressed={onlyPrepared}
             style={{
               width: 25, height: 25, marginTop: 2,
@@ -1381,6 +1442,9 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
       </header>
 
       <div style={{ flex: 1, overflow: 'auto', padding: '12px 12px 88px' }}>
+        {filtered.length === 0 ? (
+          <HifiEmptyState lang={lang} onClear={() => { clearAllFilters(); setOnlyPrepared(false); }}/>
+        ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
           {filtered.map((s, i) => (
             <HifiSpellCard
@@ -1393,6 +1457,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
             />
           ))}
         </div>
+        )}
       </div>
 
       {/* Bottom drawer */}
