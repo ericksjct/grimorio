@@ -44,8 +44,9 @@ const CLASS_EN = {
 
 const SOURCE_CODE = {
   'Livro do Jogador': 'PHB', "Player's Handbook": 'PHB',
-  'Guia de Tudo de Xanathar': 'XGE', "Xanathar's Guide to Everything": 'XGE',
-  'Caldeirão de Tudo de Tasha': 'TCE', "Tasha's Cauldron of Everything": 'TCE',
+  // Strings reais dos JSONs PT-BR (a forma oficial Galápagos), além das antigas.
+  'Guia de Xanathar para Todas as Coisas': 'XGE', 'Guia de Tudo de Xanathar': 'XGE', "Xanathar's Guide to Everything": 'XGE',
+  'O Caldeirão de Todas as Coisas de Tasha': 'TCE', 'Caldeirão de Tudo de Tasha': 'TCE', "Tasha's Cauldron of Everything": 'TCE',
   'Tesouros de Fizban dos Dragões': 'FTD', "Fizban's Treasury of Dragons": 'FTD',
 };
 
@@ -148,7 +149,25 @@ function adaptSpells(json, versionLang, edition) {
 // ──────────────────────────────────────────────────────────────────
 const _cache = {};     // key → adapted spells[]
 const _rawCache = {};  // key → raw JSON
-let _currentVersion = SPELL_VERSIONS[0].key;
+
+// Versão inicial = preferência salva (idioma escolhido na última visita) ou,
+// na primeira visita, a versão que casa com o idioma do navegador. Assim o app
+// já PRÉ-CARREGA a língua certa — sem flash de PT-BR pra quem é EN, sem fetch
+// desperdiçado. O index.html (App) deriva o mesmo, então não há troca dupla.
+function _initialVersionKey() {
+  try {
+    const prefs = JSON.parse(localStorage.getItem('spellbook-ui-prefs') || '{}');
+    if (prefs.versionKey && SPELL_VERSIONS.some(v => v.key === prefs.versionKey)) {
+      return prefs.versionKey;
+    }
+    const nav = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+    const lang = String(nav).toLowerCase().startsWith('pt') ? 'ptbr' : 'en';
+    const v = SPELL_VERSIONS.find(x => x.lang === lang);
+    if (v) return v.key;
+  } catch (e) {}
+  return SPELL_VERSIONS[0].key;
+}
+let _currentVersion = _initialVersionKey();
 let _loadingPromise = null;
 
 function getCurrentVersion() {
@@ -280,7 +299,7 @@ function VersionSelector({ current, versions, onChange, lang = 'ptbr', dark = fa
           onClick={() => setOpen(o => !o)}
           className="hifi-filter-chip"
           style={{ padding: '0 8px', gap: 5, fontSize: 11 }}
-          title={lang === 'ptbr' ? 'trocar versão das magias' : 'switch spell version'}
+          title={window.tt(lang, 'version.switch')}
         >
           <span style={langDot(currentVer)}/>
           <span style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", fontSize: 10, letterSpacing: '0.04em' }}>
@@ -299,7 +318,7 @@ function VersionSelector({ current, versions, onChange, lang = 'ptbr', dark = fa
               animation: 'hifi-toast-in 180ms ease-out',
             }}>
               <div style={{ padding: '8px 14px 6px', borderBottom: '1px solid var(--surface1)' }}>
-                <span className="hifi-section-label">{lang === 'ptbr' ? 'versão das magias' : 'spell version'}</span>
+                <span className="hifi-section-label">{window.tt(lang, 'version.labelMobile')}</span>
               </div>
               {versions.map(v => (
                 <button
@@ -334,7 +353,7 @@ function VersionSelector({ current, versions, onChange, lang = 'ptbr', dark = fa
         onClick={() => setOpen(o => !o)}
         className="hifi-filter-chip"
         style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
-        title={lang === 'ptbr' ? 'trocar versão das magias' : 'switch spell version'}
+        title={window.tt(lang, 'version.switch')}
       >
         <span style={langDot(currentVer)}/>
         <span>{lang === 'ptbr' ? currentVer.labelPt : currentVer.labelEn}</span>
@@ -350,7 +369,7 @@ function VersionSelector({ current, versions, onChange, lang = 'ptbr', dark = fa
             boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
           }}>
             <div style={{ padding: '6px 12px 4px' }}>
-              <span className="hifi-section-label">{lang === 'ptbr' ? 'versão' : 'version'}</span>
+              <span className="hifi-section-label">{window.tt(lang, 'version.label')}</span>
             </div>
             {versions.map(v => (
               <button

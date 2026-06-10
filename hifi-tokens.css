@@ -352,6 +352,29 @@
   box-shadow: 0 0 0 1px var(--accent, var(--text)), 0 4px 12px rgba(0,0,0,0.4);
 }
 
+/* Alvo de clique + foco de teclado do card inteiro. Um <button> transparente
+   que cobre o card (inset:0) dá a área de clique de sempre E torna o card
+   operável por teclado (Tab + Enter/Espaço) e anunciável por leitor de tela
+   (aria-label = nome da magia). Fica acima do conteúdo (z-index:1) mas ABAIXO
+   da fita de "preparada" (z-index:3), que continua sendo seu próprio botão. */
+.hifi-card-open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: inherit;
+  font: inherit;
+  color: inherit;
+}
+
 /* Rich text vindo do HTML da fonte (descrição/upgrade no painel de detalhe).
    Herda font-size/cor do container inline; aqui só o ritmo de parágrafos/listas. */
 .hifi-rich > :first-child { margin-top: 0; }
@@ -398,6 +421,9 @@
   line-height: 0;
   cursor: pointer;
   z-index: 3;
+  /* É um <button> de verdade (operável por teclado); zera o chrome nativo. */
+  margin: 0; padding: 0; border: none; background: none;
+  appearance: none; -webkit-appearance: none;
 }
 .hifi-card-ribbon svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .hifi-card-ribbon path { transition: fill 140ms, stroke 140ms; }
@@ -457,6 +483,7 @@
   background: transparent;
   white-space: nowrap;
   cursor: pointer;
+  appearance: none; -webkit-appearance: none;
   transition: color 160ms, border-color 160ms, transform 200ms ease-out, box-shadow 200ms ease-out;
 }
 .hifi-pill:hover {
@@ -578,9 +605,28 @@
   transition: border-color 160ms, box-shadow 160ms;
 }
 .hifi-input:focus { border-color: var(--accent, var(--text)); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent, var(--text)) 18%, transparent); }
+/* O input já tem anel próprio (box-shadow no :focus); suprime o outline genérico
+   de :focus-visible abaixo pra não desenhar dois anéis. */
+.hifi-input:focus-visible { outline: none; }
 /* overlay2 (não overlay1) pro placeholder passar no WCAG AA também no tema
    claro — continua claramente mais fraco que o texto digitado (--text). */
 .hifi-input::placeholder { color: var(--overlay2); }
+
+/* ──────────────────────────────────────────────────────────
+   FOCO DE TECLADO — anel visível em todo controle interativo.
+   :focus-visible só dispara pra teclado/AT (não pro clique de mouse),
+   então não polui a UI no uso com mouse. Cobre botões (inclui pills e a
+   fita, que agora são <button>), links, cards (.hifi-card-open) e qualquer
+   elemento com tabindex (painéis de diálogo).
+   ────────────────────────────────────────────────────────── */
+.hifi :focus-visible {
+  outline: 2px solid var(--accent, var(--text));
+  outline-offset: 2px;
+}
+/* O contêiner de diálogo recebe foco programático (tabIndex -1) só pra mover o
+   foco pra dentro; não precisa de anel próprio. */
+.hifi [role="dialog"]:focus-visible,
+.hifi [role="dialog"]:focus { outline: none; }
 
 /* Section labels */
 .hifi-section-label {

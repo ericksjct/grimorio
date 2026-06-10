@@ -80,6 +80,7 @@
      components call by bare reference; the loader overrides v7BuildSpells with
      real JSON data; the editor + hi-fi shell consume both. -->
 <script type="text/babel" src="grimorio-helpers.jsx"></script>
+<script type="text/babel" src="i18n.jsx"></script>
 <script type="text/babel" src="spells-data-loader.jsx"></script>
 <script type="text/babel" src="v11-character-editor.jsx"></script>
 <script type="text/babel" src="v10-hifi.jsx"></script>
@@ -92,6 +93,28 @@ function loadPrefs() {
 }
 function savePrefs(p) {
   try { localStorage.setItem(UI_PREFS_KEY, JSON.stringify(p)); } catch (e) {}
+}
+
+// Idioma da UI segue a VERSÃO de magias ativa (acoplado): não há toggle
+// separado — escolher uma versão EN deixa o chrome em inglês. Na primeira
+// visita (sem versão salva) detectamos pelo idioma do navegador.
+function detectLang() {
+  try {
+    const nav = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+    return String(nav).toLowerCase().startsWith('pt') ? 'ptbr' : 'en';
+  } catch (e) { return 'ptbr'; }
+}
+// Primeira versão de magias que casa com o idioma (2024 vem primeiro por idioma
+// em SPELL_VERSIONS), usada como default na primeira visita.
+function defaultVersionKeyForLang(lang) {
+  const vs = window.SPELL_VERSIONS || [];
+  const v = vs.find(x => x.lang === lang) || vs[0];
+  return v ? v.key : '';
+}
+function langOfVersionKey(key) {
+  const vs = window.SPELL_VERSIONS || [];
+  const v = vs.find(x => x.key === key);
+  return v ? v.lang : null;
 }
 
 // Track viewport so we can swap desktop ⇆ mobile layout responsively.
@@ -122,6 +145,16 @@ function App() {
   const [dark, setDark] = React.useState(initial.dark ?? false);
   const [theme, setTheme] = React.useState('daylight');
   const [charName, setCharName] = React.useState(initial.characterName || null);
+  // Versão de magias ativa (PT/EN × 2014/2024). É a fonte única de verdade do
+  // idioma: salva → senão a que casa com o idioma do navegador (1ª visita). O
+  // loader deriva o MESMO, então não há troca dupla nem flash no boot.
+  const initialVersionKey = initial.versionKey || defaultVersionKeyForLang(initial.lang || detectLang());
+  const [versionKey, setVersionKey] = React.useState(initialVersionKey);
+  // Idioma do chrome — segue a versão (acoplado): usa lang salvo, senão o da
+  // versão inicial, senão detecta. Mantido em sincronia pelo effect abaixo.
+  const [lang, setLang] = React.useState(
+    initial.lang || langOfVersionKey(initialVersionKey) || detectLang()
+  );
 
   const { chars } = useCharacters();
   const { w, h } = useViewport();
@@ -133,10 +166,32 @@ function App() {
 
   const character = chars.find(c => c.name === charName) || chars[0];
 
-  // Persist prefs whenever they change (tema, modo e personagem ativo).
+  // Restaura a versão de magias salva (ou o default do idioma detectado) no
+  // loader, uma vez, no mount. Dispara o evento que o useSpellVersions escuta.
   React.useEffect(() => {
-    savePrefs({ dark, theme, characterName: character ? character.name : null });
-  }, [dark, theme, character]);
+    if (versionKey && typeof window.setCurrentSpellVersion === 'function') {
+      window.setCurrentSpellVersion(versionKey);
+    }
+  }, []);
+
+  // Acoplamento: a versão ativa é a fonte de verdade do idioma. Quando ela muda
+  // (pelo VersionSelector, em qualquer lugar do app), espelhamos a versão e
+  // derivamos o idioma do chrome — escolher uma versão EN deixa a UI em inglês.
+  React.useEffect(() => {
+    const onSourceChanged = (e) => {
+      const key = e.detail;
+      setVersionKey(key);
+      const l = langOfVersionKey(key);
+      if (l) setLang(l);
+    };
+    window.addEventListener('hifi-spells-source-changed', onSourceChanged);
+    return () => window.removeEventListener('hifi-spells-source-changed', onSourceChanged);
+  }, []);
+
+  // Persist prefs whenever they change (tema, modo, personagem, idioma, versão).
+  React.useEffect(() => {
+    savePrefs({ dark, theme, characterName: character ? character.name : null, lang, versionKey });
+  }, [dark, theme, character, lang, versionKey]);
 
   // Paint the page background with the active theme so there's no flash of
   // the wrong color around the app (matters on overscroll / safe areas).
@@ -152,6 +207,16 @@ function App() {
       document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
     } catch (e) {}
   }, [dark, theme]);
+
+  // Reflete o idioma ativo no documento: <html lang> (leitores de tela usam pra
+  // escolher a pronúncia) e og:locale (preview de compartilhamento).
+  React.useEffect(() => {
+    try {
+      document.documentElement.setAttribute('lang', lang === 'ptbr' ? 'pt-br' : 'en');
+      const og = document.querySelector('meta[property="og:locale"]');
+      if (og) og.setAttribute('content', lang === 'ptbr' ? 'pt_BR' : 'en_US');
+    } catch (e) {}
+  }, [lang]);
 
   // Wire up the global hooks the V11 components call (dark toggle, character
   // switch after create/edit/delete, share-build link).
@@ -201,8 +266,8 @@ function App() {
   return (
     <>
       {isMobile
-        ? <HifiMobile lang="ptbr" dark={dark} theme={theme} character={character} />
-        : <HifiDesktop lang="ptbr" dark={dark} theme={theme} character={character} width={w} height={h} />}
+        ? <HifiMobile lang={lang} dark={dark} theme={theme} character={character} />
+        : <HifiDesktop lang={lang} dark={dark} theme={theme} character={character} width={w} height={h} />}
       <HifiPrintRoot />
     </>
   );

@@ -17,6 +17,16 @@ function spellName(s, lang) { return (lang === 'ptbr' ? s.pt : s.en) || s.pt || 
 const SCHOOL_KEYS = ['abjur', 'conj', 'div', 'ench', 'evoc', 'ilus', 'necr', 'trans'];
 function schoolKey(idx) { return SCHOOL_KEYS[idx] || 'evoc'; }
 
+// Nome COMPLETO da escola (pro menu descritivo) — localizado. Os índices seguem
+// a mesma ordem de SCHOOL_KEYS. schoolKey dá a abreviação ("necr") pros chips
+// compactos; schoolName dá a forma por extenso ("Necromancia" / "Necromancy").
+const SCHOOL_NAMES_PT = ['Abjuração', 'Conjuração', 'Adivinhação', 'Encantamento', 'Evocação', 'Ilusão', 'Necromancia', 'Transmutação'];
+const SCHOOL_NAMES_EN = ['Abjuration', 'Conjuration', 'Divination', 'Enchantment', 'Evocation', 'Illusion', 'Necromancy', 'Transmutation'];
+function schoolName(idx, lang) {
+  const arr = lang === 'ptbr' ? SCHOOL_NAMES_PT : SCHOOL_NAMES_EN;
+  return arr[idx] || arr[4];
+}
+
 function levelKey(lvl) { return lvl === 0 ? 'truque' : String(lvl); }
 
 // ── description / upgrade ──
@@ -78,4 +88,4 @@ function v8UpgradeHtml(s, lang) {
 }
 
 // Expose on window too — v10-hifi.jsx guards some calls with `window.v8Description ? …`.
-Object.assign(window, { spellName, schoolKey, levelKey, SCHOOL_KEYS, v8Description, v8Upgrade, v8DescriptionHtml, v8UpgradeHtml, V8_DESCRIPTIONS_PT });
+Object.assign(window, { spellName, schoolKey, schoolName, levelKey, SCHOOL_KEYS, SCHOOL_NAMES_PT, SCHOOL_NAMES_EN, v8Description, v8Upgrade, v8DescriptionHtml, v8UpgradeHtml, V8_DESCRIPTIONS_PT });

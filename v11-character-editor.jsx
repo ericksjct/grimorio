@@ -114,6 +114,20 @@ const HIFI_DEFAULT_CHARS = [
 const HIFI_CHARS_KEY = 'hifi_chars_v1';
 const HIFI_CHARS_EVENT = 'hifi-chars-changed';
 
+// Nome de EXIBIÇÃO do personagem. O default ('aventureiro') é genérico e
+// localizado (PT/EN) — "Aventureiro Desconhecido" / "Unknown Adventurer".
+// Personagens criados pelo usuário mantêm o nome literal digitado, em qualquer
+// idioma. O nome ARMAZENADO nunca muda (é chave de lookup/persistência/share);
+// só a exibição é traduzida.
+function hifiCharName(char, lang) {
+  if (!char) return '';
+  if (char.id === 'aventureiro' && typeof window.makeT === 'function') {
+    return window.makeT(lang)('char.default.name');
+  }
+  return char.name;
+}
+if (typeof window !== 'undefined') window.hifiCharName = hifiCharName;
+
 function _normChar(c) {
   return {
     id: c.id || `char-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,6)}`,
@@ -233,10 +247,73 @@ function useBookmarks() {
 // ──────────────────────────────────────────────────────────────────
 // Lives inside HifiDesktop / HifiMobile and overlays the artboard.
 // `mode`: 'panel' (desktop slide-in) or 'fullscreen' (mobile).
+// ──────────────────────────────────────────────────────────────────
+// useDialogA11y — acessibilidade de modal/diálogo, reutilizável.
+// Definido aqui (este arquivo carrega antes do v10) e exposto em window pra
+// os modais do v10 (menu de personagem, drawer, ficha) usarem o MESMO código.
+//
+// Quando `open` vira true: move o foco pra dentro do diálogo (no contêiner com
+// tabIndex -1), prende o Tab dentro dele (focus trap), fecha no Escape, e
+// devolve o foco ao elemento que estava ativo quando o diálogo fechar.
+// `ref` deve ser anexado ao contêiner do diálogo (que tem role="dialog").
+// ──────────────────────────────────────────────────────────────────
+function useDialogA11y(ref, open, onClose) {
+  const restoreRef = React.useRef(null);
+  const onCloseRef = React.useRef(onClose);
+  onCloseRef.current = onClose; // sempre o handler mais recente, sem re-rodar o efeito
+  React.useEffect(() => {
+    if (!open) return;
+    const node = ref.current;
+    if (!node) return;
+    restoreRef.current = document.activeElement;
+    // Move o foco pra dentro do diálogo (leitor de tela "entra" no modal) — mas
+    // SÓ se o foco ainda não estiver dentro. Um autoFocus já aplicado (ex.: o
+    // campo "nome" em personagem novo) coloca o foco dentro do diálogo antes
+    // deste efeito passivo rodar; sem essa guarda, o node.focus() roubaria o
+    // foco do campo e o usuário começaria a digitar no vazio.
+    if (!node.contains(document.activeElement)) {
+      try { node.focus({ preventScroll: true }); } catch (e) { node.focus(); }
+    }
+    const SELECTOR = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        onCloseRef.current && onCloseRef.current();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const items = Array.from(node.querySelectorAll(SELECTOR))
+        .filter(el => el.offsetParent !== null || el === document.activeElement);
+      if (items.length === 0) { e.preventDefault(); node.focus(); return; }
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey) {
+        if (active === first || active === node || !node.contains(active)) { e.preventDefault(); last.focus(); }
+      } else {
+        if (active === last || !node.contains(active)) { e.preventDefault(); first.focus(); }
+      }
+    };
+    node.addEventListener('keydown', onKey);
+    return () => {
+      node.removeEventListener('keydown', onKey);
+      const r = restoreRef.current;
+      if (r && typeof r.focus === 'function') { try { r.focus(); } catch (e) {} }
+    };
+  }, [open]);
+}
+if (typeof window !== 'undefined') window.useDialogA11y = useDialogA11y;
+
 function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', charId = null, mode = 'panel', onClose }) {
   const { chars, update } = useCharacters();
   const isNew = !charId;
   const existing = chars.find(c => c.id === charId);
+
+  // Acessibilidade de diálogo: foco preso, Escape fecha, foco volta ao fechar.
+  // O editor é modal enquanto montado, então open = true.
+  const dialogRef = React.useRef(null);
+  useDialogA11y(dialogRef, true, () => onClose?.(null));
 
   const [name, setName] = React.useState(existing?.name || '');
   const [accentId, setAccentId] = React.useState(normalizeAccentId(existing?.accentId) || 'purple');
@@ -273,18 +350,19 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
     return out;
   }, [allSpells, query, tab, prepared, bookmarked]);
 
+  // Helper bilíngue (pt, en) — mecanismo centralizado no i18n (window.bilingual).
+  const T = window.bilingual ? window.bilingual(lang) : (pt, en) => (lang === 'ptbr' ? pt : en);
+
   const trimmed = name.trim();
   const nameError =
     !trimmed
-      ? (lang === 'ptbr' ? 'nome obrigatório' : 'name is required')
+      ? T('nome obrigatório', 'name is required')
       : chars.some(c => c.id !== charId && c.name.trim().toLowerCase() === trimmed.toLowerCase())
-        ? (lang === 'ptbr' ? 'já existe um personagem com esse nome' : 'name already in use')
+        ? T('já existe um personagem com esse nome', 'name already in use')
         : null;
 
   const canSave = !nameError;
   const previewAccent = paletteFor(accentId, theme)[dark ? 'dark' : 'light'];
-
-  const T = (pt, en) => (lang === 'ptbr' ? pt : en);
 
   function togglePrep(s) {
     const k = hifiSpellKey(s);
@@ -325,7 +403,15 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
   };
 
   return (
-    <div className={`hifi ${themeClass}`} style={shellStyle}>
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={isNew ? T('Novo personagem', 'New character') : T('Editar personagem', 'Edit character')}
+      tabIndex={-1}
+      className={`hifi ${themeClass}`}
+      style={shellStyle}
+    >
       {/* Header */}
       <div style={{
         padding: mode === 'fullscreen' ? '14px 16px' : '16px 20px 14px',
@@ -352,7 +438,7 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
             </span>
           </div>
         </div>
-        <button className="hifi-icon-btn" onClick={() => onClose?.(null)} title={T('fechar', 'close')}>×</button>
+        <button className="hifi-icon-btn" onClick={() => onClose?.(null)} aria-label={T('fechar', 'close')} title={T('fechar', 'close')}><span aria-hidden="true">×</span></button>
       </div>
 
       {/* Body */}
@@ -368,6 +454,7 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={T('ex: Aelwyn', 'e.g. Aelwyn')}
+            aria-label={T('nome do personagem', 'character name')}
             className="hifi-input"
             autoFocus={isNew}
             maxLength={32}
@@ -434,8 +521,9 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
               { id: 'prepared',   label: T('preparadas', 'prepared') },
               { id: 'bookmarked', label: T('favoritas', 'bookmarks') },
             ].map(t => (
-              <button key={t.id}
+              <button key={t.id} type="button"
                 onClick={() => setTab(t.id)}
+                aria-pressed={tab === t.id}
                 className={`hifi-pill${tab === t.id ? ' active' : ''}`}
                 style={{ cursor: 'pointer' }}>{t.label}</button>
             ))}
@@ -445,6 +533,7 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={T('buscar magia…', 'search spell…')}
+            aria-label={T('buscar magia', 'search spell')}
             className="hifi-input"
             style={{ marginTop: 8, width: '100%' }}
           />

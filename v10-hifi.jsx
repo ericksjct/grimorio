@@ -79,8 +79,8 @@ function hifiCopyLink(s, lang, show) {
   const url = buildSpellLink(s, lang);
   if (navigator.clipboard?.writeText) {
     navigator.clipboard.writeText(url).then(
-      () => show(lang === 'ptbr' ? `link copiado: ${url}` : `link copied: ${url}`),
-      () => show(lang === 'ptbr' ? 'falha ao copiar' : 'copy failed', 'err'),
+      () => show(tt(lang, 'toast.linkCopied', { url })),
+      () => show(tt(lang, 'toast.copyFailed'), 'err'),
     );
   } else {
     show(url);
@@ -92,7 +92,7 @@ function hifiShare(s, lang, show) {
   const title = window.spellName ? window.spellName(s, lang) : s?.en;
   if (navigator.share) {
     navigator.share({ title, url }).then(
-      () => show(lang === 'ptbr' ? 'compartilhado' : 'shared'),
+      () => show(tt(lang, 'toast.shared')),
       () => {}, // user cancelled
     );
   } else {
@@ -102,12 +102,12 @@ function hifiShare(s, lang, show) {
 }
 
 function hifiPrint(s, lang, show, extras = {}) {
-  show(lang === 'ptbr' ? '⎙ preparando impressão…' : '⎙ printing…');
+  show(tt(lang, 'print.preparing'));
   window.dispatchEvent(new CustomEvent('hifi-print-request', { detail: { spell: s, lang, ...extras } }));
 }
 
 function hifiPrintList(spells, lang, show, opts = {}) {
-  show(lang === 'ptbr' ? '⎙ preparando impressão…' : '⎙ printing…');
+  show(tt(lang, 'print.preparing'));
   window.dispatchEvent(new CustomEvent('hifi-print-request', { detail: { spells, lang, ...opts } }));
 }
 
@@ -116,11 +116,11 @@ function hifiPrintList(spells, lang, show, opts = {}) {
 // sorted by level (low → high) before packing.
 function hifiPrintPrepared(spells, lang, show, opts = {}) {
   if (!spells || !spells.length) {
-    show(lang === 'ptbr' ? 'nenhuma magia preparada' : 'no prepared spells', 'err');
+    show(tt(lang, 'print.noPrepared'), 'err');
     return;
   }
   const sorted = [...spells].sort((a, b) => (a.lvl - b.lvl) || (spellName(a, lang) || '').localeCompare(spellName(b, lang) || ''));
-  show(lang === 'ptbr' ? `⎙ imprimindo ${spells.length} ${spells.length === 1 ? 'magia' : 'magias'}…` : `⎙ printing ${spells.length} spells…`);
+  show(tt(lang, 'print.printing', { n: spells.length, nounSpell: tt(lang, 'noun.spell.' + i18nPlural(spells.length)) }));
   window.dispatchEvent(new CustomEvent('hifi-print-request', { detail: { spells: sorted, lang, mode: 'pack', ...opts } }));
 }
 
@@ -166,27 +166,27 @@ function HifiPrintRoot() {
       {character && (
         <div className="hifi-print-tracker">
           <div className="hifi-print-tracker-fields">
-            <div className="hifi-print-tracker-title">{character.name}</div>
+            <div className="hifi-print-tracker-title">{hifiCharName(character, lang)}</div>
             <div className="hifi-print-tracker-url">spellbook.app</div>
             <div className="hifi-print-tracker-row">
-              <span className="hifi-print-tracker-label">{lang==='ptbr'?'classe':'class'}</span>
+              <span className="hifi-print-tracker-label">{tt(lang, 'spell.class')}</span>
               <span className="hifi-print-tracker-box hifi-print-tracker-box-name"/>
             </div>
             <div className="hifi-print-tracker-row">
-              <span className="hifi-print-tracker-label">{lang==='ptbr'?'nível':'level'}</span>
+              <span className="hifi-print-tracker-label">{tt(lang, 'spell.level')}</span>
               <span className="hifi-print-tracker-box hifi-print-tracker-box-int"/>
-              <span className="hifi-print-tracker-label">{lang==='ptbr'?'CD':'DC'}</span>
+              <span className="hifi-print-tracker-label">{tt(lang, 'print.dc')}</span>
               <span className="hifi-print-tracker-box hifi-print-tracker-box-int"/>
-              <span className="hifi-print-tracker-label">{lang==='ptbr'?'bônus':'bonus'}</span>
+              <span className="hifi-print-tracker-label">{tt(lang, 'print.bonus')}</span>
               <span className="hifi-print-tracker-box hifi-print-tracker-box-int"/>
             </div>
           </div>
           <div className="hifi-print-tracker-slots">
-            <div className="hifi-print-tracker-slots-title">{lang==='ptbr'?'espaços de magia':'spell slots'}</div>
+            <div className="hifi-print-tracker-slots-title">{tt(lang, 'print.spellSlots')}</div>
             <div className="hifi-print-tracker-slots-grid">
               {[1,2,3,4,5,6,7,8,9].map(lvl => (
                 <div className="hifi-print-tracker-slot-row" key={lvl}>
-                  <span className="hifi-print-tracker-slot-label">{lang==='ptbr'?'nv':'lvl'} {lvl}</span>
+                  <span className="hifi-print-tracker-slot-label">{tt(lang, 'print.slotShort')} {lvl}</span>
                   <span className="hifi-print-tracker-boxes">◯ ◯ ◯ ◯</span>
                 </div>
               ))}
@@ -283,28 +283,28 @@ function HifiPrintCard({ s, lang, chunk }) {
         <div className="hifi-print-spell-headrow">
           <span
             className={`hifi-print-spell-level${isCantrip ? ' is-cantrip' : ''}`}
-            title={isCantrip ? (lang==='ptbr'?'truque':'cantrip') : `${lang==='ptbr'?'nível':'level'} ${s.lvl}`}
+            title={isCantrip ? (tt(lang, 'spell.cantrip')) : `${tt(lang, 'spell.level')} ${s.lvl}`}
           >
-            {isCantrip ? (lang === 'ptbr' ? 'T' : 'C') : s.lvl}
+            {isCantrip ? (tt(lang, 'spell.cantripShort')) : s.lvl}
           </span>
           <div className="hifi-print-spell-name">{spellName(s, lang)}</div>
         </div>
         <div className="hifi-print-spell-meta">
           {schoolKey(s.school)}
-          {s.conc && <> · <span>{lang==='ptbr'?'concentração':'concentration'}</span></>}
-          {s.rit && <> · <span>{lang==='ptbr'?'ritual':'ritual'}</span></>}
+          {s.conc && <> · <span>{tt(lang, 'spell.concentration')}</span></>}
+          {s.rit && <> · <span>{tt(lang, 'spell.ritual')}</span></>}
         </div>
         {partTotal > 1 && (
           <div className="hifi-print-spell-continuation">
-            {lang === 'ptbr' ? `parte ${partIdx + 1} de ${partTotal}` : `part ${partIdx + 1} of ${partTotal}`}
+            {tt(lang, 'spell.part', { i: partIdx + 1, n: partTotal })}
           </div>
         )}
       </header>
       <dl className="hifi-print-spell-stats">
-        <div><dt>{lang==='ptbr'?'execução':'cast'}</dt><dd>{s.time}</dd></div>
-        <div><dt>{lang==='ptbr'?'alcance':'range'}</dt><dd>{s.range}</dd></div>
-        <div><dt>{lang==='ptbr'?'duração':'duration'}</dt><dd>{s.dur}</dd></div>
-        <div><dt>{lang==='ptbr'?'componentes':'components'}</dt><dd>{comps.join(' · ') || '—'}</dd></div>
+        <div><dt>{tt(lang, 'spell.cast')}</dt><dd>{s.time}</dd></div>
+        <div><dt>{tt(lang, 'spell.range')}</dt><dd>{s.range}</dd></div>
+        <div><dt>{tt(lang, 'spell.duration')}</dt><dd>{s.dur}</dd></div>
+        <div><dt>{tt(lang, 'spell.components')}</dt><dd>{comps.join(' · ') || '—'}</dd></div>
       </dl>
       {(descHtml || desc) && (
         descHtml
@@ -313,7 +313,7 @@ function HifiPrintCard({ s, lang, chunk }) {
       )}
       {(upgradeHtml || upgrade) && (
         <div className="hifi-print-spell-upgrade">
-          <strong>{lang==='ptbr'?'Em níveis superiores.':'At higher levels.'}</strong>{' '}
+          <strong>{tt(lang, 'spell.higherLevels')}</strong>{' '}
           {upgradeHtml
             ? <span className="hifi-rich" dangerouslySetInnerHTML={{ __html: upgradeHtml }}/>
             : upgrade}
@@ -396,15 +396,60 @@ function HifiThemeToggle({ dark, lang = 'ptbr', style }) {
       className="hifi-icon-btn"
       aria-pressed={!dark}
       aria-label={dark
-        ? (lang === 'ptbr' ? 'mudar para tema claro' : 'switch to light theme')
-        : (lang === 'ptbr' ? 'mudar para tema escuro' : 'switch to dark theme')}
+        ? (tt(lang, 'theme.toLight'))
+        : (tt(lang, 'theme.toDark'))}
       title={dark
-        ? (lang === 'ptbr' ? 'mudar para tema claro' : 'switch to light theme')
-        : (lang === 'ptbr' ? 'mudar para tema escuro' : 'switch to dark theme')}
+        ? (tt(lang, 'theme.toLight'))
+        : (tt(lang, 'theme.toDark'))}
       style={{ width: 25, height: 25, background: 'var(--surface1)', fontSize: 14, lineHeight: 1, ...style }}
     >
       <span aria-hidden="true">{dark ? '🌙' : '☀️'}</span>
     </button>
+  );
+}
+
+// Seletor de idioma — dois textos clicáveis no rodapé (PT / EN), sempre
+// visíveis. O idioma ativo fica em cor de texto normal; o inativo como link
+// sublinhado clicável. Emoji de bandeirinha ao lado de cada um.
+function HifiLangToggle({ lang = 'ptbr', versions = [], versionKey, onSwitch }) {
+  const cur = versions.find(v => v.key === versionKey);
+  const curLang = cur ? cur.lang : lang;
+  const editionOf = (v) => (/2024/.test(v.key) ? '2024' : '2014');
+  const curEdition = cur ? editionOf(cur) : '2024';
+
+  // Versões disponíveis para a edição atual
+  const pt = versions.find(v => v.lang === 'ptbr' && editionOf(v) === curEdition);
+  const en = versions.find(v => v.lang === 'en' && editionOf(v) === curEdition);
+
+  const itemStyle = (active) => ({
+    ...hifiFooterLink,
+    background: 'none',
+    border: 'none',
+    padding: 0,
+    cursor: active ? 'default' : 'pointer',
+    font: 'inherit',
+    textTransform: 'uppercase',
+    opacity: active ? 1 : undefined,
+    textDecoration: active ? 'none' : hifiFooterLink.textDecoration,
+    color: active ? 'var(--text)' : hifiFooterLink.color,
+  });
+
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <button
+        onClick={() => { if (!pt || curLang === 'ptbr') return; onSwitch(pt.key); }}
+        aria-label={curLang === 'ptbr' ? 'português (atual)' : 'mudar para português'}
+        title={curLang === 'ptbr' ? 'português (atual)' : 'mudar para português'}
+        style={itemStyle(curLang === 'ptbr')}
+      >🇧🇷 PT</button>
+      <span style={{ color: 'var(--overlay0)' }}>/</span>
+      <button
+        onClick={() => { if (!en || curLang === 'en') return; onSwitch(en.key); }}
+        aria-label={curLang === 'en' ? 'english (current)' : 'switch to english'}
+        title={curLang === 'en' ? 'english (current)' : 'switch to english'}
+        style={itemStyle(curLang === 'en')}
+      >🇺🇸 EN</button>
+    </span>
   );
 }
 
@@ -422,10 +467,8 @@ function HifiSpellCard({ s, lang, prepared, bookmarked, selected, onClick, onTog
   const comps = (s.comp || '').split(/\s+/).filter(Boolean);
   return (
     <div
-      onClick={onClick}
       className={`hifi-card${selected ? ' selected' : ''}${compact ? ' compact' : ''}`}
       style={{
-        cursor: 'pointer',
         position: 'relative',
         // visible (não hidden) pra o ribbon poder cobrir a borda do topo.
         // O texto/descrição têm seu próprio overflow:hidden, então nada vaza.
@@ -436,15 +479,30 @@ function HifiSpellCard({ s, lang, prepared, bookmarked, selected, onClick, onTog
         display: 'flex', flexDirection: 'column', gap: 'calc(4px * var(--z, 1))',
       }}
     >
+      {/* Alvo de clique + foco de teclado do card inteiro: um <button>
+          transparente que cobre o card (z-index:1, ABAIXO do ribbon z-index:3),
+          tornando-o operável por teclado (Tab + Enter/Espaço). aria-label = nome
+          da magia, pra o leitor de tela anunciar o que o card abre. */}
+      <button
+        type="button"
+        className="hifi-card-open"
+        onClick={onClick}
+        aria-label={spellName(s, lang)}
+      />
       {/* Ribbon = toggle de "preparada". Sempre clicável; o clique não abre o
           detalhe (stopPropagation). Preenchido quando preparada; fantasma sutil
           (clique pra marcar) quando não. */}
-      <div
+      <button
+        type="button"
         onClick={(e) => { e.stopPropagation(); onTogglePrepared && onTogglePrepared(); }}
         className={`hifi-card-ribbon ${prepared ? 'on' : 'off'}`}
+        aria-pressed={prepared}
+        aria-label={prepared
+          ? (tt(lang, 'spell.unprepare'))
+          : (tt(lang, 'spell.prepare'))}
         title={prepared
-          ? (lang==='ptbr' ? 'desmarcar como preparada' : 'unprepare')
-          : (lang==='ptbr' ? 'marcar como preparada' : 'prepare')}
+          ? (tt(lang, 'spell.unprepare'))
+          : (tt(lang, 'spell.prepare'))}
       >
         <svg viewBox="0 0 20 28" preserveAspectRatio="xMidYMin meet" aria-hidden="true" strokeLinejoin="round">
           {/* Path ABERTO (sem o segmento do topo): o stroke desenha só os lados
@@ -464,7 +522,7 @@ function HifiSpellCard({ s, lang, prepared, bookmarked, selected, onClick, onTog
             color: prepared ? 'var(--surface0)' : 'var(--yellow)',
           }}>★</span>
         )}
-      </div>
+      </button>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 'calc(8px * var(--z, 1))', paddingRight: prepared ? 'calc(42px * var(--z, 1))' : 0, minWidth: 0, flexShrink: 0 }}>
         <HifiSpellName size={compact ? 'calc(16px * var(--z, 1))' : 'calc(17px * var(--z, 1))'} style={{
           display: '-webkit-box',
@@ -483,7 +541,7 @@ function HifiSpellCard({ s, lang, prepared, bookmarked, selected, onClick, onTog
         <span>{schoolKey(s.school)}</span>
         <span style={{ color: 'var(--overlay0)' }}>·</span>
         <span
-          title={s.lvl === 0 ? (lang === 'ptbr' ? 'truque' : 'cantrip') : `${lang === 'ptbr' ? 'nível' : 'level'} ${s.lvl}`}
+          title={s.lvl === 0 ? (tt(lang, 'spell.cantrip')) : `${tt(lang, 'spell.level')} ${s.lvl}`}
           style={{
             color: `var(--level-${s.lvl})`,
             fontFamily: "'JetBrains Mono', ui-monospace, monospace",
@@ -514,22 +572,22 @@ function HifiSpellCard({ s, lang, prepared, bookmarked, selected, onClick, onTog
               <span
                 key={letter}
                 className={`hifi-comp-chip${has ? ' on' : ''}`}
-                title={letter === 'V' ? (lang==='ptbr'?'verbal':'verbal')
-                  : letter === 'S' ? (lang==='ptbr'?'somático':'somatic')
-                  : (lang==='ptbr'?'material':'material')}
+                title={letter === 'V' ? (tt(lang, 'comp.verbal'))
+                  : letter === 'S' ? (tt(lang, 'comp.somatic'))
+                  : (tt(lang, 'comp.material'))}
               >{letter}</span>
             );
           })}
         </div>
         <span className="hifi-card-meta-sep">·</span>
-        <span className="hifi-card-meta-text" title={lang==='ptbr'?'alcance':'range'}>{s.range}</span>
+        <span className="hifi-card-meta-text" title={tt(lang, 'spell.range')}>{s.range}</span>
         {s.src && <>
           <span className="hifi-card-meta-sep">·</span>
-          <span className="hifi-card-meta-text" title={lang==='ptbr'?'fonte':'source'}>{s.src}</span>
+          <span className="hifi-card-meta-text" title={tt(lang, 'spell.source')}>{s.src}</span>
         </>}
         {(s.rit || s.conc) && <span style={{ flex: 1 }}/>}
-        {s.conc && <span className="hifi-card-flag" style={{ color: 'var(--yellow)' }} title={lang==='ptbr'?'concentração':'concentration'}>C</span>}
-        {s.rit && <span className="hifi-card-flag" style={{ color: 'var(--peach)' }} title={lang==='ptbr'?'ritual':'ritual'}>R</span>}
+        {s.conc && <span className="hifi-card-flag" style={{ color: 'var(--yellow)' }} title={tt(lang, 'spell.concentration')}>C</span>}
+        {s.rit && <span className="hifi-card-flag" style={{ color: 'var(--peach)' }} title={tt(lang, 'spell.ritual')}>R</span>}
       </div>
     </div>
   );
@@ -556,19 +614,19 @@ function remapClassFilter(set, fromLang, toLang) {
 // (label + valores). `base: true` = sempre visível; o resto entra via "+ mais".
 // `derive: true` = os valores selecionáveis vêm dos próprios dados (JSON).
 function hifiFilterConfig(lang) {
-  const pt = lang === 'ptbr';
-  const bool = b => (b ? (pt ? 'sim' : 'yes') : (pt ? 'não' : 'no'));
+
+  const bool = b => (b ? (tt(lang, 'value.yes')) : (tt(lang, 'value.no')));
   return {
-    level:  { label: pt ? 'nível' : 'level',   base: true, get: s => [s.lvl === 0 ? 'truque' : String(s.lvl)] },
-    school: { label: pt ? 'escola' : 'school',  base: true, get: s => [schoolKey(s.school)] },
-    class:  { label: pt ? 'classe' : 'class',   base: true, get: s => (s.classes || []) },
-    comp:   { label: pt ? 'componente' : 'component', get: s => (s.comp || '').split(/\s+/).filter(Boolean), values: ['V', 'S', 'M'] },
-    conc:   { label: pt ? 'concentração' : 'concentration', get: s => [bool(s.conc)], values: [bool(true), bool(false)] },
-    rit:    { label: pt ? 'ritual' : 'ritual',  get: s => [bool(s.rit)], values: [bool(true), bool(false)] },
-    time:   { label: pt ? 'execução' : 'cast time', derive: true, get: s => (s.time ? [s.time] : []) },
-    dur:    { label: pt ? 'duração' : 'duration', derive: true, get: s => (s.dur ? [s.dur] : []) },
-    range:  { label: pt ? 'alcance' : 'range',  derive: true, get: s => (s.range ? [s.range] : []) },
-    src:    { label: pt ? 'fonte' : 'source',   derive: true, get: s => (s.src ? [s.src] : []) },
+    level:  { label: tt(lang, 'spell.level'),   base: true, get: s => [s.lvl === 0 ? 'truque' : String(s.lvl)] },
+    school: { label: tt(lang, 'spell.school'),  base: true, get: s => [schoolKey(s.school)] },
+    class:  { label: tt(lang, 'spell.class'),   base: true, get: s => (s.classes || []) },
+    comp:   { label: tt(lang, 'spell.component'), get: s => (s.comp || '').split(/\s+/).filter(Boolean), values: ['V', 'S', 'M'] },
+    conc:   { label: tt(lang, 'spell.concentration'), get: s => [bool(s.conc)], values: [bool(true), bool(false)] },
+    rit:    { label: tt(lang, 'spell.ritual'),  get: s => [bool(s.rit)], values: [bool(true), bool(false)] },
+    time:   { label: tt(lang, 'spell.castTime'), derive: true, get: s => (s.time ? [s.time] : []) },
+    dur:    { label: tt(lang, 'spell.duration'), derive: true, get: s => (s.dur ? [s.dur] : []) },
+    range:  { label: tt(lang, 'spell.range'),  derive: true, get: s => (s.range ? [s.range] : []) },
+    src:    { label: tt(lang, 'spell.source'),   derive: true, get: s => (s.src ? [s.src] : []) },
   };
 }
 
@@ -668,16 +726,14 @@ function HifiEmptyState({ lang, onClear }) {
     }}>
       <div aria-hidden="true" style={{ fontSize: 32, lineHeight: 1, color: 'var(--overlay0)' }}>✦</div>
       <div className="hifi-display" style={{ fontSize: 22, color: 'var(--subtext1)' }}>
-        {lang === 'ptbr' ? 'Nenhuma magia encontrada' : 'No spells found'}
+        {tt(lang, 'empty.title')}
       </div>
       <p style={{ margin: 0, fontSize: 14, maxWidth: '40ch', lineHeight: 1.5, color: 'var(--subtext0)' }}>
-        {lang === 'ptbr'
-          ? 'Nenhuma magia corresponde à busca e aos filtros atuais. Tente ajustar ou limpar os filtros.'
-          : 'No spell matches the current search and filters. Try adjusting or clearing them.'}
+        {tt(lang, 'empty.body')}
       </p>
       {onClear && (
         <button className="hifi-btn-secondary" onClick={onClear}>
-          {lang === 'ptbr' ? 'limpar filtros' : 'clear filters'}
+          {tt(lang, 'filter.clearAll')}
         </button>
       )}
     </div>
@@ -698,15 +754,15 @@ function HifiDetailContent({ s, lang }) {
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Stats grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        <HifiStat label={lang === 'ptbr' ? 'execução' : 'cast'} value={s.time}/>
-        <HifiStat label={lang === 'ptbr' ? 'alcance' : 'range'} value={s.range}/>
-        <HifiStat label={lang === 'ptbr' ? 'duração' : 'duration'} value={s.dur}/>
-        <HifiStat label={lang === 'ptbr' ? 'componentes' : 'components'} value={s.comp}/>
+        <HifiStat label={tt(lang, 'spell.cast')} value={s.time}/>
+        <HifiStat label={tt(lang, 'spell.range')} value={s.range}/>
+        <HifiStat label={tt(lang, 'spell.duration')} value={s.dur}/>
+        <HifiStat label={tt(lang, 'spell.components')} value={s.comp}/>
       </div>
 
       {/* Description */}
       <div>
-        <HifiSectionLabel>{lang === 'ptbr' ? 'descrição' : 'description'}</HifiSectionLabel>
+        <HifiSectionLabel>{tt(lang, 'spell.description')}</HifiSectionLabel>
         {descHtml
           ? <div className="hifi-rich" style={{ margin: '8px 0 0', fontSize: 15, lineHeight: 1.6, color: 'var(--text)' }} dangerouslySetInnerHTML={{ __html: descHtml }}/>
           : <p style={{ margin: '8px 0 0', fontSize: 15, lineHeight: 1.6, textWrap: 'pretty', color: 'var(--text)' }}>{desc}</p>}
@@ -715,7 +771,7 @@ function HifiDetailContent({ s, lang }) {
       {/* Upgrade — só aparece se a magia tiver essa info na fonte. */}
       {(upgradeHtml || (upgrade && upgrade.trim())) && (
         <div>
-          <HifiSectionLabel>{lang === 'ptbr' ? 'em níveis superiores' : 'at higher levels'}</HifiSectionLabel>
+          <HifiSectionLabel>{tt(lang, 'spell.higherLevelsLabel')}</HifiSectionLabel>
           {upgradeHtml
             ? <div className="hifi-rich" style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--subtext1)', fontStyle: 'italic' }} dangerouslySetInnerHTML={{ __html: upgradeHtml }}/>
             : <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.6, textWrap: 'pretty', color: 'var(--subtext1)', fontStyle: 'italic' }}>{upgrade}</p>}
@@ -724,15 +780,15 @@ function HifiDetailContent({ s, lang }) {
 
       {/* Classes */}
       <div>
-        <HifiSectionLabel>{lang === 'ptbr' ? 'classes' : 'classes'}</HifiSectionLabel>
+        <HifiSectionLabel>{tt(lang, 'spell.classes')}</HifiSectionLabel>
         <p style={{ margin: '8px 0 0', fontSize: 15, lineHeight: 1.6, color: 'var(--text)' }}>
-          {(s.classes || []).join(', ')}
+          {(s.classes || []).map(c => c ? c.charAt(0).toUpperCase() + c.slice(1) : c).join(', ')}
         </p>
       </div>
 
       {/* Source */}
       <div>
-        <HifiSectionLabel>{lang === 'ptbr' ? 'fonte' : 'source'}</HifiSectionLabel>
+        <HifiSectionLabel>{tt(lang, 'spell.source')}</HifiSectionLabel>
         <div style={{ marginTop: 6, fontSize: 13, color: 'var(--subtext0)', fontStyle: 'italic' }}>
           {s.src} · {s.edition || '5e 2014'}
         </div>
@@ -782,6 +838,15 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
   // Editor state: null | { charId } where charId === null means create mode
   const [editor, setEditor] = React.useState(null);
 
+  // A11y do menu de personagem (modal): foco preso, Escape fecha, foco volta ao
+  // botão que o abriu. window.useDialogA11y vem do v11 (carrega antes deste).
+  const charMenuRef = React.useRef(null);
+  window.useDialogA11y(charMenuRef, charMenuOpen, () => setCharMenuOpen(false));
+
+  // Ref da grade de cards — usada pra medir quantas colunas há agora (grade
+  // responsiva) e pra rolar o card selecionado pra dentro da vista na navegação.
+  const gridRef = React.useRef(null);
+
   const sel = selectedIdx !== null ? filtered[selectedIdx] : null;
   const open = !!sel;
 
@@ -792,13 +857,42 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e) => {
-      if (e.key === 'Escape') { setSelectedIdx(null); return; }
-      if (e.key === 'ArrowRight') setSelectedIdx(i => (i + 1) % filtered.length);
-      if (e.key === 'ArrowLeft')  setSelectedIdx(i => (i - 1 + filtered.length) % filtered.length);
+      // Não sequestrar o teclado enquanto o usuário digita (busca) nem atalhos
+      // do navegador (Ctrl/Cmd/Alt + tecla).
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const len = filtered.length;
+      if (len === 0) return;
+      // Quantas colunas a grade tem AGORA (responsiva via auto-fill) — pra cima/
+      // baixo pularem uma LINHA inteira. Conta os tracks já resolvidos em px.
+      const cols = () => {
+        const g = gridRef.current;
+        if (!g) return 1;
+        return Math.max(1, getComputedStyle(g).gridTemplateColumns.split(' ').filter(Boolean).length);
+      };
+      switch (e.key) {
+        case 'Escape': setSelectedIdx(null); break;
+        case 'ArrowRight': e.preventDefault(); setSelectedIdx(i => ((i ?? -1) + 1) % len); break;
+        case 'ArrowLeft':  e.preventDefault(); setSelectedIdx(i => ((i ?? 0) - 1 + len) % len); break;
+        case 'ArrowDown':  e.preventDefault(); { const c = cols(); setSelectedIdx(i => Math.min((i ?? -c) + c, len - 1)); } break;
+        case 'ArrowUp':    e.preventDefault(); { const c = cols(); setSelectedIdx(i => Math.max((i ?? c) - c, 0)); } break;
+        case 'f': case 'F': if (sel) toggleBook(sel); break;  // F = favoritar
+        case 'g': case 'G': if (sel) togglePrep(sel); break;  // G = preparar
+        default: break;
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, filtered.length, setSelectedIdx]);
+  }, [open, filtered.length, sel, liveChar, update, setSelectedIdx]);
+
+  // Mantém o card selecionado visível ao navegar pelo teclado (sem rolar se já
+  // estiver à vista — block:'nearest').
+  React.useEffect(() => {
+    if (selectedIdx == null || !gridRef.current) return;
+    const el = gridRef.current.children[selectedIdx];
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+  }, [selectedIdx]);
 
   function togglePrep(s) {
     if (!liveChar) return;
@@ -821,9 +915,9 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
   const themeClass = `${dark ? 'hifi-dark' : 'hifi-light'}${theme && theme !== 'catppuccin' ? ' hifi-theme-' + theme : ''}`;
   const containerStyle = { '--accent': accent };
   const filterCats = [
-    { key: 'level',  label: lang === 'ptbr' ? 'nível'  : 'level',  values: ['truque','1','2','3','4','5','6','7','8','9'] },
-    { key: 'school', label: lang === 'ptbr' ? 'escola' : 'school', values: ['evoc','conj','abjur','ench','ilus','div','necr','trans'] },
-    { key: 'class',  label: lang === 'ptbr' ? 'classe' : 'class',  values: ['mago','clérigo','druida','bardo','feiticeiro','bruxo'] },
+    { key: 'level',  label: tt(lang, 'spell.level'),  values: ['truque','1','2','3','4','5','6','7','8','9'] },
+    { key: 'school', label: tt(lang, 'spell.school'), values: ['evoc','conj','abjur','ench','ilus','div','necr','trans'] },
+    { key: 'class',  label: tt(lang, 'spell.class'),  values: ['mago','clérigo','druida','bardo','feiticeiro','bruxo'] },
   ];
 
   // Filtros extras (desktop): além de classe/nível/escola, o usuário adiciona
@@ -864,25 +958,36 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
             clicável e abre o menu de trocar / editar / novo. O título continua
             sendo o herói — agora também é a navegação de personagem. */}
         <div style={{ position: 'relative', display: 'flex', alignItems: 'baseline', gap: 10 }}>
-          <span className="hifi-display" style={{ fontSize: 26, color: 'var(--text)' }}>Grimório</span>
-          {liveChar?.name && (
-            <button
-              onClick={() => setCharMenuOpen(o => !o)}
-              className="hifi-char-title hifi-display"
-              title={lang === 'ptbr' ? 'trocar / editar personagem' : 'switch / edit character'}
-              style={{
-                background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                fontSize: 26, color: accent, letterSpacing: '0.04em',
-              }}
-            >de {liveChar.name} <span style={{ fontSize: 15 }}>▾</span></button>
-          )}
+          {(() => {
+            const heroWord = window.makeT(lang)('title.spellbook');
+            const name = hifiCharName(liveChar, lang);
+            const heroSpan = <span className="hifi-display" style={{ fontSize: 26, color: 'var(--text)' }}>{heroWord}</span>;
+            const charBtn = liveChar?.name && (
+              <button
+                onClick={() => setCharMenuOpen(o => !o)}
+                className="hifi-char-title hifi-display"
+                title={window.makeT(lang)('char.switchEdit')}
+                style={{
+                  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                  fontSize: 26, color: accent, letterSpacing: '0.04em',
+                }}
+              >{lang === 'ptbr' ? <>de {name} </> : <>{name}'s </>}<span style={{ fontSize: 15 }}>▾</span></button>
+            );
+            // PT: "Grimório de <nome>" · EN: "<nome>'s Spellbook" (ordem inverte)
+            return lang === 'ptbr' ? <>{heroSpan}{charBtn}</> : <>{charBtn}{heroSpan}</>;
+          })()}
           {charMenuOpen && (
             <div onClick={() => setCharMenuOpen(false)} style={{
               position: 'fixed', inset: 0, zIndex: 70,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'rgba(0,0,0,0.4)',
             }}>
-              <div onClick={(e) => e.stopPropagation()} style={{
+              <div
+                ref={charMenuRef}
+                role="dialog" aria-modal="true"
+                aria-label={tt(lang, 'char.switch')}
+                tabIndex={-1}
+                onClick={(e) => e.stopPropagation()} style={{
                 background: 'var(--mantle)', border: '1px solid var(--surface1)', borderRadius: 8,
                 minWidth: 280, padding: '4px 0',
                 boxShadow: '0 16px 48px rgba(0,0,0,0.3)',
@@ -897,15 +1002,15 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
                         className="hifi-btn-ghost"
                         style={{ display: 'flex', flex: 1, alignItems: 'center', gap: 10, padding: '8px 12px', textAlign: 'left' }}>
                         <span style={{ width: 10, height: 10, borderRadius: '50%', background: dark ? ca.accent_dark : ca.accent }}/>
-                        <span style={{ flex: 1 }}>{c.name}</span>
+                        <span style={{ flex: 1 }}>{hifiCharName(c, lang)}</span>
                         {isCurrent && <span style={{ color: accent, fontSize: 12 }}>✓</span>}
                       </button>
                       <button
                         onClick={() => { setCharMenuOpen(false); setEditor({ charId: c.id }); }}
                         className="hifi-btn-ghost"
-                        title={lang === 'ptbr' ? 'editar' : 'edit'}
+                        title={tt(lang, 'char.edit')}
                         style={{ padding: '4px 10px', fontSize: 11, color: 'var(--subtext0)' }}>
-                        {lang === 'ptbr' ? 'editar' : 'edit'}
+                        {tt(lang, 'char.edit')}
                       </button>
                     </div>
                   );
@@ -921,7 +1026,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 11, color: 'var(--accent)',
                   }}>+</span>
-                  <span>{lang === 'ptbr' ? 'novo personagem' : 'new character'}</span>
+                  <span>{tt(lang, 'char.new')}</span>
                 </button>
               </div>
             </div>
@@ -937,13 +1042,13 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
             hifiPrintPrepared(preparedSpells, lang, showToast, { character: liveChar });
           }}
           className="hifi-link-action"
-          title={lang === 'ptbr' ? 'imprimir magias preparadas' : 'print prepared spells'}
-        >{lang === 'ptbr' ? 'imprimir preparadas' : 'print prepared'}</button>
+          title={tt(lang, 'action.printPreparedTitle')}
+        >{tt(lang, 'action.printPrepared')}</button>
         <button
           onClick={() => window.__shareBuild && window.__shareBuild()}
           className="hifi-link-action"
-          title={lang === 'ptbr' ? 'compartilhar build do personagem' : 'share character build'}
-        >{lang === 'ptbr' ? 'compartilhar build' : 'share build'}</button>
+          title={tt(lang, 'action.shareBuildTitle')}
+        >{tt(lang, 'action.shareBuild')}</button>
       </header>
 
       {/* Filter bar */}
@@ -951,7 +1056,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={lang === 'ptbr' ? 'buscar magias…' : 'search spells…'}
+          placeholder={tt(lang, 'filter.searchSpells')}
           className="hifi-input"
           style={{ width: 240 }}
         />
@@ -1002,14 +1107,14 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
           className={`hifi-filter-chip icon-only${onlyPrepared ? ' active' : ''}`}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
           aria-pressed={onlyPrepared}
-          aria-label={lang === 'ptbr' ? 'mostrar só as magias preparadas' : 'show only prepared spells'}
-          title={lang === 'ptbr' ? 'mostrar só as magias preparadas' : 'show only prepared spells'}
+          aria-label={tt(lang, 'action.onlyPrepared')}
+          title={tt(lang, 'action.onlyPrepared')}
         >
           <span style={{ color: onlyPrepared ? 'var(--accent)' : 'inherit', display: 'inline-flex' }}><HifiBookmarkIcon size={14}/></span>
         </button>
         <div style={{ flex: 1 }}/>
         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'var(--subtext0)' }}>
-          {filtered.length} {lang === 'ptbr' ? 'resultados' : 'results'}
+          {filtered.length} {tt(lang, 'filter.results')}
         </span>
       </div>
 
@@ -1027,7 +1132,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
               });
             }}/>
           ) : (
-          <div style={{
+          <div ref={gridRef} style={{
             display: 'grid',
             // Escala de 20% via custom property `--z` + calc() (substitui o antigo
             // `zoom: 1.2`, que era CSS não-padrão). `--z` cascateia pros cards;
@@ -1077,29 +1182,29 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
                       className="hifi-icon-btn"
                       onClick={() => toggleBook(sel)}
                       aria-pressed={bookmarked.has(hifiSpellKey(sel))}
-                      aria-label={lang === 'ptbr' ? 'favoritar magia' : 'bookmark spell'}
-                      title={lang === 'ptbr' ? 'favoritar magia' : 'bookmark spell'}
+                      aria-label={tt(lang, 'spell.bookmark')}
+                      title={tt(lang, 'spell.bookmark')}
                       style={{ flexShrink: 0, fontSize: 16, color: bookmarked.has(hifiSpellKey(sel)) ? 'var(--yellow)' : 'var(--subtext0)' }}
                     ><span aria-hidden="true">{bookmarked.has(hifiSpellKey(sel)) ? '★' : '☆'}</span></button>
                     <button
                       className="hifi-icon-btn"
                       onClick={() => hifiCopyLink(sel, lang, showToast)}
-                      aria-label={lang === 'ptbr' ? 'copiar link da magia' : 'copy spell link'}
-                      title={lang === 'ptbr' ? 'copiar link da magia' : 'copy spell link'}
+                      aria-label={tt(lang, 'spell.copyLink')}
+                      title={tt(lang, 'spell.copyLink')}
                       style={{ flexShrink: 0, color: 'var(--subtext0)' }}
                     ><HifiLinkIcon size={15}/></button>
                     <button
                       className="hifi-icon-btn"
                       onClick={() => setSelectedIdx(null)}
-                      aria-label={lang==='ptbr'?'fechar (esc)':'close (esc)'}
-                      title={lang==='ptbr'?'fechar (esc)':'close (esc)'}
+                      aria-label={tt(lang, 'nav.close')}
+                      title={tt(lang, 'nav.close')}
                       style={{ flexShrink: 0 }}
                     ><span aria-hidden="true">×</span></button>
                   </div>
                 </div>
                 <div style={{ marginTop: 4, fontSize: 13, color: 'var(--subtext0)', fontStyle: 'italic' }}>
-                  {schoolKey(sel.school)} · {sel.lvl === 0 ? (lang === 'ptbr' ? 'truque' : 'cantrip') : `${lang === 'ptbr' ? 'nível' : 'level'} ${sel.lvl}`}
-                  {sel.conc && <span> · <span style={{ color: 'var(--yellow)' }}>concentração</span></span>}
+                  {schoolName(sel.school, lang)} · {sel.lvl === 0 ? (tt(lang, 'spell.cantrip')) : `${tt(lang, 'spell.level')} ${sel.lvl}`}
+                  {sel.conc && <span> · <span style={{ color: 'var(--yellow)' }}>{tt(lang, 'spell.concentration')}</span></span>}
                   {sel.rit && <span> · <span style={{ color: 'var(--peach)' }}>ritual</span></span>}
                 </div>
               </div>
@@ -1134,21 +1239,23 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
         textTransform: 'uppercase',
         flexShrink: 0,
       }}>
-        <span>Spellbook — {lang === 'ptbr' ? 'estudo de design' : 'design study'}</span>
+        <span>Spellbook — {tt(lang, 'title.designStudy')}</span>
         <span style={{ color: 'var(--overlay0)' }}>·</span>
-        <span>{lang === 'ptbr' ? 'temas' : 'themes'}{' '}
+        <span>{tt(lang, 'section.themes')}{' '}
           <a href="https://catppuccin.com/" target="_blank" rel="noopener" style={hifiFooterLink}>Catppuccin</a>,{' '}
           <a href="https://www.nordtheme.com/" target="_blank" rel="noopener" style={hifiFooterLink}>Nord</a>,{' '}
           <a href="https://monokai.pro/" target="_blank" rel="noopener" style={hifiFooterLink}>Monokai</a>,{' '}
           <a href="https://ethanschoonover.com/solarized/" target="_blank" rel="noopener" style={hifiFooterLink}>Solarized</a>
         </span>
         <span style={{ color: 'var(--overlay0)' }}>·</span>
-        <span>{lang === 'ptbr' ? 'fontes' : 'fonts'}{' '}
+        <span>{tt(lang, 'section.fonts')}{' '}
           <a href="https://github.com/indestructible-type/Marauder" target="_blank" rel="noopener" style={hifiFooterLink}>Marauder</a>,{' '}
           <a href="https://fonts.google.com/specimen/Texturina" target="_blank" rel="noopener" style={hifiFooterLink}>Texturina</a>,{' '}
           <a href="https://www.jetbrains.com/lp/mono/" target="_blank" rel="noopener" style={hifiFooterLink}>JetBrains Mono</a>
         </span>
         <div style={{ flex: 1, minWidth: 14 }}/>
+        <HifiLangToggle lang={lang} versions={versions} versionKey={versionKey} onSwitch={switchVersion}/>
+        <span style={{ color: 'var(--overlay0)', marginLeft: 4, marginRight: 4 }}>·</span>
         <HifiThemeToggle dark={dark} lang={lang} style={{ width: 30, height: 30, fontSize: 15 }}/>
       </footer>
 
@@ -1214,13 +1321,13 @@ function FilterChipDropdown({ label, count, values, selected, onToggle, onClear,
             {count > 0 && (
               <button onClick={onClear} className="hifi-btn-ghost"
                 style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 12px', color: 'var(--subtext0)', fontSize: 12 }}>
-                {lang === 'ptbr' ? 'limpar' : 'clear'}
+                {tt(lang, 'filter.clear')}
               </button>
             )}
             {onRemove && (
               <button onClick={() => { onRemove(); setOpen(false); }} className="hifi-btn-ghost"
                 style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 12px', color: 'var(--red)', fontSize: 12 }}>
-                {lang === 'ptbr' ? '✕ remover filtro' : '✕ remove filter'}
+                {tt(lang, 'filter.removeFilter')}
               </button>
             )}
             {(count > 0 || onRemove) && <div style={{ height: 1, background: 'var(--surface1)', margin: '4px 0' }}/>}
@@ -1257,8 +1364,8 @@ function HifiAddFilter({ available, cfg, onAdd, lang }) {
         onClick={() => setOpen(o => !o)}
         className="hifi-filter-chip"
         style={{ borderStyle: 'dashed', borderColor: 'var(--surface1)', color: 'var(--subtext0)', background: 'transparent' }}
-        title={lang === 'ptbr' ? 'adicionar filtro personalizado' : 'add custom filter'}
-      >+ {lang === 'ptbr' ? 'mais' : 'more'}</button>
+        title={tt(lang, 'filter.addCustom')}
+      >+ {tt(lang, 'filter.more')}</button>
       {open && (
         <>
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 11 }}/>
@@ -1269,7 +1376,7 @@ function HifiAddFilter({ available, cfg, onAdd, lang }) {
             boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
           }}>
             <div style={{ padding: '4px 12px 6px' }}>
-              <span className="hifi-section-label">{lang === 'ptbr' ? 'adicionar filtro' : 'add filter'}</span>
+              <span className="hifi-section-label">{tt(lang, 'filter.add')}</span>
             </div>
             {available.map(key => (
               <button key={key}
@@ -1317,6 +1424,13 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
   // o fechamento por engano.
   const drawerRef = React.useRef(null);
   const drawerSwipe = React.useRef(null);
+
+  // A11y de diálogo (modal): foco preso, Escape fecha, foco volta. Só age quando
+  // o respectivo painel está aberto. window.useDialogA11y vem do v11.
+  const charSheetRef = React.useRef(null);
+  window.useDialogA11y(drawerRef, drawerOpen, () => setDrawerOpen(false));
+  window.useDialogA11y(charSheetRef, charSheetOpen, () => setCharSheetOpen(false));
+
   function onDrawerTouchStart(e) {
     const y = e.touches[0].clientY;
     const top = drawerRef.current ? drawerRef.current.getBoundingClientRect().top : 0;
@@ -1366,27 +1480,27 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
     return (
       <div className={`hifi ${themeClass}`} style={{ ...containerStyle, height: '100%', display: 'flex', flexDirection: 'column', paddingTop: 24, paddingBottom: 34 }}>
         <header className="hifi-flat-icons" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}>
-          <button className="hifi-icon-btn" onClick={() => setSelectedIdx(null)} aria-label={lang==='ptbr'?'voltar':'back'} title={lang==='ptbr'?'voltar':'back'}><span aria-hidden="true">‹</span></button>
+          <button className="hifi-icon-btn" onClick={() => setSelectedIdx(null)} aria-label={tt(lang, 'nav.back')} title={tt(lang, 'nav.back')}><span aria-hidden="true">‹</span></button>
           <div style={{ flex: 1 }}/>
           <button className="hifi-icon-btn"
             onClick={() => toggleBook(sel)}
             aria-pressed={bookmarked.has(hifiSpellKey(sel))}
-            aria-label={lang === 'ptbr' ? 'favoritar magia' : 'bookmark spell'}
-            title={lang === 'ptbr' ? 'favoritar magia' : 'bookmark spell'}
+            aria-label={tt(lang, 'spell.bookmark')}
+            title={tt(lang, 'spell.bookmark')}
             style={{ fontSize: 16, color: bookmarked.has(hifiSpellKey(sel)) ? 'var(--yellow)' : 'var(--subtext0)' }}>
             <span aria-hidden="true">{bookmarked.has(hifiSpellKey(sel)) ? '★' : '☆'}</span>
           </button>
           <button className="hifi-icon-btn"
             onClick={() => hifiCopyLink(sel, lang, showToast)}
-            aria-label={lang === 'ptbr' ? 'copiar link da magia' : 'copy spell link'}
-            title={lang === 'ptbr' ? 'copiar link da magia' : 'copy spell link'}
+            aria-label={tt(lang, 'spell.copyLink')}
+            title={tt(lang, 'spell.copyLink')}
             style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--subtext0)' }}><HifiLinkIcon size={15}/></button>
         </header>
         <div style={{ flex: 1, overflow: 'auto' }}>
           <div style={{ padding: '20px 18px 14px' }}>
             <HifiSpellName size={32}>{spellName(sel, lang)}</HifiSpellName>
             <div style={{ marginTop: 6, fontSize: 14, color: 'var(--subtext0)', fontStyle: 'italic' }}>
-              {schoolKey(sel.school)} · {sel.lvl === 0 ? (lang === 'ptbr' ? 'truque' : 'cantrip') : `${lang === 'ptbr' ? 'nível' : 'level'} ${sel.lvl}`}
+              {schoolName(sel.school, lang)} · {sel.lvl === 0 ? (tt(lang, 'spell.cantrip')) : `${tt(lang, 'spell.level')} ${sel.lvl}`}
               {sel.conc && <span> · <span style={{ color: 'var(--yellow)' }}>conc.</span></span>}
               {sel.rit && <span> · <span style={{ color: 'var(--peach)' }}>ritual</span></span>}
             </div>
@@ -1399,8 +1513,8 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
             onClick={() => togglePrep(sel)}
             style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, ...(prepared.has(hifiSpellKey(sel)) ? {} : { background: 'transparent', color: 'var(--accent)' }) }}
           >{prepared.has(hifiSpellKey(sel))
-            ? <><HifiBookmarkIcon size={13} filled/>{lang==='ptbr'?'preparada':'prepared'}</>
-            : (lang==='ptbr'?'preparar':'prepare')}</button>
+            ? <><HifiBookmarkIcon size={13} filled/>{tt(lang, 'spell.prepared')}</>
+            : (tt(lang, 'spell.prepareShort'))}</button>
         </div>
         <HifiToast toast={toast} accent={accent}/>
       </div>
@@ -1413,24 +1527,30 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
       <header style={{ padding: '10px 16px', borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span className="hifi-display" style={{ fontSize: 22, color: 'var(--text)', lineHeight: 1 }}>Grimório</span>
-            {liveChar?.name && (
-              <button
-                onClick={() => setCharSheetOpen(true)}
-                className="hifi-char-title hifi-display"
-                title={lang === 'ptbr' ? 'trocar / editar personagem' : 'switch / edit character'}
-                style={{
-                  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                  fontSize: 22, color: accent, letterSpacing: '0.04em', lineHeight: 1,
-                }}
-              >de {liveChar.name} <span style={{ fontSize: 13 }}>▾</span></button>
-            )}
+            {(() => {
+              const heroWord = window.makeT(lang)('title.spellbook');
+              const name = hifiCharName(liveChar, lang);
+              const heroSpan = <span className="hifi-display" style={{ fontSize: 22, color: 'var(--text)', lineHeight: 1 }}>{heroWord}</span>;
+              const charBtn = liveChar?.name && (
+                <button
+                  onClick={() => setCharSheetOpen(true)}
+                  className="hifi-char-title hifi-display"
+                  title={window.makeT(lang)('char.switchEdit')}
+                  style={{
+                    background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                    fontSize: 22, color: accent, letterSpacing: '0.04em', lineHeight: 1,
+                  }}
+                >{lang === 'ptbr' ? <>de {name} </> : <>{name}'s </>}<span style={{ fontSize: 13 }}>▾</span></button>
+              );
+              // PT: "Grimório de <nome>" · EN: "<nome>'s Spellbook" (ordem inverte)
+              return lang === 'ptbr' ? <>{heroSpan}{charBtn}</> : <>{charBtn}{heroSpan}</>;
+            })()}
           </div>
           <button
             onClick={() => setOnlyPrepared(v => !v)}
             className={`hifi-icon-btn${onlyPrepared ? ' active' : ''}`}
-            title={lang === 'ptbr' ? 'mostrar só as preparadas' : 'show only prepared'}
-            aria-label={lang === 'ptbr' ? 'mostrar só as preparadas' : 'show only prepared'}
+            title={tt(lang, 'action.onlyPreparedShort')}
+            aria-label={tt(lang, 'action.onlyPreparedShort')}
             aria-pressed={onlyPrepared}
             style={{
               width: 25, height: 25, marginTop: 2,
@@ -1466,6 +1586,10 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
       )}
       <div
         ref={drawerRef}
+        role={drawerOpen ? 'dialog' : undefined}
+        aria-modal={drawerOpen ? 'true' : undefined}
+        aria-label={drawerOpen ? (tt(lang, 'filter.searchFilterAria')) : undefined}
+        tabIndex={drawerOpen ? -1 : undefined}
         onTouchStart={onDrawerTouchStart}
         onTouchEnd={onDrawerTouchEnd}
         style={{
@@ -1487,31 +1611,31 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
         </button>
         {!drawerOpen ? (
           <div style={{ padding: '0 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: 'var(--overlay1)', fontSize: 14 }}>{lang === 'ptbr' ? 'buscar, filtrar…' : 'search, filter…'}</span>
+            <span style={{ color: 'var(--overlay1)', fontSize: 14 }}>{tt(lang, 'filter.searchFilterShort')}</span>
             <div style={{ flex: 1 }}/>
-            <HifiMono>{filtered.length} {lang === 'ptbr' ? 'magias' : 'spells'}</HifiMono>
+            <HifiMono>{filtered.length} {tt(lang, 'noun.spell.other')}</HifiMono>
           </div>
         ) : (
           <div style={{ flex: 1, overflow: 'auto', padding: '4px 16px 18px', display: 'flex', flexDirection: 'column', gap: 16 }}>
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={lang === 'ptbr' ? 'nome da magia…' : 'spell name…'}
+              placeholder={tt(lang, 'filter.spellName')}
               className="hifi-input"
               style={{ fontSize: 16 }}
             />
 
             <div>
-              <HifiSectionLabel style={{ marginBottom: 6 }}>{lang === 'ptbr' ? 'nível' : 'level'}</HifiSectionLabel>
+              <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'spell.level')}</HifiSectionLabel>
               <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
                 {['truque','1','2','3','4','5','6','7','8','9'].map(v => (
-                  <HifiPill key={v} active={filters.level?.has(v)} onClick={() => toggleFilter('level', v)}>{v === 'truque' ? (lang==='ptbr'?'truque':'cantrip') : v}</HifiPill>
+                  <HifiPill key={v} active={filters.level?.has(v)} onClick={() => toggleFilter('level', v)}>{v === 'truque' ? (tt(lang, 'spell.cantrip')) : v}</HifiPill>
                 ))}
               </div>
             </div>
 
             <div>
-              <HifiSectionLabel style={{ marginBottom: 6 }}>{lang === 'ptbr' ? 'escola' : 'school'}</HifiSectionLabel>
+              <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'spell.school')}</HifiSectionLabel>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {['evoc','conj','abjur','ench','ilus','div','necr','trans'].map(v => (
                   <HifiPill key={v} active={filters.school?.has(v)} onClick={() => toggleFilter('school', v)}>{v}</HifiPill>
@@ -1520,7 +1644,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
             </div>
 
             <div>
-              <HifiSectionLabel style={{ marginBottom: 6 }}>{lang === 'ptbr' ? 'classe' : 'class'}</HifiSectionLabel>
+              <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'spell.class')}</HifiSectionLabel>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {['mago','clérigo','druida','bardo','feiticeiro','bruxo'].map(v => (
                   <HifiPill key={v} active={filters.class?.has(v)} onClick={() => toggleFilter('class', v)}>{v}</HifiPill>
@@ -1529,7 +1653,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
             </div>
 
             <div>
-              <HifiSectionLabel style={{ marginBottom: 6 }}>{lang === 'ptbr' ? 'versão' : 'version'}</HifiSectionLabel>
+              <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'version.label')}</HifiSectionLabel>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {versions.map(v => (
                   <HifiPill
@@ -1538,7 +1662,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
                     onClick={() => {
                       switchVersion(v.key);
                       setDrawerOpen(false);
-                      showToast(lang === 'ptbr' ? `versão: ${v.short}` : `version: ${v.short}`);
+                      showToast(tt(lang, 'toast.versionShort', { short: v.short }));
                     }}
                   >
                     <span style={{
@@ -1555,8 +1679,9 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
             </div>
 
             <div>
-              <HifiSectionLabel style={{ marginBottom: 6 }}>{lang === 'ptbr' ? 'ferramentas' : 'tools'}</HifiSectionLabel>
+              <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'section.tools')}</HifiSectionLabel>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <HifiLangToggle lang={lang} versions={versions} versionKey={versionKey} onSwitch={switchVersion}/>
                 <HifiThemeToggle dark={dark} lang={lang}/>
                 <button
                   onClick={() => {
@@ -1565,52 +1690,52 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
                     hifiPrintPrepared(preparedSpells, lang, showToast, { character: liveChar });
                   }}
                   className="hifi-icon-btn"
-                  title={lang === 'ptbr' ? 'imprimir preparadas' : 'print prepared'}
+                  title={tt(lang, 'action.printPrepared')}
                   style={{ fontSize: 13, background: 'var(--surface1)' }}
                 >⎙</button>
                 <button
                   onClick={() => window.__shareBuild && window.__shareBuild()}
                   className="hifi-icon-btn"
-                  title={lang === 'ptbr' ? 'compartilhar build' : 'share build'}
+                  title={tt(lang, 'action.shareBuild')}
                   style={{ fontSize: 13, background: 'var(--surface1)' }}
                 >↗</button>
               </div>
             </div>
 
             <div>
-              <HifiSectionLabel style={{ marginBottom: 6 }}>{lang === 'ptbr' ? 'ações' : 'actions'}</HifiSectionLabel>
+              <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'section.actions')}</HifiSectionLabel>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 <button className="hifi-btn-secondary"
                   onClick={() => {
                     const url = window.location.href;
                     if (navigator.clipboard?.writeText) {
                       navigator.clipboard.writeText(url).then(
-                        () => showToast(lang === 'ptbr' ? 'link copiado' : 'link copied'),
-                        () => showToast(lang === 'ptbr' ? 'falha ao copiar' : 'copy failed', 'err'),
+                        () => showToast(tt(lang, 'toast.linkCopiedShort')),
+                        () => showToast(tt(lang, 'toast.copyFailed'), 'err'),
                       );
                     } else { showToast(url); }
                   }}>
-                  {lang === 'ptbr' ? 'copiar link' : 'copy link'}
+                  {tt(lang, 'action.copyLink')}
                 </button>
                 <button className="hifi-btn-secondary"
                   onClick={() => {
                     const url = window.location.href;
-                    const title = lang === 'ptbr' ? 'meu grimório' : 'my spellbook';
+                    const title = tt(lang, 'title.myGrimoire');
                     if (navigator.share) {
                       navigator.share({ title, url }).catch(() => {});
                     } else if (navigator.clipboard?.writeText) {
                       navigator.clipboard.writeText(url).then(
-                        () => showToast(lang === 'ptbr' ? 'link copiado' : 'link copied'),
+                        () => showToast(tt(lang, 'toast.linkCopiedShort')),
                         () => {},
                       );
                     } else { showToast(url); }
                   }}>
-                  {lang === 'ptbr' ? 'compartilhar filtro' : 'share filter'}
+                  {tt(lang, 'action.shareFilter')}
                 </button>
               </div>
             </div>
 
-            <button onClick={clearAllFilters} className="hifi-btn-ghost" style={{ alignSelf: 'flex-start' }}>{lang === 'ptbr' ? 'limpar filtros' : 'clear filters'}</button>
+            <button onClick={clearAllFilters} className="hifi-btn-ghost" style={{ alignSelf: 'flex-start' }}>{tt(lang, 'filter.clearAll')}</button>
           </div>
         )}
       </div>
@@ -1619,7 +1744,12 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
       {charSheetOpen && (
         <div onClick={() => setCharSheetOpen(false)}
           style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 20, display: 'flex', alignItems: 'flex-end' }}>
-          <div onClick={(e) => e.stopPropagation()}
+          <div
+            ref={charSheetRef}
+            role="dialog" aria-modal="true"
+            aria-label={tt(lang, 'char.switch')}
+            tabIndex={-1}
+            onClick={(e) => e.stopPropagation()}
             style={{
               width: '100%', background: 'var(--mantle)',
               borderTopLeftRadius: 16, borderTopRightRadius: 16,
@@ -1629,7 +1759,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
               <div style={{ width: 40, height: 4, borderRadius: 2, background: 'var(--surface2)' }}/>
             </div>
             <div className="hifi-section-label" style={{ padding: '4px 18px 8px' }}>
-              {lang === 'ptbr' ? 'personagem' : 'character'}
+              {tt(lang, 'char.label')}
             </div>
             {chars.map(c => {
               const ca = hifiAccentsFor(c, theme);
@@ -1644,14 +1774,14 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
                     className="hifi-btn-ghost"
                     style={{ display: 'flex', flex: 1, alignItems: 'center', gap: 12, padding: '12px 18px', textAlign: 'left' }}>
                     <span style={{ width: 12, height: 12, borderRadius: '50%', background: dark ? ca.accent_dark : ca.accent }}/>
-                    <span style={{ flex: 1, fontSize: 15 }}>{c.name}</span>
+                    <span style={{ flex: 1, fontSize: 15 }}>{hifiCharName(c, lang)}</span>
                     {isCurrent && <span style={{ color: dark ? ca.accent_dark : ca.accent, fontSize: 13 }}>✓</span>}
                   </button>
                   <button
                     onClick={() => { setCharSheetOpen(false); setEditor({ charId: c.id }); }}
                     className="hifi-btn-ghost"
                     style={{ padding: '6px 12px', fontSize: 12, color: 'var(--subtext0)' }}>
-                    {lang === 'ptbr' ? 'editar' : 'edit'}
+                    {tt(lang, 'char.edit')}
                   </button>
                 </div>
               );
@@ -1667,7 +1797,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 12, color: 'var(--accent)',
               }}>+</span>
-              <span style={{ fontSize: 15 }}>{lang === 'ptbr' ? 'novo personagem' : 'new character'}</span>
+              <span style={{ fontSize: 15 }}>{tt(lang, 'char.new')}</span>
             </button>
           </div>
         </div>
