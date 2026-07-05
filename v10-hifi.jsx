@@ -617,8 +617,8 @@ function hifiFilterConfig(lang) {
 
   const bool = b => (b ? (tt(lang, 'value.yes')) : (tt(lang, 'value.no')));
   return {
-    level:  { label: tt(lang, 'spell.level'),   base: true, get: s => [s.lvl === 0 ? 'truque' : String(s.lvl)] },
-    school: { label: tt(lang, 'spell.school'),  base: true, get: s => [schoolKey(s.school)] },
+    level:  { label: tt(lang, 'spell.level'),   base: true, get: s => [s.lvl === 0 ? 'truque' : String(s.lvl)], values: ['truque','1','2','3','4','5','6','7','8','9'] },
+    school: { label: tt(lang, 'spell.school'),  base: true, get: s => [schoolKey(s.school)], values: ['evoc','conj','abjur','ench','ilus','div','necr','trans'] },
     class:  { label: tt(lang, 'spell.class'),   base: true, get: s => (s.classes || []) },
     comp:   { label: tt(lang, 'spell.component'), get: s => (s.comp || '').split(/\s+/).filter(Boolean), values: ['V', 'S', 'M'] },
     conc:   { label: tt(lang, 'spell.concentration'), get: s => [bool(s.conc)], values: [bool(true), bool(false)] },
@@ -628,6 +628,34 @@ function hifiFilterConfig(lang) {
     range:  { label: tt(lang, 'spell.range'),  derive: true, get: s => (s.range ? [s.range] : []) },
     src:    { label: tt(lang, 'spell.source'),   derive: true, get: s => (s.src ? [s.src] : []) },
   };
+}
+
+function hifiFilterValues(key, allSpells, lang) {
+  const cfg = hifiFilterConfig(lang);
+  const def = cfg[key];
+  if (!def) return [];
+  if (def.values) return def.values;
+
+  const values = new Set();
+  (allSpells || []).forEach(s => {
+    def.get(s).forEach(v => {
+      if (v) values.add(v);
+    });
+  });
+
+  return [...values].sort((a, b) =>
+    String(a).localeCompare(String(b), lang === 'ptbr' ? 'pt' : 'en', { numeric: true })
+  );
+}
+
+function hifiSchoolFilterLabel(value, lang) {
+  const idx = SCHOOL_KEYS.indexOf(value);
+  return idx >= 0 ? schoolName(idx, lang) : value;
+}
+
+function hifiTitleCaseFilterLabel(value) {
+  const s = String(value || '');
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
 function useHifiAppState(preparedKeys, initialFilters) {
@@ -914,16 +942,15 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
 
   const themeClass = `${dark ? 'hifi-dark' : 'hifi-light'}${theme && theme !== 'catppuccin' ? ' hifi-theme-' + theme : ''}`;
   const containerStyle = { '--accent': accent };
-  const filterCats = [
-    { key: 'level',  label: tt(lang, 'spell.level'),  values: ['truque','1','2','3','4','5','6','7','8','9'] },
-    { key: 'school', label: tt(lang, 'spell.school'), values: ['evoc','conj','abjur','ench','ilus','div','necr','trans'] },
-    { key: 'class',  label: tt(lang, 'spell.class'),  values: ['mago','clérigo','druida','bardo','feiticeiro','bruxo'] },
-  ];
-
   // Filtros extras (desktop): além de classe/nível/escola, o usuário adiciona
   // outros campos dos JSONs via "+ mais". `extraFilters` = chaves ativas (ordem).
   const [extraFilters, setExtraFilters] = React.useState([]);
   const filterCfg = React.useMemo(() => hifiFilterConfig(versionLang), [versionLang]);
+  const filterCats = React.useMemo(() => ([
+    { key: 'level',  label: tt(lang, 'spell.level'),  values: hifiFilterValues('level', allSpells, versionLang) },
+    { key: 'school', label: tt(lang, 'spell.school'), values: hifiFilterValues('school', allSpells, versionLang), formatValue: v => hifiSchoolFilterLabel(v, versionLang) },
+    { key: 'class',  label: tt(lang, 'spell.class'),  values: hifiFilterValues('class', allSpells, versionLang), formatValue: v => hifiTitleCaseFilterLabel(v) },
+  ]), [lang, allSpells, versionLang]);
   // Valores selecionáveis de cada extra: estáticos (config) ou derivados
   // (distintos + ordenados) dos próprios dados quando `derive`.
   const extraValues = React.useMemo(() => {
@@ -1068,6 +1095,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
               count={filters[cat.key]?.size || 0}
               values={cat.values}
               selected={filters[cat.key] || new Set()}
+              formatValue={cat.formatValue}
               onToggle={(v) => toggleFilter(cat.key, v)}
               onClear={() => setFilters(p => ({ ...p, [cat.key]: new Set() }))}
               lang={lang}
@@ -1296,7 +1324,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
   );
 }
 
-function FilterChipDropdown({ label, count, values, selected, onToggle, onClear, onRemove, lang }) {
+function FilterChipDropdown({ label, count, values, selected, formatValue = v => v, onToggle, onClear, onRemove, lang }) {
   const [open, setOpen] = React.useState(false);
   const active = count > 0;
   return (
@@ -1343,7 +1371,7 @@ function FilterChipDropdown({ label, count, values, selected, onToggle, onClear,
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     background: sel ? 'var(--accent)' : 'transparent', color: 'var(--base)', fontSize: 10,
                   }}>{sel ? '✓' : ''}</span>
-                  <span style={{ color: 'var(--text)' }}>{v}</span>
+                  <span style={{ color: 'var(--text)' }}>{formatValue(v)}</span>
                 </button>
               );
             })}
@@ -1413,6 +1441,11 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
   const { allSpells, filtered, filters, setFilters, query, setQuery,
     selectedIdx, setSelectedIdx, onlyPrepared, setOnlyPrepared,
     versionKey, switchVersion, versions, versionLang } = state;
+  const mobileFilterValues = React.useMemo(() => ({
+    level: hifiFilterValues('level', allSpells, versionLang),
+    school: hifiFilterValues('school', allSpells, versionLang),
+    class: hifiFilterValues('class', allSpells, versionLang),
+  }), [allSpells, versionLang]);
   const { toast, show: showToast } = useHifiToast();
   const [drawerOpen, setDrawerOpen] = React.useState(initialDrawerOpen);
   const [charSheetOpen, setCharSheetOpen] = React.useState(false);
@@ -1628,7 +1661,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
             <div>
               <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'spell.level')}</HifiSectionLabel>
               <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
-                {['truque','1','2','3','4','5','6','7','8','9'].map(v => (
+                {mobileFilterValues.level.map(v => (
                   <HifiPill key={v} active={filters.level?.has(v)} onClick={() => toggleFilter('level', v)}>{v === 'truque' ? (tt(lang, 'spell.cantrip')) : v}</HifiPill>
                 ))}
               </div>
@@ -1637,8 +1670,8 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
             <div>
               <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'spell.school')}</HifiSectionLabel>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {['evoc','conj','abjur','ench','ilus','div','necr','trans'].map(v => (
-                  <HifiPill key={v} active={filters.school?.has(v)} onClick={() => toggleFilter('school', v)}>{v}</HifiPill>
+                {mobileFilterValues.school.map(v => (
+                  <HifiPill key={v} active={filters.school?.has(v)} onClick={() => toggleFilter('school', v)}>{hifiSchoolFilterLabel(v, versionLang)}</HifiPill>
                 ))}
               </div>
             </div>
@@ -1646,8 +1679,8 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
             <div>
               <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'spell.class')}</HifiSectionLabel>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {['mago','clérigo','druida','bardo','feiticeiro','bruxo'].map(v => (
-                  <HifiPill key={v} active={filters.class?.has(v)} onClick={() => toggleFilter('class', v)}>{v}</HifiPill>
+                {mobileFilterValues.class.map(v => (
+                  <HifiPill key={v} active={filters.class?.has(v)} onClick={() => toggleFilter('class', v)}>{hifiTitleCaseFilterLabel(v)}</HifiPill>
                 ))}
               </div>
             </div>

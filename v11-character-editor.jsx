@@ -646,6 +646,7 @@ Object.assign(window, {
   paletteFor, paletteForTheme, accentOf, normalizeAccentId,
   HIFI_DEFAULT_CHARS,
   loadCharacters, persistCharacters, useCharacters,
+  loadBookmarks, persistBookmarks, useBookmarks,
   togglePreparedFor, toggleBookmarkedFor,
   charHasPrepared, charHasBookmarked,
   CharacterEditor,

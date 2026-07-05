@@ -762,6 +762,44 @@
   to   { transform: translate(-50%, 0);   opacity: 1; }
 }
 
+.hifi-onboarding-actions {
+  animation: hifi-onboarding-actions-in 160ms cubic-bezier(.2,.7,.3,1);
+  will-change: transform, opacity;
+}
+@keyframes hifi-onboarding-actions-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.995); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hifi-onboarding-actions {
+    animation: none;
+    will-change: auto;
+  }
+}
+
+.hifi-onboarding-editor-backdrop {
+  animation: hifi-onboarding-backdrop-in 180ms ease-out;
+}
+.hifi-onboarding-editor-shell {
+  animation: hifi-onboarding-editor-in 220ms cubic-bezier(.2,.7,.3,1);
+  will-change: transform, opacity;
+}
+@keyframes hifi-onboarding-backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes hifi-onboarding-editor-in {
+  from { opacity: 0; transform: translateX(22px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hifi-onboarding-editor-backdrop,
+  .hifi-onboarding-editor-shell {
+    animation: none;
+    will-change: auto;
+  }
+}
+
 /* ──────────────────────────────────────────────────────────
    PRINT — adapted from the live spellbook stylesheet
    ────────────────────────────────────────────────────────── */

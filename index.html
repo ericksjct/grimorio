@@ -88,21 +88,36 @@
 <script type="text/babel">
 // ── UI prefs persistence (dark mode + active character survive a refresh) ──
 const UI_PREFS_KEY = 'spellbook-ui-prefs';
+const ONBOARDING_SEEN_KEY = 'spellbook-onboarding-v1';
 function loadPrefs() {
   try { return JSON.parse(localStorage.getItem(UI_PREFS_KEY)) || {}; } catch (e) { return {}; }
 }
 function savePrefs(p) {
   try { localStorage.setItem(UI_PREFS_KEY, JSON.stringify(p)); } catch (e) {}
 }
+function hasSeenOnboarding() {
+  try { return localStorage.getItem(ONBOARDING_SEEN_KEY) === '1'; } catch (e) { return false; }
+}
+function markOnboardingSeen() {
+  try { localStorage.setItem(ONBOARDING_SEEN_KEY, '1'); } catch (e) {}
+}
 
 // Idioma da UI segue a VERSÃO de magias ativa (acoplado): não há toggle
 // separado — escolher uma versão EN deixa o chrome em inglês. Na primeira
 // visita (sem versão salva) detectamos pelo idioma do navegador.
-function detectLang() {
+function browserLanguageCandidates() {
   try {
-    const nav = (navigator.languages && navigator.languages[0]) || navigator.language || '';
-    return String(nav).toLowerCase().startsWith('pt') ? 'ptbr' : 'en';
-  } catch (e) { return 'ptbr'; }
+    return [
+      ...Array.from(navigator.languages || []),
+      navigator.language,
+      navigator.userLanguage,
+      navigator.browserLanguage,
+    ].filter(Boolean).map(l => String(l).toLowerCase());
+  } catch (e) { return []; }
+}
+function detectLang() {
+  const candidates = browserLanguageCandidates();
+  return candidates.some(l => l.startsWith('pt')) ? 'ptbr' : 'en';
 }
 // Primeira versão de magias que casa com o idioma (2024 vem primeiro por idioma
 // em SPELL_VERSIONS), usada como default na primeira visita.
@@ -115,6 +130,57 @@ function langOfVersionKey(key) {
   const vs = window.SPELL_VERSIONS || [];
   const v = vs.find(x => x.key === key);
   return v ? v.lang : null;
+}
+
+function decodeSharedBuildPayload(payload) {
+  const binary = atob(payload);
+  const encoded = Array.from(binary, ch =>
+    '%' + ch.charCodeAt(0).toString(16).padStart(2, '0')
+  ).join('');
+  return JSON.parse(decodeURIComponent(encoded));
+}
+
+function decodeSharedBuildFromUrl(value) {
+  const raw = String(value || '').trim();
+  if (!raw) throw new Error('empty');
+  let payload = raw;
+  try {
+    const url = new URL(raw, window.location.href);
+    payload = url.searchParams.get('build') || raw;
+  } catch (e) {}
+  return decodeSharedBuildPayload(payload);
+}
+
+function uniqueImportedCharacterName(baseName, chars, lang) {
+  const fallback = lang === 'ptbr' ? 'Personagem importado' : 'Imported character';
+  const base = String(baseName || fallback).trim() || fallback;
+  const used = new Set((chars || []).map(c => String(c.name || '').toLowerCase()));
+  if (!used.has(base.toLowerCase())) return base;
+  const suffix = lang === 'ptbr' ? 'importado' : 'imported';
+  let i = 2;
+  let candidate = `${base} (${suffix})`;
+  while (used.has(candidate.toLowerCase())) {
+    candidate = `${base} (${suffix} ${i})`;
+    i += 1;
+  }
+  return candidate;
+}
+
+function importSharedBuildUrl(value, lang) {
+  const build = decodeSharedBuildFromUrl(value);
+  const chars = typeof loadCharacters === 'function' ? loadCharacters() : [];
+  const character = {
+    id: `char-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,6)}`,
+    name: uniqueImportedCharacterName(build.name, chars, lang),
+    accentId: build.accentId || 'blue',
+    prepared: Array.isArray(build.prepared) ? build.prepared : [],
+    bookmarked: [],
+  };
+  if (typeof persistCharacters === 'function') persistCharacters([...chars, character]);
+  if (Array.isArray(build.bookmarked) && typeof persistBookmarks === 'function') {
+    persistBookmarks([...new Set([...(typeof loadBookmarks === 'function' ? loadBookmarks() : []), ...build.bookmarked])]);
+  }
+  return character;
 }
 
 // Track viewport so we can swap desktop ⇆ mobile layout responsively.
@@ -138,6 +204,141 @@ function useViewport() {
   return size;
 }
 
+function OnboardingModal({ lang, dark, theme, onCreate, onContinue, onImported }) {
+  const T = (pt, en) => lang === 'ptbr' ? pt : en;
+  const [mode, setOnboardingMode] = React.useState('choice');
+  const [url, setUrl] = React.useState(() => {
+    try { return new URL(window.location.href).searchParams.has('build') ? window.location.href : ''; }
+    catch (e) { return ''; }
+  });
+  const [error, setError] = React.useState('');
+  const dialogRef = React.useRef(null);
+  const themeClass = `${dark ? 'hifi-dark' : 'hifi-light'}${theme && theme !== 'catppuccin' ? ' hifi-theme-' + theme : ''}`;
+  window.useDialogA11y?.(dialogRef, true, () => {});
+
+  function submitImport() {
+    try {
+      const character = importSharedBuildUrl(url, lang);
+      markOnboardingSeen();
+      onImported(character);
+    } catch (e) {
+      setError(T('Não consegui ler essa URL de build. Confira o link e tente de novo.', 'Could not read that build URL. Check the link and try again.'));
+    }
+  }
+
+  return (
+    <div
+      className={`hifi ${themeClass}`}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 100,
+        background: 'rgba(0,0,0,0.55)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 18,
+      }}
+    >
+      <section
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={T('Comece pelo seu personagem', 'Start with your character')}
+        tabIndex={-1}
+        style={{
+          width: 'min(680px, 100%)',
+          minHeight: 320,
+          maxHeight: 'min(720px, calc(100vh - 36px))',
+          overflow: 'hidden',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
+          background: 'var(--base)',
+          color: 'var(--text)',
+          border: '1px solid var(--surface1)',
+          borderRadius: 8,
+          boxShadow: '0 24px 80px rgba(0,0,0,0.45)',
+        }}
+      >
+        <div style={{
+          padding: 26,
+          background: 'var(--mantle)',
+          borderRight: '1px solid var(--surface1)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
+          gap: 12,
+        }}>
+          <div className="hifi-section-label">{T('primeira visita', 'first visit')}</div>
+          <h2 className="hifi-display" style={{ fontSize: 26, lineHeight: 1.12, margin: 0 }}>
+            {T('Comece pelo seu personagem', 'Start with your character')}
+          </h2>
+          <p style={{ margin: 0, color: 'var(--subtext0)', fontSize: 14, lineHeight: 1.55 }}>
+            {T(
+              'Crie ou importe um personagem para salvar magias preparadas, favoritas e aparência neste aparelho.',
+              'Create or import a character to save prepared spells, bookmarks, and appearance on this device.'
+            )}
+          </p>
+        </div>
+
+        <div style={{ padding: 22, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 10, overflow: 'auto' }}>
+          <div key={mode} className="hifi-onboarding-actions" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {mode === 'choice' ? (
+              <>
+              <button
+                className="hifi-btn-primary"
+                onClick={() => { markOnboardingSeen(); onCreate(); }}
+                style={{ minHeight: 38, justifyContent: 'center' }}
+              >
+                {T('Criar novo personagem', 'Create new character')}
+              </button>
+              <button
+                className="hifi-btn-secondary"
+                onClick={() => { setError(''); setOnboardingMode('import'); }}
+                style={{ minHeight: 38, justifyContent: 'center' }}
+              >
+                {T('Carregar personagem por URL', 'Load character from URL')}
+              </button>
+              <button
+                className="hifi-btn-ghost"
+                onClick={() => { markOnboardingSeen(); onContinue(); }}
+                style={{ minHeight: 38, justifyContent: 'center', color: 'var(--subtext0)' }}
+              >
+                {T('Continuar como aventureiro anônimo', 'Continue as anonymous adventurer')}
+              </button>
+              </>
+            ) : (
+              <>
+              <label className="hifi-section-label" htmlFor="onboarding-build-url">
+                {T('url da build', 'build url')}
+              </label>
+              <textarea
+                id="onboarding-build-url"
+                className="hifi-input"
+                value={url}
+                onChange={(e) => { setUrl(e.target.value); setError(''); }}
+                placeholder={T('Cole a URL da sua build aqui', 'Paste your build URL here')}
+                rows={4}
+                style={{ height: 'auto', minHeight: 92, resize: 'vertical', padding: 10, borderRadius: 6 }}
+              />
+              <p style={{ margin: '2px 0 8px', color: 'var(--subtext0)', fontSize: 12, lineHeight: 1.45 }}>
+                {T(
+                  'Ela será copiada para este aparelho; mudanças futuras não serão sincronizadas com o link original.',
+                  'It will be copied to this device; future changes will not sync with the original link.'
+                )}
+              </p>
+              {error && <div style={{ color: 'var(--red)', fontSize: 12, lineHeight: 1.4 }}>{error}</div>}
+              <button className="hifi-btn-primary" onClick={submitImport} style={{ minHeight: 38, justifyContent: 'center' }}>
+                {T('Importar neste aparelho', 'Import on this device')}
+              </button>
+              <button className="hifi-btn-ghost" onClick={() => setOnboardingMode('choice')} style={{ justifyContent: 'center' }}>
+                {T('Voltar', 'Back')}
+              </button>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function App() {
   const initial = React.useRef(loadPrefs()).current;
   // Design system canônico: tema "Claro (carta)" = 'daylight'. Só o modo
@@ -155,6 +356,8 @@ function App() {
   const [lang, setLang] = React.useState(
     initial.lang || langOfVersionKey(initialVersionKey) || detectLang()
   );
+  const [showOnboarding, setShowOnboarding] = React.useState(() => !hasSeenOnboarding());
+  const [onboardingEditorOpen, setOnboardingEditorOpen] = React.useState(false);
 
   const { chars } = useCharacters();
   const { w, h } = useViewport();
@@ -269,6 +472,48 @@ function App() {
         ? <HifiMobile lang={lang} dark={dark} theme={theme} character={character} />
         : <HifiDesktop lang={lang} dark={dark} theme={theme} character={character} width={w} height={h} />}
       <HifiPrintRoot />
+      {showOnboarding && (
+        <OnboardingModal
+          lang={lang}
+          dark={dark}
+          theme={theme}
+          onCreate={() => {
+            setShowOnboarding(false);
+            setOnboardingEditorOpen(true);
+          }}
+          onContinue={() => setShowOnboarding(false)}
+          onImported={(imported) => {
+            setCharName(imported.name);
+            setShowOnboarding(false);
+          }}
+        />
+      )}
+      {onboardingEditorOpen && (
+        <>
+          <div className="hifi-onboarding-editor-backdrop" style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.35)' }}/>
+          <div className="hifi-onboarding-editor-shell" style={{
+            position: 'fixed',
+            top: isMobile ? 0 : 0,
+            right: 0,
+            bottom: 0,
+            width: isMobile ? '100%' : 460,
+            zIndex: 101,
+            boxShadow: isMobile ? 'none' : '-8px 0 24px rgba(0,0,0,0.18)',
+          }}>
+            <CharacterEditor
+              lang={lang}
+              dark={dark}
+              theme={theme}
+              charId={null}
+              mode={isMobile ? 'fullscreen' : 'panel'}
+              onClose={(result) => {
+                setOnboardingEditorOpen(false);
+                if (result?.action === 'created') setCharName(result.character.name);
+              }}
+            />
+          </div>
+        </>
+      )}
     </>
   );
 }
