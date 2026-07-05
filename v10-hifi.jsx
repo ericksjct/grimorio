@@ -1446,6 +1446,31 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
     school: hifiFilterValues('school', allSpells, versionLang),
     class: hifiFilterValues('class', allSpells, versionLang),
   }), [allSpells, versionLang]);
+  const filterCfg = React.useMemo(() => hifiFilterConfig(versionLang), [versionLang]);
+  const [extraFilters, setExtraFilters] = React.useState([]);
+  const extraValues = React.useMemo(() => {
+    const out = {};
+    Object.keys(filterCfg).forEach(key => {
+      const def = filterCfg[key];
+      if (def.base) return;
+      if (def.values) out[key] = def.values;
+      else if (def.derive) {
+        const set = new Set();
+        (allSpells || []).forEach(s => def.get(s).forEach(v => v && set.add(v)));
+        out[key] = [...set].sort((a, b) => String(a).localeCompare(String(b), versionLang === 'ptbr' ? 'pt' : 'en', { numeric: true }));
+      }
+    });
+    return out;
+  }, [filterCfg, allSpells, versionLang]);
+  const addExtraFilter = (key) => {
+    setExtraFilters(list => list.includes(key) ? list : [...list, key]);
+    setFilters(p => (p[key] ? p : { ...p, [key]: new Set() }));
+  };
+  const removeExtraFilter = (key) => {
+    setExtraFilters(list => list.filter(k => k !== key));
+    setFilters(p => { const n = { ...p }; delete n[key]; return n; });
+  };
+  const availableExtras = Object.keys(filterCfg).filter(k => !filterCfg[k].base && !extraFilters.includes(k));
   const { toast, show: showToast } = useHifiToast();
   const [drawerOpen, setDrawerOpen] = React.useState(initialDrawerOpen);
   const [charSheetOpen, setCharSheetOpen] = React.useState(false);
@@ -1502,6 +1527,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
   }
   function clearAllFilters() {
     setFilters({ class: new Set(), level: new Set(), school: new Set() });
+    setExtraFilters([]);
     setQuery('');
   }
 
@@ -1684,6 +1710,35 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
                 ))}
               </div>
             </div>
+
+            {extraFilters.map(key => (
+              <div key={key}>
+                <HifiSectionLabel style={{ marginBottom: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  {filterCfg[key].label}
+                  <button
+                    onClick={() => removeExtraFilter(key)}
+                    className="hifi-btn-ghost"
+                    style={{ fontSize: 11, color: 'var(--red)', padding: '2px 6px' }}
+                  >{tt(lang, 'filter.removeFilter')}</button>
+                </HifiSectionLabel>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {(extraValues[key] || []).map(v => (
+                    <HifiPill key={v} active={filters[key]?.has(v)} onClick={() => toggleFilter(key, v)}>{v}</HifiPill>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {availableExtras.length > 0 && (
+              <div>
+                <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'filter.add')}</HifiSectionLabel>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {availableExtras.map(key => (
+                    <HifiPill key={key} onClick={() => addExtraFilter(key)}>+ {filterCfg[key].label}</HifiPill>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div>
               <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'version.label')}</HifiSectionLabel>
