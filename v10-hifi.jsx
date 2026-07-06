@@ -1330,6 +1330,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
 
 function FilterChipDropdown({ label, count, values, selected, formatValue = v => v, onToggle, onClear, onRemove, lang }) {
   const [open, setOpen] = React.useState(false);
+  const dropdownTransition = window.useHifiTransition(open, 180);
   const active = count > 0;
   return (
     <>
@@ -1341,10 +1342,10 @@ function FilterChipDropdown({ label, count, values, selected, formatValue = v =>
         <span className={`hifi-filter-chip-count${count > 0 ? '' : ' empty'}`}>{count > 0 ? count : 0}</span>
         <span style={{ color: 'var(--subtext0)', fontSize: 10 }}>▾</span>
       </button>
-      {open && (
+      {dropdownTransition.mounted && (
         <>
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 11 }}/>
-          <div style={{
+          <div className={open ? 'hifi-slide-up' : dropdownTransition.cls} style={{
             position: 'absolute', top: '100%', left: 0, marginTop: 6,
             background: 'var(--mantle)', border: '1px solid var(--surface1)', borderRadius: 4,
             minWidth: 200, maxHeight: 360, overflowY: 'auto', padding: '6px 0', zIndex: 12,
