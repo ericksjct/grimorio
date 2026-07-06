@@ -1546,57 +1546,57 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
 
   const themeClass = `${dark ? 'hifi-dark' : 'hifi-light'}${theme && theme !== 'catppuccin' ? ' hifi-theme-' + theme : ''}`;
   const containerStyle = { '--accent': accent };
-
-  // Detail screen
-  if (sel) {
-    return (
-      <div className={`hifi ${themeClass}`} style={{ ...containerStyle, height: '100%', display: 'flex', flexDirection: 'column', paddingTop: 24, paddingBottom: 34 }}>
-        <header className="hifi-flat-icons" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}>
-          <button className="hifi-icon-btn" onClick={() => setSelectedIdx(null)} aria-label={tt(lang, 'nav.back')} title={tt(lang, 'nav.back')}><span aria-hidden="true">‹</span></button>
-          <div style={{ flex: 1 }}/>
-          <button className="hifi-icon-btn"
-            onClick={() => toggleBook(sel)}
-            aria-pressed={bookmarked.has(hifiSpellKey(sel))}
-            aria-label={tt(lang, 'spell.bookmark')}
-            title={tt(lang, 'spell.bookmark')}
-            style={{ fontSize: 16, color: bookmarked.has(hifiSpellKey(sel)) ? 'var(--yellow)' : 'var(--subtext0)' }}>
-            <span aria-hidden="true">{bookmarked.has(hifiSpellKey(sel)) ? '★' : '☆'}</span>
-          </button>
-          <button className="hifi-icon-btn"
-            onClick={() => hifiCopyLink(sel, lang, showToast)}
-            aria-label={tt(lang, 'spell.copyLink')}
-            title={tt(lang, 'spell.copyLink')}
-            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--subtext0)' }}><HifiLinkIcon size={15}/></button>
-        </header>
-        <div style={{ flex: 1, overflow: 'auto' }}>
-          <div style={{ padding: '20px 18px 14px' }}>
-            <HifiSpellName size={32}>{spellName(sel, lang)}</HifiSpellName>
-            <div style={{ marginTop: 6, fontSize: 14, color: 'var(--subtext0)', fontStyle: 'italic' }}>
-              {schoolName(sel.school, lang)} · {sel.lvl === 0 ? (tt(lang, 'spell.cantrip')) : `${tt(lang, 'spell.level')} ${sel.lvl}`}
-              {sel.conc && <span> · <span style={{ color: 'var(--yellow)' }}>conc.</span></span>}
-              {sel.rit && <span> · <span style={{ color: 'var(--peach)' }}>ritual</span></span>}
-            </div>
-          </div>
-          <HifiDetailContent s={sel} lang={lang}/>
-        </div>
-        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--surface1)', display: 'flex', gap: 8 }}>
-          <button
-            className="hifi-btn-primary"
-            onClick={() => togglePrep(sel)}
-            style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, ...(prepared.has(hifiSpellKey(sel)) ? {} : { background: 'transparent', color: 'var(--accent)' }) }}
-          >{prepared.has(hifiSpellKey(sel))
-            ? <><HifiBookmarkIcon size={13} filled/>{tt(lang, 'spell.prepared')}</>
-            : (tt(lang, 'spell.prepareShort'))}</button>
-        </div>
-        <HifiToast toast={toast} accent={accent}/>
-      </div>
-    );
-  }
+  const showDetail = !!sel;
+  const detailScreenTransition = window.useHifiTransition(showDetail, 240);
 
   return (
     <div className={`hifi ${themeClass}`} style={{ ...containerStyle, height: '100%', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', paddingTop: 24, paddingBottom: 0 }}>
-      {/* Header: título + botão de preparadas */}
-      <header style={{ padding: '10px 16px', borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}>
+      {detailScreenTransition.mounted && (
+        <div className={showDetail ? 'hifi-slide-in-right' : (detailScreenTransition.mounted ? 'hifi-slide-out-right' : '')} style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column' }}>
+          <header className="hifi-flat-icons" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}>
+            <button className="hifi-icon-btn" onClick={() => setSelectedIdx(null)} aria-label={tt(lang, 'nav.back')} title={tt(lang, 'nav.back')}><span aria-hidden="true">‹</span></button>
+            <div style={{ flex: 1 }}/>
+            <button className="hifi-icon-btn"
+              onClick={() => toggleBook(sel)}
+              aria-pressed={bookmarked.has(hifiSpellKey(sel))}
+              aria-label={tt(lang, 'spell.bookmark')}
+              title={tt(lang, 'spell.bookmark')}
+              style={{ fontSize: 16, color: bookmarked.has(hifiSpellKey(sel)) ? 'var(--yellow)' : 'var(--subtext0)' }}>
+              <span aria-hidden="true">{bookmarked.has(hifiSpellKey(sel)) ? '★' : '☆'}</span>
+            </button>
+            <button className="hifi-icon-btn"
+              onClick={() => hifiCopyLink(sel, lang, showToast)}
+              aria-label={tt(lang, 'spell.copyLink')}
+              title={tt(lang, 'spell.copyLink')}
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--subtext0)' }}><HifiLinkIcon size={15}/></button>
+          </header>
+          <div style={{ flex: 1, overflow: 'auto' }}>
+            <div style={{ padding: '20px 18px 14px' }}>
+              <HifiSpellName size={32}>{spellName(sel, lang)}</HifiSpellName>
+              <div style={{ marginTop: 6, fontSize: 14, color: 'var(--subtext0)', fontStyle: 'italic' }}>
+                {schoolName(sel.school, lang)} · {sel.lvl === 0 ? (tt(lang, 'spell.cantrip')) : `${tt(lang, 'spell.level')} ${sel.lvl}`}
+                {sel.conc && <span> · <span style={{ color: 'var(--yellow)' }}>conc.</span></span>}
+                {sel.rit && <span> · <span style={{ color: 'var(--peach)' }}>ritual</span></span>}
+              </div>
+            </div>
+            <HifiDetailContent s={sel} lang={lang}/>
+          </div>
+          <div style={{ padding: '12px 16px', borderTop: '1px solid var(--surface1)', display: 'flex', gap: 8 }}>
+            <button
+              className="hifi-btn-primary"
+              onClick={() => togglePrep(sel)}
+              style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, ...(prepared.has(hifiSpellKey(sel)) ? {} : { background: 'transparent', color: 'var(--accent)' }) }}
+            >{prepared.has(hifiSpellKey(sel))
+              ? <><HifiBookmarkIcon size={13} filled/>{tt(lang, 'spell.prepared')}</>
+              : (tt(lang, 'spell.prepareShort'))}</button>
+          </div>
+          <HifiToast toast={toast} accent={accent}/>
+        </div>
+      )}
+
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, zIndex: 1 }}>
+        {/* Header: título + botão de preparadas */}
+        <header style={{ padding: '10px 16px', borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}>
             {(() => {
