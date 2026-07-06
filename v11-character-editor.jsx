@@ -305,6 +305,27 @@ function useDialogA11y(ref, open, onClose) {
 }
 if (typeof window !== 'undefined') window.useDialogA11y = useDialogA11y;
 
+function useHifiTransition(open, duration = 180) {
+  const [state, setState] = React.useState({ mounted: open, cls: open ? 'hifi-fade-in' : '' });
+  const timerRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (open) {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setState({ mounted: true, cls: 'hifi-fade-in' });
+    } else {
+      setState(prev => ({ ...prev, cls: 'hifi-fade-out' }));
+      timerRef.current = setTimeout(() => {
+        setState({ mounted: false, cls: '' });
+      }, duration);
+    }
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [open, duration]);
+
+  return state;
+}
+if (typeof window !== 'undefined') window.useHifiTransition = useHifiTransition;
+
 function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', charId = null, mode = 'panel', onClose }) {
   const { chars, update } = useCharacters();
   const isNew = !charId;
@@ -650,4 +671,5 @@ Object.assign(window, {
   togglePreparedFor, toggleBookmarkedFor,
   charHasPrepared, charHasBookmarked,
   CharacterEditor,
+  useHifiTransition,
 });
