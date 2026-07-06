@@ -1907,11 +1907,11 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
       )}
 
       {/* Character editor — full-screen on mobile */}
-      {editor && (
-        <div style={{ position: 'absolute', inset: 0, zIndex: 30 }}>
+      {mobileEditorTransition.mounted && (
+        <div className={editor ? 'hifi-fade-in' : mobileEditorTransition.cls} style={{ position: 'absolute', inset: 0, zIndex: 30 }}>
           <CharacterEditor
             lang={lang} dark={dark} theme={theme}
-            charId={editor.charId}
+            charId={editor?.charId}
             mode="fullscreen"
             onClose={(result) => {
               setEditor(null);
