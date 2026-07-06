@@ -866,6 +866,8 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
   // Editor state: null | { charId } where charId === null means create mode
   const [editor, setEditor] = React.useState(null);
 
+  const charMenuTransition = window.useHifiTransition(charMenuOpen, 240);
+
   // A11y do menu de personagem (modal): foco preso, Escape fecha, foco volta ao
   // botão que o abriu. window.useDialogA11y vem do v11 (carrega antes deste).
   const charMenuRef = React.useRef(null);
@@ -1003,8 +1005,8 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
             // PT: "Grimório de <nome>" · EN: "<nome>'s Spellbook" (ordem inverte)
             return lang === 'ptbr' ? <>{heroSpan}{charBtn}</> : <>{charBtn}{heroSpan}</>;
           })()}
-          {charMenuOpen && (
-            <div onClick={() => setCharMenuOpen(false)} style={{
+          {charMenuTransition.mounted && (
+            <div onClick={() => setCharMenuOpen(false)} className={charMenuOpen ? 'hifi-fade-in' : charMenuTransition.cls} style={{
               position: 'fixed', inset: 0, zIndex: 70,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'rgba(0,0,0,0.4)',
@@ -1014,7 +1016,9 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
                 role="dialog" aria-modal="true"
                 aria-label={tt(lang, 'char.switch')}
                 tabIndex={-1}
-                onClick={(e) => e.stopPropagation()} style={{
+                onClick={(e) => e.stopPropagation()}
+                className={charMenuOpen ? 'hifi-scale-in' : charMenuTransition.cls}
+                style={{
                 background: 'var(--mantle)', border: '1px solid var(--surface1)', borderRadius: 8,
                 minWidth: 280, padding: '4px 0',
                 boxShadow: '0 16px 48px rgba(0,0,0,0.3)',
