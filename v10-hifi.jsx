@@ -879,6 +879,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
 
   const sel = selectedIdx !== null ? filtered[selectedIdx] : null;
   const open = !!sel;
+  const detailTransition = window.useHifiTransition(open, 240);
 
   React.useEffect(() => {
     if (selectedIdx !== null && selectedIdx >= filtered.length) setSelectedIdx(null);
@@ -1201,56 +1202,58 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
           display: 'flex', flexDirection: 'column',
           position: 'relative',
         }}>
-          {open && (
-            <>
-              <div className="hifi-panel-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <HifiSpellName size={26}>{spellName(sel, lang)}</HifiSpellName>
-                  <div style={{ flex: 1 }}/>
-                  {/* Botões deslocados ~6px pra baixo: alinhamento óptico com o
-                      título serifado (o centro matemático fica visualmente alto). */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginTop: 6 }}>
-                    <button
-                      className="hifi-icon-btn"
-                      onClick={() => toggleBook(sel)}
-                      aria-pressed={bookmarked.has(hifiSpellKey(sel))}
-                      aria-label={tt(lang, 'spell.bookmark')}
-                      title={tt(lang, 'spell.bookmark')}
-                      style={{ flexShrink: 0, fontSize: 16, color: bookmarked.has(hifiSpellKey(sel)) ? 'var(--yellow)' : 'var(--subtext0)' }}
-                    ><span aria-hidden="true">{bookmarked.has(hifiSpellKey(sel)) ? '★' : '☆'}</span></button>
-                    <button
-                      className="hifi-icon-btn"
-                      onClick={() => hifiCopyLink(sel, lang, showToast)}
-                      aria-label={tt(lang, 'spell.copyLink')}
-                      title={tt(lang, 'spell.copyLink')}
-                      style={{ flexShrink: 0, color: 'var(--subtext0)' }}
-                    ><HifiLinkIcon size={15}/></button>
-                    <button
-                      className="hifi-icon-btn"
-                      onClick={() => setSelectedIdx(null)}
-                      aria-label={tt(lang, 'nav.close')}
-                      title={tt(lang, 'nav.close')}
-                      style={{ flexShrink: 0 }}
-                    ><span aria-hidden="true">×</span></button>
+          {detailTransition.mounted && (
+            <div className={open ? 'hifi-slide-in-right' : detailTransition.cls}>
+              <>
+                <div className="hifi-panel-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <HifiSpellName size={26}>{spellName(sel, lang)}</HifiSpellName>
+                    <div style={{ flex: 1 }}/>
+                    {/* Botões deslocados ~6px pra baixo: alinhamento óptico com o
+                        título serifado (o centro matemático fica visualmente alto). */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginTop: 6 }}>
+                      <button
+                        className="hifi-icon-btn"
+                        onClick={() => toggleBook(sel)}
+                        aria-pressed={bookmarked.has(hifiSpellKey(sel))}
+                        aria-label={tt(lang, 'spell.bookmark')}
+                        title={tt(lang, 'spell.bookmark')}
+                        style={{ flexShrink: 0, fontSize: 16, color: bookmarked.has(hifiSpellKey(sel)) ? 'var(--yellow)' : 'var(--subtext0)' }}
+                      ><span aria-hidden="true">{bookmarked.has(hifiSpellKey(sel)) ? '★' : '☆'}</span></button>
+                      <button
+                        className="hifi-icon-btn"
+                        onClick={() => hifiCopyLink(sel, lang, showToast)}
+                        aria-label={tt(lang, 'spell.copyLink')}
+                        title={tt(lang, 'spell.copyLink')}
+                        style={{ flexShrink: 0, color: 'var(--subtext0)' }}
+                      ><HifiLinkIcon size={15}/></button>
+                      <button
+                        className="hifi-icon-btn"
+                        onClick={() => setSelectedIdx(null)}
+                        aria-label={tt(lang, 'nav.close')}
+                        title={tt(lang, 'nav.close')}
+                        style={{ flexShrink: 0 }}
+                      ><span aria-hidden="true">×</span></button>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: 4, fontSize: 13, color: 'var(--subtext0)', fontStyle: 'italic' }}>
+                    {schoolName(sel.school, lang)} · {sel.lvl === 0 ? (tt(lang, 'spell.cantrip')) : `${tt(lang, 'spell.level')} ${sel.lvl}`}
+                    {sel.conc && <span> · <span style={{ color: 'var(--yellow)' }}>{tt(lang, 'spell.concentration')}</span></span>}
+                    {sel.rit && <span> · <span style={{ color: 'var(--peach)' }}>ritual</span></span>}
                   </div>
                 </div>
-                <div style={{ marginTop: 4, fontSize: 13, color: 'var(--subtext0)', fontStyle: 'italic' }}>
-                  {schoolName(sel.school, lang)} · {sel.lvl === 0 ? (tt(lang, 'spell.cantrip')) : `${tt(lang, 'spell.level')} ${sel.lvl}`}
-                  {sel.conc && <span> · <span style={{ color: 'var(--yellow)' }}>{tt(lang, 'spell.concentration')}</span></span>}
-                  {sel.rit && <span> · <span style={{ color: 'var(--peach)' }}>ritual</span></span>}
+                <div style={{ flex: 1, overflow: 'auto' }}>
+                  <HifiDetailContent s={sel} lang={lang}/>
                 </div>
-              </div>
-              <div style={{ flex: 1, overflow: 'auto' }}>
-                <HifiDetailContent s={sel} lang={lang}/>
-              </div>
-              {/* Rodapé: marcador de posição da magia na lista filtrada. */}
-              <div style={{
-                flexShrink: 0, padding: '8px 16px',
-                display: 'flex', justifyContent: 'flex-end',
-              }}>
-                <HifiMono>{selectedIdx + 1} / {filtered.length}</HifiMono>
-              </div>
-            </>
+                {/* Rodapé: marcador de posição da magia na lista filtrada. */}
+                <div style={{
+                  flexShrink: 0, padding: '8px 16px',
+                  display: 'flex', justifyContent: 'flex-end',
+                }}>
+                  <HifiMono>{selectedIdx + 1} / {filtered.length}</HifiMono>
+                </div>
+              </>
+            </div>
           )}
         </div>
       </div>
