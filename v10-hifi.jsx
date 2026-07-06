@@ -1391,6 +1391,7 @@ function FilterChipDropdown({ label, count, values, selected, formatValue = v =>
 // não adicionados; clicar adiciona um novo chip de filtro à faixa.
 function HifiAddFilter({ available, cfg, onAdd, lang }) {
   const [open, setOpen] = React.useState(false);
+  const addMenuTransition = window.useHifiTransition(open, 180);
   return (
     <div style={{ position: 'relative' }}>
       <button
@@ -1399,10 +1400,10 @@ function HifiAddFilter({ available, cfg, onAdd, lang }) {
         style={{ borderStyle: 'dashed', borderColor: 'var(--surface1)', color: 'var(--subtext0)', background: 'transparent' }}
         title={tt(lang, 'filter.addCustom')}
       >+ {tt(lang, 'filter.more')}</button>
-      {open && (
+      {addMenuTransition.mounted && (
         <>
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 11 }}/>
-          <div style={{
+          <div className={open ? 'hifi-slide-up' : addMenuTransition.cls} style={{
             position: 'absolute', top: '100%', left: 0, marginTop: 6,
             background: 'var(--mantle)', border: '1px solid var(--surface1)', borderRadius: 4,
             minWidth: 180, maxHeight: 360, overflowY: 'auto', padding: '6px 0', zIndex: 12,
