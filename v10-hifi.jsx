@@ -867,6 +867,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
   const [editor, setEditor] = React.useState(null);
 
   const charMenuTransition = window.useHifiTransition(charMenuOpen, 240);
+  const editorTransition = window.useHifiTransition(!!editor, 240);
 
   // A11y do menu de personagem (modal): foco preso, Escape fecha, foco volta ao
   // botão que o abriu. window.useDialogA11y vem do v11 (carrega antes deste).
@@ -1295,20 +1296,20 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
       </footer>
 
       {/* Character editor — slide-in panel from the right */}
-      {editor && (
+      {editorTransition.mounted && (
         <>
           <div
             onClick={() => setEditor(null)}
+            className={editor ? 'hifi-fade-in' : editorTransition.cls}
             style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 30 }}/>
-          <div style={{
+          <div className={editor ? 'hifi-slide-in-right' : (editorTransition.mounted ? 'hifi-slide-out-right' : '')} style={{
             position: 'absolute', top: 0, right: 0, bottom: 0,
             width: 460, zIndex: 31,
             boxShadow: '-8px 0 24px rgba(0,0,0,0.18)',
-            animation: 'hifi-slide-in 240ms cubic-bezier(.2,.7,.3,1)',
           }}>
             <CharacterEditor
               lang={lang} dark={dark} theme={theme}
-              charId={editor.charId}
+              charId={editor?.charId}
               mode="panel"
               onClose={(result) => {
                 setEditor(null);
