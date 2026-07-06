@@ -1486,6 +1486,9 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
   const [charSheetOpen, setCharSheetOpen] = React.useState(false);
   const [editor, setEditor] = React.useState(null);
 
+  const charSheetTransition = window.useHifiTransition(charSheetOpen, 240);
+  const mobileEditorTransition = window.useHifiTransition(!!editor, 240);
+
   // Swipe pra abrir/fechar o drawer. Fechado: arrastar pra cima abre. Aberto:
   // arrastar pra baixo fecha, mas só quando o gesto começa no topo (~64px, zona
   // do puxador/busca) — assim o scroll do conteúdo do drawer aberto não dispara
@@ -1839,8 +1842,9 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
       </div>
 
       {/* Character sheet (switcher) */}
-      {charSheetOpen && (
+      {charSheetTransition.mounted && (
         <div onClick={() => setCharSheetOpen(false)}
+          className={charSheetOpen ? 'hifi-fade-in' : charSheetTransition.cls}
           style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 20, display: 'flex', alignItems: 'flex-end' }}>
           <div
             ref={charSheetRef}
@@ -1848,6 +1852,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
             aria-label={tt(lang, 'char.switch')}
             tabIndex={-1}
             onClick={(e) => e.stopPropagation()}
+            className={charSheetOpen ? 'hifi-slide-up' : (charSheetTransition.mounted ? 'hifi-fade-out' : '')}
             style={{
               width: '100%', background: 'var(--mantle)',
               borderTopLeftRadius: 16, borderTopRightRadius: 16,
