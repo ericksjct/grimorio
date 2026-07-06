@@ -762,6 +762,43 @@
   to   { transform: translate(-50%, 0);   opacity: 1; }
 }
 
+@keyframes hifi-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes hifi-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes hifi-slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes hifi-slide-down {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes hifi-scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes hifi-slide-in-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes hifi-slide-out-right {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(24px); }
+}
+
+.hifi-fade-in { animation: hifi-fade-in 180ms cubic-bezier(.2,.7,.3,1) both; }
+.hifi-fade-out { animation: hifi-fade-out 180ms cubic-bezier(.2,.7,.3,1) both; }
+.hifi-slide-up { animation: hifi-slide-up 180ms cubic-bezier(.2,.7,.3,1) both; }
+.hifi-slide-down { animation: hifi-slide-down 180ms cubic-bezier(.2,.7,.3,1) both; }
+.hifi-scale-in { animation: hifi-scale-in 180ms cubic-bezier(.2,.7,.3,1) both; }
+.hifi-slide-in-right { animation: hifi-slide-in-right 240ms cubic-bezier(.2,.7,.3,1) both; }
+.hifi-slide-out-right { animation: hifi-slide-out-right 240ms cubic-bezier(.2,.7,.3,1) both; }
+
 .hifi-onboarding-actions {
   animation: hifi-onboarding-actions-in 160ms cubic-bezier(.2,.7,.3,1);
   will-change: transform, opacity;
@@ -1081,4 +1118,17 @@
 
   /* Force black/white so any leftover var-driven colors don't bleed */
   .hifi, .hifi * { color: #111 !important; background: transparent !important; box-shadow: none !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hifi-fade-in,
+  .hifi-fade-out,
+  .hifi-slide-up,
+  .hifi-slide-down,
+  .hifi-scale-in,
+  .hifi-slide-in-right,
+  .hifi-slide-out-right {
+    animation: none !important;
+    transition: none !important;
+  }
 }
