@@ -670,6 +670,24 @@ function remapClassFilter(set, fromLang, toLang) {
   return out;
 }
 
+// Círculo máximo que o personagem alcança, a partir das classes/níveis.
+// ponytail: heurística por tipo de conjurador (completo ceil(L/2), metade
+// ceil(L/4), bruxo ceil(L/2) até 5). Multiclasse pega o maior valor — a regra
+// oficial de combinar níveis fica pra quando alguém sentir falta.
+const HIFI_FULL_CASTERS = ['bard', 'cleric', 'druid', 'sorcerer', 'wizard'];
+const HIFI_HALF_CASTERS = ['paladin', 'ranger', 'artificer'];
+function hifiMaxCircle(classLevels) {
+  let max = 0;
+  (classLevels || []).forEach(({ class: c, level: L }) => {
+    let m = 0;
+    if (HIFI_FULL_CASTERS.includes(c)) m = Math.min(9, Math.ceil(L / 2));
+    else if (c === 'warlock') m = Math.min(5, Math.ceil(L / 2));
+    else if (HIFI_HALF_CASTERS.includes(c)) m = Math.min(5, Math.ceil(L / 4));
+    if (m > max) max = m;
+  });
+  return max;
+}
+
 // Config de filtros — fonte única usada pelo motor (accessor `get`) e pela UI
 // (label + valores). `base: true` = sempre visível; o resto entra via "+ mais".
 // `derive: true` = os valores selecionáveis vêm dos próprios dados (JSON).
@@ -718,7 +736,7 @@ function hifiTitleCaseFilterLabel(value) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
-function useHifiAppState(preparedKeys, initialFilters) {
+function useHifiAppState(preparedKeys, initialFilters, character) {
   const spellVersions = window.useSpellVersions ? window.useSpellVersions() : null;
   const allSpells = spellVersions?.spells || [];
   const versionKey = spellVersions?.current || '';
@@ -760,6 +778,24 @@ function useHifiAppState(preparedKeys, initialFilters) {
       setSelectedIdx(null);
     }
   }, [versionKey]);
+
+  // Auto-filtro pelo personagem: com classes definidas, pré-aplica os chips de
+  // classe e de nível (truque + círculos que ele alcança). São filtros normais
+  // e visíveis — o usuário pode limpar/ajustar; reaplicam quando o personagem
+  // (ou as classes dele) muda. A assinatura ignora mudanças irrelevantes do
+  // personagem (gastar slot, preparar magia) pra não brigar com o usuário.
+  const charClassSig = JSON.stringify(character?.classes || []);
+  React.useEffect(() => {
+    const cls = character?.classes || [];
+    if (!cls.length) return;
+    const dict = window.CLASS_PT || {};
+    const classSet = new Set(cls.map(c => (versionLang === 'ptbr' ? (dict[c.class] || c.class) : c.class)));
+    const maxC = hifiMaxCircle(cls);
+    const levelSet = new Set(['truque']);
+    for (let i = 1; i <= maxC; i++) levelSet.add(String(i));
+    setFilters(prev => ({ ...prev, class: classSet, level: levelSet }));
+    setSelectedIdx(null);
+  }, [charClassSig]);
 
   const filtered = React.useMemo(() => {
     let out = allSpells || [];
@@ -960,7 +996,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
   const prepared = React.useMemo(() => new Set(liveChar?.prepared || []), [liveChar]);
   const bookmarked = React.useMemo(() => new Set(bookmarks), [bookmarks]);
 
-  const state = useHifiAppState(prepared);
+  const state = useHifiAppState(prepared, undefined, liveChar);
   const { allSpells, filtered, filters, setFilters, query, setQuery,
     selectedIdx, setSelectedIdx, onlyPrepared, setOnlyPrepared,
     versionKey, switchVersion, versions, versionLang } = state;
@@ -1574,7 +1610,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
   const accent = dark ? charWithAccent.accent_dark : charWithAccent.accent;
   const prepared = React.useMemo(() => new Set(liveChar?.prepared || []), [liveChar]);
   const bookmarked = React.useMemo(() => new Set(bookmarks), [bookmarks]); // favoritas globais
-  const state = useHifiAppState(prepared);
+  const state = useHifiAppState(prepared, undefined, liveChar);
   const { allSpells, filtered, filters, setFilters, query, setQuery,
     selectedIdx, setSelectedIdx, onlyPrepared, setOnlyPrepared,
     versionKey, switchVersion, versions, versionLang } = state;

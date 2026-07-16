@@ -204,6 +204,7 @@ function importSharedBuildUrl(value, lang) {
     prepared: Array.isArray(build.prepared) ? build.prepared : [],
     bookmarked: [],
     slots: build.slots || { total: {}, used: {} },
+    classes: Array.isArray(build.classes) ? build.classes : [],
   };
   if (typeof persistCharacters === 'function') persistCharacters([...chars, character]);
   if (Array.isArray(build.bookmarked) && typeof persistBookmarks === 'function') {
@@ -469,6 +470,7 @@ function App() {
         name: c.name, accentId: c.accentId,
         prepared: c.prepared || [], bookmarked: (typeof loadBookmarks === 'function' ? loadBookmarks() : []),
         slots: c.slots || { total: {}, used: {} },
+        classes: c.classes || [],
       }))));
       const url = `${window.location.origin}${window.location.pathname}?build=${payload}`;
       if (navigator.share) {

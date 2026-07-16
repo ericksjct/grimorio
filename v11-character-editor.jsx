@@ -128,6 +128,24 @@ function hifiCharName(char, lang) {
 }
 if (typeof window !== 'undefined') window.hifiCharName = hifiCharName;
 
+// Classes conjuradoras (chaves canônicas em inglês — os mapas CLASS_PT/CLASS_EN
+// do loader traduzem pro rótulo do idioma ativo). Nível 1..20 por classe.
+const CASTER_CLASSES = ['artificer', 'bard', 'cleric', 'druid', 'paladin', 'ranger', 'sorcerer', 'warlock', 'wizard'];
+
+function _normClassLevels(list) {
+  if (!Array.isArray(list)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const cl of list) {
+    const key = String(cl?.class || '').toLowerCase();
+    const level = Math.max(1, Math.min(20, parseInt(cl?.level, 10) || 1));
+    if (!CASTER_CLASSES.includes(key) || seen.has(key)) continue;
+    seen.add(key);
+    out.push({ class: key, level });
+  }
+  return out;
+}
+
 // Espaços de magia: totais e gastos por nível (1..9). Guardados como objetos
 // { "1": 4, "3": 2 } — só níveis com valor > 0. `used` nunca excede `total`.
 function _normSlots(slots) {
@@ -152,6 +170,7 @@ function _normChar(c) {
     prepared: Array.isArray(c.prepared) ? c.prepared : [],
     bookmarked: Array.isArray(c.bookmarked) ? c.bookmarked : [],
     slots: _normSlots(c.slots),
+    classes: _normClassLevels(c.classes),
   };
 }
 
@@ -375,6 +394,8 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
   const [prepared, setPrepared] = React.useState(() => new Set(existing?.prepared || []));
   // Totais de espaços de magia por nível (1..9). '' = nível sem espaços.
   const [slotTotals, setSlotTotals] = React.useState(() => _normSlots(existing?.slots).total);
+  // Classes e níveis do personagem (multiclasse suportada).
+  const [classLevels, setClassLevels] = React.useState(() => _normClassLevels(existing?.classes));
   // Favoritas são globais (independentes do personagem) — vêm do store global.
   const { bookmarks } = useBookmarks();
   const bookmarked = React.useMemo(() => new Set(bookmarks), [bookmarks]);
@@ -437,6 +458,7 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
       prepared: [...prepared],
       // Mantém os gastos atuais; _normSlots (no _normChar) recorta used > total.
       slots: { total: slotTotals, used: _normSlots(existing?.slots).used },
+      classes: classLevels,
     };
     update(prev => isNew ? [...prev, next] : prev.map(c => c.id === charId ? next : c));
     onClose?.({ action: isNew ? 'created' : 'updated', character: next });
@@ -521,6 +543,65 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
           {name.length > 0 && nameError && (
             <div style={{ marginTop: 6, fontSize: 12, color: 'var(--red)' }}>{nameError}</div>
           )}
+        </div>
+
+        {/* Classes e níveis — pré-filtram a lista (classe + círculo máximo). */}
+        <div>
+          <HifiSectionLabel>{T('classes e níveis', 'classes & levels')}</HifiSectionLabel>
+          <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--subtext0)', lineHeight: 1.4 }}>
+            {T('a lista de magias abre já filtrada pelas classes e pelo círculo que o personagem alcança',
+               'the spell list opens pre-filtered by class and by the highest circle the character can cast')}
+          </p>
+          <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {classLevels.map((cl, idx) => {
+              const label = (key) => {
+                const pt = (window.CLASS_PT || {})[key] || key;
+                const raw = lang === 'ptbr' ? pt : key;
+                return raw.charAt(0).toUpperCase() + raw.slice(1);
+              };
+              const free = CASTER_CLASSES.filter(k => k === cl.class || !classLevels.some(o => o.class === k));
+              return (
+                <div key={cl.class} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <select
+                    value={cl.class}
+                    onChange={(e) => setClassLevels(prev => prev.map((o, i) => i === idx ? { ...o, class: e.target.value } : o))}
+                    aria-label={T('classe', 'class')}
+                    className="hifi-input"
+                    style={{ flex: 1, height: 34 }}
+                  >
+                    {free.map(k => <option key={k} value={k}>{label(k)}</option>)}
+                  </select>
+                  <input
+                    type="number" min={1} max={20} inputMode="numeric"
+                    value={cl.level}
+                    onChange={(e) => {
+                      const n = Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 1));
+                      setClassLevels(prev => prev.map((o, i) => i === idx ? { ...o, level: n } : o));
+                    }}
+                    aria-label={T(`nível de ${label(cl.class)}`, `${label(cl.class)} level`)}
+                    className="hifi-input"
+                    style={{ width: 62, textAlign: 'center' }}
+                  />
+                  <button
+                    className="hifi-icon-btn"
+                    onClick={() => setClassLevels(prev => prev.filter((_, i) => i !== idx))}
+                    aria-label={T('remover classe', 'remove class')}
+                    title={T('remover classe', 'remove class')}
+                  ><span aria-hidden="true">×</span></button>
+                </div>
+              );
+            })}
+            {classLevels.length < CASTER_CLASSES.length && (
+              <button
+                className="hifi-btn-ghost"
+                onClick={() => {
+                  const next = CASTER_CLASSES.find(k => !classLevels.some(o => o.class === k));
+                  if (next) setClassLevels(prev => [...prev, { class: next, level: 1 }]);
+                }}
+                style={{ alignSelf: 'flex-start', color: 'var(--accent)' }}
+              >+ {T('adicionar classe', 'add class')}</button>
+            )}
+          </div>
         </div>
 
         {/* Color */}
@@ -747,6 +828,7 @@ Object.assign(window, {
   loadBookmarks, persistBookmarks, useBookmarks,
   togglePreparedFor, toggleBookmarkedFor,
   setSlotUsedFor, longRestFor, _normSlots,
+  CASTER_CLASSES, _normClassLevels,
   charHasPrepared, charHasBookmarked,
   CharacterEditor,
   useHifiTransition,
