@@ -146,6 +146,55 @@ function _normClassLevels(list) {
   return out;
 }
 
+// Tabela de espaços do conjurador COMPLETO (PHB), por nível de conjurador.
+// Índice = nível 1..20; valor = [espaços do 1º..9º círculo].
+const FULL_CASTER_SLOTS = [
+  null,
+  [2],                          // 1
+  [3],                          // 2
+  [4, 2],                       // 3
+  [4, 3],                       // 4
+  [4, 3, 2],                    // 5
+  [4, 3, 3],                    // 6
+  [4, 3, 3, 1],                 // 7
+  [4, 3, 3, 2],                 // 8
+  [4, 3, 3, 3, 1],              // 9
+  [4, 3, 3, 3, 2],              // 10
+  [4, 3, 3, 3, 2, 1],           // 11
+  [4, 3, 3, 3, 2, 1],           // 12
+  [4, 3, 3, 3, 2, 1, 1],        // 13
+  [4, 3, 3, 3, 2, 1, 1],        // 14
+  [4, 3, 3, 3, 2, 1, 1, 1],     // 15
+  [4, 3, 3, 3, 2, 1, 1, 1],     // 16
+  [4, 3, 3, 3, 2, 1, 1, 1, 1],  // 17
+  [4, 3, 3, 3, 3, 1, 1, 1, 1],  // 18
+  [4, 3, 3, 3, 3, 2, 1, 1, 1],  // 19
+  [4, 3, 3, 3, 3, 2, 2, 1, 1],  // 20
+];
+
+// Sugere os totais de espaços a partir das classes/níveis.
+// ponytail: metade (paladino/patrulheiro/artífice) conta ceil(L/2) — exato pra
+// classe única, levemente generoso em multiclasse (a regra oficial usa floor).
+// Bruxo: espaços de pacto somados no círculo deles (recarga curta ignorada).
+function hifiSuggestedSlots(classLevels) {
+  let casterLevel = 0;
+  let warlockLevel = 0;
+  for (const { class: c, level: L } of _normClassLevels(classLevels)) {
+    if (c === 'warlock') warlockLevel += L;
+    else if (c === 'paladin' || c === 'ranger' || c === 'artificer') casterLevel += Math.ceil(L / 2);
+    else casterLevel += L; // conjurador completo
+  }
+  const out = {};
+  const row = FULL_CASTER_SLOTS[Math.min(20, casterLevel)] || [];
+  row.forEach((n, i) => { if (n > 0) out[i + 1] = n; });
+  if (warlockLevel > 0) {
+    const circle = Math.min(5, Math.ceil(warlockLevel / 2));
+    const count = warlockLevel >= 17 ? 4 : warlockLevel >= 11 ? 3 : warlockLevel >= 2 ? 2 : 1;
+    out[circle] = Math.min(9, (out[circle] || 0) + count);
+  }
+  return out;
+}
+
 // Espaços de magia: totais e gastos por nível (1..9). Guardados como objetos
 // { "1": 4, "3": 2 } — só níveis com valor > 0. `used` nunca excede `total`.
 function _normSlots(slots) {
@@ -396,6 +445,16 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
   const [slotTotals, setSlotTotals] = React.useState(() => _normSlots(existing?.slots).total);
   // Classes e níveis do personagem (multiclasse suportada).
   const [classLevels, setClassLevels] = React.useState(() => _normClassLevels(existing?.classes));
+
+  // Slots automáticos: mudou classe/nível → recalcula os totais da tabela.
+  // Pula o mount (preserva ajustes manuais salvos); depois disso a sugestão
+  // sobrescreve, e o jogador ainda pode retocar os números antes de salvar.
+  const classSig = JSON.stringify(classLevels);
+  const mountedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!mountedRef.current) { mountedRef.current = true; return; }
+    if (classLevels.length) setSlotTotals(hifiSuggestedSlots(classLevels));
+  }, [classSig]);
   // Favoritas são globais (independentes do personagem) — vêm do store global.
   const { bookmarks } = useBookmarks();
   const bookmarked = React.useMemo(() => new Set(bookmarks), [bookmarks]);
@@ -567,7 +626,7 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
                     onChange={(e) => setClassLevels(prev => prev.map((o, i) => i === idx ? { ...o, class: e.target.value } : o))}
                     aria-label={T('classe', 'class')}
                     className="hifi-input"
-                    style={{ flex: 1, height: 34 }}
+                    style={{ flex: 1 }}
                   >
                     {free.map(k => <option key={k} value={k}>{label(k)}</option>)}
                   </select>
@@ -651,8 +710,8 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
             </HifiMono>
           </div>
           <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--subtext0)', lineHeight: 1.4 }}>
-            {T('quantos espaços por nível (deixe 0 pra ocultar o nível)',
-               'how many slots per level (leave 0 to hide the level)')}
+            {T('calculados automaticamente das classes — ajuste se quiser (0 oculta o círculo)',
+               'auto-calculated from the classes — tweak if you like (0 hides the circle)')}
           </p>
           <div style={{
             marginTop: 10, display: 'grid',
@@ -672,7 +731,7 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
                       return next;
                     });
                   }}
-                  aria-label={T(`espaços de nível ${lvl}`, `level ${lvl} slots`)}
+                  aria-label={T(`espaços do ${lvl}º círculo`, `level ${lvl} slots`)}
                   className="hifi-input"
                   style={{ width: '100%', textAlign: 'center', padding: '4px 2px', fontSize: 13 }}
                 />
@@ -694,7 +753,7 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
           </div>
 
           {/* Tab switcher */}
-          <div style={{ marginTop: 8, display: 'flex', gap: 4 }}>
+          <div style={{ marginTop: 8, display: 'flex', gap: 4, flexShrink: 0 }}>
             {[
               { id: 'all',        label: T('todas', 'all') },
               { id: 'prepared',   label: T('preparadas', 'prepared') },
@@ -714,7 +773,7 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
             placeholder={T('buscar magia…', 'search spell…')}
             aria-label={T('buscar magia', 'search spell')}
             className="hifi-input"
-            style={{ marginTop: 8, width: '100%' }}
+            style={{ marginTop: 8, width: '100%', flexShrink: 0 }}
           />
 
           <div style={{
@@ -740,7 +799,7 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
                       {spellName(s, lang)}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--subtext0)', fontStyle: 'italic' }}>
-                      {schoolKey(s.school)} · {s.lvl === 0 ? T('truque', 'cantrip') : `${T('nv', 'lvl')} ${s.lvl}`}
+                      {schoolKey(s.school)} · {s.lvl === 0 ? T('truque', 'cantrip') : `${T('círc.', 'lvl')} ${s.lvl}`}
                     </div>
                   </div>
                   <button onClick={() => togglePrep(s)}
@@ -828,7 +887,7 @@ Object.assign(window, {
   loadBookmarks, persistBookmarks, useBookmarks,
   togglePreparedFor, toggleBookmarkedFor,
   setSlotUsedFor, longRestFor, _normSlots,
-  CASTER_CLASSES, _normClassLevels,
+  CASTER_CLASSES, _normClassLevels, hifiSuggestedSlots,
   charHasPrepared, charHasBookmarked,
   CharacterEditor,
   useHifiTransition,

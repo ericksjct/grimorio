@@ -16,7 +16,9 @@ const STRINGS = {
   ptbr: {
     'spell.cantrip': 'truque',
     'spell.cantripShort': 'T',
-    'spell.level': 'nível',
+    // "Círculo" é o termo da tradução oficial pro nível DA MAGIA (evita
+    // confusão com o nível do personagem).
+    'spell.level': 'círculo',
     'spell.cast': 'execução',
     'spell.castTime': 'execução',
     'spell.range': 'alcance',
@@ -49,7 +51,7 @@ const STRINGS = {
     'print.dc': 'CD',
     'print.bonus': 'bônus',
     'print.spellSlots': 'espaços de magia',
-    'print.slotShort': 'nv',
+    'print.slotShort': 'c.',
     'print.preparing': '⎙ preparando impressão…',
     'print.noPrepared': 'nenhuma magia preparada',
     'print.printing': '⎙ imprimindo {n} {nounSpell}…',
@@ -101,7 +103,7 @@ const STRINGS = {
     'nav.close': 'fechar (esc)',
     'filter.byLabel': 'filtrar por {label}',
     'toast.loadFailed': 'não consegui carregar as magias — verifique a conexão',
-    'slots.slotAria': 'nível {lvl}: espaço {i} de {n}',
+    'slots.slotAria': 'círculo {lvl}: espaço {i} de {n}',
     'slots.spend': 'gastar espaço',
     'slots.restore': 'restaurar espaço',
     'slots.rested': '🌙 espaços de magia restaurados',

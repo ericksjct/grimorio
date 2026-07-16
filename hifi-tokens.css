@@ -612,6 +612,13 @@
    claro — continua claramente mais fraco que o texto digitado (--text). */
 .hifi-input::placeholder { color: var(--overlay2); }
 
+/* Inputs numéricos em pílula (slots, nível de classe): os spinners nativos
+   empurram o dígito pro lado num controle de ~40px e quebram o centrado —
+   esconde; digitar direto é mais rápido que clicar na setinha. */
+input.hifi-input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
+input.hifi-input[type='number']::-webkit-inner-spin-button,
+input.hifi-input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
 /* ──────────────────────────────────────────────────────────
    FOCO DE TECLADO — anel visível em todo controle interativo.
    :focus-visible só dispara pra teclado/AT (não pro clique de mouse),

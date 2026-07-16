@@ -67,7 +67,7 @@ function v8Upgrade(s, lang) {
     ? 'O dado da magia aumenta para 2d6 no nível 5, 3d6 no nível 11, e 4d6 no nível 17.'
     : "The spell's damage increases by 1d6 at levels 5, 11, and 17.";
   return lang === 'ptbr'
-    ? `Quando conjurada usando um espaço de magia de nível ${s.lvl + 1} ou superior, o efeito aumenta em proporção ao nível do espaço.`
+    ? `Quando conjurada usando um espaço de magia do ${s.lvl + 1}º círculo ou superior, o efeito aumenta em proporção ao círculo do espaço.`
     : `When cast using a spell slot of level ${s.lvl + 1} or higher, the effect scales with the slot level.`;
 }
 
