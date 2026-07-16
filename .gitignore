@@ -5,3 +5,10 @@ Thumbs.db
 .vscode/
 .idea/
 .superpowers/
+
+# Artefatos de debug/screenshot de sessões de desenvolvimento
+debug-*.png
+v10-*.png
+v10-body.txt
+scroll-*.png
+capture-scroll.js

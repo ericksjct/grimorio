@@ -457,9 +457,63 @@ function HifiLangToggle({ lang = 'ptbr', versions = [], versionKey, onSwitch }) 
 // A troca claro/escuro é feita pelo HifiThemeToggle (☀️ / 🌙).
 
 // ──────────────────────────────────────────────────────────────────
+// SLOT TRACKER — espaços de magia do personagem ativo (desktop + mobile)
+// Pip cheio = disponível; vazio = gasto. Clicar num pip gasta/restaura até ele.
+// Totais são configurados no editor de personagem; sem totais → não renderiza.
+// ──────────────────────────────────────────────────────────────────
+function HifiSlotTracker({ character, update, lang, style }) {
+  const slots = character?.slots || { total: {}, used: {} };
+  const levels = [1,2,3,4,5,6,7,8,9].filter(l => (slots.total[l] || 0) > 0);
+  if (!character || !levels.length) return null;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', ...style }}>
+      <span className="hifi-section-label" style={{ flexShrink: 0 }}>{tt(lang, 'print.spellSlots')}</span>
+      {levels.map(lvl => {
+        const total = slots.total[lvl];
+        const used = slots.used[lvl] || 0;
+        return (
+          <span key={lvl} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+            <span className="hifi-mono" style={{ fontSize: 10, fontWeight: 600, color: `var(--level-${lvl})` }}>{lvl}</span>
+            <span style={{ display: 'inline-flex', gap: 3 }}>
+              {Array.from({ length: total }, (_, i) => {
+                const spent = i < used;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setSlotUsedFor(character.id, lvl, spent ? i : i + 1, update)}
+                    aria-pressed={spent}
+                    aria-label={tt(lang, 'slots.slotAria', { lvl, i: i + 1, n: total })}
+                    title={spent ? tt(lang, 'slots.restore') : tt(lang, 'slots.spend')}
+                    style={{
+                      width: 13, height: 13, borderRadius: '50%', padding: 0, cursor: 'pointer',
+                      border: `1.5px solid ${spent ? 'var(--surface2)' : 'var(--accent)'}`,
+                      background: spent ? 'transparent' : 'var(--accent)',
+                      transition: 'background 120ms, border-color 120ms',
+                    }}
+                  />
+                );
+              })}
+            </span>
+          </span>
+        );
+      })}
+      <button
+        className="hifi-btn-ghost"
+        onClick={() => {
+          longRestFor(character.id, update);
+          window.dispatchEvent(new CustomEvent('hifi-toast', { detail: { msg: tt(lang, 'slots.rested') } }));
+        }}
+        title={tt(lang, 'slots.longRestTitle')}
+        style={{ fontSize: 11, color: 'var(--subtext0)', padding: '2px 8px', flexShrink: 0 }}
+      >🌙 {tt(lang, 'slots.longRest')}</button>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
 // SPELL CARD (shared)
 // ──────────────────────────────────────────────────────────────────
-function HifiSpellCard({ s, lang, prepared, bookmarked, selected, onClick, onTogglePrepared, compact }) {
+const HifiSpellCard = React.memo(function HifiSpellCard({ s, lang, prepared, bookmarked, selected, onClick, onTogglePrepared, compact }) {
   const tier = tierSymbol(s.lvl);
   const desc = window.v8Description ? window.v8Description(s, lang) : '';
   // HTML cru da fonte (preserva parágrafos); '' quando só há texto puro.
@@ -591,7 +645,13 @@ function HifiSpellCard({ s, lang, prepared, bookmarked, selected, onClick, onTog
       </div>
     </div>
   );
-}
+}, (prev, next) =>
+  // ponytail: compara só os props de dados — os callbacks são arrows recriadas
+  // a cada render, então incluí-los anularia o memo. Eles só capturam valores
+  // estáveis (índice via functional update, ids), então ignorar é seguro.
+  prev.s === next.s && prev.lang === next.lang && prev.prepared === next.prepared &&
+  prev.bookmarked === next.bookmarked && prev.selected === next.selected && prev.compact === next.compact
+);
 
 // ──────────────────────────────────────────────────────────────────
 // FILTER ENGINE (reuses parsing/filtering from v7)
@@ -704,12 +764,10 @@ function useHifiAppState(preparedKeys, initialFilters) {
   const filtered = React.useMemo(() => {
     let out = allSpells || [];
     if (query.trim()) {
-      const q = query.trim().toLowerCase();
-      out = out.filter(s => {
-        const name = spellName(s, versionLang) || '';
-        const en = s.en || '';
-        return name.toLowerCase().includes(q) || en.toLowerCase().includes(q);
-      });
+      const q = hifiNorm(query.trim());
+      out = out.filter(s =>
+        hifiNorm(spellName(s, versionLang)).includes(q) || hifiNorm(s.en).includes(q)
+      );
     }
     // Aplica todo filtro ativo genericamente: a magia passa se algum dos seus
     // valores (def.get) estiver na seleção. Cobre os filtros base (classe/nível/
@@ -825,6 +883,52 @@ function HifiDetailContent({ s, lang }) {
   );
 }
 
+// ──────────────────────────────────────────────────────────────────
+// COMPARADOR DE EDIÇÕES — vê a mesma magia na outra edição (2014 ↔ 2024),
+// no mesmo idioma. Carrega a outra versão sob demanda (cache do loader) e
+// casa a magia pelo nome em inglês (estável entre edições).
+// ──────────────────────────────────────────────────────────────────
+function useEditionCompare(sel, versionKey, versions, lang, showToast) {
+  const [alt, setAlt] = React.useState(null); // { spell, version } quando ativo
+  const [loading, setLoading] = React.useState(false);
+  // Trocar de magia ou de versão desliga a comparação.
+  React.useEffect(() => { setAlt(null); }, [sel, versionKey]);
+  const cur = versions.find(v => v.key === versionKey) || null;
+  const other = cur ? (versions.find(v => v.lang === cur.lang && v.key !== cur.key) || null) : null;
+  const toggle = React.useCallback(async () => {
+    if (alt) { setAlt(null); return; }
+    if (!sel || !other || loading) return;
+    setLoading(true);
+    try {
+      const spells = await window.loadSpellVersion(other.key);
+      const spell = spells.find(s => hifiNorm(s.en) === hifiNorm(sel.en))
+        || spells.find(s => hifiNorm(s.pt) === hifiNorm(sel.pt));
+      if (spell) setAlt({ spell, version: other });
+      else showToast(tt(lang, 'compare.notFound', { edition: other.short }), 'err');
+    } finally {
+      setLoading(false);
+    }
+  }, [alt, sel, other, loading, lang, showToast]);
+  return { alt, cur, other, toggle, loading };
+}
+
+// Botão-link que alterna a comparação (usado no detalhe desktop e mobile).
+function HifiCompareButton({ compare, lang, style }) {
+  if (!compare.other) return null;
+  return (
+    <button
+      className="hifi-btn-ghost"
+      onClick={compare.toggle}
+      disabled={compare.loading}
+      style={{ fontSize: 12, color: 'var(--accent)', padding: '2px 0', alignSelf: 'flex-start', ...style }}
+    >
+      {compare.alt
+        ? `↩ ${tt(lang, 'compare.back', { edition: compare.cur?.short || '' })}`
+        : `⇄ ${tt(lang, 'compare.view', { edition: compare.other.short })}`}
+    </button>
+  );
+}
+
 function HifiStat({ label, value }) {
   return (
     <div>
@@ -881,6 +985,16 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
   const sel = selectedIdx !== null ? filtered[selectedIdx] : null;
   const open = !!sel;
   const detailTransition = window.useHifiTransition(open, 240);
+  const compare = useEditionCompare(sel, versionKey, versions, lang, showToast);
+  // O que o painel exibe: a magia selecionada ou a versão dela na outra edição.
+  // Retém a última magia durante a animação de saída (sel=null com o painel
+  // ainda montado), senão spellName(null) crasheia — mesmo fix do mobile.
+  const lastSelRef = React.useRef(null);
+  if (sel) lastSelRef.current = sel;
+  // actionSpell = magia da VERSÃO ATUAL (chaves de preparar/favoritar);
+  // shownSpell pode ser a da outra edição (comparador), só pra exibição.
+  const actionSpell = sel || lastSelRef.current;
+  const shownSpell = compare.alt?.spell || actionSpell;
 
   React.useEffect(() => {
     if (selectedIdx !== null && selectedIdx >= filtered.length) setSelectedIdx(null);
@@ -1152,6 +1266,12 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
         </span>
       </div>
 
+      {/* Espaços de magia do personagem ativo (some quando não configurados) */}
+      <HifiSlotTracker
+        character={liveChar} update={update} lang={lang}
+        style={{ padding: '8px 28px', borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}
+      />
+
       {/* Grid + panel */}
       <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
         <div style={{ flex: 1, overflow: 'auto', padding: '20px 28px' }}>
@@ -1185,7 +1305,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
                 prepared={prepared.has(hifiSpellKey(s))}
                 bookmarked={bookmarked.has(hifiSpellKey(s))}
                 selected={i === selectedIdx}
-                onClick={() => setSelectedIdx(i === selectedIdx ? null : i)}
+                onClick={() => setSelectedIdx(prev => (prev === i ? null : i))}
                 onTogglePrepared={() => togglePrep(s)}
               />
             ))}
@@ -1208,22 +1328,22 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
               <>
                 <div className="hifi-panel-header">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <HifiSpellName size={26}>{spellName(sel, lang)}</HifiSpellName>
+                    <HifiSpellName size={26}>{spellName(shownSpell, lang)}</HifiSpellName>
                     <div style={{ flex: 1 }}/>
                     {/* Botões deslocados ~6px pra baixo: alinhamento óptico com o
                         título serifado (o centro matemático fica visualmente alto). */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginTop: 6 }}>
                       <button
                         className="hifi-icon-btn"
-                        onClick={() => toggleBook(sel)}
-                        aria-pressed={bookmarked.has(hifiSpellKey(sel))}
+                        onClick={() => toggleBook(actionSpell)}
+                        aria-pressed={bookmarked.has(hifiSpellKey(actionSpell))}
                         aria-label={tt(lang, 'spell.bookmark')}
                         title={tt(lang, 'spell.bookmark')}
-                        style={{ flexShrink: 0, fontSize: 16, color: bookmarked.has(hifiSpellKey(sel)) ? 'var(--yellow)' : 'var(--subtext0)' }}
-                      ><span aria-hidden="true">{bookmarked.has(hifiSpellKey(sel)) ? '★' : '☆'}</span></button>
+                        style={{ flexShrink: 0, fontSize: 16, color: bookmarked.has(hifiSpellKey(actionSpell)) ? 'var(--yellow)' : 'var(--subtext0)' }}
+                      ><span aria-hidden="true">{bookmarked.has(hifiSpellKey(actionSpell)) ? '★' : '☆'}</span></button>
                       <button
                         className="hifi-icon-btn"
-                        onClick={() => hifiCopyLink(sel, lang, showToast)}
+                        onClick={() => hifiCopyLink(actionSpell, lang, showToast)}
                         aria-label={tt(lang, 'spell.copyLink')}
                         title={tt(lang, 'spell.copyLink')}
                         style={{ flexShrink: 0, color: 'var(--subtext0)' }}
@@ -1238,13 +1358,14 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
                     </div>
                   </div>
                   <div style={{ marginTop: 4, fontSize: 13, color: 'var(--subtext0)', fontStyle: 'italic' }}>
-                    {schoolName(sel.school, lang)} · {sel.lvl === 0 ? (tt(lang, 'spell.cantrip')) : `${tt(lang, 'spell.level')} ${sel.lvl}`}
-                    {sel.conc && <span> · <span style={{ color: 'var(--yellow)' }}>{tt(lang, 'spell.concentration')}</span></span>}
-                    {sel.rit && <span> · <span style={{ color: 'var(--peach)' }}>ritual</span></span>}
+                    {schoolName(shownSpell.school, lang)} · {shownSpell.lvl === 0 ? (tt(lang, 'spell.cantrip')) : `${tt(lang, 'spell.level')} ${shownSpell.lvl}`}
+                    {shownSpell.conc && <span> · <span style={{ color: 'var(--yellow)' }}>{tt(lang, 'spell.concentration')}</span></span>}
+                    {shownSpell.rit && <span> · <span style={{ color: 'var(--peach)' }}>ritual</span></span>}
                   </div>
+                  <HifiCompareButton compare={compare} lang={lang} style={{ marginTop: 6 }}/>
                 </div>
                 <div style={{ flex: 1, overflow: 'auto' }}>
-                  <HifiDetailContent s={sel} lang={lang}/>
+                  <HifiDetailContent s={shownSpell} lang={lang}/>
                 </div>
                 {/* Rodapé: marcador de posição da magia na lista filtrada. */}
                 <div style={{
@@ -1338,7 +1459,13 @@ function FilterChipDropdown({ label, count, values, selected, formatValue = v =>
   const active = count > 0;
   return (
     <>
-      <button onClick={() => setOpen(o => !o)} className={`hifi-filter-chip${active ? ' active' : ''}`}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className={`hifi-filter-chip${active ? ' active' : ''}`}
+        aria-label={`${tt(lang, 'filter.byLabel', { label })}${count > 0 ? ` (${count})` : ''}`}
+        aria-haspopup="true"
+        aria-expanded={open}
+      >
         <span>{label}</span>
         {/* Badge sempre presente pra reservar o espaço e manter o shape do botão
             estável. Com contagem: pílula cheia na accent. Sem contagem: mostra um
@@ -1548,45 +1675,53 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
   const containerStyle = { '--accent': accent };
   const showDetail = !!sel;
   const detailScreenTransition = window.useHifiTransition(showDetail, 240);
+  // Mantém a última magia renderizada durante a animação de saída (240ms),
+  // senão o overlay tenta renderizar com sel=null e crasheia o app.
+  const lastSelRef = React.useRef(null);
+  if (sel) lastSelRef.current = sel;
+  const detailSpell = sel || lastSelRef.current;
+  const compare = useEditionCompare(sel, versionKey, versions, lang, showToast);
+  const shownSpell = compare.alt?.spell || detailSpell;
 
   return (
     <div className={`hifi ${themeClass}`} style={{ ...containerStyle, height: '100%', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', paddingTop: 24, paddingBottom: 0 }}>
       {detailScreenTransition.mounted && (
-        <div className={showDetail ? 'hifi-slide-in-right' : (detailScreenTransition.mounted ? 'hifi-slide-out-right' : '')} style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column' }}>
+        <div className={showDetail ? 'hifi-slide-in-right' : (detailScreenTransition.mounted ? 'hifi-slide-out-right' : '')} style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column', background: 'var(--base)' }}>
           <header className="hifi-flat-icons" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}>
             <button className="hifi-icon-btn" onClick={() => setSelectedIdx(null)} aria-label={tt(lang, 'nav.back')} title={tt(lang, 'nav.back')}><span aria-hidden="true">‹</span></button>
             <div style={{ flex: 1 }}/>
             <button className="hifi-icon-btn"
-              onClick={() => toggleBook(sel)}
-              aria-pressed={bookmarked.has(hifiSpellKey(sel))}
+              onClick={() => toggleBook(detailSpell)}
+              aria-pressed={bookmarked.has(hifiSpellKey(detailSpell))}
               aria-label={tt(lang, 'spell.bookmark')}
               title={tt(lang, 'spell.bookmark')}
-              style={{ fontSize: 16, color: bookmarked.has(hifiSpellKey(sel)) ? 'var(--yellow)' : 'var(--subtext0)' }}>
-              <span aria-hidden="true">{bookmarked.has(hifiSpellKey(sel)) ? '★' : '☆'}</span>
+              style={{ fontSize: 16, color: bookmarked.has(hifiSpellKey(detailSpell)) ? 'var(--yellow)' : 'var(--subtext0)' }}>
+              <span aria-hidden="true">{bookmarked.has(hifiSpellKey(detailSpell)) ? '★' : '☆'}</span>
             </button>
             <button className="hifi-icon-btn"
-              onClick={() => hifiCopyLink(sel, lang, showToast)}
+              onClick={() => hifiCopyLink(detailSpell, lang, showToast)}
               aria-label={tt(lang, 'spell.copyLink')}
               title={tt(lang, 'spell.copyLink')}
               style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--subtext0)' }}><HifiLinkIcon size={15}/></button>
           </header>
           <div style={{ flex: 1, overflow: 'auto' }}>
             <div style={{ padding: '20px 18px 14px' }}>
-              <HifiSpellName size={32}>{spellName(sel, lang)}</HifiSpellName>
+              <HifiSpellName size={32}>{spellName(shownSpell, lang)}</HifiSpellName>
               <div style={{ marginTop: 6, fontSize: 14, color: 'var(--subtext0)', fontStyle: 'italic' }}>
-                {schoolName(sel.school, lang)} · {sel.lvl === 0 ? (tt(lang, 'spell.cantrip')) : `${tt(lang, 'spell.level')} ${sel.lvl}`}
-                {sel.conc && <span> · <span style={{ color: 'var(--yellow)' }}>conc.</span></span>}
-                {sel.rit && <span> · <span style={{ color: 'var(--peach)' }}>ritual</span></span>}
+                {schoolName(shownSpell.school, lang)} · {shownSpell.lvl === 0 ? (tt(lang, 'spell.cantrip')) : `${tt(lang, 'spell.level')} ${shownSpell.lvl}`}
+                {shownSpell.conc && <span> · <span style={{ color: 'var(--yellow)' }}>conc.</span></span>}
+                {shownSpell.rit && <span> · <span style={{ color: 'var(--peach)' }}>ritual</span></span>}
               </div>
+              <HifiCompareButton compare={compare} lang={lang} style={{ marginTop: 8 }}/>
             </div>
-            <HifiDetailContent s={sel} lang={lang}/>
+            <HifiDetailContent s={shownSpell} lang={lang}/>
           </div>
           <div style={{ padding: '12px 16px', borderTop: '1px solid var(--surface1)', display: 'flex', gap: 8 }}>
             <button
               className="hifi-btn-primary"
-              onClick={() => togglePrep(sel)}
-              style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, ...(prepared.has(hifiSpellKey(sel)) ? {} : { background: 'transparent', color: 'var(--accent)' }) }}
-            >{prepared.has(hifiSpellKey(sel))
+              onClick={() => togglePrep(detailSpell)}
+              style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, ...(prepared.has(hifiSpellKey(detailSpell)) ? {} : { background: 'transparent', color: 'var(--accent)' }) }}
+            >{prepared.has(hifiSpellKey(detailSpell))
               ? <><HifiBookmarkIcon size={13} filled/>{tt(lang, 'spell.prepared')}</>
               : (tt(lang, 'spell.prepareShort'))}</button>
           </div>
@@ -1633,6 +1768,12 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
         </div>
       </header>
 
+      {/* Espaços de magia — faixa compacta com rolagem horizontal */}
+      <HifiSlotTracker
+        character={liveChar} update={update} lang={lang}
+        style={{ padding: '8px 16px', borderBottom: '1px solid var(--surface1)', flexWrap: 'nowrap', overflowX: 'auto', flexShrink: 0 }}
+      />
+
       <div style={{ flex: 1, overflow: 'auto', padding: '12px 12px 88px' }}>
         {filtered.length === 0 ? (
           <HifiEmptyState lang={lang} onClear={() => { clearAllFilters(); setOnlyPrepared(false); }}/>
@@ -1650,6 +1791,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
           ))}
         </div>
         )}
+      </div>
       </div>
 
       {/* Bottom drawer */}

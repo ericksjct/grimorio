@@ -13,6 +13,12 @@
 // ── name: adapted spells carry { pt, en } (see spells-data-loader.jsx) ──
 function spellName(s, lang) { return (lang === 'ptbr' ? s.pt : s.en) || s.pt || s.en || ''; }
 
+// Normaliza pra busca: minúsculas e sem diacríticos ("Bênção" → "bencao"),
+// pra "druidica" achar "Arte Druídica". Usada pelo grid (v10) e pelo editor (v11).
+function hifiNorm(str) {
+  return String(str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 // ── school: spells store a numeric school index; map to its short key ──
 const SCHOOL_KEYS = ['abjur', 'conj', 'div', 'ench', 'evoc', 'ilus', 'necr', 'trans'];
 function schoolKey(idx) { return SCHOOL_KEYS[idx] || 'evoc'; }
@@ -88,4 +94,4 @@ function v8UpgradeHtml(s, lang) {
 }
 
 // Expose on window too — v10-hifi.jsx guards some calls with `window.v8Description ? …`.
-Object.assign(window, { spellName, schoolKey, schoolName, levelKey, SCHOOL_KEYS, SCHOOL_NAMES_PT, SCHOOL_NAMES_EN, v8Description, v8Upgrade, v8DescriptionHtml, v8UpgradeHtml, V8_DESCRIPTIONS_PT });
+Object.assign(window, { spellName, schoolKey, schoolName, levelKey, hifiNorm, SCHOOL_KEYS, SCHOOL_NAMES_PT, SCHOOL_NAMES_EN, v8Description, v8Upgrade, v8DescriptionHtml, v8UpgradeHtml, V8_DESCRIPTIONS_PT });

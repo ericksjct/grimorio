@@ -11,6 +11,9 @@
 <!-- Favicon: SVG transparente (fita de preparada + estrela de favorita) -->
 <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
 
+<!-- PWA: instalável e 100% offline (service worker pré-cacheia shell + magias) -->
+<link rel="manifest" href="manifest.json"/>
+
 <!-- Open Graph / share-build previews -->
 <meta property="og:type" content="website"/>
 <meta property="og:title" content="Grimório · Magias de D&D 5e"/>
@@ -68,11 +71,36 @@
   </div>
 </div>
 
+<script>
+// Plano B do boot: se o app não montou em 12s (CDN fora, erro de transpile…),
+// troca os pontinhos por uma mensagem acionável em vez de girar pra sempre.
+// Script simples de propósito — precisa funcionar mesmo se React/Babel falharem.
+setTimeout(function () {
+  var boot = document.querySelector('#root .od-boot');
+  if (!boot) return; // React montou e substituiu o conteúdo — tudo certo.
+  var dots = boot.querySelector('.od-boot__dots');
+  if (dots) dots.remove();
+  var msg = document.createElement('div');
+  msg.className = 'od-fallback';
+  msg.innerHTML = 'O grimório está demorando mais que o normal.<br/>' +
+    'Verifique a conexão e <a href="javascript:location.reload()" style="color:inherit">recarregue a página</a>.<br/>' +
+    '<span style="opacity:.7">Taking too long? Check your connection and reload.</span>';
+  boot.appendChild(msg);
+}, 12000);
+
+// PWA: registra o service worker (offline + instalável). file:// não suporta.
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+</script>
+
 <!-- React + Babel standalone (pinned). Babel transpiles the JSX modules below
      in the browser, so this same folder works locally (file://), in the preview,
      and on GitHub Pages with no build step. -->
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" integrity="sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" integrity="sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
 <!-- Production dependency set for the V11 (hi-fi) product.
@@ -175,6 +203,7 @@ function importSharedBuildUrl(value, lang) {
     accentId: build.accentId || 'blue',
     prepared: Array.isArray(build.prepared) ? build.prepared : [],
     bookmarked: [],
+    slots: build.slots || { total: {}, used: {} },
   };
   if (typeof persistCharacters === 'function') persistCharacters([...chars, character]);
   if (Array.isArray(build.bookmarked) && typeof persistBookmarks === 'function') {
@@ -342,8 +371,11 @@ function OnboardingModal({ lang, dark, theme, onCreate, onContinue, onImported }
 function App() {
   const initial = React.useRef(loadPrefs()).current;
   // Design system canônico: tema "Claro (carta)" = 'daylight'. Só o modo
-  // claro/escuro alterna (toggle da vela); o modo é persistido.
-  const [dark, setDark] = React.useState(initial.dark ?? false);
+  // claro/escuro alterna (toggle da vela); o modo é persistido. Na primeira
+  // visita (sem preferência salva) segue o modo do sistema operacional.
+  const [dark, setDark] = React.useState(
+    initial.dark ?? (window.matchMedia?.('(prefers-color-scheme: dark)')?.matches || false)
+  );
   const [theme, setTheme] = React.useState('daylight');
   const [charName, setCharName] = React.useState(initial.characterName || null);
   // Versão de magias ativa (PT/EN × 2014/2024). É a fonte única de verdade do
@@ -436,6 +468,7 @@ function App() {
       const payload = btoa(unescape(encodeURIComponent(JSON.stringify({
         name: c.name, accentId: c.accentId,
         prepared: c.prepared || [], bookmarked: (typeof loadBookmarks === 'function' ? loadBookmarks() : []),
+        slots: c.slots || { total: {}, used: {} },
       }))));
       const url = `${window.location.origin}${window.location.pathname}?build=${payload}`;
       if (navigator.share) {
@@ -518,7 +551,32 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+// Um erro de render em qualquer componente desmontaria o app inteiro (tela
+// branca, sem explicação). O boundary segura o erro e oferece recarregar.
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) { console.error('[grimorio] render error:', error, info); }
+  render() {
+    if (!this.state.error) return this.props.children;
+    return (
+      <div className="od-boot">
+        <div className="od-boot__mark">Grimório</div>
+        <div className="od-fallback">
+          Algo deu errado ao desenhar a página. / Something went wrong.
+          <br/><br/>
+          <button
+            onClick={() => window.location.reload()}
+            style={{ font: 'inherit', padding: '8px 18px', cursor: 'pointer',
+              background: '#272822', color: '#f8f7f3', border: 'none', borderRadius: 4 }}
+          >Recarregar / Reload</button>
+        </div>
+      </div>
+    );
+  }
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App /></ErrorBoundary>);
 </script>
 </body>
 </html>

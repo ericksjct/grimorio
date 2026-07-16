@@ -184,40 +184,52 @@ function setCurrentVersion(key) {
 // ──────────────────────────────────────────────────────────────────
 // FETCH
 // ──────────────────────────────────────────────────────────────────
+const _pending = {}; // key → Promise em voo (dedup de fetches concorrentes)
+
 async function loadVersion(key) {
   if (_cache[key]) return _cache[key];
+  if (_pending[key]) return _pending[key];
   const ver = SPELL_VERSIONS.find(v => v.key === key);
   if (!ver) throw new Error('Unknown version: ' + key);
 
-  // Tenta carregar do path relativo (funciona no GitHub Pages / local / file://)
-  // O HTML e os JSONs estão no mesmo diretório (teste(2)/)
-  const paths = [
-    ver.file,
-    './' + ver.file,
-    '../' + ver.file,
-  ];
-
-  let lastErr;
-  for (const path of paths) {
-    try {
-      const res = await fetch(path);
-      if (!res.ok) continue;
-      const json = await res.json();
-      _rawCache[key] = json;
-      const adapted = adaptSpells(json, ver.lang, detectEdition(ver.file));
-      _cache[key] = adapted;
-      return adapted;
-    } catch (e) {
-      lastErr = e;
+  _pending[key] = (async () => {
+    // Tenta carregar do path relativo (funciona no GitHub Pages / local)
+    const paths = [ver.file, './' + ver.file, '../' + ver.file];
+    let lastErr;
+    for (const path of paths) {
+      try {
+        const res = await fetch(path);
+        if (!res.ok) continue;
+        const json = await res.json();
+        _rawCache[key] = json;
+        const adapted = adaptSpells(json, ver.lang, detectEdition(ver.file));
+        _cache[key] = adapted;
+        return adapted;
+      } catch (e) {
+        lastErr = e;
+      }
     }
-  }
+    console.warn('[spells-data-loader] Falha ao carregar', ver.file, lastErr);
+    // NÃO cacheia a falha: a próxima chamada (trocar de versão, reabrir) tenta
+    // de novo. Avisa o usuário em vez de mostrar "0 magias" em silêncio.
+    try {
+      const lang = ver.lang;
+      window.dispatchEvent(new CustomEvent('hifi-toast', {
+        detail: { msg: window.tt ? window.tt(lang, 'toast.loadFailed') : 'falha ao carregar as magias', kind: 'err' },
+      }));
+    } catch (e) {}
+    return [];
+  })();
 
-  console.warn('[spells-data-loader] Falha ao carregar', ver.file, lastErr);
-  // Fallback: retorna array vazio para não quebrar o app
-  _cache[key] = [];
-  return [];
+  try {
+    return await _pending[key];
+  } finally {
+    delete _pending[key];
+  }
 }
 
+// Mantido pra quem quiser aquecer o cache das 4 versões (ex.: service worker /
+// comparador). O boot NÃO chama mais isso — só a versão ativa é baixada.
 async function loadAllVersions() {
   if (_loadingPromise) return _loadingPromise;
   _loadingPromise = Promise.all(SPELL_VERSIONS.map(v => loadVersion(v.key)));
@@ -246,7 +258,9 @@ function useSpellVersions() {
 
   React.useEffect(() => {
     let mounted = true;
-    loadAllVersions().then(() => {
+    // Só a versão ATIVA é baixada no boot (~600 KB em vez de ~2,6 MB das 4).
+    // As outras são carregadas sob demanda ao trocar de versão / comparar edição.
+    loadVersion(_currentVersion).then(() => {
       if (!mounted) return;
       setLoaded(true);
       setSpells(buildSpellsFromRealData());

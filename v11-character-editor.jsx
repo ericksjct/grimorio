@@ -128,6 +128,22 @@ function hifiCharName(char, lang) {
 }
 if (typeof window !== 'undefined') window.hifiCharName = hifiCharName;
 
+// Espaços de magia: totais e gastos por nível (1..9). Guardados como objetos
+// { "1": 4, "3": 2 } — só níveis com valor > 0. `used` nunca excede `total`.
+function _normSlots(slots) {
+  const clean = (obj, cap) => {
+    const out = {};
+    for (let lvl = 1; lvl <= 9; lvl++) {
+      const n = Math.max(0, Math.min(9, parseInt(obj?.[lvl], 10) || 0));
+      const c = cap ? Math.min(n, cap[lvl] || 0) : n;
+      if (c > 0) out[lvl] = c;
+    }
+    return out;
+  };
+  const total = clean(slots?.total);
+  return { total, used: clean(slots?.used, total) };
+}
+
 function _normChar(c) {
   return {
     id: c.id || `char-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,6)}`,
@@ -135,6 +151,7 @@ function _normChar(c) {
     accentId: c.accentId || 'mauve',
     prepared: Array.isArray(c.prepared) ? c.prepared : [],
     bookmarked: Array.isArray(c.bookmarked) ? c.bookmarked : [],
+    slots: _normSlots(c.slots),
   };
 }
 
@@ -190,6 +207,23 @@ function toggleBookmarkedFor(charId, key, update) {
     s.has(key) ? s.delete(key) : s.add(key);
     return { ...c, bookmarked: [...s] };
   }));
+}
+
+// ── Espaços de magia (tracker) ─────────────────────────────────────
+function setSlotUsedFor(charId, lvl, used, update) {
+  update(prev => prev.map(c => {
+    if (c.id !== charId) return c;
+    const slots = _normSlots(c.slots);
+    const next = { ...slots.used };
+    const clamped = Math.max(0, Math.min(slots.total[lvl] || 0, used));
+    if (clamped > 0) next[lvl] = clamped; else delete next[lvl];
+    return { ...c, slots: { ...slots, used: next } };
+  }));
+}
+
+// Descanso longo: restaura todos os espaços (used = 0 em todos os níveis).
+function longRestFor(charId, update) {
+  update(prev => prev.map(c => (c.id === charId ? { ...c, slots: { ..._normSlots(c.slots), used: {} } } : c)));
 }
 
 // ── Favoritas GLOBAIS ───────────────────────────────────────────────
@@ -339,6 +373,8 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
   const [name, setName] = React.useState(existing?.name || '');
   const [accentId, setAccentId] = React.useState(normalizeAccentId(existing?.accentId) || 'purple');
   const [prepared, setPrepared] = React.useState(() => new Set(existing?.prepared || []));
+  // Totais de espaços de magia por nível (1..9). '' = nível sem espaços.
+  const [slotTotals, setSlotTotals] = React.useState(() => _normSlots(existing?.slots).total);
   // Favoritas são globais (independentes do personagem) — vêm do store global.
   const { bookmarks } = useBookmarks();
   const bookmarked = React.useMemo(() => new Set(bookmarks), [bookmarks]);
@@ -362,11 +398,10 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
     if (tab === 'prepared') out = out.filter(s => prepared.has(hifiSpellKey(s)));
     else if (tab === 'bookmarked') out = out.filter(s => bookmarked.has(hifiSpellKey(s)));
     if (query.trim()) {
-      const q = query.toLowerCase();
-      out = out.filter(s => {
-        const name = spellName(s, lang) || '';
-        return name.toLowerCase().includes(q) || (s.en || '').toLowerCase().includes(q);
-      });
+      const q = hifiNorm(query.trim());
+      out = out.filter(s =>
+        hifiNorm(spellName(s, lang)).includes(q) || hifiNorm(s.en).includes(q)
+      );
     }
     return out;
   }, [allSpells, query, tab, prepared, bookmarked]);
@@ -400,6 +435,8 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
     const next = {
       id, name: trimmed, accentId,
       prepared: [...prepared],
+      // Mantém os gastos atuais; _normSlots (no _normChar) recorta used > total.
+      slots: { total: slotTotals, used: _normSlots(existing?.slots).used },
     };
     update(prev => isNew ? [...prev, next] : prev.map(c => c.id === charId ? next : c));
     onClose?.({ action: isNew ? 'created' : 'updated', character: next });
@@ -520,6 +557,46 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
                   }}/>
               );
             })}
+          </div>
+        </div>
+
+        {/* Spell slots — totais por nível; o tracker na tela principal usa isso. */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+            <HifiSectionLabel>{T('espaços de magia', 'spell slots')}</HifiSectionLabel>
+            <div style={{ flex: 1 }}/>
+            <HifiMono style={{ color: 'var(--subtext0)' }}>
+              {Object.values(slotTotals).reduce((a, b) => a + b, 0) || '—'}
+            </HifiMono>
+          </div>
+          <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--subtext0)', lineHeight: 1.4 }}>
+            {T('quantos espaços por nível (deixe 0 pra ocultar o nível)',
+               'how many slots per level (leave 0 to hide the level)')}
+          </p>
+          <div style={{
+            marginTop: 10, display: 'grid',
+            gridTemplateColumns: 'repeat(9, 1fr)', gap: 6,
+          }}>
+            {[1,2,3,4,5,6,7,8,9].map(lvl => (
+              <label key={lvl} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <span className="hifi-mono" style={{ fontSize: 10, color: `var(--level-${lvl})` }}>{lvl}</span>
+                <input
+                  type="number" min={0} max={9} inputMode="numeric"
+                  value={slotTotals[lvl] || 0}
+                  onChange={(e) => {
+                    const n = Math.max(0, Math.min(9, parseInt(e.target.value, 10) || 0));
+                    setSlotTotals(prev => {
+                      const next = { ...prev };
+                      if (n > 0) next[lvl] = n; else delete next[lvl];
+                      return next;
+                    });
+                  }}
+                  aria-label={T(`espaços de nível ${lvl}`, `level ${lvl} slots`)}
+                  className="hifi-input"
+                  style={{ width: '100%', textAlign: 'center', padding: '4px 2px', fontSize: 13 }}
+                />
+              </label>
+            ))}
           </div>
         </div>
 
@@ -669,6 +746,7 @@ Object.assign(window, {
   loadCharacters, persistCharacters, useCharacters,
   loadBookmarks, persistBookmarks, useBookmarks,
   togglePreparedFor, toggleBookmarkedFor,
+  setSlotUsedFor, longRestFor, _normSlots,
   charHasPrepared, charHasBookmarked,
   CharacterEditor,
   useHifiTransition,

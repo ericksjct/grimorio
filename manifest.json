@@ -1,0 +1,14 @@
+{
+  "name": "Grimório · Magias de D&D 5e",
+  "short_name": "Grimório",
+  "description": "Grimório de magias de D&D 5e — prepare, favorite, filtre e imprima. PT-BR e EN, edições 2014 e 2024. Funciona offline.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8f7f3",
+  "theme_color": "#f8f7f3",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
