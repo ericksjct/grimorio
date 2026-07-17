@@ -95,8 +95,7 @@ const STRINGS = {
     'action.printPreparedTitle': 'imprimir magias preparadas',
     'action.shareBuild': 'compartilhar build',
     'action.shareBuildTitle': 'compartilhar build do personagem',
-    'action.copyLink': 'copiar link',
-    'action.shareFilter': 'compartilhar filtro',
+    'action.shareView': 'compartilhar busca e filtros',
     'action.onlyPrepared': 'mostrar só as magias preparadas',
     'action.onlyPreparedShort': 'mostrar só as preparadas',
     'nav.back': 'voltar',
@@ -112,6 +111,8 @@ const STRINGS = {
     'compare.view': 'ver na {edition}',
     'compare.back': 'voltar pra {edition}',
     'compare.notFound': 'essa magia não existe na {edition}',
+    'toast.buildImported': 'personagem “{name}” importado',
+    'toast.buildImportFailed': 'não consegui importar a build dessa URL',
   },
 
   en: {
@@ -194,8 +195,7 @@ const STRINGS = {
     'action.printPreparedTitle': 'print prepared spells',
     'action.shareBuild': 'share build',
     'action.shareBuildTitle': 'share character build',
-    'action.copyLink': 'copy link',
-    'action.shareFilter': 'share filter',
+    'action.shareView': 'share search & filters',
     'action.onlyPrepared': 'show only prepared spells',
     'action.onlyPreparedShort': 'show only prepared',
     'nav.back': 'back',
@@ -211,6 +211,8 @@ const STRINGS = {
     'compare.view': 'view in {edition}',
     'compare.back': 'back to {edition}',
     'compare.notFound': 'this spell does not exist in {edition}',
+    'toast.buildImported': 'character “{name}” imported',
+    'toast.buildImportFailed': 'could not import the build from this URL',
   },
 };
 

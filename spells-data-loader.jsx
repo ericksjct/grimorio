@@ -156,6 +156,9 @@ const _rawCache = {};  // key → raw JSON
 // desperdiçado. O index.html (App) deriva o mesmo, então não há troca dupla.
 function _initialVersionKey() {
   try {
+    // ?v= de link compartilhado vence a preferência salva (o App faz o mesmo).
+    const urlV = new URL(window.location.href).searchParams.get('v');
+    if (urlV && SPELL_VERSIONS.some(v => v.key === urlV)) return urlV;
     const prefs = JSON.parse(localStorage.getItem('spellbook-ui-prefs') || '{}');
     if (prefs.versionKey && SPELL_VERSIONS.some(v => v.key === prefs.versionKey)) {
       return prefs.versionKey;

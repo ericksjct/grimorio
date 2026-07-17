@@ -161,7 +161,9 @@ function langOfVersionKey(key) {
 }
 
 function decodeSharedBuildPayload(payload) {
-  const binary = atob(payload);
+  // searchParams converte '+' em espaço; base64 nunca tem espaço, então
+  // restaurar é seguro — cobre links antigos gerados sem encodeURIComponent.
+  const binary = atob(String(payload).replace(/ /g, '+'));
   const encoded = Array.from(binary, ch =>
     '%' + ch.charCodeAt(0).toString(16).padStart(2, '0')
   ).join('');
@@ -380,9 +382,15 @@ function App() {
   const [theme, setTheme] = React.useState('daylight');
   const [charName, setCharName] = React.useState(initial.characterName || null);
   // Versão de magias ativa (PT/EN × 2014/2024). É a fonte única de verdade do
-  // idioma: salva → senão a que casa com o idioma do navegador (1ª visita). O
-  // loader deriva o MESMO, então não há troca dupla nem flash no boot.
-  const initialVersionKey = initial.versionKey || defaultVersionKeyForLang(initial.lang || detectLang());
+  // idioma: ?v= na URL (link compartilhado) → salva → idioma do navegador.
+  // O loader deriva o MESMO, então não há troca dupla nem flash no boot.
+  const urlVersionKey = (() => {
+    try {
+      const v = new URL(window.location.href).searchParams.get('v');
+      return (window.SPELL_VERSIONS || []).some(x => x.key === v) ? v : null;
+    } catch (e) { return null; }
+  })();
+  const initialVersionKey = urlVersionKey || initial.versionKey || defaultVersionKeyForLang(initial.lang || detectLang());
   const [versionKey, setVersionKey] = React.useState(initialVersionKey);
   // Idioma do chrome — segue a versão (acoplado): usa lang salvo, senão o da
   // versão inicial, senão detecta. Mantido em sincronia pelo effect abaixo.
@@ -408,6 +416,30 @@ function App() {
     if (versionKey && typeof window.setCurrentSpellVersion === 'function') {
       window.setCurrentSpellVersion(versionKey);
     }
+  }, []);
+
+  // Link de build (?build=) abre em QUALQUER visita — não só no onboarding.
+  // Importa direto (abrir o link é a intenção), ativa o personagem, tira o
+  // parâmetro da URL (refresh não duplica) e avisa via toast.
+  React.useEffect(() => {
+    let url;
+    try { url = new URL(window.location.href); } catch (e) { return; }
+    if (!url.searchParams.has('build')) return;
+    try {
+      const character = importSharedBuildUrl(window.location.href, lang);
+      markOnboardingSeen();
+      setShowOnboarding(false);
+      setCharName(character.name);
+      window.dispatchEvent(new CustomEvent('hifi-toast', {
+        detail: { msg: makeT(lang)('toast.buildImported', { name: character.name }) },
+      }));
+    } catch (e) {
+      window.dispatchEvent(new CustomEvent('hifi-toast', {
+        detail: { msg: makeT(lang)('toast.buildImportFailed'), kind: 'err' },
+      }));
+    }
+    url.searchParams.delete('build');
+    history.replaceState(null, '', url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : ''));
   }, []);
 
   // Acoplamento: a versão ativa é a fonte de verdade do idioma. Quando ela muda
@@ -472,7 +504,8 @@ function App() {
         slots: c.slots || { total: {}, used: {} },
         classes: c.classes || [],
       }))));
-      const url = `${window.location.origin}${window.location.pathname}?build=${payload}`;
+      // encodeURIComponent: base64 tem '+' e '=', que corrompem em query string.
+      const url = `${window.location.origin}${window.location.pathname}?build=${encodeURIComponent(payload)}`;
       if (navigator.share) {
         navigator.share({ title: `Grimório · ${c.name}`, url }).catch(() => {});
       } else if (navigator.clipboard?.writeText) {

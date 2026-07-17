@@ -48,12 +48,12 @@ function useHifiToast() {
   return { toast, show };
 }
 
-function HifiToast({ toast, accent }) {
+function HifiToast({ toast, accent, bottom = 22 }) {
   if (!toast) return null;
   return (
     <div style={{
       position: 'absolute',
-      left: '50%', bottom: 22, transform: 'translateX(-50%)',
+      left: '50%', bottom, transform: 'translateX(-50%)',
       padding: '8px 14px',
       background: 'var(--mantle)',
       color: 'var(--text)',
@@ -69,10 +69,32 @@ function HifiToast({ toast, accent }) {
   );
 }
 
+// Slug estável da magia (nome em inglês) — usado no link e no handler ?spell=.
+function hifiSpellSlug(s) {
+  const name = (window.spellName ? window.spellName(s, 'en') : s?.en) || s?.en || '';
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
 function buildSpellLink(s, lang) {
-  const name = (window.spellName ? window.spellName(s, 'en') : s?.en) || s?.en || 'magia';
-  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  return `https://spellbook.app/s/${slug || 'magia'}`;
+  // URL real do próprio site (o ?spell= abre o detalhe ao carregar) — antes
+  // apontava pro domínio-placeholder spellbook.app do protótipo (404 garantido).
+  return `${window.location.origin}${window.location.pathname}?spell=${hifiSpellSlug(s) || 'magia'}`;
+}
+
+// URL que reproduz a visão atual (busca + filtros base + só-preparadas +
+// versão). É o que o botão "compartilhar" do drawer copia — a location crua
+// não carrega estado nenhum.
+function hifiShareViewUrl({ query, filters, onlyPrepared, versionKey }) {
+  const p = new URLSearchParams();
+  if (query && query.trim()) p.set('q', query.trim());
+  ['class', 'level', 'school'].forEach(key => {
+    const set = filters[key];
+    if (set && set.size) p.set('f.' + key, [...set].join('|'));
+  });
+  if (onlyPrepared) p.set('prep', '1');
+  if (versionKey) p.set('v', versionKey);
+  const qs = p.toString();
+  return `${window.location.origin}${window.location.pathname}${qs ? '?' + qs : ''}`;
 }
 
 function hifiCopyLink(s, lang, show) {
@@ -167,7 +189,7 @@ function HifiPrintRoot() {
         <div className="hifi-print-tracker">
           <div className="hifi-print-tracker-fields">
             <div className="hifi-print-tracker-title">{hifiCharName(character, lang)}</div>
-            <div className="hifi-print-tracker-url">spellbook.app</div>
+            <div className="hifi-print-tracker-url">{window.location.host || 'grimório'}</div>
             <div className="hifi-print-tracker-row">
               <span className="hifi-print-tracker-label">{tt(lang, 'spell.class')}</span>
               <span className="hifi-print-tracker-box hifi-print-tracker-box-name"/>
@@ -466,15 +488,17 @@ function HifiSlotTracker({ character, update, lang, style }) {
   const levels = [1,2,3,4,5,6,7,8,9].filter(l => (slots.total[l] || 0) > 0);
   if (!character || !levels.length) return null;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', ...style }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, ...style }}>
       <span className="hifi-section-label" style={{ flexShrink: 0 }}>{tt(lang, 'print.spellSlots')}</span>
-      {levels.map(lvl => {
-        const total = slots.total[lvl];
-        const used = slots.used[lvl] || 0;
-        return (
-          <span key={lvl} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-            <span className="hifi-mono" style={{ fontSize: 10, fontWeight: 600, color: `var(--level-${lvl})` }}>{lvl}</span>
-            <span style={{ display: 'inline-flex', gap: 3 }}>
+      {/* Só os pips rolam; label e "descanso longo" ficam sempre visíveis
+          (antes o botão sumia no fim do scroll horizontal do mobile). */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', flex: 1, minWidth: 0 }}>
+        {levels.map(lvl => {
+          const total = slots.total[lvl];
+          const used = slots.used[lvl] || 0;
+          return (
+            <span key={lvl} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
+              <span className="hifi-mono" style={{ fontSize: 10, fontWeight: 600, color: `var(--level-${lvl})`, marginRight: 2 }}>{lvl}</span>
               {Array.from({ length: total }, (_, i) => {
                 const spent = i < used;
                 return (
@@ -484,19 +508,27 @@ function HifiSlotTracker({ character, update, lang, style }) {
                     aria-pressed={spent}
                     aria-label={tt(lang, 'slots.slotAria', { lvl, i: i + 1, n: total })}
                     title={spent ? tt(lang, 'slots.restore') : tt(lang, 'slots.spend')}
+                    // Botão 24px (alvo de toque decente) com o pip de 13px
+                    // desenhado dentro — o visual não muda.
                     style={{
-                      width: 13, height: 13, borderRadius: '50%', padding: 0, cursor: 'pointer',
+                      width: 24, height: 24, padding: 0, border: 'none', background: 'transparent',
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', flexShrink: 0,
+                    }}
+                  >
+                    <span aria-hidden="true" style={{
+                      width: 13, height: 13, borderRadius: '50%',
                       border: `1.5px solid ${spent ? 'var(--surface2)' : 'var(--accent)'}`,
                       background: spent ? 'transparent' : 'var(--accent)',
                       transition: 'background 120ms, border-color 120ms',
-                    }}
-                  />
+                    }}/>
+                  </button>
                 );
               })}
             </span>
-          </span>
-        );
-      })}
+          );
+        })}
+      </div>
       <button
         className="hifi-btn-ghost"
         onClick={() => {
@@ -750,16 +782,32 @@ function useHifiAppState(preparedKeys, initialFilters, character) {
   }, [versionKey, versions]);
 
   // Começa sem nenhum filtro aplicado (mostra todas as magias) — o usuário
-  // (Aventureiro Desconhecido por padrão) refina a partir do conjunto completo.
-  const [filters, setFilters] = React.useState(initialFilters || ({
+  // refina a partir do conjunto completo. Exceção: um link compartilhado
+  // (?q= / ?f.*= / ?prep=) restaura a visão de quem compartilhou.
+  const urlView = React.useMemo(() => {
+    try {
+      const p = new URL(window.location.href).searchParams;
+      const view = { q: p.get('q') || '', prep: p.get('prep') === '1', filters: {}, any: false };
+      p.forEach((val, key) => {
+        if (key.startsWith('f.')) { view.filters[key.slice(2)] = new Set(val.split('|').filter(Boolean)); view.any = true; }
+      });
+      view.any = view.any || !!view.q || view.prep;
+      return view;
+    } catch (e) { return { q: '', prep: false, filters: {}, any: false }; }
+  }, []);
+  const [filters, setFilters] = React.useState(() => ({
     class: new Set(),
     level: new Set(),
     school: new Set(),
+    ...(initialFilters || {}),
+    ...urlView.filters,
   }));
-  const [query, setQuery] = React.useState('');
+  const [query, setQuery] = React.useState(urlView.q);
   const [selectedIdx, setSelectedIdx] = React.useState(null);
   // Quando ligado, mostra só as magias preparadas do personagem ativo.
-  const [onlyPrepared, setOnlyPrepared] = React.useState(false);
+  const [onlyPrepared, setOnlyPrepared] = React.useState(urlView.prep);
+  // Link com visão explícita: o auto-filtro do personagem não sobrescreve no boot.
+  const skipCharFilterRef = React.useRef(urlView.any);
 
   // Persist filters when version changes. Nível e escola usam valores canônicos
   // (independentes de idioma), então sobrevivem a qualquer troca. A classe usa
@@ -786,6 +834,9 @@ function useHifiAppState(preparedKeys, initialFilters, character) {
   // personagem (gastar slot, preparar magia) pra não brigar com o usuário.
   const charClassSig = JSON.stringify(character?.classes || []);
   React.useEffect(() => {
+    // URL trouxe filtros/busca explícitos → essa visão vence o auto-filtro
+    // (só neste boot; trocar de personagem depois reaplica normalmente).
+    if (skipCharFilterRef.current) { skipCharFilterRef.current = false; return; }
     const cls = character?.classes || [];
     if (!cls.length) return;
     const dict = window.CLASS_PT || {};
@@ -796,6 +847,36 @@ function useHifiAppState(preparedKeys, initialFilters, character) {
     setFilters(prev => ({ ...prev, class: classSet, level: levelSet }));
     setSelectedIdx(null);
   }, [charClassSig]);
+
+  // ?spell=<slug> (link de magia compartilhado): quando as magias carregarem,
+  // zera busca/filtros (a magia precisa estar na lista pra ser selecionável),
+  // seleciona o detalhe e tira o parâmetro da URL.
+  const spellParamRef = React.useRef(null);
+  if (spellParamRef.current === null) {
+    try { spellParamRef.current = new URL(window.location.href).searchParams.get('spell') || ''; }
+    catch (e) { spellParamRef.current = ''; }
+  }
+  React.useEffect(() => {
+    const slug = spellParamRef.current;
+    if (!slug || !allSpells.length) return;
+    spellParamRef.current = '';
+    const target = allSpells.find(s => hifiSpellSlug(s) === slug);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('spell');
+      history.replaceState(null, '', url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : ''));
+    } catch (e) {}
+    if (!target) return;
+    setQuery('');
+    setOnlyPrepared(false);
+    setFilters(prev => { const next = {}; Object.keys(prev).forEach(k => { next[k] = new Set(); }); return next; });
+    // Replica a ordenação do `filtered` sem filtros pra achar o índice certo.
+    const collator = versionLang === 'ptbr' ? 'pt' : 'en';
+    const sorted = [...allSpells].sort((a, b) =>
+      (a.lvl - b.lvl) || (spellName(a, versionLang) || '').localeCompare(spellName(b, versionLang) || '', collator)
+    );
+    setSelectedIdx(sorted.findIndex(s => hifiSpellSlug(s) === slug));
+  }, [allSpells]);
 
   const filtered = React.useMemo(() => {
     let out = allSpells || [];
@@ -1804,10 +1885,10 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
         </div>
       </header>
 
-      {/* Espaços de magia — faixa compacta com rolagem horizontal */}
+      {/* Espaços de magia — pips rolam; label e descanso longo ficam fixos */}
       <HifiSlotTracker
         character={liveChar} update={update} lang={lang}
-        style={{ padding: '8px 16px', borderBottom: '1px solid var(--surface1)', flexWrap: 'nowrap', overflowX: 'auto', flexShrink: 0 }}
+        style={{ padding: '6px 16px', borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}
       />
 
       <div style={{ flex: 1, overflow: 'auto', padding: '12px 12px 88px' }}>
@@ -1844,7 +1925,8 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
         onTouchEnd={onDrawerTouchEnd}
         style={{
         position: 'absolute', left: 0, right: 0, bottom: 0,
-        height: drawerOpen ? 480 : 56,
+        // min(): em paisagem (~390px de altura) os 480 fixos estourariam a tela.
+        height: drawerOpen ? 'min(480px, calc(100% - 60px))' : 56,
         background: 'var(--mantle)',
         borderTop: '1px solid var(--surface1)',
         borderTopLeftRadius: 16, borderTopRightRadius: 16,
@@ -1959,8 +2041,10 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
 
             <div>
               <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'section.tools')}</HifiSectionLabel>
+              {/* Sem o toggle 🇧🇷/EN aqui: as pills de "versão" logo acima já
+                  trocam idioma+edição — dois controles pro mesmo estado no
+                  mesmo drawer só confundem. */}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <HifiLangToggle lang={lang} versions={versions} versionKey={versionKey} onSwitch={switchVersion}/>
                 <HifiThemeToggle dark={dark} lang={lang}/>
                 <button
                   onClick={() => {
@@ -1983,35 +2067,25 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
 
             <div>
               <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'section.actions')}</HifiSectionLabel>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                <button className="hifi-btn-secondary"
-                  onClick={() => {
-                    const url = window.location.href;
-                    if (navigator.clipboard?.writeText) {
-                      navigator.clipboard.writeText(url).then(
-                        () => showToast(tt(lang, 'toast.linkCopiedShort')),
-                        () => showToast(tt(lang, 'toast.copyFailed'), 'err'),
-                      );
-                    } else { showToast(url); }
-                  }}>
-                  {tt(lang, 'action.copyLink')}
-                </button>
-                <button className="hifi-btn-secondary"
-                  onClick={() => {
-                    const url = window.location.href;
-                    const title = tt(lang, 'title.myGrimoire');
-                    if (navigator.share) {
-                      navigator.share({ title, url }).catch(() => {});
-                    } else if (navigator.clipboard?.writeText) {
-                      navigator.clipboard.writeText(url).then(
-                        () => showToast(tt(lang, 'toast.linkCopiedShort')),
-                        () => {},
-                      );
-                    } else { showToast(url); }
-                  }}>
-                  {tt(lang, 'action.shareFilter')}
-                </button>
-              </div>
+              {/* Um botão só: os antigos "copiar link" e "compartilhar filtro"
+                  copiavam a MESMA location crua (que não carrega estado nenhum).
+                  Este serializa busca + filtros + versão numa URL que restaura
+                  a visão em quem abrir. */}
+              <button className="hifi-btn-secondary" style={{ width: '100%' }}
+                onClick={() => {
+                  const url = hifiShareViewUrl({ query, filters, onlyPrepared, versionKey });
+                  const title = tt(lang, 'title.myGrimoire');
+                  if (navigator.share) {
+                    navigator.share({ title, url }).catch(() => {});
+                  } else if (navigator.clipboard?.writeText) {
+                    navigator.clipboard.writeText(url).then(
+                      () => showToast(tt(lang, 'toast.linkCopiedShort')),
+                      () => showToast(tt(lang, 'toast.copyFailed'), 'err'),
+                    );
+                  } else { showToast(url); }
+                }}>
+                {tt(lang, 'action.shareView')}
+              </button>
             </div>
 
             <button onClick={clearAllFilters} className="hifi-btn-ghost" style={{ alignSelf: 'flex-start' }}>{tt(lang, 'filter.clearAll')}</button>
@@ -2105,7 +2179,8 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
         </div>
       )}
 
-      <HifiToast toast={toast} accent={accent}/>
+      {/* bottom 70: acima do handle do drawer (56px), senão o toast some atrás dele */}
+      <HifiToast toast={toast} accent={accent} bottom={70}/>
     </div>
   );
 }
