@@ -1,0 +1,13 @@
+{
+  "source_path": "C:\\Users\\Erick\\Documents\\Projetos\\grimorio-do-jogador\\docs\\superpowers\\specs\\2026-07-05-animacoes-menus-filtros-design.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": true,
+  "title": "Especificação — Animações sutis em menus, filtros e painéis",
+  "summary": "Technical spec for adding subtle open/close CSS transitions to menus, filters, and panels while preserving accessibility.",
+  "scope": ["animações", "menus", "filtros", "painéis", "CSS transitions", "hifi-tokens.css", "useHifiTransition", "acessibilidade", "prefers-reduced-motion"],
+  "cross_refs": ["hifi-tokens.css", "v11-character-editor.jsx"],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}
