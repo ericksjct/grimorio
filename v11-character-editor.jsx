@@ -220,6 +220,7 @@ function _normChar(c) {
     bookmarked: Array.isArray(c.bookmarked) ? c.bookmarked : [],
     slots: _normSlots(c.slots),
     classes: _normClassLevels(c.classes),
+    slotsManual: !!c.slotsManual,
   };
 }
 
@@ -445,14 +446,23 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
   const [slotTotals, setSlotTotals] = React.useState(() => _normSlots(existing?.slots).total);
   // Classes e níveis do personagem (multiclasse suportada).
   const [classLevels, setClassLevels] = React.useState(() => _normClassLevels(existing?.classes));
+  // Com classes definidas os slots são automáticos; o grid manual fica atrás
+  // de "ajustar manualmente" (homebrew) ou aparece quando não há classes.
+  const [slotsManual, setSlotsManual] = React.useState(() => !!existing?.slotsManual);
 
   // Slots automáticos: mudou classe/nível → recalcula os totais da tabela.
-  // Pula o mount (preserva ajustes manuais salvos); depois disso a sugestão
-  // sobrescreve, e o jogador ainda pode retocar os números antes de salvar.
+  // No mount, só pula o recálculo se o total salvo veio de ajuste manual
+  // (slotsManual persistido) — senão ressincroniza com a tabela, corrigindo
+  // totais que ficaram desatualizados (personagem subiu de nível sem passar
+  // pelo editor, dado antigo, etc.). Depois do mount, qualquer mudança de
+  // classe/nível sempre recalcula (mesmo em modo manual — ver aviso na UI).
   const classSig = JSON.stringify(classLevels);
   const mountedRef = React.useRef(false);
   React.useEffect(() => {
-    if (!mountedRef.current) { mountedRef.current = true; return; }
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      if (slotsManual) return;
+    }
     if (classLevels.length) setSlotTotals(hifiSuggestedSlots(classLevels));
   }, [classSig]);
   // Favoritas são globais (independentes do personagem) — vêm do store global.
@@ -461,9 +471,6 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
   const [query, setQuery] = React.useState('');
   const [tab, setTab] = React.useState('all'); // all | prepared | bookmarked
   const [confirmDelete, setConfirmDelete] = React.useState(false);
-  // Com classes definidas os slots são automáticos; o grid manual fica atrás
-  // de "ajustar manualmente" (homebrew) ou aparece quando não há classes.
-  const [slotsManual, setSlotsManual] = React.useState(false);
 
   const [spellVersion, setSpellVersion] = React.useState(0);
   React.useEffect(() => {
@@ -521,6 +528,7 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
       // Mantém os gastos atuais; _normSlots (no _normChar) recorta used > total.
       slots: { total: slotTotals, used: _normSlots(existing?.slots).used },
       classes: classLevels,
+      slotsManual,
     };
     update(prev => isNew ? [...prev, next] : prev.map(c => c.id === charId ? next : c));
     onClose?.({ action: isNew ? 'created' : 'updated', character: next });
