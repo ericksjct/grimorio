@@ -461,6 +461,9 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
   const [query, setQuery] = React.useState('');
   const [tab, setTab] = React.useState('all'); // all | prepared | bookmarked
   const [confirmDelete, setConfirmDelete] = React.useState(false);
+  // Com classes definidas os slots são automáticos; o grid manual fica atrás
+  // de "ajustar manualmente" (homebrew) ou aparece quando não há classes.
+  const [slotsManual, setSlotsManual] = React.useState(false);
 
   const [spellVersion, setSpellVersion] = React.useState(0);
   React.useEffect(() => {
@@ -633,9 +636,17 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
                   <input
                     type="number" min={1} max={20} inputMode="numeric"
                     value={cl.level}
+                    // Digitação livre (senão apagar o campo vira "1" na hora e
+                    // digitar "3" produz "13" — impraticável no celular);
+                    // clampa no blur, e o save normaliza de novo por garantia.
                     onChange={(e) => {
-                      const n = Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 1));
-                      setClassLevels(prev => prev.map((o, i) => i === idx ? { ...o, level: n } : o));
+                      const raw = e.target.value;
+                      setClassLevels(prev => prev.map((o, i) => i === idx ? { ...o, level: raw } : o));
+                    }}
+                    onBlur={() => {
+                      setClassLevels(prev => prev.map((o, i) => i === idx
+                        ? { ...o, level: Math.max(1, Math.min(20, parseInt(o.level, 10) || 1)) }
+                        : o));
                     }}
                     aria-label={T(`nível de ${label(cl.class)}`, `${label(cl.class)} level`)}
                     className="hifi-input"
@@ -706,38 +717,71 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
             <HifiSectionLabel>{T('espaços de magia', 'spell slots')}</HifiSectionLabel>
             <div style={{ flex: 1 }}/>
             <HifiMono style={{ color: 'var(--subtext0)' }}>
-              {Object.values(slotTotals).reduce((a, b) => a + b, 0) || '—'}
+              {Object.values(slotTotals).reduce((a, b) => a + (parseInt(b, 10) || 0), 0) || '—'}
             </HifiMono>
           </div>
-          <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--subtext0)', lineHeight: 1.4 }}>
-            {T('calculados automaticamente das classes — ajuste se quiser (0 oculta o círculo)',
-               'auto-calculated from the classes — tweak if you like (0 hides the circle)')}
-          </p>
-          <div style={{
-            marginTop: 10, display: 'grid',
-            gridTemplateColumns: 'repeat(9, 1fr)', gap: 6,
-          }}>
-            {[1,2,3,4,5,6,7,8,9].map(lvl => (
-              <label key={lvl} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <span className="hifi-mono" style={{ fontSize: 10, color: `var(--level-${lvl})` }}>{lvl}</span>
-                <input
-                  type="number" min={0} max={9} inputMode="numeric"
-                  value={slotTotals[lvl] || 0}
-                  onChange={(e) => {
-                    const n = Math.max(0, Math.min(9, parseInt(e.target.value, 10) || 0));
-                    setSlotTotals(prev => {
-                      const next = { ...prev };
-                      if (n > 0) next[lvl] = n; else delete next[lvl];
-                      return next;
-                    });
-                  }}
-                  aria-label={T(`espaços do ${lvl}º círculo`, `level ${lvl} slots`)}
-                  className="hifi-input"
-                  style={{ width: '100%', textAlign: 'center', padding: '4px 2px', fontSize: 13 }}
-                />
-              </label>
-            ))}
-          </div>
+          {classLevels.length > 0 && !slotsManual ? (
+            <>
+              {/* Automático: só mostra o resultado — o jogador não precisa digitar nada. */}
+              <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--subtext0)', lineHeight: 1.4 }}>
+                {T('calculados automaticamente das classes e níveis', 'auto-calculated from the classes and levels')}
+              </p>
+              <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                {[1,2,3,4,5,6,7,8,9].filter(l => (parseInt(slotTotals[l], 10) || 0) > 0).map(l => (
+                  <HifiMono key={l} style={{ fontSize: 12 }}>
+                    <span style={{ color: `var(--level-${l})`, fontWeight: 600 }}>{l}º</span>
+                    <span style={{ color: 'var(--subtext0)' }}> × {slotTotals[l]}</span>
+                  </HifiMono>
+                ))}
+                {![1,2,3,4,5,6,7,8,9].some(l => (parseInt(slotTotals[l], 10) || 0) > 0) && (
+                  <HifiMono style={{ color: 'var(--overlay0)' }}>—</HifiMono>
+                )}
+                <button
+                  className="hifi-btn-ghost"
+                  onClick={() => setSlotsManual(true)}
+                  style={{ fontSize: 11, padding: '2px 8px', color: 'var(--subtext0)' }}
+                >{T('ajustar manualmente', 'adjust manually')}</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--subtext0)', lineHeight: 1.4 }}>
+                {classLevels.length > 0
+                  ? T('sobrescreve os valores calculados — mudar as classes recalcula', 'overrides the calculated values — changing classes recalculates')
+                  : T('quantos espaços por círculo (0 oculta o círculo)', 'how many slots per circle (0 hides the circle)')}
+              </p>
+              <div style={{
+                marginTop: 10, display: 'grid',
+                gridTemplateColumns: 'repeat(9, 1fr)', gap: 6,
+              }}>
+                {[1,2,3,4,5,6,7,8,9].map(lvl => (
+                  <label key={lvl} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                    <span className="hifi-mono" style={{ fontSize: 10, color: `var(--level-${lvl})` }}>{lvl}</span>
+                    <input
+                      type="number" min={0} max={9} inputMode="numeric"
+                      value={slotTotals[lvl] ?? 0}
+                      // Digitação livre; clampa no blur (mesma razão do nível de classe).
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        setSlotTotals(prev => ({ ...prev, [lvl]: raw }));
+                      }}
+                      onBlur={() => {
+                        setSlotTotals(prev => {
+                          const next = { ...prev };
+                          const n = Math.max(0, Math.min(9, parseInt(next[lvl], 10) || 0));
+                          if (n > 0) next[lvl] = n; else delete next[lvl];
+                          return next;
+                        });
+                      }}
+                      aria-label={T(`espaços do ${lvl}º círculo`, `level ${lvl} slots`)}
+                      className="hifi-input"
+                      style={{ width: '100%', textAlign: 'center', padding: '4px 2px', fontSize: 13 }}
+                    />
+                  </label>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Spells */}
