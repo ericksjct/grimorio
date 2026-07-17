@@ -624,15 +624,23 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
               const free = CASTER_CLASSES.filter(k => k === cl.class || !classLevels.some(o => o.class === k));
               return (
                 <div key={cl.class} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                  <select
-                    value={cl.class}
-                    onChange={(e) => setClassLevels(prev => prev.map((o, i) => i === idx ? { ...o, class: e.target.value } : o))}
-                    aria-label={T('classe', 'class')}
-                    className="hifi-input"
-                    style={{ flex: 1 }}
-                  >
-                    {free.map(k => <option key={k} value={k}>{label(k)}</option>)}
-                  </select>
+                  {/* Seta nativa do <select> não segue o tema (widget claro do
+                      SO) — remove e desenha o mesmo ▾ dos chips de filtro. */}
+                  <div style={{ position: 'relative', flex: 1 }}>
+                    <select
+                      value={cl.class}
+                      onChange={(e) => setClassLevels(prev => prev.map((o, i) => i === idx ? { ...o, class: e.target.value } : o))}
+                      aria-label={T('classe', 'class')}
+                      className="hifi-input"
+                      style={{ width: '100%', appearance: 'none', WebkitAppearance: 'none', paddingRight: 30 }}
+                    >
+                      {free.map(k => <option key={k} value={k}>{label(k)}</option>)}
+                    </select>
+                    <span aria-hidden="true" style={{
+                      position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)',
+                      pointerEvents: 'none', color: 'var(--subtext0)', fontSize: 10, lineHeight: 1,
+                    }}>▾</span>
+                  </div>
                   <input
                     type="number" min={1} max={20} inputMode="numeric"
                     value={cl.level}
