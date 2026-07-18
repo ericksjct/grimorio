@@ -58,11 +58,11 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
   3. An installed pack can be exported back to a downloaded JSON file, content-identical to what's stored (STOR-03)
   4. A storage write that fails (e.g., quota exceeded) fails cleanly — no partial writes, no crash, no silent data loss
 
-**Plans**: 2 plans
+**Plans**: 1/2 plans executed
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — `plugin-store.jsx`: CRUD IndexedDB (`grimorio-plugins` v1 / store `packs`), falha limpa em escrita, wiring em `index.html` + PRECACHE do `sw.js` (STOR-01)
+- [x] 02-01-PLAN.md — `plugin-store.jsx`: CRUD IndexedDB (`grimorio-plugins` v1 / store `packs`), falha limpa em escrita, wiring em `index.html` + PRECACHE do `sw.js` (STOR-01)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -158,7 +158,7 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|-----------------|--------|-----------|
 | 1. Animation Verification & Polish | Pre-milestone | ad hoc | Complete | 2026-07-17 |
-| 2. Plugin Storage Foundation | v2.0 | 0/2 | Planned | - |
+| 2. Plugin Storage Foundation | v2.0 | 1/2 | In Progress|  |
 | 3. SRD Pack & Import Pipeline | v2.0 | 0/TBD | Not started | - |
 | 4. Loader Integration (Source-Dispatch) | v2.0 | 0/TBD | Not started | - |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 0/TBD | Not started | - |
