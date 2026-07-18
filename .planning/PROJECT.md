@@ -23,6 +23,7 @@ Players can quickly find, prepare, and reference the right spells for their char
 - ✓ 6 visual themes (Catppuccin, Nord, Monokai, Solarized, Parchment, Daylight) × light/dark, with PT-BR/EN localization tied to spell version
 - ✓ Menu/filter/panel open-close micro-animations — desktop character menu, filter dropdowns, "+ mais" filter menu, character editor, side detail panel; mobile character sheet, fullscreen editor, spell detail screen. Implemented per `docs/superpowers/specs/2026-07-05-animacoes-menus-filtros-design.md` (commits `e733b1c`..`463fb7d`). Manual verification pass (cross-theme, reduced-motion, keyboard focus) confirmed done by the user on 2026-07-17.
 - ✓ Session mode (mobile): dedicated in-game screen with derived caster stats (spell DC / attack / modifier / proficiency from class+level+ability scores), compact BG3-style slot tracker, prepared-spells list (cards/list views), cast action with school-colored spark animation and upcast sheet. Spec: `docs/superpowers/specs/2026-07-17-modo-sessao-mobile-design.md`.
+- ✓ Plugin storage foundation (STOR-01/02/03) — `plugin-store.jsx`: IndexedDB CRUD (`grimorio-plugins` v1, store `packs`, records `{id, meta, spells}`), persistent-storage request at boot, and verbatim pack export to a downloaded JSON file. Writes fail cleanly: shape validated before any transaction opens, transactions resolve only on `oncomplete`, no partial state on error. Validated in Phase 2: Plugin Storage Foundation.
 
 ### Active
 
@@ -92,4 +93,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-17 — milestone v2.0 Plugins BYOD started*
+*Last updated: 2026-07-18 — Phase 2 complete (plugin storage foundation: IndexedDB layer, persistent storage, export)*
