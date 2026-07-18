@@ -58,7 +58,7 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
   3. An installed pack can be exported back to a downloaded JSON file, content-identical to what's stored (STOR-03)
   4. A storage write that fails (e.g., quota exceeded) fails cleanly — no partial writes, no crash, no silent data loss
 
-**Plans**: 1/2 plans executed
+**Plans**: 2/2 plans executed
 Plans:
 **Wave 1**
 
@@ -66,7 +66,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-02-PLAN.md — `navigator.storage.persist()` no boot + `exportPack()` como download JSON, e verificação humana dos 4 critérios da fase (STOR-02, STOR-03)
+- [x] 02-02-PLAN.md — `navigator.storage.persist()` no boot + `exportPack()` como download JSON, e verificação humana dos 4 critérios da fase (STOR-02, STOR-03)
 
 **Planning route**: PLAN DIRETO (sem discuss). IDB schema + wrapper de ~40 linhas + export-como-download já especificados em `research/ARCHITECTURE.md` e `STACK.md`. Nenhuma decisão de produto em aberto. Research do plan: NÃO.
 
@@ -158,7 +158,7 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|-----------------|--------|-----------|
 | 1. Animation Verification & Polish | Pre-milestone | ad hoc | Complete | 2026-07-17 |
-| 2. Plugin Storage Foundation | v2.0 | 1/2 | In Progress|  |
+| 2. Plugin Storage Foundation | v2.0 | 2/2 | In Progress|  |
 | 3. SRD Pack & Import Pipeline | v2.0 | 0/TBD | Not started | - |
 | 4. Loader Integration (Source-Dispatch) | v2.0 | 0/TBD | Not started | - |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 0/TBD | Not started | - |

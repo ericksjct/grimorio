@@ -17,8 +17,8 @@
 ### STOR — Armazenamento
 
 - [x] **STOR-01**: Pacotes instalados persistem em IndexedDB como JSON cru sanitizado (mesma forma dos arquivos; `adaptSpells()` continua o único ponto de normalização)
-- [ ] **STOR-02**: App solicita armazenamento persistente (`navigator.storage.persist()`) para mitigar a eviction de 7 dias do Safari
-- [ ] **STOR-03**: Usuário pode exportar um pacote instalado de volta para arquivo (backup/recuperação — crítico para o cenário de eviction do Safari)
+- [x] **STOR-02**: App solicita armazenamento persistente (`navigator.storage.persist()`) para mitigar a eviction de 7 dias do Safari
+- [x] **STOR-03**: Usuário pode exportar um pacote instalado de volta para arquivo (backup/recuperação — crítico para o cenário de eviction do Safari)
 
 ### MGMT — Gerenciamento
 
@@ -66,8 +66,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | STOR-01 | Phase 2 | Complete |
-| STOR-02 | Phase 2 | Pending |
-| STOR-03 | Phase 2 | Pending |
+| STOR-02 | Phase 2 | Complete |
+| STOR-03 | Phase 2 | Complete |
 | PKG-01 | Phase 3 | Pending |
 | PKG-02 | Phase 3 | Pending |
 | PKG-03 | Phase 3 | Pending |

@@ -4,16 +4,16 @@ milestone: v2.0
 milestone_name: Plugins BYOD
 current_phase: 02
 current_phase_name: plugin-storage-foundation
-status: executing
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-07-18T22:34:08.286Z"
+status: verifying
+stopped_at: Completed 02-02-PLAN.md - Phase 2 complete, all 4 success criteria verified
+last_updated: "2026-07-18T22:48:39.257Z"
 last_activity: 2026-07-18
 last_activity_desc: Phase 02 execution started
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -29,10 +29,10 @@ See: .planning/PROJECT.md (updated 2026-07-17)
 
 Phase: 02 (plugin-storage-foundation) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-18 — Phase 02 execution started
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [█████░░░░░] 50%
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 02 P01 | 3min | 3 tasks | 4 files |
+| Phase 02 P02 | 12min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,8 @@ Decisions are logged in PROJECT.md Key Decisions table. Four decisions locked fo
 - [Phase ?]: plugin-store.jsx putPack/deletePack resolve only on tx.oncomplete (durability proof), not on request onsuccess
 - [Phase ?]: IndexedDB errors propagate unwrapped (name/message intact) from plugin-store.jsx; caller decides UI messaging
 - [Phase ?]: sw.js CACHE_VERSION left unchanged when adding plugin-store.jsx to PRECACHE to avoid re-downloading cached spell JSONs
+- [Phase ?]: A-02: exportPack() serializa o registro armazenado VERBATIM, incluindo a chave de topo id - Fase 3 deve tolerar/remover essa chave no import
+- [Phase ?]: A-03 aplicada: navigator.storage.persist() solicitado no boot (ROADMAP/REQUIREMENTS autoritativos sobre nota de research desatualizada)
 
 ### Pending Todos
 
@@ -95,6 +98,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-18T22:34:08.277Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-07-18T22:48:39.248Z
+Stopped at: Completed 02-02-PLAN.md - Phase 2 complete, all 4 success criteria verified
 Resume file: None
