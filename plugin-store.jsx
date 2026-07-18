@@ -173,9 +173,48 @@ if (typeof document !== 'undefined') {
 }
 
 // ──────────────────────────────────────────────────────────────────
+// EXPORTAÇÃO DE PACOTE (STOR-03)
+// ──────────────────────────────────────────────────────────────────
+// Mitigação de T-02-06: meta.name vem de conteúdo não confiável (arquivo do
+// usuário) e nunca deve alcançar o atributo `download` cru.
+function _packFileName(record) {
+  const reduce = (s) => String(s || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+
+  let slug = reduce(record && record.meta && record.meta.name);
+  if (!slug) slug = reduce(record && record.id);
+  if (!slug) slug = 'pack';
+  return `grimorio-${slug}.json`;
+}
+
+async function exportPack(id) {
+  const record = await getPack(id);
+  if (!record) {
+    throw new Error(`pluginStore.exportPack: pacote '${id}' não encontrado.`);
+  }
+  // Serializado VERBATIM — sem remover/renomear/reordenar campos (A-02: o
+  // arquivo baixado precisa reparsear pra um objeto idêntico ao armazenado).
+  const text = JSON.stringify(record, null, 2);
+  const blob = new Blob([text], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = _packFileName(record);
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url); // depois do click — revogar cedo cancela o download em alguns navegadores
+  return text;
+}
+
+// ──────────────────────────────────────────────────────────────────
 // EXPOSIÇÃO
 // ──────────────────────────────────────────────────────────────────
 window.pluginStore = {
   openDB, putPack, getPack, getSpells, listPacks, deletePack,
-  requestPersistence, getPersistenceState,
+  requestPersistence, getPersistenceState, exportPack,
 };
