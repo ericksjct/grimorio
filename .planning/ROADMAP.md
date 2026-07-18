@@ -52,6 +52,7 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
   3. An installed pack can be exported back to a downloaded JSON file, content-identical to what's stored (STOR-03)
   4. A storage write that fails (e.g., quota exceeded) fails cleanly — no partial writes, no crash, no silent data loss
 **Plans**: TBD
+**Planning route**: PLAN DIRETO (sem discuss). IDB schema + wrapper de ~40 linhas + export-como-download já especificados em `research/ARCHITECTURE.md` e `STACK.md`. Nenhuma decisão de produto em aberto. Research do plan: NÃO.
 
 ### Phase 3: SRD Pack & Import Pipeline
 **Goal**: Users can install a spell pack of their choosing — their own file or a compatible URL — into the app, with every pack validated and its HTML sanitized before anything renders; the built-in SRD content exists as a real, importable pack.
@@ -66,6 +67,7 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
   6. A generated SRD pack (CC-BY EN subset) exists as a file conforming to the same pack schema and installs cleanly through the same pipeline (SRD-01)
 **Plans**: TBD
 **UI hint**: yes
+**Planning route**: PLAN DIRETO após 2 decisões de produto resolvidas em chat antes do plan: (a) qual SRD embutir — 5.1/2014, 5.2/2024, ou ambos (afeta subconjunto de magias + texto de atribuição da Fase 5); (b) teto de tamanho do import. Pipeline (validação, DOMPurify, formato) já especificada em research. Research do plan: NÃO — mas a geração do subconjunto SRD CC-BY-limpo (quais magias contam como livres) é uma tarefa de dados a resolver no plan, não pesquisa de framework.
 
 ### Phase 4: Loader Integration (Source-Dispatch)
 **Goal**: The app's spell-loading engine natively supports both the bundled SRD pack and any number of user-installed packs from one dispatch point, with no hardcoded 4-dataset list.
@@ -76,6 +78,7 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
   2. The SRD pack and any packs already sitting in IndexedDB (installed via Phase 3's pipeline) both load at boot through the same dispatch path, with no separate per-source logic
   3. A previously-selected version preference that no longer resolves (e.g., points at a pack that's gone) still boots into a working version instead of a blank or broken state
 **Plans**: TBD
+**Planning route**: PLAN DIRETO (sem discuss). Ponto de integração único (`source: 'fetch'|'idb'` em `loadVersion`) já desenhado em `research/ARCHITECTURE.md`, ancorado no código real de `spells-data-loader.jsx`. Maior risco TÉCNICO do milestone (mexe em código load-bearing) — mitigado por plano bom + verificação, não por discuss. Research do plan: NÃO.
 
 ### Phase 5: Plugin Manager UI & Version Selector
 **Goal**: Users can see and manage everything they've installed in one place, the version selector reflects reality instead of a fixed list, and the built-in SRD content carries correct legal attribution.
@@ -90,6 +93,7 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
   6. The app displays the verbatim CC-BY attribution text matching the exact SRD edition bundled (5.1 or 5.2), including notes on any modifications to the source text (SRD-02)
 **Plans**: TBD
 **UI hint**: yes
+**Planning route**: DISCUSS antes de planejar. Decisões de UX genuínas: onde o gerenciador vive (drawer/tela própria), desktop vs mobile, onde a atribuição aparece. Candidata a sketch de mockup (como no modo sessão). Research do plan: NÃO — é design de UI, não pesquisa técnica.
 
 ### Phase 6: Decommissioning & Migration
 **Goal**: The four copyrighted spell datasets are fully removed from the live site and repo HEAD, and every existing user's prepared/bookmarked spells transition safely with nothing silently lost.
@@ -102,6 +106,21 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
   4. An existing user's first visit after the update shows clear, actionable guidance on how to import their own pack to restore full spell content (MIGR-03)
 **Plans**: TBD
 **UI hint**: yes
+**Planning route**: DISCUSS antes de planejar. Decisões delicadas: como o usuário existente vivencia a transição (aviso/tela de boas-vindas, como as órfãs aparecem), sequência do deploy. Research marcou a detecção de migração como território novo do codebase. Fase IRREVERSÍVEL — discutir sai mais barato que corrigir. Research do plan: possível research LEVE na lógica de detecção/preservação de referências órfãs (novidade no codebase), a confirmar no discuss.
+
+## Planning Routes (resumo)
+
+Registrado 2026-07-18. Regra: discuss só quando há decisão de produto/UX que o planner não pode tomar sozinho.
+
+| Fase | Rota | Research no plan? |
+|------|------|-------------------|
+| 2 Storage | Plan direto | Não |
+| 3 SRD + Import | Plan direto (após 2 decisões em chat: qual SRD, teto de tamanho) | Não |
+| 4 Loader | Plan direto | Não |
+| 5 Manager UI | Discuss (+ possível sketch) | Não |
+| 6 Migração | Discuss | Talvez leve (detecção de órfãs) |
+
+**Research de plano:** nenhuma fase precisa do research pesado de framework — a pesquisa de milestone já cobriu stack/arquitetura/pitfalls com código real. A única candidata a research LEVE é a Fase 6 (lógica de preservação de referências órfãs, que é novidade neste codebase), e mesmo assim só se o discuss revelar necessidade.
 
 ## Progress
 
