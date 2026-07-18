@@ -1676,6 +1676,410 @@ function HifiAddFilter({ available, cfg, onAdd, lang }) {
 }
 
 // ──────────────────────────────────────────────────────────────────
+// MODO SESSÃO (mobile) — stats + tracker compacto + preparadas + conjurar
+// ──────────────────────────────────────────────────────────────────
+const HIFI_SESSION_KEY = 'hifi_session_v1';
+const HIFI_SESSION_VIEW_KEY = 'hifi_session_view_v1';
+
+// Cor da fagulha por escola (mesma ordem de SCHOOL_KEYS) → var do tema.
+const HIFI_SCHOOL_FX_VARS = ['--blue', '--yellow', '--teal', '--pink', '--peach', '--mauve', '--green', '--maroon'];
+
+function hifiReducedMotion() {
+  return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+// Estouro de fagulhas no PONTO DO TOQUE (DOM imperativo — cria, anima, remove).
+// Fora do React de propósito: efeito descartável de 700ms, sem estado.
+function hifiCastSpark(rootEl, ev, btnEl, schoolIdx) {
+  if (!rootEl || hifiReducedMotion()) return;
+  const pr = rootEl.getBoundingClientRect();
+  let cx, cy;
+  if (ev && (ev.clientX || ev.clientY)) { cx = ev.clientX; cy = ev.clientY; }
+  else if (btnEl) { const br = btnEl.getBoundingClientRect(); cx = br.left + br.width / 2; cy = br.top + br.height / 2; }
+  else return;
+  const fx = document.createElement('div');
+  fx.className = 'hifi-spark';
+  fx.style.left = (cx - pr.left) + 'px';
+  fx.style.top = (cy - pr.top) + 'px';
+  fx.style.setProperty('--school', `var(${HIFI_SCHOOL_FX_VARS[schoolIdx] || '--accent'})`);
+  const core = document.createElement('i');
+  core.className = 'hifi-spark-core';
+  fx.appendChild(core);
+  for (let i = 0; i < 9; i++) {
+    const p = document.createElement('i');
+    const ang = (Math.PI * 2 * i / 9) + Math.random() * 0.5;
+    const dist = 48 + Math.random() * 46;
+    p.style.setProperty('--dx', Math.round(Math.cos(ang) * dist) + 'px');
+    p.style.setProperty('--dy', Math.round(Math.sin(ang) * dist) + 'px');
+    p.style.animationDelay = Math.round(Math.random() * 40) + 'ms';
+    fx.appendChild(p);
+  }
+  rootEl.appendChild(fx);
+  setTimeout(() => fx.remove(), 700);
+}
+
+function hifiCastPulse(btnEl) {
+  if (!btnEl || hifiReducedMotion()) return;
+  btnEl.classList.remove('hifi-cast-pulse');
+  void btnEl.offsetWidth;
+  btnEl.classList.add('hifi-cast-pulse');
+}
+
+const HIFI_ROMAN = [null, 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
+function hifiFmtMod(n) { return (n >= 0 ? '+' : '') + n; }
+
+function HifiSessionMode({ character, update, lang, allSpells, onExit }) {
+  const prepared = React.useMemo(() => new Set(character?.prepared || []), [character]);
+  const spells = React.useMemo(() => {
+    const list = allSpells.filter(s => prepared.has(hifiSpellKey(s)));
+    return list.sort((a, b) => (a.lvl - b.lvl)
+      || spellName(a, lang).localeCompare(spellName(b, lang), lang === 'ptbr' ? 'pt' : 'en'));
+  }, [allSpells, prepared, lang]);
+
+  const [view, setViewState] = React.useState(() => {
+    try { return localStorage.getItem(HIFI_SESSION_VIEW_KEY) === 'list' ? 'list' : 'cards'; } catch (e) { return 'cards'; }
+  });
+  const setView = (v) => { setViewState(v); try { localStorage.setItem(HIFI_SESSION_VIEW_KEY, v); } catch (e) {} };
+
+  const [detail, setDetail] = React.useState(null);       // magia aberta no detalhe
+  const [upcastFor, setUpcastFor] = React.useState(null); // magia do sheet de upcast
+  const [infoOpen, setInfoOpen] = React.useState(false);  // sheet de explicação dos stats
+  const rootRef = React.useRef(null);
+  const { toast, show: showToast } = useHifiToast();
+
+  const stats = window.hifiCasterStats ? window.hifiCasterStats(character) : null;
+  const slots = character?.slots || { total: {}, used: {} };
+  const slotLevels = [1,2,3,4,5,6,7,8,9].filter(l => (slots.total[l] || 0) > 0);
+
+  // Detalhe é uma TELA (como no grimório mobile); sheets são diálogos.
+  const detailTransition = window.useHifiTransition(!!detail, 240);
+  const sheetOpen = !!upcastFor || infoOpen;
+  const sheetTransition = window.useHifiTransition(sheetOpen, 240);
+  const sheetRef = React.useRef(null);
+  const closeSheet = React.useCallback(() => { setUpcastFor(null); setInfoOpen(false); }, []);
+  window.useDialogA11y(sheetRef, sheetOpen, closeSheet);
+
+  // Mantém a última magia durante a animação de saída do detalhe.
+  const lastDetailRef = React.useRef(null);
+  if (detail) lastDetailRef.current = detail;
+  const detailSpell = detail || lastDetailRef.current;
+
+  function availFor(circle) { return Math.max(0, (slots.total[circle] || 0) - (slots.used[circle] || 0)); }
+
+  function castSpell(s, circle, ev, btnEl) {
+    const name = spellName(s, lang);
+    if (circle > 0) {
+      if (!availFor(circle)) { showToast(tt(lang, 'session.noSlots', { circle }), 'err'); return; }
+      setSlotUsedFor(character.id, circle, (slots.used[circle] || 0) + 1, update);
+      // "Drena" o quadradinho recém-gasto: classe imperativa pós-commit do React
+      // (className do render limparia a classe se aplicada antes).
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        const sqs = rootRef.current ? rootRef.current.querySelectorAll(`.hifi-slot-sq[data-lvl="${circle}"].spent`) : [];
+        const sq = sqs[sqs.length - 1];
+        if (sq) { sq.classList.add('draining'); setTimeout(() => sq.classList.remove('draining'), 520); }
+      }));
+    }
+    hifiCastPulse(btnEl);
+    hifiCastSpark(rootRef.current, ev, btnEl, s.school);
+    if (circle === 0) showToast(tt(lang, 'session.toastCast', { name }));
+    else if (circle !== s.lvl) showToast(tt(lang, 'session.toastUpcast', { name, circle }));
+    else showToast(tt(lang, 'session.toastSlot', { name, circle }));
+  }
+
+  const classLabel = (key) => {
+    const pt = (window.CLASS_PT || {})[key] || key;
+    const raw = lang === 'ptbr' ? pt : key;
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  };
+  const classesLabel = (character?.classes || []).map(cl => `${classLabel(cl.class)} ${cl.level}`).join(' / ');
+
+  const statBox = (label, value, accented) => (
+    <div style={{ flex: 1, background: 'var(--surface0)', border: '1px solid var(--surface1)', borderRadius: 12, padding: '8px 4px', textAlign: 'center', minWidth: 0 }}>
+      <div className="hifi-mono" style={{ fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--overlay1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
+      <div style={{ fontSize: 18, fontWeight: 700, marginTop: 1, color: accented ? 'var(--accent)' : 'var(--text)', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+    </div>
+  );
+
+  const castRow = (s, mini) => {
+    const name = spellName(s, lang);
+    const isCantrip = s.lvl === 0;
+    const primaryStyle = isCantrip ? { background: 'transparent', color: 'var(--accent)' } : {};
+    return (
+      <span onClick={(e) => e.stopPropagation()} style={mini
+        ? { display: 'inline-flex', gap: 8, flexShrink: 0, alignItems: 'center' }
+        : { display: 'flex', gap: 8, marginTop: 8 }}>
+        <button
+          type="button"
+          className="hifi-btn-primary"
+          onClick={(e) => castSpell(s, s.lvl, e, e.currentTarget)}
+          aria-label={tt(lang, 'session.castAria', { name })}
+          title={tt(lang, 'session.castAria', { name })}
+          style={mini
+            ? { width: 34, height: 34, borderRadius: '50%', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', ...primaryStyle }
+            : { flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, ...primaryStyle }}
+        >✦{mini ? '' : ` ${isCantrip ? tt(lang, 'session.castCantrip') : tt(lang, 'session.cast')}`}</button>
+        {!isCantrip && (
+          <button
+            type="button"
+            className="hifi-icon-btn"
+            onClick={() => setUpcastFor(s)}
+            aria-label={tt(lang, 'session.upcastAria')}
+            title={tt(lang, 'session.upcastAria')}
+            style={{ width: mini ? 34 : 38, height: mini ? 34 : 38, borderRadius: '50%', color: 'var(--accent)', border: '1.5px solid color-mix(in srgb, var(--accent) 45%, transparent)', background: 'transparent', alignSelf: 'center', flexShrink: 0 }}
+          ><span aria-hidden="true">▲</span></button>
+        )}
+      </span>
+    );
+  };
+
+  // Lista agrupada por círculo (Truques, 1º, 2º…).
+  const grouped = [];
+  let lastLvl = null;
+  spells.forEach(s => {
+    if (s.lvl !== lastLvl) {
+      lastLvl = s.lvl;
+      grouped.push({ type: 'label', lvl: s.lvl });
+    }
+    grouped.push({ type: 'spell', s });
+  });
+
+  const comps = (s) => (s.comp || '').split(/\s+/).filter(Boolean);
+
+  return (
+    <div ref={rootRef} className="hifi-flat-icons" style={{ height: '100%', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--base)', paddingTop: 24 }}>
+      {/* Header: sair · título/personagem · toggle cards/lista */}
+      <header style={{ padding: '10px 16px', borderBottom: '1px solid var(--surface1)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+        <button className="hifi-icon-btn" onClick={onExit} aria-label={tt(lang, 'session.exit')} title={tt(lang, 'session.exit')}><span aria-hidden="true">‹</span></button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="hifi-section-label" style={{ fontSize: 10 }}>{tt(lang, 'session.title')}</div>
+          <div className="hifi-display" style={{ fontSize: 19, color: 'var(--accent)', lineHeight: 1.15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {hifiCharName(character, lang)}
+            {classesLabel && <span style={{ fontSize: 12, color: 'var(--overlay1)' }}> · {classesLabel}</span>}
+          </div>
+        </div>
+        {[['cards', '⊞', 'session.viewCards'], ['list', '≣', 'session.viewList']].map(([v, glyph, key]) => (
+          <button
+            key={v}
+            className="hifi-icon-btn"
+            onClick={() => setView(v)}
+            aria-pressed={view === v}
+            aria-label={tt(lang, key)}
+            title={tt(lang, key)}
+            style={view === v
+              ? { color: 'var(--base)', background: 'var(--accent)', borderColor: 'var(--accent)' }
+              : {}}
+          ><span aria-hidden="true">{glyph}</span></button>
+        ))}
+      </header>
+
+      {/* Stats: faixa inteira tocável abre o sheet de explicações; ⓘ é o affordance. */}
+      <div
+        role="button" tabIndex={0}
+        onClick={() => setInfoOpen(true)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setInfoOpen(true); } }}
+        aria-label={tt(lang, 'session.statsAria')}
+        title={tt(lang, 'session.statsAria')}
+        style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 30px 8px 16px', cursor: 'pointer', flexShrink: 0 }}
+      >
+        {statBox(tt(lang, 'stats.dc'), stats ? stats.dc : '—', true)}
+        {statBox(tt(lang, 'stats.atk'), stats ? hifiFmtMod(stats.atk) : '—')}
+        {statBox(tt(lang, 'stats.cast'), stats ? `${tt(lang, 'ability.' + stats.ability)} ${hifiFmtMod(stats.mod)}` : '—')}
+        {statBox(tt(lang, 'stats.prof'), stats ? hifiFmtMod(stats.prof) : '—')}
+        <span aria-hidden="true" style={{ position: 'absolute', top: '50%', right: 9, transform: 'translateY(-50%)', color: 'var(--overlay0)', fontSize: 13 }}>ⓘ</span>
+      </div>
+
+      {/* Tracker compacto (BG3): numeral romano + slots em bloco 2x2. */}
+      {slotLevels.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '2px 16px 9px', borderBottom: '1px solid var(--surface1)', flexShrink: 0, overflowX: 'auto' }}>
+          {slotLevels.map(lvl => {
+            const total = slots.total[lvl];
+            const used = slots.used[lvl] || 0;
+            return (
+              <span key={lvl} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <span className="hifi-mono" style={{ fontSize: 10.5, fontWeight: 700, color: `var(--level-${lvl})` }}>{HIFI_ROMAN[lvl]}</span>
+                <span className="hifi-session-sqgrid">
+                  {Array.from({ length: total }, (_, i) => {
+                    const spent = i < used;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        data-lvl={lvl}
+                        className={`hifi-slot-sq${spent ? ' spent' : ''}`}
+                        aria-pressed={spent}
+                        aria-label={tt(lang, 'slots.slotAria', { lvl, i: i + 1, n: total })}
+                        title={spent ? tt(lang, 'slots.restore') : tt(lang, 'slots.spend')}
+                        onClick={() => setSlotUsedFor(character.id, lvl, spent ? i : i + 1, update)}
+                      />
+                    );
+                  })}
+                </span>
+              </span>
+            );
+          })}
+          <div style={{ flex: 1 }}/>
+          <button
+            className="hifi-btn-ghost"
+            onClick={() => { longRestFor(character.id, update); showToast(tt(lang, 'slots.rested')); }}
+            title={tt(lang, 'slots.longRestTitle')}
+            style={{ fontSize: 11, color: 'var(--subtext0)', padding: '2px 8px', flexShrink: 0 }}
+          >🌙 {tt(lang, 'slots.longRest')}</button>
+        </div>
+      )}
+
+      {/* Lista das preparadas, agrupada por círculo. */}
+      <div style={{ flex: 1, overflow: 'auto', padding: '12px 12px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {spells.length === 0 ? (
+          <div style={{ margin: 'auto', textAlign: 'center', padding: 24, maxWidth: 280 }}>
+            <p style={{ fontSize: 13, color: 'var(--subtext0)', lineHeight: 1.5 }}>{tt(lang, 'session.empty')}</p>
+            <button className="hifi-btn-secondary" style={{ marginTop: 14 }} onClick={onExit}>{tt(lang, 'session.exit')}</button>
+          </div>
+        ) : grouped.map((item, idx) => {
+          if (item.type === 'label') {
+            return (
+              <div key={`g${item.lvl}`} className="hifi-section-label" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 2px 0', flexShrink: 0 }}>
+                <span style={{ color: `var(--level-${item.lvl})` }}>
+                  {item.lvl === 0 ? tt(lang, 'session.groupCantrips') : tt(lang, 'session.groupCircle', { n: item.lvl })}
+                </span>
+                <span style={{ flex: 1, height: 1, background: 'var(--surface1)' }}/>
+              </div>
+            );
+          }
+          const s = item.s;
+          const k = hifiSpellKey(s);
+          if (view === 'list') {
+            return (
+              <div key={k} className="hifi-card compact" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', cursor: 'pointer', flexShrink: 0 }} onClick={() => setDetail(s)}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <HifiSpellName size={14} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{spellName(s, lang)}</HifiSpellName>
+                  <div style={{ fontSize: 11, color: 'var(--subtext0)', fontStyle: 'italic', fontFamily: "'Marauder Text', Georgia, serif" }}>
+                    {schoolKey(s.school)} · {s.lvl === 0 ? tt(lang, 'spell.cantrip') : tt(lang, 'session.groupCircle', { n: s.lvl })}
+                    {s.conc && <span style={{ color: 'var(--yellow)' }}> · C</span>}
+                    {s.rit && <span style={{ color: 'var(--peach)' }}> · R</span>}
+                  </div>
+                </div>
+                {castRow(s, true)}
+              </div>
+            );
+          }
+          const desc = window.v8Description ? window.v8Description(s, lang) : '';
+          return (
+            <div key={k} className="hifi-card compact" style={{ padding: '12px 13px', display: 'flex', flexDirection: 'column', gap: 4, cursor: 'pointer', flexShrink: 0, position: 'relative', overflow: 'hidden' }} onClick={() => setDetail(s)}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, minWidth: 0 }}>
+                <HifiSpellName size={16} style={{ display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{spellName(s, lang)}</HifiSpellName>
+              </div>
+              <div style={{ fontStyle: 'italic', fontSize: 12, color: 'var(--subtext0)', fontFamily: "'Marauder Text', Georgia, serif", display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>{schoolKey(s.school)}</span>
+                <span style={{ color: 'var(--overlay0)' }}>·</span>
+                <span style={{ color: `var(--level-${s.lvl})`, fontFamily: "'JetBrains Mono', ui-monospace, monospace", fontStyle: 'normal', letterSpacing: '0.06em', fontSize: 11, fontWeight: 600 }}>{tierSymbol(s.lvl)}</span>
+              </div>
+              {desc && (
+                <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.4, color: 'var(--subtext1)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{desc}</p>
+              )}
+              <div className="hifi-card-footer">
+                <div className="hifi-comp-chips">
+                  {['V','S','M'].map(letter => (
+                    <span key={letter} className={`hifi-comp-chip${comps(s).includes(letter) ? ' on' : ''}`}>{letter}</span>
+                  ))}
+                </div>
+                <span className="hifi-card-meta-sep">·</span>
+                <span className="hifi-card-meta-text">{s.range}</span>
+                {(s.rit || s.conc) && <span style={{ flex: 1 }}/>}
+                {s.conc && <span className="hifi-card-flag" style={{ color: 'var(--yellow)' }} title={tt(lang, 'spell.concentration')}>C</span>}
+                {s.rit && <span className="hifi-card-flag" style={{ color: 'var(--peach)' }} title={tt(lang, 'spell.ritual')}>R</span>}
+              </div>
+              {castRow(s, false)}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Detalhe da magia — tela deslizante (mesmo padrão do grimório mobile). */}
+      {detailTransition.mounted && detailSpell && (
+        <div className={detail ? 'hifi-slide-in-right' : 'hifi-slide-out-right'} style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column', background: 'var(--base)', paddingTop: 24 }}>
+          <header className="hifi-flat-icons" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}>
+            <button className="hifi-icon-btn" onClick={() => setDetail(null)} aria-label={tt(lang, 'nav.back')} title={tt(lang, 'nav.back')}><span aria-hidden="true">‹</span></button>
+          </header>
+          <div style={{ flex: 1, overflow: 'auto' }}>
+            <div style={{ padding: '20px 18px 14px' }}>
+              <HifiSpellName size={32}>{spellName(detailSpell, lang)}</HifiSpellName>
+              <div style={{ marginTop: 6, fontSize: 14, color: 'var(--subtext0)', fontStyle: 'italic' }}>
+                {schoolName(detailSpell.school, lang)} · {detailSpell.lvl === 0 ? tt(lang, 'spell.cantrip') : `${tt(lang, 'spell.level')} ${detailSpell.lvl}`}
+                {detailSpell.conc && <span> · <span style={{ color: 'var(--yellow)' }}>conc.</span></span>}
+                {detailSpell.rit && <span> · <span style={{ color: 'var(--peach)' }}>ritual</span></span>}
+              </div>
+            </div>
+            <HifiDetailContent s={detailSpell} lang={lang}/>
+          </div>
+          <div style={{ padding: '12px 16px', borderTop: '1px solid var(--surface1)' }}>
+            {castRow(detailSpell, false)}
+          </div>
+        </div>
+      )}
+
+      {/* Sheet (upcast OU explicação dos stats) com scrim. */}
+      {sheetTransition.mounted && (
+        <>
+          <div className={sheetOpen ? 'hifi-fade-in' : 'hifi-fade-out'} onClick={closeSheet} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 20 }}/>
+          <div
+            ref={sheetRef}
+            role="dialog" aria-modal="true" tabIndex={-1}
+            aria-label={upcastFor ? tt(lang, 'session.upcastAria') : tt(lang, 'session.statsAria')}
+            className={sheetOpen ? 'hifi-slide-up' : 'hifi-fade-out'}
+            style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 21, background: 'var(--mantle)', borderTop: '1px solid var(--surface1)', borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: '16px 18px 24px', maxHeight: '70%', overflowY: 'auto', boxShadow: '0 -8px 20px rgba(0,0,0,0.2)' }}
+          >
+            {upcastFor ? (
+              <>
+                <div style={{ fontSize: 13, color: 'var(--subtext1)', marginBottom: 12 }}>{tt(lang, 'session.upcastTitle', { name: spellName(upcastFor, lang) })}</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {[1,2,3,4,5,6,7,8,9].filter(c => c >= upcastFor.lvl && (slots.total[c] || 0) > 0).map(c => {
+                    const avail = availFor(c);
+                    return (
+                      <button
+                        key={c}
+                        className="hifi-btn-secondary"
+                        disabled={!avail}
+                        style={{ opacity: avail ? 1 : 0.4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}
+                        onClick={(e) => { const s = upcastFor; closeSheet(); castSpell(s, c, e, e.currentTarget); }}
+                      >
+                        <span style={{ color: `var(--level-${c})`, fontWeight: 700 }}>{tt(lang, 'session.groupCircle', { n: c })}</span>
+                        <span style={{ color: 'var(--subtext0)', fontSize: 11 }}>{tt(lang, 'session.avail', { n: avail })}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <>
+                {!stats && (
+                  <p style={{ fontSize: 12.5, color: 'var(--peach)', lineHeight: 1.5, marginBottom: 14 }}>{tt(lang, 'stats.missing')}</p>
+                )}
+                {[
+                  ['dc', stats ? stats.dc : null],
+                  ['atk', stats ? hifiFmtMod(stats.atk) : null],
+                  ['cast', stats ? `${tt(lang, 'ability.' + stats.ability)} ${hifiFmtMod(stats.mod)}` : null],
+                  ['prof', stats ? hifiFmtMod(stats.prof) : null],
+                ].map(([key, val]) => (
+                  <div key={key} style={{ marginBottom: 14 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                      {tt(lang, `stats.${key}Title`)}{val != null && <span style={{ color: 'var(--accent)' }}> — {val}</span>}
+                    </div>
+                    <div className="hifi-mono" style={{ display: 'inline-block', fontSize: 11.5, color: 'var(--accent)', background: 'var(--surface0)', borderRadius: 8, padding: '4px 9px', margin: '6px 0' }}>{tt(lang, `stats.${key}Formula`)}</div>
+                    <p style={{ margin: 0, fontSize: 12.5, color: 'var(--subtext0)', lineHeight: 1.5 }}>{tt(lang, `stats.${key}Text`)}</p>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        </>
+      )}
+
+      <HifiToast toast={toast} accent="var(--accent)"/>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
 // MOBILE
 // ──────────────────────────────────────────────────────────────────
 function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', character, drawerOpen: initialDrawerOpen = false, detailIdx = null }) {
@@ -1729,9 +2133,18 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
   const [drawerOpen, setDrawerOpen] = React.useState(initialDrawerOpen);
   const [charSheetOpen, setCharSheetOpen] = React.useState(false);
   const [editor, setEditor] = React.useState(null);
+  // Modo sessão: persistido — recarregar no meio da sessão volta direto pra ele.
+  const [sessionOpen, setSessionOpen] = React.useState(() => {
+    try { return localStorage.getItem(HIFI_SESSION_KEY) === '1'; } catch (e) { return false; }
+  });
+  const openSession = (v) => {
+    setSessionOpen(v);
+    try { localStorage.setItem(HIFI_SESSION_KEY, v ? '1' : '0'); } catch (e) {}
+  };
 
   const charSheetTransition = window.useHifiTransition(charSheetOpen, 240);
   const mobileEditorTransition = window.useHifiTransition(!!editor, 240);
+  const sessionTransition = window.useHifiTransition(sessionOpen, 240);
 
   // Swipe pra abrir/fechar o drawer. Fechado: arrastar pra cima abre. Aberto:
   // arrastar pra baixo fecha, mas só quando o gesto começa no topo (~64px, zona
@@ -1882,6 +2295,13 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
               background: onlyPrepared ? 'var(--accent)' : 'var(--surface1)',
               borderColor: onlyPrepared ? 'var(--accent)' : undefined }}
           ><HifiBookmarkIcon size={14}/></button>
+          <button
+            onClick={() => openSession(true)}
+            className="hifi-icon-btn"
+            title={tt(lang, 'session.enter')}
+            aria-label={tt(lang, 'session.enter')}
+            style={{ width: 25, height: 25, marginTop: 2, background: 'var(--surface1)', fontSize: 13 }}
+          ><span aria-hidden="true">🎲</span></button>
         </div>
       </header>
 
@@ -2155,6 +2575,17 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
               <span style={{ fontSize: 15 }}>{tt(lang, 'char.new')}</span>
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Modo sessão — tela cheia por cima do grimório (abaixo do editor). */}
+      {sessionTransition.mounted && (
+        <div className={sessionOpen ? 'hifi-slide-in-right' : 'hifi-slide-out-right'} style={{ position: 'absolute', inset: 0, zIndex: 25, background: 'var(--base)' }}>
+          <HifiSessionMode
+            character={liveChar} update={update} lang={lang}
+            allSpells={allSpells}
+            onExit={() => openSession(false)}
+          />
         </div>
       )}
 

@@ -195,6 +195,43 @@ function hifiSuggestedSlots(classLevels) {
   return out;
 }
 
+// Atributos (valores 1..30). Parcial: só os preenchidos são guardados.
+const ABILITY_KEYS = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+function _normAbilities(a) {
+  const out = {};
+  for (const k of ABILITY_KEYS) {
+    const n = parseInt(a?.[k], 10);
+    if (n >= 1) out[k] = Math.min(30, n);
+  }
+  return out;
+}
+
+// Atributo de conjuração por classe (5e).
+const CASTING_ABILITY = {
+  artificer: 'int', wizard: 'int',
+  cleric: 'wis', druid: 'wis', ranger: 'wis',
+  bard: 'cha', paladin: 'cha', sorcerer: 'cha', warlock: 'cha',
+};
+
+function hifiAbilityMod(score) { return Math.floor((score - 10) / 2); }
+function hifiProfBonus(totalLevel) { return 2 + Math.floor((Math.max(1, totalLevel) - 1) / 4); }
+
+// Stats de conjuração derivados (CD, ataque, modificador). Retorna null quando
+// faltam classes ou o valor do atributo de conjuração da 1ª classe.
+// ponytail: multiclasse com atributos diferentes usa o da 1ª classe — cobre o
+// caso comum; CD por classe se alguém pedir.
+function hifiCasterStats(char) {
+  const classes = _normClassLevels(char?.classes);
+  if (!classes.length) return null;
+  const ability = CASTING_ABILITY[classes[0].class];
+  const score = _normAbilities(char?.abilities)[ability];
+  if (!score) return null;
+  const totalLevel = classes.reduce((a, c) => a + c.level, 0);
+  const mod = hifiAbilityMod(score);
+  const prof = hifiProfBonus(totalLevel);
+  return { ability, score, mod, prof, dc: 8 + prof + mod, atk: prof + mod };
+}
+
 // Espaços de magia: totais e gastos por nível (1..9). Guardados como objetos
 // { "1": 4, "3": 2 } — só níveis com valor > 0. `used` nunca excede `total`.
 function _normSlots(slots) {
@@ -221,6 +258,7 @@ function _normChar(c) {
     slots: _normSlots(c.slots),
     classes: _normClassLevels(c.classes),
     slotsManual: !!c.slotsManual,
+    abilities: _normAbilities(c.abilities),
   };
 }
 
@@ -446,6 +484,8 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
   const [slotTotals, setSlotTotals] = React.useState(() => _normSlots(existing?.slots).total);
   // Classes e níveis do personagem (multiclasse suportada).
   const [classLevels, setClassLevels] = React.useState(() => _normClassLevels(existing?.classes));
+  // Atributos (valores; modificador/CD/ataque são derivados).
+  const [abilities, setAbilities] = React.useState(() => _normAbilities(existing?.abilities));
   // Com classes definidas os slots são automáticos; o grid manual fica atrás
   // de "ajustar manualmente" (homebrew) ou aparece quando não há classes.
   const [slotsManual, setSlotsManual] = React.useState(() => !!existing?.slotsManual);
@@ -529,6 +569,7 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
       slots: { total: slotTotals, used: _normSlots(existing?.slots).used },
       classes: classLevels,
       slotsManual,
+      abilities,
     };
     update(prev => isNew ? [...prev, next] : prev.map(c => c.id === charId ? next : c));
     onClose?.({ action: isNew ? 'created' : 'updated', character: next });
@@ -687,6 +728,50 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
                 style={{ alignSelf: 'flex-start', color: 'var(--accent)' }}
               >+ {T('adicionar classe', 'add class')}</button>
             )}
+          </div>
+        </div>
+
+        {/* Atributos — valores; CD/ataque/modificador são derivados deles. */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+            <HifiSectionLabel>{T('atributos', 'ability scores')}</HifiSectionLabel>
+            <div style={{ flex: 1 }}/>
+            {(() => {
+              const st = hifiCasterStats({ classes: classLevels, abilities });
+              return st ? (
+                <HifiMono style={{ color: 'var(--subtext0)', fontSize: 11 }}>
+                  {T('CD', 'DC')} {st.dc} · {T('ataque', 'attack')} {st.atk >= 0 ? '+' : ''}{st.atk}
+                </HifiMono>
+              ) : null;
+            })()}
+          </div>
+          <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--subtext0)', lineHeight: 1.4 }}>
+            {T('usados pra calcular CD de magia, ataque mágico e modificador de conjuração',
+               'used to calculate spell DC, attack bonus and spellcasting modifier')}
+          </p>
+          <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6 }}>
+            {ABILITY_KEYS.map(k => (
+              <label key={k} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <span className="hifi-mono" style={{ fontSize: 10, color: 'var(--subtext0)' }}>{window.tt ? window.tt(lang, 'ability.' + k) : k.toUpperCase()}</span>
+                <input
+                  type="number" min={1} max={30} inputMode="numeric"
+                  value={abilities[k] ?? ''}
+                  placeholder="—"
+                  // Digitação livre; clampa no blur (mesma razão do nível de classe).
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    setAbilities(prev => ({ ...prev, [k]: raw }));
+                  }}
+                  onBlur={() => setAbilities(prev => _normAbilities(prev))}
+                  aria-label={T(
+                    { str: 'Força', dex: 'Destreza', con: 'Constituição', int: 'Inteligência', wis: 'Sabedoria', cha: 'Carisma' }[k],
+                    { str: 'Strength', dex: 'Dexterity', con: 'Constitution', int: 'Intelligence', wis: 'Wisdom', cha: 'Charisma' }[k],
+                  )}
+                  className="hifi-input"
+                  style={{ width: '100%', textAlign: 'center', padding: '4px 2px', fontSize: 13 }}
+                />
+              </label>
+            ))}
           </div>
         </div>
 
@@ -948,6 +1033,8 @@ Object.assign(window, {
   togglePreparedFor, toggleBookmarkedFor,
   setSlotUsedFor, longRestFor, _normSlots,
   CASTER_CLASSES, _normClassLevels, hifiSuggestedSlots,
+  ABILITY_KEYS, CASTING_ABILITY, _normAbilities,
+  hifiAbilityMod, hifiProfBonus, hifiCasterStats,
   charHasPrepared, charHasBookmarked,
   CharacterEditor,
   useHifiTransition,

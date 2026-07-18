@@ -845,6 +845,65 @@ input.hifi-input[type='number']::-webkit-outer-spin-button { -webkit-appearance:
 }
 
 /* ──────────────────────────────────────────────────────────
+   MODO SESSÃO — fagulhas de conjuração + tracker compacto
+   ────────────────────────────────────────────────────────── */
+/* Fagulha: nasce no ponto do toque; cor da escola via --school (fallback accent). */
+.hifi-spark { position: absolute; width: 0; height: 0; pointer-events: none; z-index: 45; }
+.hifi-spark i {
+  position: absolute; left: 0; top: 0; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--school, var(--accent, var(--mauve)));
+  box-shadow: 0 0 8px 2px var(--school, var(--accent, var(--mauve)));
+  animation: hifi-spark-fly 620ms cubic-bezier(.2,.7,.3,1) forwards;
+}
+.hifi-spark .hifi-spark-core {
+  left: -6px; top: -6px; width: 12px; height: 12px; background: #fff;
+  box-shadow: 0 0 18px 8px var(--school, var(--accent, var(--mauve)));
+  animation: hifi-spark-core 500ms cubic-bezier(.2,.7,.3,1) forwards;
+}
+@keyframes hifi-spark-fly {
+  from { opacity: 1; transform: translate(0, 0) scale(1); }
+  to   { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.2); }
+}
+@keyframes hifi-spark-core {
+  0%   { opacity: 0.95; transform: scale(0.4); }
+  60%  { opacity: 0.9;  transform: scale(1.3); }
+  100% { opacity: 0;    transform: scale(0.2); }
+}
+
+/* Slot compacto (estilo BG3): quadradinho aceso = disponível, apagado = gasto. */
+.hifi-slot-sq {
+  width: 11px; height: 11px; border-radius: 3px; padding: 0; cursor: pointer;
+  background: var(--accent, var(--mauve));
+  border: 1px solid color-mix(in srgb, var(--accent, var(--mauve)) 70%, #fff 12%);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent, var(--mauve)) 55%, transparent);
+  transition: background 180ms cubic-bezier(.2,.7,.3,1),
+              border-color 180ms cubic-bezier(.2,.7,.3,1),
+              box-shadow 180ms cubic-bezier(.2,.7,.3,1);
+}
+.hifi-slot-sq.spent { background: transparent; border-color: var(--surface2); box-shadow: none; }
+.hifi-slot-sq.draining { animation: hifi-slot-drain 500ms cubic-bezier(.2,.7,.3,1); }
+@keyframes hifi-slot-drain {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.6); box-shadow: 0 0 12px 4px var(--accent, var(--mauve)); }
+  100% { transform: scale(1); }
+}
+/* Slots do círculo em bloco 2x2 (>4 quebra linha). */
+.hifi-session-sqgrid { display: grid; grid-template-columns: repeat(2, 11px); gap: 3px; }
+
+/* Pulso do botão de conjurar. */
+.hifi-cast-pulse { animation: hifi-cast-pulse 400ms cubic-bezier(.2,.7,.3,1); }
+@keyframes hifi-cast-pulse {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent, var(--mauve)) 70%, transparent); }
+  40%  { transform: scale(0.95); box-shadow: 0 0 22px 6px color-mix(in srgb, var(--accent, var(--mauve)) 55%, transparent); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hifi-spark, .hifi-spark i, .hifi-spark .hifi-spark-core { display: none; }
+  .hifi-slot-sq.draining, .hifi-cast-pulse { animation: none; }
+}
+
+/* ──────────────────────────────────────────────────────────
    PRINT — adapted from the live spellbook stylesheet
    ────────────────────────────────────────────────────────── */
 @page { size: A4 portrait; margin: 8mm; }
