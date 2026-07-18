@@ -114,6 +114,68 @@ async function deletePack(id) {
 }
 
 // ──────────────────────────────────────────────────────────────────
+// ARMAZENAMENTO PERSISTENTE (STOR-02)
+// ──────────────────────────────────────────────────────────────────
+// ponytail: persistência é best-effort por definição (Pitfall 4 do research) —
+// nunca bloqueia o boot, nunca é usada pra habilitar/desabilitar funcionalidade.
+let _persistPromise = null;
+let _persistState = null;
+
+async function requestPersistence() {
+  if (_persistPromise) return _persistPromise;
+
+  if (!navigator.storage || typeof navigator.storage.persist !== 'function') {
+    const result = { supported: false, persisted: false, requested: false };
+    _persistState = result;
+    return result;
+  }
+
+  _persistPromise = (async () => {
+    try {
+      const already = await navigator.storage.persisted();
+      if (already) {
+        // Curto-circuito: já concedida, não emite uma segunda requisição.
+        return { supported: true, persisted: true, requested: false };
+      }
+      const granted = await navigator.storage.persist();
+      return { supported: true, persisted: granted, requested: true };
+    } catch (err) {
+      // Único ponto do arquivo onde um erro é absorvido em vez de propagado:
+      // persistência é best-effort e não pode derrubar o boot.
+      console.warn('pluginStore.requestPersistence: falha ao consultar/solicitar persistência.', err);
+      return { supported: true, persisted: false, requested: true };
+    }
+  })()
+    .then((result) => {
+      _persistState = result;
+      return result;
+    })
+    .finally(() => {
+      _persistPromise = null;
+    });
+
+  return _persistPromise;
+}
+
+function getPersistenceState() {
+  return _persistState;
+}
+
+// Solicita persistência assim que o DOM estiver pronto — mitiga a eviction de
+// 7 dias do Safari (STOR-02, mesmo padrão de boot de spells-data-loader.jsx).
+// Não aguardada por nada; resultado é best-effort e observável via getPersistenceState().
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => { requestPersistence(); });
+  } else {
+    requestPersistence();
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────
 // EXPOSIÇÃO
 // ──────────────────────────────────────────────────────────────────
-window.pluginStore = { openDB, putPack, getPack, getSpells, listPacks, deletePack };
+window.pluginStore = {
+  openDB, putPack, getPack, getSpells, listPacks, deletePack,
+  requestPersistence, getPersistenceState,
+};

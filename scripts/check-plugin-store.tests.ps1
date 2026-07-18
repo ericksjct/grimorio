@@ -35,7 +35,11 @@ if ($store -match 'catch\s*\([^)]*\)\s*\{\s*\}') {
   throw 'plugin-store.jsx has an empty catch block - the storage layer must not swallow errors.'
 }
 
-foreach ($boundary in @('adaptSpell', 'DOMPurify', 'navigator.storage', 'import ', 'export ')) {
+# 'navigator.storage' removido desta lista no plano 02-02: STOR-02 exige
+# navigator.storage.persist()/.persisted() dentro de plugin-store.jsx no boot
+# (ROADMAP/REQUIREMENTS autoritativos, ver A-03 em 02-02-PLAN.md) — a suposição
+# original desta lista (02-01) ficou obsoleta, não é mais uma violação de escopo.
+foreach ($boundary in @('adaptSpell', 'DOMPurify', 'import ', 'export ')) {
   if ($store -like "*$boundary*") {
     throw "plugin-store.jsx crosses a scope boundary it does not own: $boundary"
   }
