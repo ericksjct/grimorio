@@ -19,6 +19,7 @@ const PRECACHE = [
   './grimorio-helpers.jsx',
   './i18n.jsx',
   './spells-data-loader.jsx',
+  './plugin-store.jsx', // ponytail: CACHE_VERSION não muda — install() reabre o mesmo cache e só adiciona este arquivo, sem re-baixar os JSONs de magias já cacheados
   './v11-character-editor.jsx',
   './v10-hifi.jsx',
   './favicon.svg',

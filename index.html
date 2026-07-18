@@ -106,10 +106,12 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 <!-- Production dependency set for the V11 (hi-fi) product.
      ORDER MATTERS: helpers define spellName / schoolKey / v8Description that the
      components call by bare reference; the loader overrides v7BuildSpells with
-     real JSON data; the editor + hi-fi shell consume both. -->
+     real JSON data; plugin-store.jsx exposes window.pluginStore and must exist
+     before any component that queries it; the editor + hi-fi shell consume both. -->
 <script type="text/babel" src="grimorio-helpers.jsx"></script>
 <script type="text/babel" src="i18n.jsx"></script>
 <script type="text/babel" src="spells-data-loader.jsx"></script>
+<script type="text/babel" src="plugin-store.jsx"></script>
 <script type="text/babel" src="v11-character-editor.jsx"></script>
 <script type="text/babel" src="v10-hifi.jsx"></script>
 
