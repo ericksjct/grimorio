@@ -51,7 +51,11 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
   2. The app requests persistent storage on load, visible as a granted/requested persistent quota in the browser's storage devtools panel (STOR-02)
   3. An installed pack can be exported back to a downloaded JSON file, content-identical to what's stored (STOR-03)
   4. A storage write that fails (e.g., quota exceeded) fails cleanly — no partial writes, no crash, no silent data loss
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 02-01-PLAN.md — `plugin-store.jsx`: CRUD IndexedDB (`grimorio-plugins` v1 / store `packs`), falha limpa em escrita, wiring em `index.html` + PRECACHE do `sw.js` (STOR-01)
+- [ ] 02-02-PLAN.md — `navigator.storage.persist()` no boot + `exportPack()` como download JSON, e verificação humana dos 4 critérios da fase (STOR-02, STOR-03)
+
 **Planning route**: PLAN DIRETO (sem discuss). IDB schema + wrapper de ~40 linhas + export-como-download já especificados em `research/ARCHITECTURE.md` e `STACK.md`. Nenhuma decisão de produto em aberto. Research do plan: NÃO.
 
 ### Phase 3: SRD Pack & Import Pipeline
@@ -130,7 +134,7 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|-----------------|--------|-----------|
 | 1. Animation Verification & Polish | Pre-milestone | ad hoc | Complete | 2026-07-17 |
-| 2. Plugin Storage Foundation | v2.0 | 0/TBD | Not started | - |
+| 2. Plugin Storage Foundation | v2.0 | 0/2 | Planned | - |
 | 3. SRD Pack & Import Pipeline | v2.0 | 0/TBD | Not started | - |
 | 4. Loader Integration (Source-Dispatch) | v2.0 | 0/TBD | Not started | - |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 0/TBD | Not started | - |
