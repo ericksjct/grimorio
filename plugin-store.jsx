@@ -3,8 +3,8 @@
 // Schema: banco 'grimorio-plugins' (v1), um único object store 'packs' com
 // keyPath 'id'. Cada registro tem a forma { id, meta, spells }, onde `spells`
 // é o JSON cru na mesma forma dos arquivos spells-5E-*.json — esta camada não
-// normaliza, transforma nem empobrece o conteúdo; adaptSpells() (no loader)
-// continua o único ponto de normalização do app (STOR-01).
+// normaliza, transforma nem empobrece o conteúdo; o adaptador de magias (no
+// loader) continua o único ponto de normalização do app (STOR-01).
 //
 // Uso: incluir este arquivo no HTML depois de spells-data-loader.jsx e antes
 // dos componentes que consultam window.pluginStore.
@@ -99,7 +99,7 @@ async function getPack(id) {
 
 async function getSpells(id) {
   const record = await _tx('readonly', (store) => store.get(id));
-  // Array cru, sem transformação/filtro/ordenação — adaptSpells() é quem normaliza.
+  // Array cru, sem transformação/filtro/ordenação — o adaptador de magias é quem normaliza.
   return record ? record.spells : [];
 }
 
