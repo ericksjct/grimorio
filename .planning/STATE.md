@@ -2,9 +2,13 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Plugins BYOD
-status: planning
-last_updated: "2026-07-18T00:00:00.000Z"
+current_phase: 2
+current_phase_name: Plugin Storage Foundation
+status: executing
+stopped_at: ROADMAP.md, STATE.md written and REQUIREMENTS.md traceability updated for milestone v2.0; ready for `/gsd-plan-phase 2`
+last_updated: "2026-07-18T22:25:45.542Z"
 last_activity: 2026-07-18
+last_activity_desc: ROADMAP.md written for milestone v2.0 (Phases 2-6); Phase 1 closed out as pre-milestone history
 progress:
   total_phases: 6
   completed_phases: 1
@@ -26,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-07-17)
 
 Phase: 2 of 6 (Plugin Storage Foundation)
 Plan: — (not yet planned)
-Status: Ready to plan
+Status: Ready to execute
 Last activity: 2026-07-18 — ROADMAP.md written for milestone v2.0 (Phases 2-6); Phase 1 closed out as pre-milestone history
 
 Progress: [██░░░░░░░░] 17%
@@ -57,6 +61,7 @@ Progress: [██░░░░░░░░] 17%
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table. Four decisions locked for this milestone (all "Pending — milestone v2.0" until phases execute):
+
 - BYOD completo para dados de magias — copyright protection, app embeds only SRD/CC-BY, user imports own JSONs
 - Plugin format = existing spell schema + `meta` manifest header
 - Imported packs stored in IndexedDB (localStorage quota too small for ~600KB+ packs)
