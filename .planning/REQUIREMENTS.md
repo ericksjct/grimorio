@@ -65,13 +65,32 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| — | — | — |
+| STOR-01 | Phase 2 | Pending |
+| STOR-02 | Phase 2 | Pending |
+| STOR-03 | Phase 2 | Pending |
+| PKG-01 | Phase 3 | Pending |
+| PKG-02 | Phase 3 | Pending |
+| PKG-03 | Phase 3 | Pending |
+| PKG-04 | Phase 3 | Pending |
+| PKG-05 | Phase 3 | Pending |
+| SRD-01 | Phase 3 | Pending |
+| SRD-03 | Phase 4 | Pending |
+| MGMT-01 | Phase 5 | Pending |
+| MGMT-02 | Phase 5 | Pending |
+| MGMT-03 | Phase 5 | Pending |
+| MGMT-04 | Phase 5 | Pending |
+| MGMT-05 | Phase 5 | Pending |
+| SRD-02 | Phase 5 | Pending |
+| MIGR-01 | Phase 6 | Pending |
+| MIGR-02 | Phase 6 | Pending |
+| MIGR-03 | Phase 6 | Pending |
 
 **Coverage:**
-- v2.0 requirements: 16 total
-- Mapped to phases: 0
-- Unmapped: 16 (roadmap pending)
+- v2.0 requirements: 19 total (corrected from a stale "16 total" note in this file's initial draft — the requirement list itself has always had 5 PKG + 3 STOR + 5 MGMT + 3 SRD + 3 MIGR = 19 items)
+- Mapped to phases: 19
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-07-18 (milestone v2.0)*
 *Previous milestone (v1, maintenance mode): ANIM-01..04 verified manually and closed 2026-07-17*
+*Roadmap created: 2026-07-18 — Phases 2-6 (see .planning/ROADMAP.md)*
