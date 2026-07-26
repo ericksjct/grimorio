@@ -84,9 +84,33 @@ Plans:
   5. Every spell description from an imported pack passes through DOMPurify sanitization before it can reach any `dangerouslySetInnerHTML` sink — raw imported HTML is never rendered (PKG-05)
   6. A generated SRD pack (CC-BY EN subset) exists as a file conforming to the same pack schema and installs cleanly through the same pipeline (SRD-01)
 
-**Plans**: TBD
+**Plans**: 8 plans
+Plans:
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — `pack.schema.json` na raiz + `pack-docs.html`: o contrato do formato publicado para autores (PKG-01)
+- [ ] 03-02-PLAN.md — investigação de licença das fontes SRD 5.1/5.2 com evidência verificável, correção do texto de SRD-01 em REQUIREMENTS.md, e checkpoint de decisão da rota (SRD-01, D-05/D-06/D-07)
+
+**Wave 2** *(bloqueada na Wave 1)*
+
+- [ ] 03-03-PLAN.md — `pack-import.jsx`: validador escrito à mão, bloqueio de `__proto__`/`constructor`/`prototype` no reviver do parse, teto de 10 MB e `freeIdentifier` (PKG-04)
+- [ ] 03-04-PLAN.md — `scripts/generate-srd-pack.mjs` + `srd-2014-en.json` / `srd-2024-en.json`, com prova de não-reuso do texto dos JSONs atuais (SRD-01)
+
+**Wave 3** *(bloqueada na Wave 2)*
+
+- [ ] 03-05-PLAN.md — funil de instalação: leitura de arquivo, fetch por URL com bytes limitados, DOMPurify e gravação única com sufixo (PKG-02, PKG-03, PKG-05)
+- [ ] 03-06-PLAN.md — `pack-import-dialog.jsx` + chaves `import.*`/`packErr.*` no `i18n.jsx`: superfície mínima de import (PKG-02, PKG-03)
+
+**Wave 4** *(bloqueada na Wave 3)*
+
+- [ ] 03-07-PLAN.md — wiring: DOMPurify com SRI e versão fixada, ordem de carga no `index.html`, montagem do gatilho e `PRECACHE` do `sw.js`
+
+**Wave 5** *(bloqueada na Wave 4)*
+
+- [ ] 03-08-PLAN.md — CSP de escopo mínimo com a rota de saída de D-10 registrada, e verificação humana da fase (6 temas × claro/escuro + impressão + payload hostil)
+
 **UI hint**: yes
-**Planning route**: PLAN DIRETO após 2 decisões de produto resolvidas em chat antes do plan: (a) qual SRD embutir — 5.1/2014, 5.2/2024, ou ambos (afeta subconjunto de magias + texto de atribuição da Fase 5); (b) teto de tamanho do import. Pipeline (validação, DOMPurify, formato) já especificada em research. Research do plan: NÃO — mas a geração do subconjunto SRD CC-BY-limpo (quais magias contam como livres) é uma tarefa de dados a resolver no plan, não pesquisa de framework.
+**Planning route**: PLAN DIRETO após 2 decisões de produto resolvidas em chat antes do plan: (a) qual SRD embutir — 5.1/2014, 5.2/2024, ou ambos (afeta subconjunto de magias + texto de atribuição da Fase 5); (b) teto de tamanho do import. Pipeline (validação, DOMPurify, formato) já especificada em research. Research do plan: NÃO — **corrigido em 2026-07-26 (D-07):** a nota original subestimou o escopo. A validação de licença das fontes SRD é investigação real e virou o plano 03-02, com checkpoint de decisão bloqueante antes de qualquer geração de pacote. Não é pesquisa de framework; é verificação de fonte de dados + licença.
 
 ### Phase 4: Loader Integration (Source-Dispatch)
 
