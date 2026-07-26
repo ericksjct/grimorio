@@ -1,7 +1,7 @@
 ---
 phase: 3
 slug: srd-pack-import-pipeline
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-07-25
@@ -76,6 +76,8 @@ Only 2 weights used project-wide (400 regular, 700 bold) — do not introduce a 
 
 Accent reserved for exactly: submit button background, active mode-toggle tab, focus ring outline, docs-page inline links. Never used for plain body text, card borders, or decorative elements.
 
+**Focal point.** On the import surface, the eye lands first on the **File/URL mode toggle** (the only accent-filled control above the fold, and the decision the user must make before anything else), then on the **"Instalar pacote" submit button** as the terminal action — everything between them (URL field, size hint, CORS notice) is supporting chrome at Body/Label weight. On the docs page, the focal point is the **Display-size page title**, followed by the example-pack JSON block, which is the artifact a pack author actually came for.
+
 ---
 
 ## Copywriting Contract
@@ -96,17 +98,33 @@ Bilingual app (`T(pt, en)` / `tt(lang, key)` pattern already established in `v10
 
 ## UI Considerations
 
-Applicable state considerations resolved: 7 covered, 0 backstop, 0 unresolved
+Produced by the `ui-consideration-probe` engine (14 applicable considerations across 2 surfaces),
+resolved interactively. Element kinds confirmed with the user: **E1 import-form** = `form` +
+`interactive-control` + `static-content`; **E2 pack-docs-page** = `list-collection` +
+`static-content` (the classifier's `form` cue on E2 was a false positive — user-confirmed dismissal,
+see the four `dismissed` rows below).
+
+Applicable: 14 — **10 covered, 0 backstop, 4 dismissed, 0 unresolved**
+
+Empty-state and error-state **copy** lives in `## Copywriting Contract` above; the rows below cover
+state *shape* and reference that copy rather than restating it.
 
 | Category | Element(s) | Status | Resolution / Reason |
 |----------|------------|--------|---------------------|
-| empty | import-form (form) | ✅ covered | Untouched form shows the idle file-picker button and an empty URL field (mutually exclusive tabs/toggle), the CORS-hosts notice, and a link to the docs page, before any input — copy in "Empty state heading/body" above. |
-| loading | import-form (form) | ✅ covered | Submit button label switches to "Instalando…"/"Installing…" and disables; file/URL inputs disable for the duration of the validate→sanitize→write pipeline. No spinner icon added (matches the no-icon-library convention) — text-only busy state is sufficient at this scale. |
-| error | import-form (form) | ✅ covered | Every PKG-04 rejection renders inline in `var(--red)` directly under the active input; transient fetch/CORS failures also fire the existing toast (`useHifiToast`/`hifi-toast` event, `kind:'err'`) — see "Error state" row in Copywriting Contract for the exact per-reason strings. |
-| partial | import-form (form) | ✅ covered | File and URL are mutually exclusive input modes (tab/toggle, never two simultaneously-active fields); submit stays disabled until exactly one mode has a non-empty value, so "both filled" or "neither filled" never reaches the pipeline. |
-| long-text | import-form (form) | ✅ covered | URL input uses `.hifi-input` with native text overflow (no custom truncation); the success message names the full applied identifier (D-09 suffix) in `.hifi-mono` styling, wrapping rather than clipping for long homebrew source strings. |
-| overflow | pack-docs-page (static-content) | ✅ covered | The one-spell example JSON and field-reference table render in a monospace, horizontally-scrollable block (`overflow-x: auto`, no wrap) — matches the existing JetBrains Mono chrome convention, never silently clipped. |
-| long-text | pack-docs-page (static-content) | ✅ covered | Prose sections (manifest field descriptions, CORS/hosts explanation) use `.hifi-rich` paragraph rhythm (already defined in `hifi-tokens.css`) — normal wrapping, no truncation; this is a static reference page, not a fixed-height card. |
+| empty | E1 import-form (form) | ✅ covered | Untouched form shows the idle file-picker button and an empty URL field (mutually exclusive tabs/toggle), the CORS-hosts notice, the size hint, and a link to the docs page, before any input — copy in the "Empty state heading/body" rows above. |
+| loading | E1 import-form (form) | ✅ covered | Submit button label switches to "Instalando…"/"Installing…" and disables; file/URL inputs disable for the duration of the validate→sanitize→write pipeline. No spinner icon added (matches the no-icon-library convention) — text-only busy state is sufficient at this scale. |
+| error | E1 import-form (form) | ✅ covered | Every PKG-04 rejection renders inline in `var(--red)` directly under the active input; transient fetch/CORS failures also fire the existing toast (`useHifiToast`/`hifi-toast` event, `kind:'err'`) — see the "Error state" row in `## Copywriting Contract` for the exact per-reason strings. The error clears on the next input change; the form stays filled so the user can correct rather than re-enter. |
+| partial | E1 import-form (form) | ✅ covered | File and URL are mutually exclusive input modes (tab/toggle, never two simultaneously-active fields); submit stays disabled until exactly one mode has a non-empty value, so "both filled" or "neither filled" never reaches the pipeline. A pack that parses but fails schema validation is rejected whole — no partial install, nothing written to storage (PKG-04). |
+| overflow | E1 import-form (form) | ✅ covered | The dialog panel caps at `max-height: 80vh` with `overflow-y: auto` on its body (existing `role="dialog"` shell convention in `hifi-tokens.css`); the header and the submit row stay visible. A long selected filename renders in `.hifi-mono` with `text-overflow: ellipsis` on a single line, full name in `title`. Error messages wrap, never scroll horizontally. |
+| long-text | E1 import-form (form) | ✅ covered | URL input uses `.hifi-input` with native single-line text overflow (no custom truncation). The success message names the full applied identifier including any D-09 suffix in `.hifi-mono`, wrapping with `overflow-wrap: anywhere` rather than clipping — a long homebrew `source` string must stay fully readable, since it is the identifier the user will look for later. |
+| populated | E2 pack-docs-page (list-collection) | ✅ covered | Happy path at typical volume: Display-size title → short intro prose → manifest field-reference table (~8–12 rows) → spell field-reference table (~10–15 rows) → one complete example pack in a monospace block → CORS-compatible-hosts note → link to `pack.schema.json`. Single-column, `max-width` capped for line length at Body size; sections separated by the 48px `2xl` step. |
+| overflow | E2 pack-docs-page (list-collection) | ✅ covered | The example-pack JSON block and both field-reference tables render in a monospace, horizontally scrollable container (`overflow-x: auto`, no wrap) — matches the existing JetBrains Mono chrome convention, never silently clipped. On narrow viewports the tables scroll rather than reflowing into stacked cards. |
+| zero-one-many | E2 pack-docs-page (list-collection) | ✅ covered | The field-reference tables are authored static content with a fixed, non-zero row count — zero is not a reachable state. Copy is written for the many case throughout ("Campos do manifesto" / "Manifest fields", plural), and the example section shows exactly **one** spell, labelled as one example rather than as the full pack, so the singular case is never mistaken for the schema's cardinality. |
+| long-text | E2 pack-docs-page (static-content) | ✅ covered | Prose sections (manifest field descriptions, CORS/hosts explanation) use `.hifi-rich` paragraph rhythm (already defined in `hifi-tokens.css`) — normal wrapping, no truncation; this is a static reference page, not a fixed-height card. Long field descriptions inside a table cell wrap within the cell. |
+| empty | E2 pack-docs-page | ⊘ dismissed | The docs page is authored static content shipped with the app — it has no data source and no zero state. Classifier `form` cue was a false positive (user-confirmed). |
+| loading | E2 pack-docs-page | ⊘ dismissed | Served as part of the app bundle with no runtime `fetch` — the schema link is an anchor, not an in-page load. No loading state exists to design. Classifier `form` cue was a false positive (user-confirmed). |
+| error | E2 pack-docs-page | ⊘ dismissed | Nothing on the page can fail: no submit, no fetch, no user input. Classifier `form` cue was a false positive (user-confirmed). |
+| partial | E2 pack-docs-page | ⊘ dismissed | No data binding — content is complete by construction or the page is broken at build/author time, which is not a runtime UI state. Classifier `form` cue was a false positive (user-confirmed). |
 
 ---
 
@@ -123,11 +141,11 @@ No component registry is in play for this phase. The only new external dependenc
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS — was FLAG (no focal point declared); resolved by the **Focal point** paragraph in `## Color`
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** APPROVED
