@@ -572,7 +572,7 @@ const HifiSpellCard = React.memo(function HifiSpellCard({ s, lang, prepared, boo
       <button
         type="button"
         className="hifi-card-open"
-        onClick={onClick}
+        onClick={() => onClick && onClick(s)}
         aria-label={spellName(s, lang)}
       />
       {/* Ribbon = toggle de "preparada". Sempre clicável; o clique não abre o
@@ -580,7 +580,7 @@ const HifiSpellCard = React.memo(function HifiSpellCard({ s, lang, prepared, boo
           (clique pra marcar) quando não. */}
       <button
         type="button"
-        onClick={(e) => { e.stopPropagation(); onTogglePrepared && onTogglePrepared(); }}
+        onClick={(e) => { e.stopPropagation(); onTogglePrepared && onTogglePrepared(s); }}
         className={`hifi-card-ribbon ${prepared ? 'on' : 'off'}`}
         aria-pressed={prepared}
         aria-label={prepared
@@ -678,9 +678,12 @@ const HifiSpellCard = React.memo(function HifiSpellCard({ s, lang, prepared, boo
     </div>
   );
 }, (prev, next) =>
-  // ponytail: compara só os props de dados — os callbacks são arrows recriadas
-  // a cada render, então incluí-los anularia o memo. Eles só capturam valores
-  // estáveis (índice via functional update, ids), então ignorar é seguro.
+  // ponytail: compara só os props de dados — incluir callbacks anularia o memo.
+  // CONTRATO: por isso `onClick`/`onTogglePrepared` PRECISAM ter identidade
+  // estável e receber a magia por argumento. Um callback recriado a cada render
+  // fica preso na versão antiga quando o card não re-renderiza — se ele
+  // capturar o índice na lista filtrada, filtrar a lista faz o card abrir a
+  // magia errada (bug real: buscar "flame" e clicar no 1º card abria o 4º).
   prev.s === next.s && prev.lang === next.lang && prev.prepared === next.prepared &&
   prev.bookmarked === next.bookmarked && prev.selected === next.selected && prev.compact === next.compact
 );
@@ -1165,6 +1168,21 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
     // Favoritas são globais — não dependem do personagem ativo.
     toggleBookmark(hifiSpellKey(s));
   }
+  // Callbacks do card: identidade estável (o memo do HifiSpellCard ignora props
+  // de função, então um callback recriado a cada render fica preso na versão
+  // antiga). Nada de índice/personagem capturado — lê tudo por ref no clique.
+  const cardCtxRef = React.useRef(null);
+  cardCtxRef.current = { filtered, liveChar, update };
+  const onCardOpen = React.useCallback((s) => {
+    const i = cardCtxRef.current.filtered.indexOf(s);
+    if (i < 0) return;
+    setSelectedIdx(prev => (prev === i ? null : i));
+  }, [setSelectedIdx]);
+  const onCardPrepare = React.useCallback((s) => {
+    const { liveChar: c, update: u } = cardCtxRef.current;
+    if (!c) return;
+    togglePreparedFor(c.id, hifiSpellKey(s), u);
+  }, []);
   function toggleFilter(category, value) {
     setFilters(prev => {
       const next = { ...prev };
@@ -1422,8 +1440,8 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
                 prepared={prepared.has(hifiSpellKey(s))}
                 bookmarked={bookmarked.has(hifiSpellKey(s))}
                 selected={i === selectedIdx}
-                onClick={() => setSelectedIdx(prev => (prev === i ? null : i))}
-                onTogglePrepared={() => togglePrep(s)}
+                onClick={onCardOpen}
+                onTogglePrepared={onCardPrepare}
               />
             ))}
           </div>
@@ -2186,6 +2204,18 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
     // Favoritas são globais — não dependem do personagem ativo.
     toggleBookmark(hifiSpellKey(s));
   }
+  // Mesmo contrato do desktop: callbacks estáveis, magia vem por argumento.
+  const cardCtxRef = React.useRef(null);
+  cardCtxRef.current = { filtered, liveChar, update };
+  const onCardOpen = React.useCallback((s) => {
+    const i = cardCtxRef.current.filtered.indexOf(s);
+    if (i >= 0) setSelectedIdx(i);
+  }, [setSelectedIdx]);
+  const onCardPrepare = React.useCallback((s) => {
+    const { liveChar: c, update: u } = cardCtxRef.current;
+    if (!c) return;
+    togglePreparedFor(c.id, hifiSpellKey(s), u);
+  }, []);
   function toggleFilter(category, value) {
     setFilters(prev => {
       const next = { ...prev };
@@ -2321,8 +2351,8 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
               key={hifiSpellKey(s)} s={s} lang={lang}
               prepared={prepared.has(hifiSpellKey(s))}
               bookmarked={bookmarked.has(hifiSpellKey(s))}
-              onClick={() => setSelectedIdx(i)}
-              onTogglePrepared={() => togglePrep(s)}
+              onClick={onCardOpen}
+              onTogglePrepared={onCardPrepare}
               compact
             />
           ))}
