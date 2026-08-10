@@ -54,4 +54,16 @@ Nota genérica única, para `meta.license.modifications` dos dois pacotes:
 
 - **SRD 5.1:** rota (b) recomendada — parser sobre o dump de texto oficialmente licenciado do Tabyltop/CC-SRD (ou, em segundo lugar, OCR do PDF oficial `SRD_CC_v5.1.pdf`). URL de dados: https://raw.githubusercontent.com/Tabyltop/CC-SRD/main/SRD5.1-CCBY4.0License-TT.json. URL de fallback (PDF oficial): https://media.wizards.com/2023/downloads/dnd/SRD_CC_v5.1.pdf.
 - **SRD 5.2:** rota (a) recomendada — script one-shot sobre o gist estruturado `srd-5.2-spells.json`. URL de dados: https://gist.github.com/dmcb/4b67869f962e3adaa3d0f7e5ca8f4912. URL de fallback (PDF oficial): https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.pdf.
-- **Aprovação do usuário:** pendente — registrada pela Task 3 deste plano (checkpoint de decisão) após o usuário escolher entre as opções `route-a-both`, `route-a-51-b-52`, `route-b-both` ou `defer-52`.
+
+### Aprovação do usuário (2026-08-10)
+
+**Decisão registrada:** texto livre, reconhecendo a inversão 5.1/5.2 encontrada nesta investigação — nenhuma das quatro opções pré-formuladas descreve exatamente o cenário achado, porque as opções assumiam que uma rota (a) madura existiria para 5.1 e não para 5.2. A investigação encontrou o oposto: 5.2 tem dataset estruturado CC-BY, 5.1 não. A opção estruturalmente mais próxima é **`route-a-51-b-52`, invertida**: aqui a rota (a) vale para **5.2**, e a rota (b) vale para **5.1** — o oposto do nome literal dessa opção (que descreve (a) para 5.1 e (b) OCR para 5.2). Registrar isso explicitamente para que nenhuma automação futura leia `route-a-51-b-52` como "rota (a) para 5.1" sem checar esta nota.
+
+Rota aprovada por edição:
+
+- **SRD 5.1 (2014) → rota (b):** parser próprio sobre o dump CC-BY-4.0 do `Tabyltop/CC-SRD` (`SRD5.1-CCBY4.0License-TT.json`, https://raw.githubusercontent.com/Tabyltop/CC-SRD/main/SRD5.1-CCBY4.0License-TT.json) — texto já extraído do PDF oficial, sem ruído de OCR. O PDF oficial (`SRD_CC_v5.1.pdf`, https://media.wizards.com/2023/downloads/dnd/SRD_CC_v5.1.pdf) NÃO é usado como fonte primária de OCR — fica reservado como referência de conferência/auditoria caso o parser produza resultado suspeito.
+- **SRD 5.2 (2024) → rota (a):** script one-shot sobre o dataset estruturado de 339 magias do gist `dmcb` (https://gist.github.com/dmcb/4b67869f962e3adaa3d0f7e5ca8f4912), com **cópia local versionada no repositório** (ex.: `scripts/srd-sources/srd-5.2-spells.json` ou caminho equivalente escolhido em 03-04) — nada de fetch ao vivo em runtime nem em tempo de build. O PDF oficial (`SRD_CC_v5.2.pdf`, https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.pdf) fica como fallback caso o gist se mostre inadequado.
+
+**Justificativa registrada pelo usuário:** é a combinação com licença CC-BY-4.0 verificada nas duas pontas e o menor trabalho total; a ressalva de que o dataset 5.2 vem de um projeto pessoal (não um dataset comunitário estabelecido) é mitigada pela cópia local versionada, que remove a dependência de disponibilidade contínua do gist.
+
+**Consequência de escopo:** nenhum arquivo de pacote SRD (`srd-2014-en.json` / `srd-2024-en.json` ou nomes equivalentes) foi criado por este plano — a geração em si é trabalho do plano 03-04, que deve ler este documento em vez de reinvestigar a licença.
