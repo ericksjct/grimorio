@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"/>
+<title>Formato do Pacote / Pack Format — Grimório do Jogador</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="description" content="Documentação do formato de pacote de magias (BYOD) do Grimório do Jogador — campos do manifesto, campos de magia, exemplo e limites de import."/>
+<link rel="stylesheet" href="hifi-tokens.css">
+<style>
+  html, body { margin: 0; padding: 0; }
+  * { box-sizing: border-box; }
+  body.hifi {
+    background: var(--base);
+    color: var(--text);
+  }
+  .pd-page {
+    max-width: 72ch;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  .pd-section {
+    margin-top: 48px;
+  }
+  .pd-section:first-child { margin-top: 0; }
+  .pd-title {
+    font-size: 28px;
+    margin: 0 0 8px;
+  }
+  .pd-heading {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 16px;
+  }
+  .pd-scroll {
+    overflow-x: auto;
+  }
+  table.pd-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 14px;
+  }
+  table.pd-table th,
+  table.pd-table td {
+    border: 1px solid var(--surface1, var(--mantle));
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+    white-space: nowrap;
+  }
+  table.pd-table th {
+    background: var(--mantle);
+  }
+  table.pd-table td.pd-desc,
+  table.pd-table th.pd-desc {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    min-width: 22ch;
+  }
+  .pd-example pre {
+    background: var(--mantle);
+    padding: 16px;
+    margin: 0;
+    overflow-x: auto;
+    white-space: nowrap;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 13px;
+  }
+  .pd-list {
+    padding-left: 1.4em;
+  }
+  .pd-list li {
+    margin: 0.3em 0;
+  }
+  .pd-final a,
+  .hifi-rich a {
+    color: var(--accent);
+  }
+</style>
+</head>
+<body class="hifi hifi-light">
+<div class="pd-page">
+
+  <div class="pd-section">
+    <h1 class="pd-title hifi-display">Formato do Pacote / Pack Format</h1>
+  </div>
+
+  <div class="pd-section hifi-rich">
+    <p>
+      Um pacote de magias (<em>pack</em>) é um único arquivo JSON com dois blocos: um
+      <code>meta</code> (identificação, autor, licença) e uma lista <code>spells</code>. Um
+      pacote é sempre <strong>só dados</strong> — nunca JavaScript nem código executável de
+      qualquer tipo. Antes de gravar qualquer coisa, o app valida o pacote contra
+      <a href="pack.schema.json">pack.schema.json</a> e sanitiza todo HTML das descrições.
+      Declarar a licença do conteúdo do pacote é responsabilidade de quem publica.
+    </p>
+    <p>
+      A spell pack is a single JSON file with two blocks: a <code>meta</code> block
+      (identification, author, license) and a <code>spells</code> list. A pack is always
+      <strong>data only</strong> — never JavaScript or any executable code. Before writing
+      anything, the app validates the pack against
+      <a href="pack.schema.json">pack.schema.json</a> and sanitizes all HTML in the
+      descriptions. Declaring the license of the pack's content is the publisher's
+      responsibility.
+    </p>
+  </div>
+
+  <div class="pd-section">
+    <h2 class="pd-heading">Campos do manifesto / Manifest fields</h2>
+    <div class="pd-scroll">
+      <table class="pd-table">
+        <thead>
+          <tr>
+            <th class="hifi-section-label">Campo / Field</th>
+            <th class="hifi-section-label">Tipo / Type</th>
+            <th class="hifi-section-label">Obrigatório / Required</th>
+            <th class="hifi-section-label pd-desc">Descrição / Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>source</code></td>
+            <td>string</td>
+            <td>sim / yes</td>
+            <td class="pd-desc">Identificador único do pacote. A unicidade é comparação exata de string, sensível a maiúsculas/minúsculas, sem normalização Unicode, contra os pacotes já instalados. Um <code>source</code> repetido não é bloqueado nem sobrescrito: o pacote entra com um identificador com sufixo (ex.: <code>meu-homebrew</code> vira <code>meu-homebrew-2</code>) e a mensagem de sucesso informa qual identificador foi aplicado. / Uniqueness is exact, case-sensitive string comparison, no Unicode normalization. A duplicate <code>source</code> is neither blocked nor overwritten — it installs under a suffixed identifier, and the success message names it.</td>
+          </tr>
+          <tr>
+            <td><code>name</code></td>
+            <td>string</td>
+            <td>sim / yes</td>
+            <td class="pd-desc">Nome legível do pacote. / Human-readable pack name.</td>
+          </tr>
+          <tr>
+            <td><code>version</code></td>
+            <td>string</td>
+            <td>sim / yes</td>
+            <td class="pd-desc">Versão do pacote, formato livre. / Pack version, free-form string.</td>
+          </tr>
+          <tr>
+            <td><code>author</code></td>
+            <td>string</td>
+            <td>sim / yes</td>
+            <td class="pd-desc">Rótulo livre — pseudônimo aceito. Nem e-mail nem qualquer contato é campo do schema. / Free-form label — a pseudonym is fine. Neither email nor any contact info is a schema field.</td>
+          </tr>
+          <tr>
+            <td><code>lang</code></td>
+            <td>string (<code>ptbr</code> | <code>en</code>)</td>
+            <td>sim / yes</td>
+            <td class="pd-desc">Idioma do conteúdo das magias. / Language of the spell content.</td>
+          </tr>
+          <tr>
+            <td><code>edition</code></td>
+            <td>string</td>
+            <td>não / no</td>
+            <td class="pd-desc">Ex.: <code>"2014"</code>, <code>"2024"</code>. / e.g. <code>"2014"</code>, <code>"2024"</code>.</td>
+          </tr>
+          <tr>
+            <td><code>spellCount</code></td>
+            <td>integer</td>
+            <td>não / no</td>
+            <td class="pd-desc">Derivado no import a partir do número de magias — o autor não precisa declarar, e qualquer valor declarado aqui é substituído. / Derived on import from the spell count — declaring it is unnecessary, and any declared value is overwritten.</td>
+          </tr>
+          <tr>
+            <td><code>license.id</code></td>
+            <td>string</td>
+            <td>sim / yes</td>
+            <td class="pd-desc">Identificador SPDX quando existir (ex.: <code>CC-BY-4.0</code>), senão um rótulo (<code>proprietary</code>, <code>unspecified</code>). / SPDX identifier when one exists, otherwise a label.</td>
+          </tr>
+          <tr>
+            <td><code>license.attribution</code></td>
+            <td>string</td>
+            <td>sim / yes</td>
+            <td class="pd-desc">Texto de atribuição VERBATIM exigido pela licença — é este texto que o app exibe. / VERBATIM attribution text required by the license — this is the text the app displays.</td>
+          </tr>
+          <tr>
+            <td><code>license.modifications</code></td>
+            <td>string</td>
+            <td>não / no</td>
+            <td class="pd-desc">Nota genérica de modificação exigida pela CC-BY. / Generic modification note required by CC-BY.</td>
+          </tr>
+          <tr>
+            <td><code>license.url</code></td>
+            <td>string (uri)</td>
+            <td>não / no</td>
+            <td class="pd-desc">URL da licença. / License URL.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="pd-section">
+    <h2 class="pd-heading">Campos da magia / Spell fields</h2>
+    <div class="pd-scroll">
+      <table class="pd-table">
+        <thead>
+          <tr>
+            <th class="hifi-section-label">Campo / Field</th>
+            <th class="hifi-section-label">Tipo / Type</th>
+            <th class="hifi-section-label">Obrigatório / Required</th>
+            <th class="hifi-section-label pd-desc">Descrição / Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>name</code></td>
+            <td>string</td>
+            <td>sim / yes</td>
+            <td class="pd-desc">ID estável da magia DENTRO deste pacote — qualquer string única no pacote, não precisa ser inglês. / Stable id for the spell WITHIN this pack — any unique string in the pack, does not need to be English.</td>
+          </tr>
+          <tr>
+            <td><code>displayName</code></td>
+            <td>string</td>
+            <td>não / no</td>
+            <td class="pd-desc">Nome exibido na UI. / Displayed name.</td>
+          </tr>
+          <tr>
+            <td><code>level</code></td>
+            <td>integer (0–9)</td>
+            <td>sim / yes</td>
+            <td class="pd-desc">Nível da magia. / Spell level.</td>
+          </tr>
+          <tr>
+            <td><code>school</code></td>
+            <td>string</td>
+            <td>sim / yes</td>
+            <td class="pd-desc">Escola de magia. / School of magic.</td>
+          </tr>
+          <tr>
+            <td><code>description</code></td>
+            <td>string (HTML)</td>
+            <td>sim / yes</td>
+            <td class="pd-desc">HTML sanitizado no import. Tags preservadas: <code>p, strong, em, i, b, ul, ol, li, table, thead, tbody, tr, th, td, h5, br, hr</code>. TODOS os atributos HTML são removidos (inclusive <code>border</code> em tabelas) — o estilo vem do CSS do app. / Sanitized HTML on import. Preserved tags listed above. ALL HTML attributes are stripped (including table <code>border</code>) — styling comes from the app's CSS.</td>
+          </tr>
+          <tr>
+            <td><code>upgradeDescription</code></td>
+            <td>string (HTML)</td>
+            <td>não / no</td>
+            <td class="pd-desc">HTML, mesma sanitização de <code>description</code> — mesmas tags preservadas, mesmos atributos removidos. / HTML, same sanitization as <code>description</code>.</td>
+          </tr>
+          <tr>
+            <td><code>statBlock</code></td>
+            <td>string | null</td>
+            <td>não / no</td>
+            <td class="pd-desc">HTML, mesma sanitização de <code>description</code>. / HTML, same sanitization as <code>description</code>.</td>
+          </tr>
+          <tr>
+            <td><code>ritual</code></td>
+            <td>boolean</td>
+            <td>não / no</td>
+            <td class="pd-desc">É rituais? / Can be cast as a ritual?</td>
+          </tr>
+          <tr>
+            <td><code>concentration</code></td>
+            <td>boolean</td>
+            <td>não / no</td>
+            <td class="pd-desc">Exige concentração? / Requires concentration?</td>
+          </tr>
+          <tr>
+            <td><code>castTime</code></td>
+            <td>string</td>
+            <td>não / no</td>
+            <td class="pd-desc">Tempo de conjuração. / Casting time.</td>
+          </tr>
+          <tr>
+            <td><code>castTimeNote</code></td>
+            <td>string</td>
+            <td>não / no</td>
+            <td class="pd-desc">Nota adicional sobre o tempo de conjuração. / Extra note about casting time.</td>
+          </tr>
+          <tr>
+            <td><code>range</code></td>
+            <td>string</td>
+            <td>não / no</td>
+            <td class="pd-desc">Alcance. / Range.</td>
+          </tr>
+          <tr>
+            <td><code>components</code></td>
+            <td>string</td>
+            <td>não / no</td>
+            <td class="pd-desc">Componentes (ex.: <code>V, S, M</code>). / Components.</td>
+          </tr>
+          <tr>
+            <td><code>componentsNote</code></td>
+            <td>string</td>
+            <td>não / no</td>
+            <td class="pd-desc">Nota sobre componentes materiais. / Note about material components.</td>
+          </tr>
+          <tr>
+            <td><code>duration</code></td>
+            <td>string</td>
+            <td>não / no</td>
+            <td class="pd-desc">Duração. / Duration.</td>
+          </tr>
+          <tr>
+            <td><code>source</code></td>
+            <td>string</td>
+            <td>não / no</td>
+            <td class="pd-desc">Livro/fonte da magia (ex.: <code>Player's Handbook</code>) — não confundir com <code>meta.source</code>. / Spell's source book — do not confuse with <code>meta.source</code>.</td>
+          </tr>
+          <tr>
+            <td><code>class</code></td>
+            <td>array de string</td>
+            <td>não / no</td>
+            <td class="pd-desc">Classes que podem conjurar a magia. / Classes that can cast the spell.</td>
+          </tr>
+          <tr>
+            <td><code>classNote</code></td>
+            <td>array de string</td>
+            <td>não / no</td>
+            <td class="pd-desc">Notas por classe. / Per-class notes.</td>
+          </tr>
+          <tr>
+            <td><code>url</code></td>
+            <td>string</td>
+            <td>não / no</td>
+            <td class="pd-desc">Link de referência externa. / External reference link.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="pd-section pd-example">
+    <h2 class="pd-heading">Exemplo / Example</h2>
+    <p class="hifi-rich">
+      O bloco abaixo mostra um pacote completo com <strong>exatamente uma magia</strong> — é
+      um exemplo de uma magia só, não o pacote inteiro. O JSON abaixo valida contra
+      <a href="pack.schema.json">pack.schema.json</a>.
+      <br/>
+      The block below shows a complete pack with <strong>exactly one spell</strong> — it is an
+      example of a single spell, not the whole pack. The JSON below validates against
+      <a href="pack.schema.json">pack.schema.json</a>.
+    </p>
+    <div class="pd-scroll">
+<pre>{
+  "meta": {
+    "source": "meu-homebrew",
+    "name": "Meu Pacote Homebrew",
+    "version": "1.0.0",
+    "author": "Autor Anônimo",
+    "lang": "ptbr",
+    "license": {
+      "id": "CC-BY-4.0",
+      "attribution": "Baseado em conteúdo original do autor.",
+      "modifications": "Nenhuma."
+    }
+  },
+  "spells": [
+    {
+      "name": "faisca-arcana",
+      "displayName": "Faísca Arcana",
+      "level": 1,
+      "school": "evocation",
+      "description": "&lt;p&gt;Você dispara uma pequena faísca de energia arcana em um alvo dentro do alcance.&lt;/p&gt;",
+      "ritual": false,
+      "concentration": false,
+      "castTime": "Action",
+      "range": "30 feet",
+      "components": "V, S",
+      "duration": "Instantaneous",
+      "class": ["Wizard"]
+    }
+  ]
+}</pre>
+    </div>
+  </div>
+
+  <div class="pd-section">
+    <h2 class="pd-heading">Limites e rejeições / Limits and rejections</h2>
+    <ul class="pd-list hifi-rich">
+      <li>Teto de 10 MB (10485760 bytes) por pacote, medido em bytes do arquivo. / 10 MB cap (10485760 bytes) per pack, measured in file bytes.</li>
+      <li>JSON malformado. / Malformed JSON.</li>
+      <li>Pacote que não bate com <a href="pack.schema.json">pack.schema.json</a>. / Pack that does not match <a href="pack.schema.json">pack.schema.json</a>.</li>
+      <li>Chaves <code>__proto__</code>, <code>constructor</code> e <code>prototype</code> em qualquer nível. / <code>__proto__</code>, <code>constructor</code> and <code>prototype</code> keys at any level.</li>
+    </ul>
+    <p class="hifi-rich">Todas essas rejeições acontecem antes de qualquer gravação em storage. / All of these are rejected before any write to storage.</p>
+  </div>
+
+  <div class="pd-section">
+    <h2 class="pd-heading">Importar por URL / Import from URL</h2>
+    <p class="hifi-rich">
+      Só funcionam hosts que servem o arquivo com cabeçalho CORS permissivo:
+      <code>raw.githubusercontent.com</code>, Gist (<code>gist.githubusercontent.com</code>) e
+      jsDelivr (<code>cdn.jsdelivr.net</code>). Em qualquer outro host, baixe o arquivo e
+      importe por upload.
+      <br/>
+      Only hosts that serve the file with a permissive CORS header work:
+      <code>raw.githubusercontent.com</code>, Gist (<code>gist.githubusercontent.com</code>) and
+      jsDelivr (<code>cdn.jsdelivr.net</code>). On any other host, download the file and import
+      it via upload instead.
+    </p>
+  </div>
+
+  <div class="pd-section pd-final hifi-rich">
+    <p>
+      Schema completo: <a href="pack.schema.json">pack.schema.json</a> — pode ser apontado
+      direto num validador JSON Schema online.
+      <br/>
+      Full schema: <a href="pack.schema.json">pack.schema.json</a> — point an online JSON
+      Schema validator directly at it.
+    </p>
+  </div>
+
+</div>
+
+<!-- ponytail: esta página espelha a preferência de tema já salva pelo app
+     (spellbook-ui-prefs) em vez de ter seletor próprio — página estática sem
+     estado, upgrade seria um toggle de tema se algum dia precisar de um. -->
+<script>
+(function () {
+  var prefs = {};
+  try { prefs = JSON.parse(localStorage.getItem('spellbook-ui-prefs')) || {}; } catch (e) { prefs = {}; }
+  document.body.className = 'hifi ' + (prefs.dark ? 'hifi-dark' : 'hifi-light') +
+    (prefs.theme && prefs.theme !== 'catppuccin' ? ' hifi-theme-' + prefs.theme : '');
+})();
+</script>
+</body>
+</html>
