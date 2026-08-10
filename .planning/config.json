@@ -1,0 +1,21 @@
+{
+  "workflow": {
+    "_auto_chain_active": false
+  },
+  "model_profile": "balanced",
+  "models": {
+    "planning": "opus",
+    "discuss": "opus",
+    "research": "sonnet",
+    "execution": "sonnet",
+    "verification": "sonnet"
+  },
+  "model_overrides": {
+    "gsd-debugger": "opus",
+    "gsd-code-reviewer": "opus",
+    "gsd-pattern-mapper": "haiku",
+    "gsd-codebase-mapper": "haiku",
+    "gsd-research-synthesizer": "haiku",
+    "gsd-doc-verifier": "haiku"
+  }
+}
