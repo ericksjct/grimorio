@@ -67,6 +67,21 @@ function stripHtml(s) {
     .trim();
 }
 
+// A fonte embute o próprio cabeçalho no texto do upgrade
+// (`<p><strong><em>Em Níveis Superiores.</em></strong> …`) e a UI já renderiza
+// um rótulo de seção "em níveis superiores" — sem tirar, o título aparece duas
+// vezes. Remove só o cabeçalho de abertura, preservando o `<p>` e o resto do
+// HTML. Casa pela ESTRUTURA (ênfase curta terminada em `.`/`:` na abertura), não
+// pelo texto — serve pros dois idiomas e pros packs BYOD. Se sobrar só o
+// cabeçalho (3 magias de 2014 PT-BR), devolve '' e a seção inteira desaparece
+// em vez de mostrar um título solto.
+const UPGRADE_HEADING = /^(\s*<p[^>]*>)?\s*<strong>\s*<em>\s*[^<]{1,40}[.:]\s*<\/em>\s*<\/strong>\s*/i;
+function stripUpgradeHeading(html) {
+  if (!html) return '';
+  const out = String(html).replace(UPGRADE_HEADING, (m, openP) => (openP ? openP.trimStart() : ''));
+  return stripHtml(out) ? out : '';
+}
+
 function normalizeComponents(comp) {
   if (!comp) return '';
   return comp.split(',').map(s => s.trim()).filter(Boolean).join(' ');
@@ -119,12 +134,12 @@ function adaptSpell(s, versionLang, edition) {
       en: s.description || '',
     },
     upgrade: {
-      pt: stripHtml(s.upgradeDescription),
-      en: stripHtml(s.upgradeDescription),
+      pt: stripHtml(stripUpgradeHeading(s.upgradeDescription)),
+      en: stripHtml(stripUpgradeHeading(s.upgradeDescription)),
     },
     upgradeHtml: {
-      pt: s.upgradeDescription || '',
-      en: s.upgradeDescription || '',
+      pt: stripUpgradeHeading(s.upgradeDescription),
+      en: stripUpgradeHeading(s.upgradeDescription),
     },
     classes: versionLang === 'ptbr' ? classesPt : classesEn,
     classesPt,
