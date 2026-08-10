@@ -121,3 +121,128 @@ function parsePackText(text) {
 
   return result;
 }
+
+// ──────────────────────────────────────────────────────────────────
+// VALIDADOR DE SCHEMA ESCRITO À MÃO (D-13)
+// ──────────────────────────────────────────────────────────────────
+
+// Valida UM valor contra UMA entrada de tabela de campo.
+function _checkField(path, spec, value) {
+  switch (spec.type) {
+    case 'string': {
+      if (typeof value !== 'string') _fail(PACK_ERROR_CODES.SCHEMA_INVALID, `packImport.validate: ${path} precisa ser uma string.`);
+      if (spec.minLength !== undefined && value.length < spec.minLength) _fail(PACK_ERROR_CODES.SCHEMA_INVALID, `packImport.validate: ${path} precisa ter ao menos ${spec.minLength} caractere(s).`);
+      if (spec.pattern && !spec.pattern.test(value)) _fail(PACK_ERROR_CODES.SCHEMA_INVALID, `packImport.validate: ${path} não bate com o formato esperado.`);
+      if (spec.enum && spec.enum.indexOf(value) === -1) _fail(PACK_ERROR_CODES.SCHEMA_INVALID, `packImport.validate: ${path} precisa ser um dos valores: ${spec.enum.join(', ')}.`);
+      break;
+    }
+    case 'integer': {
+      if (typeof value !== 'number' || !Number.isInteger(value)) _fail(PACK_ERROR_CODES.SCHEMA_INVALID, `packImport.validate: ${path} precisa ser um número inteiro.`);
+      if (spec.min !== undefined && value < spec.min) _fail(PACK_ERROR_CODES.SCHEMA_INVALID, `packImport.validate: ${path} precisa ser >= ${spec.min}.`);
+      if (spec.max !== undefined && value > spec.max) _fail(PACK_ERROR_CODES.SCHEMA_INVALID, `packImport.validate: ${path} precisa ser <= ${spec.max}.`);
+      break;
+    }
+    case 'boolean': {
+      if (typeof value !== 'boolean') _fail(PACK_ERROR_CODES.SCHEMA_INVALID, `packImport.validate: ${path} precisa ser booleano.`);
+      break;
+    }
+    case 'string[]': {
+      if (!Array.isArray(value) || !value.every((v) => typeof v === 'string')) _fail(PACK_ERROR_CODES.SCHEMA_INVALID, `packImport.validate: ${path} precisa ser um array de strings.`);
+      break;
+    }
+    case 'string|null': {
+      if (value !== null && typeof value !== 'string') _fail(PACK_ERROR_CODES.SCHEMA_INVALID, `packImport.validate: ${path} precisa ser string ou null.`);
+      break;
+    }
+    case 'object': {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) _fail(PACK_ERROR_CODES.SCHEMA_INVALID, `packImport.validate: ${path} precisa ser um objeto.`);
+      break;
+    }
+    default:
+      _fail(PACK_ERROR_CODES.SCHEMA_INVALID, `packImport.validate: ${path} tem tipo de campo desconhecido: ${spec.type}.`);
+  }
+}
+
+// Valida um objeto contra uma tabela de campos: obrigatoriedade, tipo, e
+// rejeita a primeira chave própria fora da tabela (equivalente a
+// additionalProperties: false do schema). Nunca remove nem corrige a chave
+// desconhecida; rejeita.
+function _checkObject(path, fields, obj) {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+    _fail(PACK_ERROR_CODES.SCHEMA_INVALID, `packImport.validate: ${path} precisa ser um objeto.`);
+  }
+  for (const field of fields) {
+    const value = obj[field.key];
+    const fieldPath = `${path}.${field.key}`;
+    if (value === undefined) {
+      if (field.required) _fail(PACK_ERROR_CODES.SCHEMA_INVALID, `packImport.validate: ${fieldPath} é obrigatório.`);
+      continue;
+    }
+    _checkField(fieldPath, field, value);
+  }
+  const known = fields.map((f) => f.key);
+  for (const key of Object.keys(obj)) {
+    if (known.indexOf(key) === -1) {
+      _fail(PACK_ERROR_CODES.SCHEMA_INVALID, `packImport.validate: ${path} contém uma chave desconhecida: ${key}.`);
+    }
+  }
+}
+
+// Ordem exata: pacote é objeto -> chaves de topo conhecidas -> meta -> license
+// -> spells (mínimo 1 item, cada um contra SPELL_FIELDS). Falha na primeira
+// violação encontrada; não retorna valor e não modifica pack.
+function validatePack(pack) {
+  if (!pack || typeof pack !== 'object' || Array.isArray(pack)) {
+    _fail(PACK_ERROR_CODES.SCHEMA_INVALID, 'packImport.validate: o pacote precisa ser um objeto.');
+  }
+
+  // id é tolerado (A-02: pluginStore.exportPack() serializa o registro
+  // verbatim incluindo a chave de topo id) — o import recalcula o id e não
+  // confia no que veio no arquivo.
+  const topKeys = ['id', 'meta', 'spells'];
+  for (const key of Object.keys(pack)) {
+    if (topKeys.indexOf(key) === -1) {
+      _fail(PACK_ERROR_CODES.SCHEMA_INVALID, `packImport.validate: chave de topo desconhecida: ${key}.`);
+    }
+  }
+
+  _checkObject('meta', META_FIELDS, pack.meta);
+  _checkObject('meta.license', LICENSE_FIELDS, pack.meta && pack.meta.license);
+
+  // minItems: 1 do schema — um pacote vazio criaria entrada fantasma no
+  // seletor de versões da Fase 5.
+  if (!Array.isArray(pack.spells) || pack.spells.length < 1) {
+    _fail(PACK_ERROR_CODES.SCHEMA_INVALID, 'packImport.validate: spells precisa ser um array com ao menos 1 magia.');
+  }
+  pack.spells.forEach((spell, i) => {
+    _checkObject(`spells[${i}]`, SPELL_FIELDS, spell);
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────
+// IDENTIFICADOR LIVRE (D-09)
+// ──────────────────────────────────────────────────────────────────
+
+// ponytail: pluginStore.putPack() é store.put (upsert cru, sem dedup) e
+// sobrescreveria em silêncio um pacote existente com o mesmo id — este
+// cálculo é obrigatório ANTES da gravação, não uma cortesia.
+function freeIdentifier(base, existingIds) {
+  if (existingIds.indexOf(base) === -1) return base;
+  let n = 2;
+  while (existingIds.indexOf(`${base}-${n}`) !== -1) {
+    n += 1;
+  }
+  return `${base}-${n}`;
+}
+
+// ──────────────────────────────────────────────────────────────────
+// EXPOSIÇÃO — o plano seguinte desta fase acrescenta sanitizePack,
+// installFromFile e installFromUrl a este mesmo objeto.
+// ──────────────────────────────────────────────────────────────────
+window.packImport = {
+  MAX_PACK_BYTES,
+  PACK_ERROR_CODES,
+  parsePackText,
+  validatePack,
+  freeIdentifier,
+};
