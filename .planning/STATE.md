@@ -89,6 +89,12 @@ None yet. `.planning/codebase/CONCERNS.md` holds candidate future maintenance it
 - Research flags Phase 3 as needing a concrete file-size cap decided during planning (no byte threshold proposed yet) and a scoping call on whether to add a CSP as defense-in-depth alongside DOMPurify.
 - No automated frontend test suite exists — all phase verification will be manual browser QA, consistent with the rest of the project.
 
+## Quick Tasks Completed
+
+| Date | Slug | Result |
+|------|------|--------|
+| 2026-08-10 | spell-card-stale-index | Spell cards opened the wrong spell after filtering — memo'd card kept a stale index closure. Callbacks made identity-stable + spell-argument based; static check added. |
+
 ## Deferred Items
 
 Items acknowledged and carried forward from previous milestone close:
