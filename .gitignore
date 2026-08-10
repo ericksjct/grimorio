@@ -6,6 +6,10 @@ Thumbs.db
 .idea/
 .superpowers/
 
+# scripts/generate-srd-pack.mjs live-fetch cache (SRD 5.1 source dump) —
+# never committed; scripts/srd-sources/ holds the versioned SRD 5.2 copy instead.
+.cache/
+
 # Artefatos de debug/screenshot de sessões de desenvolvimento
 debug-*.png
 v10-*.png
