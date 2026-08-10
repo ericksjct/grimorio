@@ -8,7 +8,7 @@
 
 ### PKG — Formato & Import
 
-- [ ] **PKG-01**: Autor de pacote pode descrever seu pack num JSON = schema atual de magias + cabeçalho `meta` (nome, autor, versão, licença, `source` único). O formato é publicado como JSON Schema (`pack.schema.json`) + página de docs para autores — schema é ao mesmo tempo a documentação oficial e o validador do import. `name` de cada magia é documentado como ID estável (qualquer string única dentro do pack; não precisa ser inglês)
+- [x] **PKG-01**: Autor de pacote pode descrever seu pack num JSON = schema atual de magias + cabeçalho `meta` (nome, autor, versão, licença, `source` único). O formato é publicado como JSON Schema (`pack.schema.json`) + página de docs para autores — schema é ao mesmo tempo a documentação oficial e o validador do import. `name` de cada magia é documentado como ID estável (qualquer string única dentro do pack; não precisa ser inglês)
 - [ ] **PKG-02**: Usuário pode instalar um pacote a partir de um arquivo do dispositivo (`input[type=file]`)
 - [ ] **PKG-03**: Usuário pode instalar um pacote a partir de uma URL, com a limitação de CORS explicada na própria UI (hosts compatíveis: raw.githubusercontent, Gist, jsDelivr)
 - [ ] **PKG-04**: Import valida o pacote antes de gravar: conformidade com o schema, JSON malformado, tamanho máximo, bloqueio de chaves `__proto__`/`constructor`/`prototype`, unicidade do `source` contra os packs já instalados
@@ -68,7 +68,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STOR-01 | Phase 2 | Complete |
 | STOR-02 | Phase 2 | Complete |
 | STOR-03 | Phase 2 | Complete |
-| PKG-01 | Phase 3 | Pending |
+| PKG-01 | Phase 3 | Complete |
 | PKG-02 | Phase 3 | Pending |
 | PKG-03 | Phase 3 | Pending |
 | PKG-04 | Phase 3 | Pending |
