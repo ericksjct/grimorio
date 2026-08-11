@@ -112,7 +112,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
      must exist before any component that queries it; the editor + hi-fi shell
      consume both. -->
 <!-- pack-import.jsx needs window.pluginStore and the DOMPurify script above, so
-     it loads right after plugin-store.jsx; pack-import-dialog.jsx uses
+     it loads right after the plugin store script; pack-import-dialog.jsx uses
      window.useDialogA11y from the v11 editor, so it loads right after it. -->
 <script type="text/babel" src="grimorio-helpers.jsx"></script>
 <script type="text/babel" src="i18n.jsx"></script>
