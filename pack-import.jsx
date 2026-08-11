@@ -1,18 +1,19 @@
-// Pack Import — camada de validação e rejeição de pacotes de magias BYOD
-// (PKG-02, PKG-03, PKG-04).
+// Pack Import — camada de validação, sanitização e instalação de pacotes de
+// magias BYOD (PKG-02, PKG-03, PKG-04, PKG-05).
 //
 // Este módulo possui: leitura defensiva de texto JSON de pacote
 // (parsePackText), validação de schema escrita à mão (validatePack)
 // espelhando pack.schema.json, cálculo puro de identificador livre
-// (freeIdentifier, D-09), e leitura de arquivo local e busca por URL com
-// teto de tamanho nos dois caminhos (_readFileText, _fetchText, D-08).
+// (freeIdentifier, D-09), leitura de arquivo local e busca por URL com teto
+// de tamanho nos dois caminhos (_readFileText, _fetchText, D-08),
+// sanitização de HTML com DOMPurify (sanitizePack, PKG-05) e o funil único de
+// instalação (installFromFile, installFromUrl) que lê, valida, sanitiza e
+// grava — nessa ordem, com uma única gravação.
 //
 // Este módulo NÃO possui: não abre IndexedDB por conta própria — toda
 // gravação passa por window.pluginStore (plugin-store.jsx); não normaliza
 // magia — adaptSpells() no loader continua o único ponto de normalização do
-// app; não sanitiza HTML nem instala pacotes — isso é acrescentado a
-// window.packImport (sanitizePack, installFromFile, installFromUrl) pela
-// próxima task deste mesmo plano.
+// app.
 //
 // Uso: incluir este arquivo no HTML depois de plugin-store.jsx (a instalação
 // usa window.pluginStore) e depois do script do DOMPurify.
@@ -225,7 +226,7 @@ function validatePack(pack) {
 // IDENTIFICADOR LIVRE (D-09)
 // ──────────────────────────────────────────────────────────────────
 
-// ponytail: pluginStore.putPack() é store.put (upsert cru, sem dedup) e
+// ponytail: pluginStore.putPack faz um store.put cru (upsert, sem dedup) e
 // sobrescreveria em silêncio um pacote existente com o mesmo id — este
 // cálculo é obrigatório ANTES da gravação, não uma cortesia.
 function freeIdentifier(base, existingIds) {
@@ -313,8 +314,114 @@ async function _fetchText(url) {
 }
 
 // ──────────────────────────────────────────────────────────────────
-// EXPOSIÇÃO — a próxima task deste plano acrescenta sanitizePack,
-// installFromFile e installFromUrl a este mesmo objeto.
+// SANITIZAÇÃO (PKG-05) — whitelist explícita, DOMPurify, falha fechada.
+// ──────────────────────────────────────────────────────────────────
+
+// Tags observadas nos quatro spells-5E-*.json atuais. `ol` e `hr` entram por
+// simetria com `ul` e as demais tags de bloco; nenhum atributo é permitido em
+// nenhuma delas.
+const ALLOWED_TAGS = Object.freeze(['p', 'strong', 'em', 'i', 'b', 'ul', 'ol', 'li', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'h5', 'br', 'hr']);
+
+// Campos de texto do meta que a UI exibe — rótulos, nunca marcação.
+const META_TEXT_FIELDS = ['name', 'author', 'version', 'edition'];
+const META_LICENSE_TEXT_FIELDS = ['id', 'attribution', 'modifications', 'url'];
+const SPELL_HTML_FIELDS = ['description', 'upgradeDescription', 'statBlock'];
+
+// Clone profundo sem introduzir uma segunda chamada de JSON.parse neste
+// arquivo — parsePackText já é a única, e o script de checagem assere isso.
+function _cloneDeep(value) {
+  if (typeof structuredClone === 'function') return structuredClone(value);
+  if (Array.isArray(value)) return value.map(_cloneDeep);
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const key of Object.keys(value)) out[key] = _cloneDeep(value[key]);
+    return out;
+  }
+  return value;
+}
+
+// ponytail: a sanitização acontece uma vez, no import, porque a cópia
+// sanitizada é a única que existe no storage e a única que sai no
+// exportPack(). Os sinks de dangerouslySetInnerHTML em v10-hifi.jsx não
+// ganham sanitização em runtime nesta fase, por decisão de arquitetura: o
+// dado entra limpo.
+function sanitizePack(pack) {
+  if (!window.DOMPurify) {
+    _fail(PACK_ERROR_CODES.SCHEMA_INVALID, 'packImport.sanitize: DOMPurify não carregou — o import não instala conteúdo não sanitizado.');
+  }
+
+  const copy = _cloneDeep(pack);
+  let changedFields = 0;
+
+  const sanitizeHtml = (value) => window.DOMPurify.sanitize(value, { ALLOWED_TAGS, ALLOWED_ATTR: [], ALLOW_DATA_ATTR: false });
+  const sanitizeText = (value) => window.DOMPurify.sanitize(value, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+
+  copy.spells.forEach((spell) => {
+    for (const field of SPELL_HTML_FIELDS) {
+      const original = spell[field];
+      if (typeof original !== 'string') continue;
+      const clean = sanitizeHtml(original);
+      if (clean !== original) changedFields += 1;
+      spell[field] = clean;
+    }
+  });
+
+  for (const field of META_TEXT_FIELDS) {
+    const original = copy.meta[field];
+    if (typeof original !== 'string') continue;
+    const clean = sanitizeText(original);
+    if (clean !== original) changedFields += 1;
+    copy.meta[field] = clean;
+  }
+
+  if (copy.meta.license) {
+    for (const field of META_LICENSE_TEXT_FIELDS) {
+      const original = copy.meta.license[field];
+      if (typeof original !== 'string') continue;
+      const clean = sanitizeText(original);
+      if (clean !== original) changedFields += 1;
+      copy.meta.license[field] = clean;
+    }
+  }
+
+  return { pack: copy, changedFields };
+}
+
+// ──────────────────────────────────────────────────────────────────
+// INSTALAÇÃO — funil único: ler → validar → sanitizar → gravar, nessa ordem.
+// Nenhum passo pode ser reordenado: gravar antes de validar ou de sanitizar
+// é exatamente a falha que PKG-04/PKG-05 existem para impedir.
+// ──────────────────────────────────────────────────────────────────
+async function _install(text) {
+  const parsed = parsePackText(text);
+  validatePack(parsed);
+  const { pack, changedFields } = sanitizePack(parsed);
+
+  const metas = await window.pluginStore.listPacks();
+  const existingIds = metas.map((m) => m.source);
+  const identifier = freeIdentifier(pack.meta.source, existingIds);
+
+  // O identificador é sempre recalculado — qualquer chave `id` vinda do
+  // arquivo (ciclo exportar→reimportar, A-02) é descartada aqui.
+  pack.meta.source = identifier;
+  pack.meta.spellCount = pack.spells.length;
+  const record = { id: identifier, meta: pack.meta, spells: pack.spells };
+
+  await window.pluginStore.putPack(record);
+
+  return { identifier, spellCount: pack.spells.length, changedFields };
+}
+
+async function installFromFile(file) {
+  return _install(await _readFileText(file));
+}
+
+async function installFromUrl(url) {
+  return _install(await _fetchText(url));
+}
+
+// ──────────────────────────────────────────────────────────────────
+// EXPOSIÇÃO
 // ──────────────────────────────────────────────────────────────────
 window.packImport = {
   MAX_PACK_BYTES,
@@ -322,4 +429,7 @@ window.packImport = {
   parsePackText,
   validatePack,
   freeIdentifier,
+  sanitizePack,
+  installFromFile,
+  installFromUrl,
 };
