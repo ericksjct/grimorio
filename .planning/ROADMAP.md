@@ -84,7 +84,7 @@ Plans:
   5. Every spell description from an imported pack passes through DOMPurify sanitization before it can reach any `dangerouslySetInnerHTML` sink — raw imported HTML is never rendered (PKG-05)
   6. A generated SRD pack (CC-BY EN subset) exists as a file conforming to the same pack schema and installs cleanly through the same pipeline (SRD-01)
 
-**Plans**: 6/8 plans executed
+**Plans**: 7/8 plans executed
 Plans:
 **Wave 1**
 
@@ -103,7 +103,7 @@ Plans:
 
 **Wave 4** *(bloqueada na Wave 3)*
 
-- [ ] 03-07-PLAN.md — wiring: DOMPurify com SRI e versão fixada, ordem de carga no `index.html`, montagem do gatilho e `PRECACHE` do `sw.js`
+- [x] 03-07-PLAN.md — wiring: DOMPurify com SRI e versão fixada, ordem de carga no `index.html`, montagem do gatilho e `PRECACHE` do `sw.js`
 
 **Wave 5** *(bloqueada na Wave 4)*
 
@@ -183,7 +183,7 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 |-------|-----------|-----------------|--------|-----------|
 | 1. Animation Verification & Polish | Pre-milestone | ad hoc | Complete | 2026-07-17 |
 | 2. Plugin Storage Foundation | v2.0 | 2/2 | Complete    | 2026-07-18 |
-| 3. SRD Pack & Import Pipeline | v2.0 | 6/8 | In Progress|  |
+| 3. SRD Pack & Import Pipeline | v2.0 | 7/8 | In Progress|  |
 | 4. Loader Integration (Source-Dispatch) | v2.0 | 0/TBD | Not started | - |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 0/TBD | Not started | - |
 | 6. Decommissioning & Migration | v2.0 | 0/TBD | Not started | - |
