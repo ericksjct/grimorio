@@ -102,6 +102,8 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" integrity="sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" integrity="sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<!-- DOMPurify: a tranca de sanitização do PKG-05. Sem este script, sanitizePack falha fechada e nada é gravado — não há caminho de import que grave HTML sem sanitizar. -->
+<script src="https://unpkg.com/dompurify@3.4.13/dist/purify.min.js" integrity="sha384-ZuC+DIACqSIZTsp+7YF57cR5Y+6qXa7YFbEKdA/EHA/R0T+41dtorqucYl71Zp+t" crossorigin="anonymous"></script>
 
 <!-- Production dependency set for the V11 (hi-fi) product.
      ORDER MATTERS: helpers define spellName / schoolKey / v8Description that the
@@ -109,11 +111,16 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
      real JSON data; the plugin store (see below) exposes window.pluginStore and
      must exist before any component that queries it; the editor + hi-fi shell
      consume both. -->
+<!-- pack-import.jsx needs window.pluginStore and the DOMPurify script above, so
+     it loads right after plugin-store.jsx; pack-import-dialog.jsx uses
+     window.useDialogA11y from the v11 editor, so it loads right after it. -->
 <script type="text/babel" src="grimorio-helpers.jsx"></script>
 <script type="text/babel" src="i18n.jsx"></script>
 <script type="text/babel" src="spells-data-loader.jsx"></script>
 <script type="text/babel" src="plugin-store.jsx"></script>
+<script type="text/babel" src="pack-import.jsx"></script>
 <script type="text/babel" src="v11-character-editor.jsx"></script>
+<script type="text/babel" src="pack-import-dialog.jsx"></script>
 <script type="text/babel" src="v10-hifi.jsx"></script>
 
 <script type="text/babel">
@@ -543,6 +550,8 @@ function App() {
         ? <HifiMobile lang={lang} dark={dark} theme={theme} character={character} />
         : <HifiDesktop lang={lang} dark={dark} theme={theme} character={character} width={w} height={h} />}
       <HifiPrintRoot />
+      {/* ponytail: montagem provisória de D-12 — a Fase 5 decide onde o import vive na UI final e apaga esta linha. */}
+      <PackImportRoot lang={lang} dark={dark} theme={theme} />
       {showOnboarding && (
         <OnboardingModal
           lang={lang}
