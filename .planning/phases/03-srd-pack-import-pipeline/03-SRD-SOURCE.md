@@ -67,3 +67,39 @@ Rota aprovada por edição:
 **Justificativa registrada pelo usuário:** é a combinação com licença CC-BY-4.0 verificada nas duas pontas e o menor trabalho total; a ressalva de que o dataset 5.2 vem de um projeto pessoal (não um dataset comunitário estabelecido) é mitigada pela cópia local versionada, que remove a dependência de disponibilidade contínua do gist.
 
 **Consequência de escopo:** nenhum arquivo de pacote SRD (`srd-2014-en.json` / `srd-2024-en.json` ou nomes equivalentes) foi criado por este plano — a geração em si é trabalho do plano 03-04, que deve ler este documento em vez de reinvestigar a licença.
+
+## Achado do plano 03-04: overlap de descrições com spells-5E-*.json (2026-08-10)
+
+O plano 03-04 tentou provar D-05 ("nenhum byte de texto de descrição dos arquivos `spells-5E-*.json` entra nos pacotes SRD") com um diff textual: comparar o conjunto de `description` dos pacotes gerados contra o conjunto de `description` dos quatro `spells-5E-*.json`, exigindo interseção zero. Essa prova encontrou uma interseção **não-zero**, gerou um checkpoint de decisão, e o usuário resolveu o checkpoint redefinindo como D-05 deve ser aplicada. Este registro existe para que uma automação futura não reabra a mesma investigação.
+
+**Números encontrados:**
+
+- `srd-2014-en.json`: 319 magias geradas, **46 descrições** idênticas byte-a-byte a uma entrada de `spells-5E-*.json`.
+- `srd-2024-en.json`: 339 magias geradas, **77 descrições** idênticas byte-a-byte a uma entrada de `spells-5E-*.json`.
+- Total: **123 de 658** descrições geradas (~19%) coincidem exatamente com o conjunto de 1.751 descrições únicas dos quatro `spells-5E-*.json`.
+- As descrições que colidem são sistematicamente mais curtas (comprimento médio 248 caracteres) do que as que não colidem (comprimento médio 850 caracteres) — consistente com "magias simples, texto-padrão do SRD" e não com cópia de conteúdo elaborado.
+- A maior colisão (`programmed-illusion`, 1.454 caracteres, 4 parágrafos) foi inspecionada manualmente: texto de regras comum, sem qualquer indício de adulteração.
+
+**Comando de reprodução** (raiz do repo, após `node scripts/generate-srd-pack.mjs`):
+
+```js
+node -e "
+const fs=require('fs');
+const oldFiles=['spells-5E-2014-EN.json','spells-5E-2014-PTBR.json','spells-5E-2024-EN.json','spells-5E-2024-PTBR.json'];
+const oldDescs=new Set();
+for(const f of oldFiles){ JSON.parse(fs.readFileSync(f,'utf8')).spells.forEach(s=>{ if(s.description) oldDescs.add(s.description); }); }
+for(const f of ['srd-2014-en.json','srd-2024-en.json']){
+  const j=JSON.parse(fs.readFileSync(f,'utf8'));
+  const matched=j.spells.filter(s=>oldDescs.has(s.description));
+  console.log(f, 'total', j.spells.length, 'matched', matched.length, matched.map(s=>s.name));
+}
+"
+```
+
+**Ruling do usuário (resolução do checkpoint, 2026-08-10):**
+
+D-05, como escrito neste documento, é uma regra de **proveniência** — "os pacotes SRD nascem de uma fonte separada, com licença verificada de forma independente, nunca dos JSONs atuais do app". O plano 03-04 traduziu isso para um diff textual de zero interseção. Esse proxy falha nas duas direções: dá falso-positivo em transcrições fiéis e independentes do mesmo texto oficial (este caso — o gerador nunca lê `spells-5E-*.json`, verificado por inspeção de código), e passaria silenciosamente um arquivo genuinamente copiado após qualquer reformatação cosmética. A aplicação de D-05 passa a ser por **proveniência do gerador** (verificável por inspeção, resistente a reformatação), não por diff de bytes.
+
+**O que este achado prova e o que NÃO prova:** as 123 entradas coincidentes confirmam que essa fração específica dos `spells-5E-*.json` atuais é texto puro do SRD (sem alteração). Isso **não diz nada** sobre a proveniência das entradas restantes desses quatro arquivos — o texto delas continua não-confiável por D-05, exatamente como antes.
+
+**Consequência para a aplicação de D-05:** `scripts/check-srd-packs.tests.ps1` (plano 03-04, Task 3) verifica que `scripts/generate-srd-pack.mjs` nunca referencia nenhum dos quatro `spells-5E-*.json` (nem por nome literal, nem por padrão/glob), em vez de comparar texto de descrição. Os pacotes `srd-2014-en.json`/`srd-2024-en.json` foram commitados completos e sem alteração (319 + 339 magias) — nenhuma magia foi removida para forçar diferença de bytes.
