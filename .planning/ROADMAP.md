@@ -80,7 +80,7 @@ Plans:
   1. A pack author can read a published JSON Schema + docs page describing the manifest and spell format, and validate their own pack file against it before sharing it (PKG-01)
   2. User can pick a pack JSON file from their device and have it installed into the app (PKG-02)
   3. User can enter a compatible URL (raw.githubusercontent/Gist/jsDelivr) and have the pack fetched and installed, with CORS limitations explained in the UI (PKG-03)
-  4. Malformed JSON, oversized files, schema-invalid content, a duplicate `source` value, or `__proto__`/`constructor`/`prototype` keys are all rejected with a clear message before anything is written to storage (PKG-04)
+  4. Malformed JSON, oversized files, schema-invalid content, or `__proto__`/`constructor`/`prototype` keys are all rejected with a clear message before anything is written to storage (PKG-04). A duplicate `source` value is NOT rejected — per D-09 it resolves to a free identifier (`srd-2014-en` → `srd-2014-en-2`), so an existing pack is never overwritten and two versions of the same pack can coexist.
   5. Every spell description from an imported pack passes through DOMPurify sanitization before it can reach any `dangerouslySetInnerHTML` sink — raw imported HTML is never rendered (PKG-05)
   6. A generated SRD pack (CC-BY EN subset) exists as a file conforming to the same pack schema and installs cleanly through the same pipeline (SRD-01)
 

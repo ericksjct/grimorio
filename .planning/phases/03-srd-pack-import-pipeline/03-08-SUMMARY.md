@@ -90,7 +90,51 @@ Method: isolated headless Chrome (`--headless=new`, dedicated `--user-data-dir`,
 | 4 | Final shipped policy (`object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'`, no `script-src` entry) on `index.html` | App boots fully | 2 occurrences of: `The Content Security Policy directive 'frame-ancestors' is ignored when delivered via a <meta> element.` |
 | 5 | Same final policy on `pack-docs.html` | App boots fully | 1 occurrence of the same `frame-ancestors`-ignored message |
 
-## Task 3 Checkpoint: Human Browser Verification (PENDING)
+## Task 3 Result: Human Browser Verification (PARTIAL — run 2026-08-11)
+
+The human ran the checkpoint in a real browser (app in English). Results below are what the human
+actually observed and reported; nothing here is inferred or self-approved.
+
+### Verified PASS
+
+| Step | What was checked | Evidence reported |
+|---|---|---|
+| 5 | Install `srd-2014-en.json` by file | Installed |
+| 6 | Install the same file again — no overwrite | `listPacks()` returned 6 records incl. `srd-2014-en`, `srd-2014-en-2`, `srd-2024-en`, `srd-2024-en-2`, `srd-2024-en-3` — free-identifier suffixing (D-09) working, nothing overwritten |
+| 11 | Install by URL | Worked; URL-imported pack present in the same `listPacks()` output |
+| 7 | `01-not-json.txt` rejected | `File is not valid JSON — check the syntax and try again.` |
+| 8 | `02-empty-spells.json` rejected | `Pack does not match the schema — check pack.schema.json.` |
+| 9 | `03-proto-pollution.json` rejected | `Pack contains a disallowed key and was rejected for security.` |
+| 13 | Install `04-hostile-html.json` | Installed as `qa-hostile-html` |
+| 17 | **Stored HTML already sanitized** | `(await window.pluginStore.getPack('qa-hostile-html')).spells[0].description` returned `"<p>Texto normal antes.</p><p>Texto normal depois.</p>"` — the `<img onerror=…>` and the inline `<script>` were both stripped at import, before the write. PKG-05 closed at the storage layer. |
+| 18 | Offline | DevTools Offline + reload: app opens normally |
+
+Three distinct, specific rejection messages (steps 7/8/9) confirm the error codes map to
+distinct i18n keys rather than collapsing into one generic message. Messages appeared in
+English, which is correct — the app was in English mode for this run.
+
+### NOT verified — blocked by Phase 4 scope, not by a defect
+
+Steps 15 and 16 (open the hostile spell in the card / side panel / detail screen, and print it)
+could not be run: an imported pack is not selectable in the source menu until Phase 4
+(`spells-data-loader.jsx` still carries a hardcoded 4-entry `SPELL_VERSIONS` and has no
+`pluginStore` reference). There is no UI path to render a spell from an imported pack yet.
+
+Step 17 covers the underlying risk: the stored description is already clean, so no render sink
+can receive the payload — there is nothing left to execute regardless of which sink is reached.
+This is recorded as coverage-by-substitution, NOT as steps 15/16 having passed.
+
+### NOT run — deferred by the human
+
+- Steps 1–4: CSP boot check and the 6 themes × light/dark sweep, `pack-docs.html` theming and
+  table overflow, print output.
+- Step 10: form-state retention after a rejection.
+- Step 12: CORS-refused URL message and global toast.
+
+These carry no known defect signal; they were skipped for time, not because anything failed.
+They belong in the phase's outstanding-verification debt.
+
+### Original checkpoint brief (kept for reference)
 
 **This is the plan's `checkpoint:human-verify` task (`gate="blocking"`).** Everything scriptable is done and green; what remains needs human eyes in a real browser tab, per plan.
 
