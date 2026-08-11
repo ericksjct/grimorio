@@ -1,16 +1,18 @@
-// Pack Import — camada de validação e rejeição de pacotes de magias BYOD (PKG-04).
+// Pack Import — camada de validação e rejeição de pacotes de magias BYOD
+// (PKG-02, PKG-03, PKG-04).
 //
 // Este módulo possui: leitura defensiva de texto JSON de pacote
 // (parsePackText), validação de schema escrita à mão (validatePack)
-// espelhando pack.schema.json, e o cálculo puro de identificador livre
-// (freeIdentifier) exigido antes de qualquer gravação (D-09).
+// espelhando pack.schema.json, cálculo puro de identificador livre
+// (freeIdentifier, D-09), e leitura de arquivo local e busca por URL com
+// teto de tamanho nos dois caminhos (_readFileText, _fetchText, D-08).
 //
 // Este módulo NÃO possui: não abre IndexedDB por conta própria — toda
 // gravação passa por window.pluginStore (plugin-store.jsx); não normaliza
 // magia — adaptSpells() no loader continua o único ponto de normalização do
 // app; não sanitiza HTML nem instala pacotes — isso é acrescentado a
-// window.packImport (sanitizePack, installFromFile, installFromUrl) por um
-// plano posterior desta fase.
+// window.packImport (sanitizePack, installFromFile, installFromUrl) pela
+// próxima task deste mesmo plano.
 //
 // Uso: incluir este arquivo no HTML depois de plugin-store.jsx (a instalação
 // usa window.pluginStore) e depois do script do DOMPurify.
@@ -236,7 +238,82 @@ function freeIdentifier(base, existingIds) {
 }
 
 // ──────────────────────────────────────────────────────────────────
-// EXPOSIÇÃO — o plano seguinte desta fase acrescenta sanitizePack,
+// LEITURA — arquivo local e busca por URL, teto de bytes de D-08 nos dois
+// caminhos. Nenhuma das duas funções grava nem sanitiza; devolvem texto cru.
+// ──────────────────────────────────────────────────────────────────
+
+function _tooLarge(bytes) {
+  const mb = (bytes / (1024 * 1024)).toFixed(1);
+  _fail(PACK_ERROR_CODES.TOO_LARGE, `packImport.read: arquivo de ${mb} MB excede o teto de 10 MB.`);
+}
+
+// O tamanho de um File é conhecido pelo navegador sem ler nenhum byte, então
+// o caminho local não precisa de leitura incremental — só compara e lê.
+async function _readFileText(file) {
+  if (file.size > MAX_PACK_BYTES) _tooLarge(file.size);
+  return file.text();
+}
+
+// PKG-03 + metade remota de D-08. O navegador não distingue bloqueio de CORS
+// de DNS/offline — um único código (fetch-failed) cobre todos os casos de
+// "não consegui buscar"; classificar por heurística de string seria frágil e
+// falso.
+async function _fetchText(url) {
+  let res;
+  try {
+    res = await fetch(url);
+  } catch (err) {
+    _fail(PACK_ERROR_CODES.FETCH_FAILED, `packImport.fetch: não foi possível buscar o pacote — ${err && err.message}`);
+  }
+
+  if (!res.ok) {
+    _fail(PACK_ERROR_CODES.FETCH_FAILED, `packImport.fetch: resposta HTTP ${res.status} ao buscar o pacote.`);
+  }
+
+  // Content-Length, quando presente, falha ANTES de tocar no corpo.
+  const contentLength = res.headers && typeof res.headers.get === 'function' ? res.headers.get('Content-Length') : null;
+  if (contentLength && Number(contentLength) > MAX_PACK_BYTES) {
+    _tooLarge(Number(contentLength));
+  }
+
+  if (!res.body || typeof res.body.getReader !== 'function') {
+    // ponytail: sem streams no fetch (navegador antigo) — este ramo
+    // bufferiza o corpo inteiro antes de medir. O teto de 10 MB é pequeno o
+    // bastante para isso ser aceitável como degradação, não um risco real de
+    // memória.
+    const text = await res.text();
+    const byteLength = new TextEncoder().encode(text).byteLength;
+    if (byteLength > MAX_PACK_BYTES) _tooLarge(byteLength);
+    return text;
+  }
+
+  // Independentemente do cabeçalho, os bytes efetivamente lidos são
+  // limitados de qualquer forma — a leitura aborta ao ultrapassar o teto,
+  // sem bufferizar o corpo inteiro.
+  const reader = res.body.getReader();
+  const chunks = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > MAX_PACK_BYTES) {
+      reader.cancel();
+      _tooLarge(total);
+    }
+    chunks.push(value);
+  }
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(merged);
+}
+
+// ──────────────────────────────────────────────────────────────────
+// EXPOSIÇÃO — a próxima task deste plano acrescenta sanitizePack,
 // installFromFile e installFromUrl a este mesmo objeto.
 // ──────────────────────────────────────────────────────────────────
 window.packImport = {
