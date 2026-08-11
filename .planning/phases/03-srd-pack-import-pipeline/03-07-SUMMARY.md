@@ -152,3 +152,8 @@ None - no external service configuration required. DOMPurify é servido por CDN 
 ---
 *Phase: 03-srd-pack-import-pipeline*
 *Completed: 2026-08-10*
+
+## Self-Check: PASSED
+- FOUND: scripts/check-pack-wiring.tests.ps1
+- FOUND: .planning/phases/03-srd-pack-import-pipeline/03-07-SUMMARY.md
+- FOUND commits: b46c68d, 122bda3, e828960, 3b8227b (all present in `git log --oneline`)
