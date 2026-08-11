@@ -136,6 +136,16 @@ None - no external service configuration required.
 - Phase 5 can delete the `PackImportRoot` trigger button (marked with a `ponytail:` comment) once it decides where the import surface actually lives in the final UI, per D-12.
 - No blockers. The only outstanding coupling is runtime verification against the real `window.packImport.installFromFile`/`installFromUrl` once 03-05 merges — recommend a manual browser QA pass (6 themes x light/dark, per project convention) after all three wave-3 worktrees merge.
 
+## Self-Check: PASSED
+
+- FOUND: i18n.jsx
+- FOUND: pack-import-dialog.jsx
+- FOUND: scripts/check-pack-import-dialog.tests.ps1
+- FOUND: .planning/phases/03-srd-pack-import-pipeline/03-06-SUMMARY.md
+- FOUND commit: 221efe9 (Task 1)
+- FOUND commit: 61d01f4 (Task 2)
+- FOUND commit: 7b24c64 (Task 3)
+
 ---
 *Phase: 03-srd-pack-import-pipeline*
 *Completed: 2026-08-10*
