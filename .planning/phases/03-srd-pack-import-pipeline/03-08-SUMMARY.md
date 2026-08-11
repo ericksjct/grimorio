@@ -166,3 +166,13 @@ None - no external service configuration required.
 ---
 *Phase: 03-srd-pack-import-pipeline*
 *Completed: pending Task 3 human checkpoint*
+
+## Self-Check: PASSED
+
+- FOUND: `scripts/check-csp.tests.ps1`
+- FOUND: `.planning/phases/03-srd-pack-import-pipeline/03-08-SUMMARY.md`
+- FOUND commit: `dd9d6bc`
+- FOUND commit: `d9d168b`
+- FOUND commit: `5efbef4`
+
+Not self-checked (cannot be, by design): the 18-step human browser verification in Task 3. No step there is claimed as PASSED anywhere in this document.
