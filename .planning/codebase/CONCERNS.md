@@ -91,6 +91,19 @@
 - Current mitigation: SRI hashes prevent loading different versions
 - Recommendations: Self-host React/Babel or use a more trusted CDN. At minimum, add Cache-Control headers that force revalidation daily. Consider removing unpkg.com from precache and loading on-demand only.
 
+**Content Security Policy — Partial Closure (D-10)**
+- Status: Partially resolved, not a gap left unexamined. `object-src 'none'`, `base-uri 'self'` and `form-action 'self'` are shipped, byte-identical, via `<meta http-equiv="Content-Security-Policy">` in both `index.html` and `pack-docs.html`. `script-src` is deliberately NOT shipped, in any form — this is D-10's exit condition, hit on purpose.
+- Files: `index.html`, `pack-docs.html`, `scripts/check-csp.tests.ps1` (regression check for what did ship).
+- Measured, not assumed — incremental testing in a real headless Chrome (`--enable-logging=stderr --v=1`, console captured, `document.body.className` used as the boot signal) against `index.html`:
+  1. `script-src 'self' https://unpkg.com` (bare): 10 "Executing inline script" violations — one from the boot-fallback `<script>` at `index.html:75`, nine from `babel.min.js:3`. Babel Standalone 7.29 transpiles each `type="text/babel"` block and re-injects the *result* as a fresh inline `<script>` element (not `eval`/`Function`) — that injected script is itself what CSP blocks. App does not boot (`<body>` never gains the class React's mount effect sets).
+  2. `script-src 'self' 'unsafe-eval' https://unpkg.com` (no `'unsafe-inline'`): identical 10 violations, identical failure to boot. `'unsafe-eval'` alone does nothing here.
+  3. `script-src 'self' 'unsafe-inline' https://unpkg.com` (no `'unsafe-eval'`): **zero** violations, app boots fully.
+  - This corrects the plan's own flagged assumption (`03-08-PLAN.md`, that both permissions would be needed): only `'unsafe-inline'` is actually required, not `'unsafe-eval'`. The correction does not change the outcome — D-10's rule is "if closing requires accepting inline execution, don't ship it weakened." `'unsafe-inline'` in `script-src` disables CSP's ability to block inline event-handler attributes (`onerror=`, `onload=`, …), which is exactly the vector this phase's threat model (T-03-31) cares about for sanitizer-escape XSS. Shipping `script-src` with `'unsafe-inline'` would look like protection and add none against that specific threat, so it was not shipped.
+- Also measured: `frame-ancestors 'none'` triggers the console message `"The Content Security Policy directive 'frame-ancestors' is ignored when delivered via a <meta> element."` on both pages. This is CSP spec behavior — `frame-ancestors` (like `sandbox` and `report-uri`) only takes effect via the `Content-Security-Policy` HTTP response header, never via `<meta>`. It is still declared in the meta tag (matches this plan's acceptance criteria, and costs nothing if this app is ever served with real headers), but as shipped today — a static host with no header control — it provides **no actual clickjacking protection**. Do not read its presence in the meta tag as closing that threat.
+- Babel Standalone removal was explicitly not considered as a path — D-10 vetoes removing the no-build-step architecture to accommodate the CSP.
+- Future closure path (one line): adopting a build step that pre-transpiles the `.jsx` files removes the need for runtime Babel and `'unsafe-inline'` entirely — that is the architecture decision that would let `script-src` close for real (nonce/hash-based, no CDN-loaded transformer). Also unlocks real `frame-ancestors` enforcement, since a build step usually implies a real HTTP server that can set response headers instead of a `<meta>` tag.
+- Ref: D-10 (`.planning/phases/03-srd-pack-import-pipeline/03-CONTEXT.md`), plan `03-08-PLAN.md`.
+
 ---
 
 ## Performance Bottlenecks
