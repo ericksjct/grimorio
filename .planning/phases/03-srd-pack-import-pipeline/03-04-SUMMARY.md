@@ -10,7 +10,9 @@ requires:
 provides:
   - "scripts/generate-srd-pack.mjs: one-shot Node ESM generator for both SRD packs, with a hand-rolled schema validator and no third-party dependencies"
   - "scripts/srd-sources/srd-5.2-spells.json: locally versioned copy of the dmcb CC-BY-4.0 gist (339 spells), committed per D-06's no-live-fetch requirement"
-  - "srd-2014-en.json / srd-2024-en.json generated on disk but NOT committed — blocked pending a D-05 policy decision, see Deviations"
+  - "srd-2014-en.json (319 spells) / srd-2024-en.json (339 spells): the two embedded SRD packs, installable through the same pipeline as any third-party pack"
+  - "scripts/check-srd-packs.tests.ps1: permanent regression check, D-05 enforced via generator provenance"
+  - "03-SRD-SOURCE.md: records the D-05 overlap evidence and the checkpoint ruling for future readers"
 affects: [03-05, 03-06, 03-07, 03-08, 04-loader-integration]
 
 tech-stack:
@@ -18,23 +20,29 @@ tech-stack:
   patterns:
     - "Hand-rolled recursive JSON-Schema-subset validator (object/array/string/integer/boolean, required, additionalProperties, pattern, minLength/minItems, enum, minimum/maximum) driven directly by pack.schema.json — no schema-validation dependency, matches D-13's 'no dependency, no runtime schema compile' convention already used for pack-import.jsx's validator"
     - "PDF-text-dump-to-structured-record parser: boundary detection via 'does the next paragraph match a known field-start pattern', not 'every heading is a new record' — needed because Tabyltop/CC-SRD's dump nests true sub-headings (spell sub-tables) inside a single h4/paragraph/table stream with no explicit nesting marker"
+    - "Provenance-based licence-reuse check: verify a generator script never references a forbidden source file (literal string or glob), instead of diffing generated output against that source's content — a diff proxy false-positives on faithful independent transcriptions of the same public text and false-negatives on a cosmetically-reformatted copy"
 
 key-files:
   created:
     - scripts/generate-srd-pack.mjs
     - scripts/srd-sources/srd-5.2-spells.json
+    - srd-2014-en.json
+    - srd-2024-en.json
+    - scripts/check-srd-packs.tests.ps1
   modified:
     - .gitignore
+    - .planning/phases/03-srd-pack-import-pipeline/03-SRD-SOURCE.md
 
 key-decisions:
-  - "SRD 5.1's approved 'route (b)' (03-SRD-SOURCE.md) is a parser over Tabyltop/CC-SRD's already-extracted CC-BY-4.0 text dump, NOT OCR of the official PDF - confirmed via prior_wave_context instruction to trust 03-SRD-SOURCE.md over the plan's literal escalation-gate wording ('(b) OCR do PDF oficial'), which described a different scenario than what was actually approved. Documented as a deviation below."
-  - "SRD 5.2's dmcb gist copy is committed at scripts/srd-sources/srd-5.2-spells.json (not in the plan's files_modified list) because 03-SRD-SOURCE.md's approved route explicitly requires a locally versioned copy with no live fetch, ever - added per Rule 2 (missing critical functionality the approved route itself mandates)."
+  - "SRD 5.1's approved 'route (b)' (03-SRD-SOURCE.md) is a parser over Tabyltop/CC-SRD's already-extracted CC-BY-4.0 text dump, NOT OCR of the official PDF - confirmed via prior_wave_context instruction to trust 03-SRD-SOURCE.md over the plan's literal escalation-gate wording ('(b) OCR do PDF oficial'), which described a different scenario than what was actually approved."
+  - "SRD 5.2's dmcb gist copy is committed at scripts/srd-sources/srd-5.2-spells.json (not in the plan's files_modified list) because 03-SRD-SOURCE.md's approved route explicitly requires a locally versioned copy with no live fetch, ever - added per Rule 2."
+  - "D-05 enforcement redefined at a blocking checkpoint: the plan's literal acceptance criterion (zero-byte-diff between generated descriptions and spells-5E-*.json) was replaced with a provenance check (generator never references spells-5E-*.json, by inspection) after the byte-diff proof found 123/658 genuine, licensed, independently-sourced overlaps. Both packs ship complete (319 + 339 spells) - no spell was dropped to force byte-inequality."
   - "toSpell()'s per-pack name uniqueness reuses the same freeIdentifier('-2', '-3', ...) suffix rule as pack-import.jsx's D-09 dedup, kept as a small shared helper rather than duplicating slug logic per edition."
 
 patterns-established:
   - "Generation scripts that must stay in sync with pack.schema.json load the schema file directly at run time and validate against it programmatically, instead of hand-copying the field list into the generator - same anti-drift principle as scripts/check-pack-format.tests.ps1 (03-01), applied to code instead of docs."
 
-requirements-completed: []
+requirements-completed: [SRD-01]
 
 coverage:
   - id: D1
@@ -46,148 +54,139 @@ coverage:
         status: pass
     human_judgment: false
   - id: D2
-    description: "Both SRD packs generate successfully (319 + 339 spells), validate against the hand-rolled pack.schema.json checker before being written, and satisfy every schema-shape acceptance check from Task 2 (meta.source, meta.lang, license.attribution/modifications present, spellCount matches spells.length, attributions differ between editions)"
+    description: "Both SRD packs generated (319 + 339 spells), validated against the hand-rolled pack.schema.json checker before being written, committed complete and unmodified, and satisfy every Task 2 schema-shape acceptance check"
     requirement: "SRD-01"
     verification:
       - kind: unit
-        ref: "node scripts/generate-srd-pack.mjs (exit 0, wrote 319 + 339 spells); node -e per-file shape assertions from the plan's Task 2 acceptance criteria (all pass, see Task Commits section)"
+        ref: "node scripts/generate-srd-pack.mjs (exit 0, wrote 319 + 339 spells); node -e per-file shape assertions from the plan's Task 2 acceptance criteria (meta.source/lang/license fields, spellCount===spells.length, distinct attributions) - all pass"
         status: pass
     human_judgment: false
   - id: D3
-    description: "D-05 non-reuse proof: zero-intersection between generated SRD pack descriptions and the four spells-5E-*.json files' descriptions"
+    description: "D-05 provenance proof: scripts/generate-srd-pack.mjs never references any of the four spells-5E-*.json files, and scripts/check-srd-packs.tests.ps1 enforces this permanently"
     requirement: "SRD-01"
     verification:
-      - kind: other
-        ref: "node -e set-intersection check (see Deviations) - result: 123 of 658 generated descriptions are byte-identical to an existing spells-5E-*.json description"
-        status: fail
-    human_judgment: true
-    rationale: "The plan requires zero exact-text intersection with the current spells-5E-*.json files (D-05) and explicitly forbids committing the packs if this check fails. The intersection found here is non-zero and is a genuine, reproducible finding, not a parser bug (see Deviations for the full analysis and evidence that this is a real properties of the licensed source, not accidental reuse). Resolving whether D-05's zero-tolerance criterion should apply as literally written, given this evidence, is a locked-policy question the plan's own author flagged as needing a human decision, not something this executor can unilaterally decide."
+      - kind: unit
+        ref: "pwsh -NoProfile -File scripts/check-srd-packs.tests.ps1 (exit 0, single success line); fail-first #1: injecting a readFile('spells-5E-2014-EN.json') call into the generator flips exit 0->1 citing the D-05 message, reverted, back to exit 0; fail-first #2: zeroing meta.license.modifications on a pack flips exit 0->1, reverted, back to exit 0"
+        status: pass
+    human_judgment: false
   - id: D4
-    description: "scripts/check-srd-packs.tests.ps1 permanent regression check"
+    description: "scripts/check-srd-packs.tests.ps1 permanent regression check: schema shape, distinct attributions, per-spell required fields (name/school/description/level 0-9), name uniqueness within each pack, D-05 provenance"
     requirement: "SRD-01"
-    verification: []
-    human_judgment: true
-    rationale: "Not started - Task 3 depends on Task 2's packs being finalized (its D-05 block would immediately fail against the same finding as D3, since it enforces the identical zero-intersection rule). Blocked on the same decision as D3."
+    verification:
+      - kind: unit
+        ref: "pwsh -NoProfile -File scripts/check-srd-packs.tests.ps1 (exit 0)"
+        status: pass
+    human_judgment: false
 
-duration: ~3h10min (research-heavy: SRD 5.1's parser required reverse-engineering an undocumented PDF-extraction node stream with no field-level schema of its own)
+duration: ~3h45min (research-heavy: SRD 5.1's parser required reverse-engineering an undocumented PDF-extraction node stream with no field-level schema of its own; paused mid-plan for a checkpoint decision)
 completed: 2026-08-10
-status: blocked
+status: complete
 ---
 
 # Phase 3 Plan 04: SRD Pack Generation Summary
 
-**Built and validated a working two-edition SRD pack generator (319 SRD 5.1 spells parsed from Tabyltop/CC-SRD's text dump, 339 SRD 5.2 spells mapped from dmcb's structured gist) — both packs pass schema validation, but neither is committed: the D-05 non-reuse proof found genuine byte-identical overlap with the current spells-5E-*.json files for the subset of spells that are pure, un-modified SRD content, and a locked-policy decision is needed before shipping.**
+**Generated and shipped both embedded SRD packs (319 SRD 5.1 spells parsed from Tabyltop/CC-SRD's text dump, 339 SRD 5.2 spells mapped from dmcb's structured gist), with D-05 provenance enforced by verifying the generator never reads the app's current spell JSONs — not by a byte-level description diff, which a checkpoint decision found to be the wrong proxy.**
 
 ## Performance
 
-- **Duration:** ~3h10min
-- **Completed:** 2026-08-10T23:58Z (paused at checkpoint, Task 2/3 blocked)
-- **Tasks:** 1 of 3 completed and committed; Task 2 executed but blocked at its own verification gate; Task 3 not started
-- **Files modified:** 3 committed (scripts/generate-srd-pack.mjs, scripts/srd-sources/srd-5.2-spells.json, .gitignore) + 2 generated-but-uncommitted (srd-2014-en.json, srd-2024-en.json)
+- **Duration:** ~3h45min (includes a mid-plan checkpoint pause for a policy decision)
+- **Completed:** 2026-08-11T00:15Z
+- **Tasks:** 3/3 complete
+- **Files modified:** 7 (5 created, 2 modified)
 
 ## Accomplishments
 
 - `scripts/generate-srd-pack.mjs`: one-shot Node ESM generator, zero third-party dependencies, hand-rolled recursive validator that loads `pack.schema.json` directly and aborts before writing on any type/requiredness violation.
-- SRD 5.1 parser reverse-engineers Tabyltop/CC-SRD's 13,353-node PDF-extraction stream: correctly isolates the "Spell Descriptions" section, distinguishes true spell headings from in-spell sub-headings (e.g. "Control Weather"'s three sub-tables: Precipitation/Temperature/Wind; "Animate Objects"'s stat table), converts embedded tables to sanitizer-whitelisted `<table>` HTML, splits metadata lines (Casting Time/Range/Components/Duration) from body text even when the source glues them together with no separating whitespace, and merges two confirmed page-break label splits ("At" / "Higher Levels...", "Casting " / "Time:1 action") that would otherwise have silently corrupted those two spells' fields.
+- SRD 5.1 parser reverse-engineers Tabyltop/CC-SRD's 13,353-node PDF-extraction stream: isolates the "Spell Descriptions" section, distinguishes true spell headings from in-spell sub-headings (e.g. "Control Weather"'s three sub-tables: Precipitation/Temperature/Wind; "Animate Objects"'s stat table), converts embedded tables to sanitizer-whitelisted `<table>` HTML, splits metadata lines (Casting Time/Range/Components/Duration) from body text even when the source glues them together with no separating whitespace, and merges two confirmed page-break label splits ("At" / "Higher Levels...", "Casting " / "Time:1 action").
 - SRD 5.2 mapper converts dmcb's clean 339-spell structured gist directly: derives `castTime` from `actionType`/`castingTime`/`castingTrigger`, `components` from the `components` array + `material`, and `duration` by re-attaching the "Concentration, " prefix when `concentration: true` and the source string doesn't already carry it.
-- Both packs generated successfully (319 + 339 spells) and pass every Task 2 schema-shape acceptance check (`meta.source`, `meta.lang`, `license.attribution`/`modifications` present and non-empty, `meta.spellCount === spells.length`, attributions differ between editions).
+- `srd-2014-en.json` (319 spells) and `srd-2024-en.json` (339 spells) committed complete and unmodified — both pass schema validation and every shape/attribution check.
 - `scripts/srd-sources/srd-5.2-spells.json`: the dmcb gist's raw content, committed verbatim as the locally versioned copy 03-SRD-SOURCE.md's approved route requires (no live fetch, ever, for this edition).
+- `scripts/check-srd-packs.tests.ps1`: permanent regression check — schema shape, distinct attributions between editions, per-spell required fields, name uniqueness, and D-05 enforced via generator-provenance inspection. Fail-first proven twice.
+- `03-SRD-SOURCE.md` updated with the full overlap evidence (counts, length skew, reproduction command) and the checkpoint ruling, so the finding is not re-investigated by a future reader.
 
 ## Task Commits
 
 1. **Task 1: Ler a rota aprovada e escrever o script de geração** - `16231b1` (feat)
-2. **Task 2: Gerar e commitar os dois pacotes SRD** - NOT COMMITTED. Packs were generated on disk and pass schema validation, but the D-05 non-reuse proof (required by this task's own acceptance criteria) found non-zero intersection — see Deviations. Per the plan's explicit instruction ("Se qualquer uma das três falhar, NÃO commite os pacotes"), `srd-2014-en.json` and `srd-2024-en.json` remain untracked/uncommitted pending a decision.
-3. **Task 3: Checagem de regressão dos pacotes SRD** - NOT STARTED. Blocked on Task 2 (the check would encode and immediately fail on the same D-05 finding).
+2. **Task 2: Gerar e commitar os dois pacotes SRD** - `5123b7c` (feat)
+3. **Task 3: Checagem de regressão dos pacotes SRD** - `6496652` (test)
 
-**Plan metadata:** this SUMMARY.md commit (docs)
+**Plan metadata:**
+- `eee3e2a` (docs: checkpoint escalation, before resolution)
+- `07b0248` (docs: record D-05 overlap evidence and provenance ruling in 03-SRD-SOURCE.md)
+- this SUMMARY.md commit (docs)
 
 ## Files Created/Modified
 
-- `scripts/generate-srd-pack.mjs` - SRD pack generator (both editions), committed.
-- `scripts/srd-sources/srd-5.2-spells.json` - Locally versioned copy of the dmcb gist (SRD 5.2 source), committed.
+- `scripts/generate-srd-pack.mjs` - SRD pack generator (both editions).
+- `scripts/srd-sources/srd-5.2-spells.json` - Locally versioned copy of the dmcb gist (SRD 5.2 source).
+- `srd-2014-en.json` - SRD 5.1 pack, 319 spells.
+- `srd-2024-en.json` - SRD 5.2 pack, 339 spells.
+- `scripts/check-srd-packs.tests.ps1` - Regression check for both packs.
 - `.gitignore` - Added `.cache/` for the SRD 5.1 live-fetch cache (never committed).
-- `srd-2014-en.json`, `srd-2024-en.json` - Generated on disk, present in the worktree, **NOT committed** (untracked). Left in place for inspection; the orchestrator/user can regenerate them any time via `node scripts/generate-srd-pack.mjs`.
+- `.planning/phases/03-srd-pack-import-pipeline/03-SRD-SOURCE.md` - Added the D-05 overlap-evidence section and provenance ruling.
 
 ## Decisions Made
 
-- Trusted `03-SRD-SOURCE.md`'s "Consequências para o plano 03-04" section over the plan's literal Task 1 escalation-gate text, per the explicit `prior_wave_context` instruction. The plan's gate says to stop if any edition's approved route is "(b) OCR do PDF oficial" — but the actual approved SRD 5.1 route is a parser over Tabyltop/CC-SRD's already-extracted, OCR-free CC-BY-4.0 text dump; 03-SRD-SOURCE.md explicitly says the official PDF is a cross-check reference only, not the primary source. Proceeded with writing a real parser instead of escalating, as directed.
-- `scripts/srd-sources/srd-5.2-spells.json` added outside the plan's `files_modified` list (Rule 2) because the approved D-06 route for SRD 5.2 explicitly mandates a locally versioned copy with no live fetch at any time — the generator cannot honor that route without this file existing.
+- Trusted `03-SRD-SOURCE.md`'s "Consequências para o plano 03-04" section over the plan's literal Task 1 escalation-gate text, per the explicit `prior_wave_context` instruction — the plan's gate describes stopping for OCR of the official PDF, but the actual approved SRD 5.1 route is a parser over an already-extracted, OCR-free text dump. Proceeded with writing a real parser instead of escalating.
+- `scripts/srd-sources/srd-5.2-spells.json` added outside the plan's `files_modified` list (Rule 2) because the approved D-06 route for SRD 5.2 explicitly mandates a locally versioned copy with no live fetch at any time.
 - Kept SRD 5.1's fetch live (with a gitignored `.cache/` fallback) rather than also vendoring a local copy, since 03-SRD-SOURCE.md's approved route only mandates a versioned local copy for 5.2, not 5.1.
+- **D-05 enforcement redefined at a blocking checkpoint** (see Deviations below for the full finding and ruling).
 
 ## Deviations from Plan
 
-### Auto-fixed Issues (Rule 1/2/3 — no permission needed, documented per protocol)
+### Auto-fixed Issues (Rule 1/2/3 — no permission needed)
 
 **1. [Rule 1 - Bug] Merged two page-break-split metadata labels in the SRD 5.1 source stream**
-- **Found during:** Task 1 (writing the SRD 5.1 parser) — validated against the full 319-spell corpus before finalizing.
-- **Issue:** Tabyltop/CC-SRD's PDF-extraction stream splits a label word across a page break in two places across the entire "Spell Descriptions" section: `Counterspell`'s "At Higher Levels." paragraph is split into a standalone `"At "` paragraph followed by `"Higher Levels.When you cast..."`; `Reverse Gravity`'s "Casting Time:" line is split into `"Casting "` followed by `"Time:1 action"`. Left unhandled, `Counterspell`'s upgrade text would have been misclassified as body text (breaking the At-Higher-Levels/body split) and `Reverse Gravity` would have been missing `castTime` entirely.
-- **Fix:** Added a `mergeDanglingLabels()` pre-pass that detects a lone paragraph whose entire trimmed text is one of the five known label words (`At`, `Casting`, `Range`, `Components`/`Component`, `Duration`) with nothing else, and merges it with the immediately following paragraph before classification runs.
-- **Files modified:** `scripts/generate-srd-pack.mjs` (part of Task 1's single file).
-- **Verification:** Re-ran the full 319-spell extraction after the fix — 0 missing `castTime`, 0 missing `components`, 0 missing `duration`, 0 missing `range`, 0 missing body content (all were previously non-zero for the two affected spells before this fix); manually confirmed `Counterspell.upgradeDescription` now contains the full "At Higher Levels." text and `Reverse Gravity.castTime === '1 action'`.
-- **Committed in:** `16231b1` (Task 1 commit — found and fixed during that task's own verification loop, before the file was finalized).
+- **Found during:** Task 1 — validated against the full 319-spell corpus before finalizing.
+- **Issue:** Tabyltop/CC-SRD's PDF-extraction stream splits a label word across a page break in two places: `Counterspell`'s "At Higher Levels." paragraph is split into a standalone `"At "` paragraph followed by `"Higher Levels.When you cast..."`; `Reverse Gravity`'s "Casting Time:" line is split into `"Casting "` followed by `"Time:1 action"`. Left unhandled, `Counterspell`'s upgrade text would have been misclassified as body text and `Reverse Gravity` would have been missing `castTime` entirely.
+- **Fix:** Added a `mergeDanglingLabels()` pre-pass that detects a lone paragraph whose entire trimmed text is one of the five known label words with nothing else, and merges it with the immediately following paragraph before classification runs.
+- **Verification:** Re-ran the full 319-spell extraction after the fix — 0 missing `castTime`/`components`/`duration`/`range`/body content anywhere in the corpus.
+- **Committed in:** `16231b1`.
 
 **2. [Rule 1 - Bug] Made the "Components:" label regex accept the source's singular typo**
 - **Found during:** Task 1, same validation pass.
-- **Issue:** `Contagion`'s metadata line reads `"Component:V, S"` (singular, no "s") — the source document's own typo, not an extraction artifact. The original regex only matched the plural `"Components:"` and would have left `Contagion.components` empty.
-- **Fix:** Changed `COMPONENTS_RE` from `/^Components\s*:\s*/i` to `/^Components?\s*:\s*/i`.
-- **Files modified:** `scripts/generate-srd-pack.mjs`.
-- **Verification:** Re-ran extraction — `Contagion.components === 'V, S'`.
+- **Issue:** `Contagion`'s metadata line reads `"Component:V, S"` (singular — the source document's own typo). The original regex only matched plural `"Components:"`.
+- **Fix:** Changed `COMPONENTS_RE` to `/^Components?\s*:\s*/i`.
+- **Verification:** `Contagion.components === 'V, S'` after the fix.
 - **Committed in:** `16231b1`.
 
 **3. [Rule 2 - Missing critical functionality] Added `scripts/srd-sources/srd-5.2-spells.json`**
 - See "Decisions Made" above — required by the approved D-06 route, not optional.
 - **Committed in:** `16231b1`.
 
-### Escalated Issue (Rule 4 — blocking this plan's completion, human decision required)
+### Escalated and resolved (Rule 4 — human decision required, checkpoint returned and resolved)
 
-**[Rule 4 - Architectural/policy] D-05's zero-intersection criterion fails against genuine, licensed, independently-sourced SRD text overlap**
+**[Rule 4 - Architectural/policy] D-05's literal zero-intersection criterion is the wrong proxy for D-05's actual provenance rule**
 
 - **Found during:** Task 2's mandatory non-reuse proof.
-- **What was found:** Comparing the generated packs' 658 total spell descriptions (319 + 339) against the union of all descriptions in the four `spells-5E-*.json` files (1,751 unique descriptions) found **123 exact byte-for-byte matches** (46 of 319 in `srd-2014-en.json`, 77 of 339 in `srd-2024-en.json`).
-- **Why this is very unlikely to be accidental reuse:** The generator (`scripts/generate-srd-pack.mjs`) never reads any `spells-5E-*.json` file — verified by inspection (no reference to that filename pattern anywhere in the script) and by construction (SRD 5.1 comes from the Tabyltop text-dump parser, SRD 5.2 from the dmcb gist mapper; neither pipeline touches the old JSONs at any step). The matched descriptions skew heavily toward short, simple, canonical spells (average matched length 248 characters vs. 850 for non-matched descriptions in the same packs); spot-checking the single longest match (`programmed-illusion`, 1,454 characters, 4 paragraphs) shows ordinary, unremarkable SRD rules text with nothing suggesting tampering or copy-paste. The most plausible explanation: for spells that are pure, unmodified SRD content, there is exactly one official wording, so any two independently-sourced, faithful transcriptions of that spell will match byte-for-byte — this is what "correctly reproducing the licensed text" looks like, not what "laundering uncertain-provenance text" looks like.
-- **Why this executor did not decide unilaterally:** D-05 is recorded in `03-CONTEXT.md` as a "Regra travada" (locked rule), and its explicit purpose is copyright-risk mitigation for the whole `PROJECT.md` v2.0 milestone ("a plataforma não distribui conteúdo protegido"). Relaxing or reinterpreting a locked, copyright-relevant policy decision is exactly the class of change Rule 4 reserves for a human call, not an auto-fix. Fabricating cosmetic differences in the licensed text to force a zero-byte-diff result was considered and rejected as a false fix — it would misrepresent CC-BY-licensed content for no licensing benefit and wouldn't actually address whatever concern motivated the zero-tolerance rule.
-- **Options for the decision:**
-  1. **Accept the overlap as expected/correct for provably-independent, licensed sources**, and redefine D-05's check to key off traceable provenance (does the generator ever read the old JSONs — verifiable by code inspection, already true today) rather than textual difference. Ship both packs as generated; Task 3's regression script would assert the generator's source-independence instead of (or in addition to) a description diff.
-  2. **Keep the zero-tolerance textual check exactly as specified**, and drop the 123 overlapping spells from the generated packs (SRD 5.1 would ship 273 of 319 spells; SRD 5.2 would ship 262 of 339) to preserve a literal zero-intersection guarantee at the cost of completeness.
-  3. **Audit the four `spells-5E-*.json` files spell-by-spell** to determine which entries are confirmed non-SRD (Tasha's/Xanathar's/other sourcebooks) vs. confirmed-SRD, and only compare against the confirmed-non-SRD subset — likely a separate plan given the ~500-spell-per-file scope, not something to absorb into this plan.
-  4. **(Not recommended)** Introduce a cosmetic/structural difference in the generated HTML for matching descriptions purely to break byte-identity. Rejected above as dishonest engineering that doesn't serve D-05's actual purpose.
-- **Impact if left unresolved:** `srd-2014-en.json` and `srd-2024-en.json` cannot be committed, Task 3's `scripts/check-srd-packs.tests.ps1` cannot be written in a way that passes (its own D-05 block, as specified, would immediately fail), and this phase's "critério 6 do ROADMAP" (SRD content existing as a real, installable pack) remains unmet.
-- **Not fixed. Awaiting decision** — see full evidence and reproduction command below.
-
-**Reproduction (from repo root, after `node scripts/generate-srd-pack.mjs`):**
-```js
-node -e "
-const fs=require('fs');
-const oldFiles=['spells-5E-2014-EN.json','spells-5E-2014-PTBR.json','spells-5E-2024-EN.json','spells-5E-2024-PTBR.json'];
-const oldDescs=new Set();
-for(const f of oldFiles){ JSON.parse(fs.readFileSync(f,'utf8')).spells.forEach(s=>{ if(s.description) oldDescs.add(s.description); }); }
-for(const f of ['srd-2014-en.json','srd-2024-en.json']){
-  const j=JSON.parse(fs.readFileSync(f,'utf8'));
-  const matched=j.spells.filter(s=>oldDescs.has(s.description));
-  console.log(f, 'total', j.spells.length, 'matched', matched.length, matched.map(s=>s.name));
-}
-"
-```
+- **What was found:** Comparing the generated packs' 658 total descriptions against the four `spells-5E-*.json` files' 1,751 unique descriptions found **123 exact byte-for-byte matches** (46/319 in `srd-2014-en.json`, 77/339 in `srd-2024-en.json`) — see `03-SRD-SOURCE.md`'s "Achado do plano 03-04" section for the full number breakdown, the length-skew evidence (matched avg. 248 chars vs. non-matched avg. 850 chars), and the reproduction command.
+- **Why escalated instead of auto-fixed:** `scripts/generate-srd-pack.mjs` never reads any `spells-5E-*.json` file (verifiable by inspection), so this wasn't a copy bug — but D-05 is recorded as a locked, copyright-risk-motivated policy in `03-CONTEXT.md`, and this executor does not have standing to unilaterally reinterpret a locked policy. Returned a `checkpoint:decision` (gate: blocking-human) with four options rather than deciding.
+- **Resolution (user, at the checkpoint):** D-05 as written in `03-SRD-SOURCE.md` is a **provenance** rule ("os pacotes SRD nascem de uma fonte separada... nunca dos JSONs atuais do app"), and the plan's byte-diff was only ever a proxy for that rule — a proxy that false-positives on faithful independent transcriptions of the same official SRD text (this case) and would false-negative on a genuinely laundered file after any cosmetic reformat. Enforcement was redefined to key off **generator provenance** (verifiable by inspection, resistant to reformatting) instead of textual difference.
+- **What changed as a result:**
+  1. Both packs shipped **complete and unmodified** (319 + 339 spells) — no spell dropped to force byte-inequality, no cosmetic text alteration.
+  2. `scripts/check-srd-packs.tests.ps1`'s D-05 block asserts `scripts/generate-srd-pack.mjs` never holds a string-literal reference to `spells-5E` and never uses `readdir`/`readdirSync`/`glob(` (which could indirectly resolve to those files) — instead of diffing description sets.
+  3. `03-SRD-SOURCE.md` records the full evidence and ruling, with an explicit note that the 123 matches confirm ONLY that fraction of the current JSONs is plain SRD text — the remaining entries in those four files stay untrusted per D-05, unchanged.
+- **Deviation from the plan's literal acceptance criteria:** the plan's Task 2 (`"Zero interseção exata é o critério"`) and Task 3 (`"para cada descrição de cada pacote SRD, throw no primeiro acerto exato"`) both specify a textual zero-intersection check as the literal implementation of D-05. That literal check was replaced by the checkpoint decision above with a provenance check that serves the same underlying rule without the false-positive/false-negative failure modes of a byte diff. This is the one place this plan's shipped behavior differs from its literal written acceptance criteria, and it happened via an explicit user decision at a blocking checkpoint, not a unilateral executor choice.
 
 ---
 
-**Total deviations:** 3 auto-fixed (2 bugs, 1 missing-critical-functionality) + 1 escalated (architectural/policy, blocking).
-**Impact on plan:** Auto-fixes were necessary for parser correctness against the real source data and required no judgment call. The escalated item blocks Tasks 2 and 3 entirely — this plan is not complete.
+**Total deviations:** 3 auto-fixed (2 bugs, 1 missing-critical-functionality) + 1 escalated-and-resolved (architectural/policy, user decision).
+**Impact on plan:** Auto-fixes were necessary for parser correctness against real source data. The escalated item changed how D-05 is enforced (provenance instead of byte-diff) but did not change what ships — both packs are complete, unmodified, and licensed exactly as investigated in 03-02.
 
 ## Known Stubs
 
-None — no UI/rendering stubs; this plan produces backend data files and a generation script only.
+None — no UI/rendering stubs; this plan produces backend data files, a generation script, and a regression check only.
 
 ## Threat Flags
 
-None beyond what `03-04-PLAN.md`'s own `<threat_model>` already anticipated (T-03-13/14/15/16 are all about exactly this class of risk — the escalated item above is T-03-14 materializing as a real finding, not a new threat surface).
+None beyond what `03-04-PLAN.md`'s own `<threat_model>` already anticipated. T-03-14 ("reuso acidental de texto de proveniência incerta") materialized as a real finding during Task 2's proof; its resolution (provenance-based enforcement, recorded above and in `03-SRD-SOURCE.md`) is the mitigation now in force, replacing the plan's originally-specified byte-diff mitigation.
 
 ## Issues Encountered
 
-- Tabyltop/CC-SRD's text-dump JSON has no field-level schema of its own (it is a flat PDF-extraction node stream: `h1`/`h2`/`h3`/`h4`/`paragraph`/`table` nodes with `subelements` carrying raw text runs). Reverse-engineering the spell-boundary rule (a heading is a new spell only if the immediately following paragraph matches a level/school pattern; otherwise it's a sub-heading of the current spell) and the metadata/body split (Casting Time/Range/Components/Duration lines, several of which are glued to body text with zero separating whitespace) required direct inspection of the 13,353-node array rather than relying on any documented structure. This is exactly the risk flagged in `03-02-SUMMARY.md`'s "Next Phase Readiness" note ("route (b) is genuinely more work than a one-shot script... budget accordingly").
-- Two additional source-data quality issues were found and fixed inline (page-break label splits, a singular/plural label typo) — see Deviations above.
-- `Counterspell`'s `castTime` field is genuinely truncated in the Tabyltop source itself (`"1 reaction, which you take when you see a creature within 60 feet of you casting a spell"` — missing the real spell's trailing clause "that is harmful to you or that targets you"). This is a source-fidelity gap, not a parser bug; per D-05's spirit, fabricating the missing words was not attempted. Left as extracted verbatim from the licensed source.
-- `Fireball`'s body text is split into two `<p>` tags mid-sentence ("...ignites flammable objects in the area" / "that aren't being worn or carried.") due to a page break in the source stream. Content is complete and correct, just split into an extra paragraph boundary — a cosmetic artifact, not a data-loss issue. Not fixed; documented per the plan's own `<flagged_assumptions>` note about acceptable extraction-fidelity gaps.
+- Tabyltop/CC-SRD's text-dump JSON has no field-level schema of its own (a flat PDF-extraction node stream: `h1`/`h2`/`h3`/`h4`/`paragraph`/`table` nodes with `subelements` carrying raw text runs). Reverse-engineering the spell-boundary rule and the metadata/body split required direct inspection of the 13,353-node array rather than relying on documented structure — matches the risk flagged in `03-02-SUMMARY.md`'s "Next Phase Readiness" note.
+- `Counterspell`'s `castTime` field is genuinely truncated in the Tabyltop source itself (missing the real spell's trailing clause "that is harmful to you or that targets you"). Source-fidelity gap, not a parser bug; per D-05's spirit, fabricating the missing words was not attempted — left as extracted verbatim from the licensed source.
+- `Fireball`'s body text is split into two `<p>` tags mid-sentence due to a page break in the source stream. Content is complete and correct, just an extra paragraph boundary — cosmetic, not data loss. Not fixed; consistent with the plan's own `<flagged_assumptions>` note about acceptable extraction-fidelity gaps.
+- Cross-validation against `pack-import.jsx`'s `validatePack()` (mentioned in Task 2's `<read_first>`) was not possible: `pack-import.jsx` is produced by plan 03-03, a sibling wave-2 plan not merged into this worktree. The hand-rolled schema validator embedded in `scripts/generate-srd-pack.mjs` (loading `pack.schema.json` directly) covers the same contract this plan is responsible for; `pack-import.jsx`'s validator should be re-run against both packs once 03-03 merges, as a cheap confirmation, not a blocker.
 
 ## User Setup Required
 
@@ -195,13 +194,25 @@ None - no external service configuration required.
 
 ## Next Phase Readiness
 
-**This plan is BLOCKED, not complete.** Before this phase can close out SRD-01 / ROADMAP criterion 6:
-
-1. A human/orchestrator decision is needed on the D-05 zero-intersection question above (four options presented).
-2. Once decided, Task 2 needs to either commit the packs as-is (option 1), regenerate them with the overlapping spells removed (option 2), or wait on a separate spell-provenance-audit plan (option 3).
-3. Task 3 (`scripts/check-srd-packs.tests.ps1`) needs to be written to match whatever D-05 enforcement shape is decided — its other four checks (schema shape, distinct attributions, per-spell required fields, name uniqueness) are unaffected by this decision and can be written directly from the already-working pack shape.
-4. `scripts/generate-srd-pack.mjs`, `scripts/srd-sources/srd-5.2-spells.json`, and the `.gitignore` change are already committed and ready to build on — no rework needed there regardless of which option is chosen.
+- Both SRD packs exist as real, installable files at the repo root, in the same format and pipeline as any third-party pack — SRD-01 / ROADMAP criterion 6 is met.
+- `scripts/generate-srd-pack.mjs` is ready to be re-run if the SRD text is ever updated (WotC errata) or a source URL moves.
+- Recommend re-validating both packs against `pack-import.jsx`'s `validatePack()` once 03-03 merges (see Issues Encountered) — expected to pass without changes, since both packs already satisfy the same schema this plan's own validator enforces.
+- Pre-installing these packs at boot and adding them to `sw.js`'s `PRECACHE` is explicitly out of scope here (SRD-03, Phase 4) — not started, not needed for this plan's completion.
 
 ---
 *Phase: 03-srd-pack-import-pipeline*
-*Completed: 2026-08-10 (blocked, not complete)*
+*Completed: 2026-08-10*
+
+## Self-Check: PASSED
+
+- FOUND: scripts/generate-srd-pack.mjs
+- FOUND: scripts/srd-sources/srd-5.2-spells.json
+- FOUND: srd-2014-en.json
+- FOUND: srd-2024-en.json
+- FOUND: scripts/check-srd-packs.tests.ps1
+- FOUND: .planning/phases/03-srd-pack-import-pipeline/03-04-SUMMARY.md
+- FOUND commit: 16231b1
+- FOUND commit: 5123b7c
+- FOUND commit: 6496652
+- FOUND commit: eee3e2a
+- FOUND commit: 07b0248
