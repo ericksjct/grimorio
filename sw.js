@@ -15,15 +15,19 @@ const SHELL_RE = /\.(html|css|jsx)$/;
 const PRECACHE = [
   './',
   './index.html',
+  './pack-docs.html',
   './hifi-tokens.css',
   './grimorio-helpers.jsx',
   './i18n.jsx',
   './spells-data-loader.jsx',
   './plugin-store.jsx', // ponytail: CACHE_VERSION não muda — install() reabre o mesmo cache e só adiciona este arquivo, sem re-baixar os JSONs de magias já cacheados
+  './pack-import.jsx', // acréscimo puro no mesmo cache — sem bump de CACHE_VERSION, sem re-baixar os JSONs de magias já cacheados
   './v11-character-editor.jsx',
+  './pack-import-dialog.jsx',
   './v10-hifi.jsx',
   './favicon.svg',
   './manifest.json',
+  './pack.schema.json',
   './fonts/texturina-latin.woff2',
   './fonts/texturina-latin-ext.woff2',
   './fonts/jetbrainsmono-latin.woff2',
@@ -35,6 +39,7 @@ const PRECACHE = [
   'https://unpkg.com/react@18.3.1/umd/react.production.min.js',
   'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js',
   'https://unpkg.com/@babel/standalone@7.29.0/babel.min.js',
+  'https://unpkg.com/dompurify@3.4.13/dist/purify.min.js',
 ];
 
 self.addEventListener('install', (event) => {
