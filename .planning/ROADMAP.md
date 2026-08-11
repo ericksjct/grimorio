@@ -84,7 +84,7 @@ Plans:
   5. Every spell description from an imported pack passes through DOMPurify sanitization before it can reach any `dangerouslySetInnerHTML` sink — raw imported HTML is never rendered (PKG-05)
   6. A generated SRD pack (CC-BY EN subset) exists as a file conforming to the same pack schema and installs cleanly through the same pipeline (SRD-01)
 
-**Plans**: 2/8 plans executed
+**Plans**: 4/8 plans executed
 Plans:
 **Wave 1**
 
@@ -93,8 +93,8 @@ Plans:
 
 **Wave 2** *(bloqueada na Wave 1)*
 
-- [ ] 03-03-PLAN.md — `pack-import.jsx`: validador escrito à mão, bloqueio de `__proto__`/`constructor`/`prototype` no reviver do parse, teto de 10 MB e `freeIdentifier` (PKG-04)
-- [ ] 03-04-PLAN.md — `scripts/generate-srd-pack.mjs` + `srd-2014-en.json` / `srd-2024-en.json`, com prova de não-reuso do texto dos JSONs atuais (SRD-01)
+- [x] 03-03-PLAN.md — `pack-import.jsx`: validador escrito à mão, bloqueio de `__proto__`/`constructor`/`prototype` no reviver do parse, teto de 10 MB e `freeIdentifier` (PKG-04)
+- [x] 03-04-PLAN.md — `scripts/generate-srd-pack.mjs` + `srd-2014-en.json` / `srd-2024-en.json`, com prova de não-reuso do texto dos JSONs atuais (SRD-01)
 
 **Wave 3** *(bloqueada na Wave 2)*
 
@@ -183,7 +183,7 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 |-------|-----------|-----------------|--------|-----------|
 | 1. Animation Verification & Polish | Pre-milestone | ad hoc | Complete | 2026-07-17 |
 | 2. Plugin Storage Foundation | v2.0 | 2/2 | Complete    | 2026-07-18 |
-| 3. SRD Pack & Import Pipeline | v2.0 | 2/8 | In Progress|  |
+| 3. SRD Pack & Import Pipeline | v2.0 | 4/8 | In Progress|  |
 | 4. Loader Integration (Source-Dispatch) | v2.0 | 0/TBD | Not started | - |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 0/TBD | Not started | - |
 | 6. Decommissioning & Migration | v2.0 | 0/TBD | Not started | - |
