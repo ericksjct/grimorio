@@ -7,12 +7,47 @@
 // ──────────────────────────────────────────────────────────────────
 // CONFIGURAÇÃO DAS VERSÕES
 // ──────────────────────────────────────────────────────────────────
-const SPELL_VERSIONS = [
-  { key: 'spells-5E-2024-PTBR', file: 'spells-5E-2024-PTBR.json', lang: 'ptbr', label: 'D&D 5.5E 2024', labelPt: 'D&D 5.5E 2024', labelEn: "D&D 5.5E 2024", short: '5.5E 2024' },
-  { key: 'spells-5E-2014-PTBR', file: 'spells-5E-2014-PTBR.json', lang: 'ptbr', label: 'D&D 5E 2014',   labelPt: 'D&D 5E 2014',   labelEn: "D&D 5E 2014",   short: '5E 2014' },
-  { key: 'spells-5E-2024-EN',   file: 'spells-5E-2024-EN.json',   lang: 'en',   label: "PHB 2024",      labelPt: 'PHB 2024',      labelEn: "PHB 2024",      short: '2024 EN' },
-  { key: 'spells-5E-2014-EN',   file: 'spells-5E-2014-EN.json',   lang: 'en',   label: "PHB 2014",      labelPt: 'PHB 2014',      labelEn: "PHB 2014",      short: '2014 EN' },
+// Contrato de entrada de versão. Campos obrigatórios em toda entrada: `key`,
+// `source` ('fetch' | 'idb'), `lang`, `edition`, `labelPt`, `labelEn`, `short`.
+// Mais `file` quando `source === 'fetch'`, ou `packId` quando `source === 'idb'`.
+// O campo `label` existe só nas 4 entradas legadas abaixo e não é consumido em
+// lugar nenhum do app — não o replique em entradas novas.
+//
+// Colisão de nomes — três coisas diferentes chamadas `source` neste arquivo:
+//   - `source` na ENTRADA DE VERSÃO (aqui, `BUILTIN_VERSIONS`/`SPELL_VERSIONS`): 'fetch' | 'idb'.
+//   - `meta.source` de um PACK (ver plugin-store.jsx): identificador único do pack (D-09).
+//   - `source` numa MAGIA (campo do JSON de spells): nome do livro-fonte (ex.: "SRD 5.2").
+//
+// BUILTIN_VERSIONS = entradas que vêm do repositório, nesta ordem EXATA — a
+// ordem é semântica: índice 0 é o último elo da cadeia de fallback
+// (_defaultVersion) e a primeira entrada com lang 'en' é o default de primeira
+// visita para navegador em inglês. Os rótulos SRD nomeiam a edição do SRD
+// (5.1/5.2), não a edição do PHB — isso evita que o usuário leia 319/339
+// magias do SRD como se fosse o PHB completo de 474 (P-03).
+const BUILTIN_VERSIONS = [
+  { key: 'srd-2024-en', source: 'fetch', file: 'srd-2024-en.json', lang: 'en', edition: '5e 2024', labelPt: 'SRD 5.2 (EN)', labelEn: 'SRD 5.2 (EN)', short: 'SRD 5.2' },
+  { key: 'srd-2014-en', source: 'fetch', file: 'srd-2014-en.json', lang: 'en', edition: '5e 2014', labelPt: 'SRD 5.1 (EN)', labelEn: 'SRD 5.1 (EN)', short: 'SRD 5.1' },
+  { key: 'spells-5E-2024-PTBR', source: 'fetch', file: 'spells-5E-2024-PTBR.json', lang: 'ptbr', edition: '5e 2024', label: 'D&D 5.5E 2024', labelPt: 'D&D 5.5E 2024', labelEn: "D&D 5.5E 2024", short: '5.5E 2024' },
+  { key: 'spells-5E-2014-PTBR', source: 'fetch', file: 'spells-5E-2014-PTBR.json', lang: 'ptbr', edition: '5e 2014', label: 'D&D 5E 2014',   labelPt: 'D&D 5E 2014',   labelEn: "D&D 5E 2014",   short: '5E 2014' },
+  { key: 'spells-5E-2024-EN',   source: 'fetch', file: 'spells-5E-2024-EN.json',   lang: 'en',   edition: '5e 2024', label: "PHB 2024",      labelPt: 'PHB 2024',      labelEn: "PHB 2024",      short: '2024 EN' },
+  { key: 'spells-5E-2014-EN',   source: 'fetch', file: 'spells-5E-2014-EN.json',   lang: 'en',   edition: '5e 2014', label: "PHB 2014",      labelPt: 'PHB 2014',      labelEn: "PHB 2014",      short: '2014 EN' },
 ];
+
+// SPELL_VERSIONS é o registro VIVO — extensível em runtime (packs de
+// IndexedDB, plano 04-02). REGRA DURA: só pode ser mutado IN PLACE
+// (push/splice); NUNCA reatribuído. window.SPELL_VERSIONS, os três leitores em
+// index.html (defaultVersionKeyForLang, langOfVersionKey, a derivação de
+// versão inicial) e v10-hifi.jsx seguram a MESMA referência de array —
+// reatribuir deixa todos eles apontando para a lista antiga.
+const SPELL_VERSIONS = BUILTIN_VERSIONS.slice();
+
+function _versionByKey(key) {
+  return SPELL_VERSIONS.find(v => v.key === key) || null;
+}
+
+function _defaultVersion() {
+  return SPELL_VERSIONS[0];
+}
 
 // ──────────────────────────────────────────────────────────────────
 // MAPEAMENTOS
@@ -173,9 +208,9 @@ function _initialVersionKey() {
   try {
     // ?v= de link compartilhado vence a preferência salva (o App faz o mesmo).
     const urlV = new URL(window.location.href).searchParams.get('v');
-    if (urlV && SPELL_VERSIONS.some(v => v.key === urlV)) return urlV;
+    if (urlV && _versionByKey(urlV)) return urlV;
     const prefs = JSON.parse(localStorage.getItem('spellbook-ui-prefs') || '{}');
-    if (prefs.versionKey && SPELL_VERSIONS.some(v => v.key === prefs.versionKey)) {
+    if (prefs.versionKey && _versionByKey(prefs.versionKey)) {
       return prefs.versionKey;
     }
     const nav = (navigator.languages && navigator.languages[0]) || navigator.language || '';
@@ -183,13 +218,13 @@ function _initialVersionKey() {
     const v = SPELL_VERSIONS.find(x => x.lang === lang);
     if (v) return v.key;
   } catch (e) {}
-  return SPELL_VERSIONS[0].key;
+  return _defaultVersion().key;
 }
 let _currentVersion = _initialVersionKey();
 let _loadingPromise = null;
 
 function getCurrentVersion() {
-  return SPELL_VERSIONS.find(v => v.key === _currentVersion) || SPELL_VERSIONS[0];
+  return _versionByKey(_currentVersion) || _defaultVersion();
 }
 
 function setCurrentVersion(key) {
