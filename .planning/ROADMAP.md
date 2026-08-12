@@ -18,7 +18,7 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
 
 - [x] **Phase 1: Animation Verification & Polish** - Confirm the already-implemented menu/filter/panel animations work correctly everywhere they were built for
 - [x] **Phase 2: Plugin Storage Foundation** - IndexedDB persistence layer for spell packs, with persistent-storage request and export/backup (completed 2026-07-18)
-- [ ] **Phase 3: SRD Pack & Import Pipeline** - Users install a validated, sanitized pack from file or URL; SRD content exists as a real pack
+- [x] **Phase 3: SRD Pack & Import Pipeline** - Users install a validated, sanitized pack from file or URL; SRD content exists as a real pack (completed 2026-08-11)
 - [ ] **Phase 4: Loader Integration (Source-Dispatch)** - The loader natively reads SRD + any installed packs through one dispatch point, no hardcoded 4-dataset list
 - [ ] **Phase 5: Plugin Manager UI & Version Selector** - Install/list/remove UI, dynamic version selector, duplicate-spell notes, empty state, CC-BY attribution
 - [ ] **Phase 6: Decommissioning & Migration** - Remove the 4 protected JSONs from site/repo; migrate existing users without silently dropping references
@@ -84,7 +84,7 @@ Plans:
   5. Every spell description from an imported pack passes through DOMPurify sanitization before it can reach any `dangerouslySetInnerHTML` sink — raw imported HTML is never rendered (PKG-05)
   6. A generated SRD pack (CC-BY EN subset) exists as a file conforming to the same pack schema and installs cleanly through the same pipeline (SRD-01)
 
-**Plans**: 7/8 plans executed
+**Plans**: 8/8 plans executed
 Plans:
 **Wave 1**
 
@@ -107,7 +107,7 @@ Plans:
 
 **Wave 5** *(bloqueada na Wave 4)*
 
-- [ ] 03-08-PLAN.md — CSP de escopo mínimo com a rota de saída de D-10 registrada, e verificação humana da fase (6 temas × claro/escuro + impressão + payload hostil)
+- [x] 03-08-PLAN.md — CSP de escopo mínimo com a rota de saída de D-10 registrada, e verificação humana da fase (6 temas × claro/escuro + impressão + payload hostil)
 
 **UI hint**: yes
 **Planning route**: PLAN DIRETO após 2 decisões de produto resolvidas em chat antes do plan: (a) qual SRD embutir — 5.1/2014, 5.2/2024, ou ambos (afeta subconjunto de magias + texto de atribuição da Fase 5); (b) teto de tamanho do import. Pipeline (validação, DOMPurify, formato) já especificada em research. Research do plan: NÃO — **corrigido em 2026-07-26 (D-07):** a nota original subestimou o escopo. A validação de licença das fontes SRD é investigação real e virou o plano 03-02, com checkpoint de decisão bloqueante antes de qualquer geração de pacote. Não é pesquisa de framework; é verificação de fonte de dados + licença.
@@ -183,7 +183,7 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 |-------|-----------|-----------------|--------|-----------|
 | 1. Animation Verification & Polish | Pre-milestone | ad hoc | Complete | 2026-07-17 |
 | 2. Plugin Storage Foundation | v2.0 | 2/2 | Complete    | 2026-07-18 |
-| 3. SRD Pack & Import Pipeline | v2.0 | 7/8 | In Progress|  |
+| 3. SRD Pack & Import Pipeline | v2.0 | 8/8 | Complete    | 2026-08-11 |
 | 4. Loader Integration (Source-Dispatch) | v2.0 | 0/TBD | Not started | - |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 0/TBD | Not started | - |
 | 6. Decommissioning & Migration | v2.0 | 0/TBD | Not started | - |

@@ -9,10 +9,10 @@
 ### PKG — Formato & Import
 
 - [x] **PKG-01**: Autor de pacote pode descrever seu pack num JSON = schema atual de magias + cabeçalho `meta` (nome, autor, versão, licença, `source` único). O formato é publicado como JSON Schema (`pack.schema.json`) + página de docs para autores — schema é ao mesmo tempo a documentação oficial e o validador do import. `name` de cada magia é documentado como ID estável (qualquer string única dentro do pack; não precisa ser inglês)
-- [ ] **PKG-02**: Usuário pode instalar um pacote a partir de um arquivo do dispositivo (`input[type=file]`)
-- [ ] **PKG-03**: Usuário pode instalar um pacote a partir de uma URL, com a limitação de CORS explicada na própria UI (hosts compatíveis: raw.githubusercontent, Gist, jsDelivr)
-- [ ] **PKG-04**: Import valida o pacote antes de gravar: conformidade com o schema, JSON malformado, tamanho máximo, bloqueio de chaves `__proto__`/`constructor`/`prototype`, unicidade do `source` contra os packs já instalados
-- [ ] **PKG-05**: Import sanitiza o HTML das descrições (DOMPurify via CDN+SRI, whitelist explícita de tags) — nenhum conteúdo não-sanitizado chega aos 4 render sinks (`dangerouslySetInnerHTML`) existentes
+- [x] **PKG-02**: Usuário pode instalar um pacote a partir de um arquivo do dispositivo (`input[type=file]`)
+- [x] **PKG-03**: Usuário pode instalar um pacote a partir de uma URL, com a limitação de CORS explicada na própria UI (hosts compatíveis: raw.githubusercontent, Gist, jsDelivr)
+- [x] **PKG-04**: Import valida o pacote antes de gravar: conformidade com o schema, JSON malformado, tamanho máximo, bloqueio de chaves `__proto__`/`constructor`/`prototype`, unicidade do `source` contra os packs já instalados
+- [x] **PKG-05**: Import sanitiza o HTML das descrições (DOMPurify via CDN+SRI, whitelist explícita de tags) — nenhum conteúdo não-sanitizado chega aos 4 render sinks (`dangerouslySetInnerHTML`) existentes
 
 ### STOR — Armazenamento
 
@@ -30,7 +30,7 @@
 
 ### SRD — Pacote embutido
 
-- [ ] **SRD-01**: Dois pacotes SRD EN embutidos, um por edição (5.1/2014 e 5.2/2024), com conteúdo vindo de fonte com licença verificada e registrada — nunca dos arquivos `spells-5E-*.json` atuais; cada pacote carrega em `meta.license` o texto de atribuição verbatim da sua edição mais a nota de modificação
+- [x] **SRD-01**: Dois pacotes SRD EN embutidos, um por edição (5.1/2014 e 5.2/2024), com conteúdo vindo de fonte com licença verificada e registrada — nunca dos arquivos `spells-5E-*.json` atuais; cada pacote carrega em `meta.license` o texto de atribuição verbatim da sua edição mais a nota de modificação
 - [ ] **SRD-02**: Atribuição CC-BY visível no app, com o texto verbatim exato da versão de SRD usada (5.1 e 5.2 têm textos distintos; modificações ao texto-fonte anotadas)
 - [ ] **SRD-03**: Pacote SRD vem pré-instalado — primeira abertura nunca é vazia
 
@@ -71,11 +71,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STOR-02 | Phase 2 | Complete |
 | STOR-03 | Phase 2 | Complete |
 | PKG-01 | Phase 3 | Complete |
-| PKG-02 | Phase 3 | Pending |
-| PKG-03 | Phase 3 | Pending |
-| PKG-04 | Phase 3 | Pending |
-| PKG-05 | Phase 3 | Pending |
-| SRD-01 | Phase 3 | Pending |
+| PKG-02 | Phase 3 | Complete |
+| PKG-03 | Phase 3 | Complete |
+| PKG-04 | Phase 3 | Complete |
+| PKG-05 | Phase 3 | Complete |
+| SRD-01 | Phase 3 | Complete |
 | SRD-03 | Phase 4 | Pending |
 | MGMT-01 | Phase 5 | Pending |
 | MGMT-02 | Phase 5 | Pending |
