@@ -7,12 +7,47 @@
 // ──────────────────────────────────────────────────────────────────
 // CONFIGURAÇÃO DAS VERSÕES
 // ──────────────────────────────────────────────────────────────────
-const SPELL_VERSIONS = [
-  { key: 'spells-5E-2024-PTBR', file: 'spells-5E-2024-PTBR.json', lang: 'ptbr', label: 'D&D 5.5E 2024', labelPt: 'D&D 5.5E 2024', labelEn: "D&D 5.5E 2024", short: '5.5E 2024' },
-  { key: 'spells-5E-2014-PTBR', file: 'spells-5E-2014-PTBR.json', lang: 'ptbr', label: 'D&D 5E 2014',   labelPt: 'D&D 5E 2014',   labelEn: "D&D 5E 2014",   short: '5E 2014' },
-  { key: 'spells-5E-2024-EN',   file: 'spells-5E-2024-EN.json',   lang: 'en',   label: "PHB 2024",      labelPt: 'PHB 2024',      labelEn: "PHB 2024",      short: '2024 EN' },
-  { key: 'spells-5E-2014-EN',   file: 'spells-5E-2014-EN.json',   lang: 'en',   label: "PHB 2014",      labelPt: 'PHB 2014',      labelEn: "PHB 2014",      short: '2014 EN' },
+// Contrato de entrada de versão. Campos obrigatórios em toda entrada: `key`,
+// `source` ('fetch' | 'idb'), `lang`, `edition`, `labelPt`, `labelEn`, `short`.
+// Mais `file` quando `source === 'fetch'`, ou `packId` quando `source === 'idb'`.
+// O campo `label` existe só nas 4 entradas legadas abaixo e não é consumido em
+// lugar nenhum do app — não o replique em entradas novas.
+//
+// Colisão de nomes — três coisas diferentes chamadas `source` neste arquivo:
+//   - `source` na ENTRADA DE VERSÃO (aqui, `BUILTIN_VERSIONS`/`SPELL_VERSIONS`): 'fetch' | 'idb'.
+//   - `meta.source` de um PACK (ver plugin-store.jsx): identificador único do pack (D-09).
+//   - `source` numa MAGIA (campo do JSON de spells): nome do livro-fonte (ex.: "SRD 5.2").
+//
+// BUILTIN_VERSIONS = entradas que vêm do repositório, nesta ordem EXATA — a
+// ordem é semântica: índice 0 é o último elo da cadeia de fallback
+// (_defaultVersion) e a primeira entrada com lang 'en' é o default de primeira
+// visita para navegador em inglês. Os rótulos SRD nomeiam a edição do SRD
+// (5.1/5.2), não a edição do PHB — isso evita que o usuário leia 319/339
+// magias do SRD como se fosse o PHB completo de 474 (P-03).
+const BUILTIN_VERSIONS = [
+  { key: 'srd-2024-en', source: 'fetch', file: 'srd-2024-en.json', lang: 'en', edition: '5e 2024', labelPt: 'SRD 5.2 (EN)', labelEn: 'SRD 5.2 (EN)', short: 'SRD 5.2' },
+  { key: 'srd-2014-en', source: 'fetch', file: 'srd-2014-en.json', lang: 'en', edition: '5e 2014', labelPt: 'SRD 5.1 (EN)', labelEn: 'SRD 5.1 (EN)', short: 'SRD 5.1' },
+  { key: 'spells-5E-2024-PTBR', source: 'fetch', file: 'spells-5E-2024-PTBR.json', lang: 'ptbr', edition: '5e 2024', label: 'D&D 5.5E 2024', labelPt: 'D&D 5.5E 2024', labelEn: "D&D 5.5E 2024", short: '5.5E 2024' },
+  { key: 'spells-5E-2014-PTBR', source: 'fetch', file: 'spells-5E-2014-PTBR.json', lang: 'ptbr', edition: '5e 2014', label: 'D&D 5E 2014',   labelPt: 'D&D 5E 2014',   labelEn: "D&D 5E 2014",   short: '5E 2014' },
+  { key: 'spells-5E-2024-EN',   source: 'fetch', file: 'spells-5E-2024-EN.json',   lang: 'en',   edition: '5e 2024', label: "PHB 2024",      labelPt: 'PHB 2024',      labelEn: "PHB 2024",      short: '2024 EN' },
+  { key: 'spells-5E-2014-EN',   source: 'fetch', file: 'spells-5E-2014-EN.json',   lang: 'en',   edition: '5e 2014', label: "PHB 2014",      labelPt: 'PHB 2014',      labelEn: "PHB 2014",      short: '2014 EN' },
 ];
+
+// SPELL_VERSIONS é o registro VIVO — extensível em runtime (packs de
+// IndexedDB, plano 04-02). REGRA DURA: só pode ser mutado IN PLACE
+// (push/splice); NUNCA reatribuído. window.SPELL_VERSIONS, os três leitores em
+// index.html (defaultVersionKeyForLang, langOfVersionKey, a derivação de
+// versão inicial) e v10-hifi.jsx seguram a MESMA referência de array —
+// reatribuir deixa todos eles apontando para a lista antiga.
+const SPELL_VERSIONS = BUILTIN_VERSIONS.slice();
+
+function _versionByKey(key) {
+  return SPELL_VERSIONS.find(v => v.key === key) || null;
+}
+
+function _defaultVersion() {
+  return SPELL_VERSIONS[0];
+}
 
 // ──────────────────────────────────────────────────────────────────
 // MAPEAMENTOS
@@ -144,7 +179,7 @@ function adaptSpell(s, versionLang, edition) {
     classes: versionLang === 'ptbr' ? classesPt : classesEn,
     classesPt,
     classesEn,
-    src: SOURCE_CODE[s.source] || (s.source || '').slice(0, 4).toUpperCase(),
+    src: SOURCE_CODE[s.source] || (s.source || '').slice(0, 4).toUpperCase().trim(),
     sourceFull: s.source || '',
     edition: edition || detectEdition(''),
     url: s.url || '',
@@ -173,9 +208,9 @@ function _initialVersionKey() {
   try {
     // ?v= de link compartilhado vence a preferência salva (o App faz o mesmo).
     const urlV = new URL(window.location.href).searchParams.get('v');
-    if (urlV && SPELL_VERSIONS.some(v => v.key === urlV)) return urlV;
+    if (urlV && _versionByKey(urlV)) return urlV;
     const prefs = JSON.parse(localStorage.getItem('spellbook-ui-prefs') || '{}');
-    if (prefs.versionKey && SPELL_VERSIONS.some(v => v.key === prefs.versionKey)) {
+    if (prefs.versionKey && _versionByKey(prefs.versionKey)) {
       return prefs.versionKey;
     }
     const nav = (navigator.languages && navigator.languages[0]) || navigator.language || '';
@@ -183,13 +218,13 @@ function _initialVersionKey() {
     const v = SPELL_VERSIONS.find(x => x.lang === lang);
     if (v) return v.key;
   } catch (e) {}
-  return SPELL_VERSIONS[0].key;
+  return _defaultVersion().key;
 }
 let _currentVersion = _initialVersionKey();
 let _loadingPromise = null;
 
 function getCurrentVersion() {
-  return SPELL_VERSIONS.find(v => v.key === _currentVersion) || SPELL_VERSIONS[0];
+  return _versionByKey(_currentVersion) || _defaultVersion();
 }
 
 function setCurrentVersion(key) {
@@ -204,39 +239,61 @@ function setCurrentVersion(key) {
 // ──────────────────────────────────────────────────────────────────
 const _pending = {}; // key → Promise em voo (dedup de fetches concorrentes)
 
+// Tenta os mesmos três caminhos relativos de sempre (nome cru, './' e '../' —
+// funciona no GitHub Pages / local / file://) e devolve o primeiro JSON
+// parseado com sucesso. Ponto ÚNICO de tratamento de erro de fetch — lança
+// quando nenhum caminho responde OK, em vez de engolir o erro dentro do loop.
+async function _fetchVersionJson(ver) {
+  const paths = [ver.file, './' + ver.file, '../' + ver.file];
+  let lastErr;
+  for (const path of paths) {
+    try {
+      const res = await fetch(path);
+      if (!res.ok) continue;
+      return await res.json();
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error('Falha ao carregar ' + ver.file);
+}
+
 async function loadVersion(key) {
   if (_cache[key]) return _cache[key];
   if (_pending[key]) return _pending[key];
-  const ver = SPELL_VERSIONS.find(v => v.key === key);
-  if (!ver) throw new Error('Unknown version: ' + key);
+
+  const ver = _versionByKey(key);
+  if (!ver) {
+    // Chave desconhecida (ex.: preferência salva apontando pra um pack que
+    // sumiu do IndexedDB) nunca pode terminar em exceção/tela em branco —
+    // redireciona pra entrada padrão builtin, que sempre resolve.
+    console.warn('[spells-data-loader] Versão desconhecida:', key, '— usando versão padrão.');
+    return loadVersion(_defaultVersion().key);
+  }
 
   _pending[key] = (async () => {
-    // Tenta carregar do path relativo (funciona no GitHub Pages / local)
-    const paths = [ver.file, './' + ver.file, '../' + ver.file];
-    let lastErr;
-    for (const path of paths) {
-      try {
-        const res = await fetch(path);
-        if (!res.ok) continue;
-        const json = await res.json();
-        _rawCache[key] = json;
-        const adapted = adaptSpells(json, ver.lang, detectEdition(ver.file));
-        _cache[key] = adapted;
-        return adapted;
-      } catch (e) {
-        lastErr = e;
-      }
-    }
-    console.warn('[spells-data-loader] Falha ao carregar', ver.file, lastErr);
-    // NÃO cacheia a falha: a próxima chamada (trocar de versão, reabrir) tenta
-    // de novo. Avisa o usuário em vez de mostrar "0 magias" em silêncio.
     try {
-      const lang = ver.lang;
-      window.dispatchEvent(new CustomEvent('hifi-toast', {
-        detail: { msg: window.tt ? window.tt(lang, 'toast.loadFailed') : 'falha ao carregar as magias', kind: 'err' },
-      }));
-    } catch (e) {}
-    return [];
+      // Dispatch por origem: dali em diante o caminho é UM SÓ, seja o JSON
+      // vindo de arquivo estático ou de IndexedDB — mesma normalização abaixo,
+      // mesmo _cache. Nenhum pós-processamento condicional por origem.
+      const json = ver.source === 'idb'
+        ? await window.pluginStore.getSpells(ver.packId)
+        : await _fetchVersionJson(ver);
+      _rawCache[key] = json;
+      const adapted = adaptSpells(json, ver.lang, ver.edition);
+      _cache[key] = adapted;
+      return adapted;
+    } catch (e) {
+      console.warn('[spells-data-loader] Falha ao carregar', key, e);
+      // NÃO cacheia a falha: a próxima chamada (trocar de versão, reabrir)
+      // tenta de novo. Avisa o usuário em vez de mostrar "0 magias" em silêncio.
+      try {
+        window.dispatchEvent(new CustomEvent('hifi-toast', {
+          detail: { msg: window.tt ? window.tt(ver.lang, 'toast.loadFailed') : 'falha ao carregar as magias', kind: 'err' },
+        }));
+      } catch (e2) {}
+      return [];
+    }
   })();
 
   try {
