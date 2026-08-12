@@ -134,3 +134,12 @@ None - no external service configuration required.
 ---
 *Phase: 04-loader-integration-source-dispatch*
 *Completed: 2026-08-12*
+
+## Self-Check: PASSED
+
+- FOUND: `spells-data-loader.jsx`
+- FOUND: `scripts/check-source-dispatch.tests.ps1`
+- FOUND: `.planning/phases/04-loader-integration-source-dispatch/04-01-SUMMARY.md`
+- FOUND: commit `6de5642` (Task 1)
+- FOUND: commit `36893a4` (Task 2)
+- FOUND: commit `0d7ec49` (docs: SUMMARY)
