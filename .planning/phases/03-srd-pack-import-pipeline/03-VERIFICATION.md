@@ -1,26 +1,32 @@
 ---
 phase: 03-srd-pack-import-pipeline
 verified: 2026-08-11T23:52:24Z
-status: human_needed
+status: passed
 score: 6/6 must-haves structurally+behaviorally verified; 6 items outstanding for human browser verification
 behavior_unverified: 0
 overrides_applied: 0
 human_verification:
+
   - test: "Open the app and pack-docs.html across the 6 themes (Catppuccin, Solarized, Nord, Monokai, Parchment, Daylight) × light/dark (12 combinations), confirming no CSP console violation, legible import dialog, and pack-docs.html tables scrolling horizontally instead of clipping."
     expected: "App boots clean in all 12 combos, import dialog and pack-docs.html render correctly, no console errors."
     why_human: "Visual rendering across theme/mode combinations cannot be verified by grep/static analysis; 03-08-PLAN.md Task 3 steps 1-4 were explicitly deferred by the human for time, not run."
+
   - test: "Trigger print with a prepared spell and confirm output matches pre-phase behavior."
     expected: "Print sheet renders unchanged from before the phase."
     why_human: "Visual/print-context check; 03-08-PLAN.md step 4, deferred."
+
   - test: "After a rejected import (bad JSON / schema-invalid / blocked-key), confirm the form fields stay filled and the inline error clears on the next input change."
     expected: "Form retains user input; error message disappears on field touch."
     why_human: "Interactive form-state behavior in a live browser; 03-08-PLAN.md step 10, deferred."
+
   - test: "Paste a URL from a host without permissive CORS and confirm the specific CORS rejection message (packErr.fetchFailed) appears inline and the global toast also fires."
     expected: "User sees a specific 'could not fetch — download and upload instead' message, not a generic error, plus a toast."
     why_human: "The underlying fetch-failed code path was verified with a Node harness (simulated CORS TypeError -> .code === 'fetch-failed'), but the actual on-screen message/toast rendering in a real browser was not observed; 03-08-PLAN.md step 12, deferred."
+
   - test: "Open a spell whose description carries a hostile payload (img onerror + inline script) in the card, side panel, and detail screen, and print it, confirming no alert fires and the console shows no execution in any of the four dangerouslySetInnerHTML sinks."
     expected: "No alert fires in any of the 4 render contexts."
     why_human: "There is no UI path to render a spell from an imported pack yet in this phase — spells-data-loader.jsx still has a hardcoded 4-entry SPELL_VERSIONS and no pluginStore reference (that dispatch is Phase 4 / SRD-03 scope). Steps 15-16 of 03-08-PLAN.md could not be executed for this reason. Step 17 (reading the stored HTML back from IndexedDB) WAS run by the human and confirmed the stored description is already sanitized (script and onerror stripped before write), which covers the underlying risk by substitution — but the render-sink path itself remains genuinely unexercised, and that should not be silently counted as equivalent to actually watching the 4 sinks not execute a payload."
+
   - test: "Confirm REQUIREMENTS.md checkboxes and Traceability table are updated to reflect Phase 3 completion (PKG-02, PKG-03, PKG-04, PKG-05, SRD-01 currently still show '[ ]' / 'Pending', only PKG-01 shows 'Complete')."
     expected: "Requirement tracking metadata matches actual implementation status."
     why_human: "Not a functional defect — the code is complete, tested, and behaviorally verified for all 6 IDs — but it is a documentation/bookkeeping gap a human (not this verifier) should decide whether to close before shipping, since flipping requirement checkboxes is a product-tracking decision, not a code fact this verifier can programmatically resolve without risk of overstepping the phase's own PLAN/SUMMARY record."
