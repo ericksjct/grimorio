@@ -58,4 +58,34 @@ if (-not $loader.Contains('window.SPELL_VERSIONS = SPELL_VERSIONS;')) {
   throw 'window.SPELL_VERSIONS is no longer exposed pointing at the live registry.'
 }
 
-Write-Output 'Source-dispatch version registry contract is present.'
+# ── Dispatch por origem em loadVersion, com fallback de chave desconhecida (Task 2) ──
+foreach ($needle in @(
+  'function _fetchVersionJson(',
+  'pluginStore.getSpells(',
+  "ver.source === 'idb'"
+)) {
+  if (-not $loader.Contains($needle)) {
+    throw "Missing spells-data-loader.jsx dispatch detail: $needle"
+  }
+}
+
+$adaptSpellsCallCount = ([regex]::Matches($loader, 'adaptSpells\(')).Count
+if ($adaptSpellsCallCount -ne 2) {
+  throw "Expected exactly 2 occurrences of adaptSpells( (definition + single call site in loadVersion), found $adaptSpellsCallCount. A second normalization path may have been introduced."
+}
+
+if ($loader.Contains('detectEdition(ver.file)')) {
+  throw 'loadVersion() must not derive edition from the file name anymore - edition must come from the version registry entry.'
+}
+
+if ($loader.Contains("throw new Error('Unknown version: '")) {
+  throw 'loadVersion() must not throw on an unknown version key - it must redirect to the default version instead.'
+}
+
+foreach ($forbidden in @('putPack', 'deletePack', 'exportPack')) {
+  if ($loader.Contains($forbidden)) {
+    throw "spells-data-loader.jsx must be a strict IndexedDB reader - found forbidden call: $forbidden"
+  }
+}
+
+Write-Output 'Source-dispatch registry and loadVersion() dispatch contract are present.'

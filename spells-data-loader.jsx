@@ -179,7 +179,7 @@ function adaptSpell(s, versionLang, edition) {
     classes: versionLang === 'ptbr' ? classesPt : classesEn,
     classesPt,
     classesEn,
-    src: SOURCE_CODE[s.source] || (s.source || '').slice(0, 4).toUpperCase(),
+    src: SOURCE_CODE[s.source] || (s.source || '').slice(0, 4).toUpperCase().trim(),
     sourceFull: s.source || '',
     edition: edition || detectEdition(''),
     url: s.url || '',
@@ -239,39 +239,61 @@ function setCurrentVersion(key) {
 // ──────────────────────────────────────────────────────────────────
 const _pending = {}; // key → Promise em voo (dedup de fetches concorrentes)
 
+// Tenta os mesmos três caminhos relativos de sempre (nome cru, './' e '../' —
+// funciona no GitHub Pages / local / file://) e devolve o primeiro JSON
+// parseado com sucesso. Ponto ÚNICO de tratamento de erro de fetch — lança
+// quando nenhum caminho responde OK, em vez de engolir o erro dentro do loop.
+async function _fetchVersionJson(ver) {
+  const paths = [ver.file, './' + ver.file, '../' + ver.file];
+  let lastErr;
+  for (const path of paths) {
+    try {
+      const res = await fetch(path);
+      if (!res.ok) continue;
+      return await res.json();
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error('Falha ao carregar ' + ver.file);
+}
+
 async function loadVersion(key) {
   if (_cache[key]) return _cache[key];
   if (_pending[key]) return _pending[key];
-  const ver = SPELL_VERSIONS.find(v => v.key === key);
-  if (!ver) throw new Error('Unknown version: ' + key);
+
+  const ver = _versionByKey(key);
+  if (!ver) {
+    // Chave desconhecida (ex.: preferência salva apontando pra um pack que
+    // sumiu do IndexedDB) nunca pode terminar em exceção/tela em branco —
+    // redireciona pra entrada padrão builtin, que sempre resolve.
+    console.warn('[spells-data-loader] Versão desconhecida:', key, '— usando versão padrão.');
+    return loadVersion(_defaultVersion().key);
+  }
 
   _pending[key] = (async () => {
-    // Tenta carregar do path relativo (funciona no GitHub Pages / local)
-    const paths = [ver.file, './' + ver.file, '../' + ver.file];
-    let lastErr;
-    for (const path of paths) {
-      try {
-        const res = await fetch(path);
-        if (!res.ok) continue;
-        const json = await res.json();
-        _rawCache[key] = json;
-        const adapted = adaptSpells(json, ver.lang, detectEdition(ver.file));
-        _cache[key] = adapted;
-        return adapted;
-      } catch (e) {
-        lastErr = e;
-      }
-    }
-    console.warn('[spells-data-loader] Falha ao carregar', ver.file, lastErr);
-    // NÃO cacheia a falha: a próxima chamada (trocar de versão, reabrir) tenta
-    // de novo. Avisa o usuário em vez de mostrar "0 magias" em silêncio.
     try {
-      const lang = ver.lang;
-      window.dispatchEvent(new CustomEvent('hifi-toast', {
-        detail: { msg: window.tt ? window.tt(lang, 'toast.loadFailed') : 'falha ao carregar as magias', kind: 'err' },
-      }));
-    } catch (e) {}
-    return [];
+      // Dispatch por origem: dali em diante o caminho é UM SÓ, seja o JSON
+      // vindo de arquivo estático ou de IndexedDB — mesma normalização abaixo,
+      // mesmo _cache. Nenhum pós-processamento condicional por origem.
+      const json = ver.source === 'idb'
+        ? await window.pluginStore.getSpells(ver.packId)
+        : await _fetchVersionJson(ver);
+      _rawCache[key] = json;
+      const adapted = adaptSpells(json, ver.lang, ver.edition);
+      _cache[key] = adapted;
+      return adapted;
+    } catch (e) {
+      console.warn('[spells-data-loader] Falha ao carregar', key, e);
+      // NÃO cacheia a falha: a próxima chamada (trocar de versão, reabrir)
+      // tenta de novo. Avisa o usuário em vez de mostrar "0 magias" em silêncio.
+      try {
+        window.dispatchEvent(new CustomEvent('hifi-toast', {
+          detail: { msg: window.tt ? window.tt(ver.lang, 'toast.loadFailed') : 'falha ao carregar as magias', kind: 'err' },
+        }));
+      } catch (e2) {}
+      return [];
+    }
   })();
 
   try {
