@@ -72,6 +72,11 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
         : await window.packImport.installFromUrl(url.trim());
       setResult(res);
       window.dispatchEvent(new CustomEvent('hifi-toast', { detail: { msg: tt(lang, 'import.success', { identifier: res.identifier }) } }));
+      // Reconstrói o registro de versões do loader e dispara hifi-plugins-changed
+      // — a entrada nova aparece no seletor sem recarregar a página (04-02).
+      // Sem await: não é preciso segurar o feedback de sucesso na chamada de
+      // storage, e refreshPluginVersions já absorve as próprias falhas.
+      if (typeof window.refreshPluginVersions === 'function') window.refreshPluginVersions();
     } catch (err) {
       const code = err && err.code;
       const msg = tt(lang, packErrKeyFor(code));

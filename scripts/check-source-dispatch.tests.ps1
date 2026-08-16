@@ -88,4 +88,79 @@ foreach ($forbidden in @('putPack', 'deletePack', 'exportPack')) {
   }
 }
 
+# ── Enumeração de packs do IndexedDB no boot (04-02 Task 1) ────────
+foreach ($needle in @(
+  'function _packToVersion(',
+  'async function refreshPluginVersions(',
+  'pluginStore.listPacks(',
+  'window.refreshPluginVersions'
+)) {
+  if (-not $loader.Contains($needle)) {
+    throw "Missing spells-data-loader.jsx plugin-enumeration detail: $needle"
+  }
+}
+
+$pluginsChangedCount = ([regex]::Matches($loader, 'hifi-plugins-changed')).Count
+if ($pluginsChangedCount -lt 2) {
+  throw "Expected at least 2 occurrences of hifi-plugins-changed (one dispatchEvent, one addEventListener), found $pluginsChangedCount."
+}
+if (-not ($loader.Contains("dispatchEvent(new CustomEvent('hifi-plugins-changed'"))) {
+  throw 'Missing hifi-plugins-changed dispatchEvent in spells-data-loader.jsx.'
+}
+if (-not ($loader.Contains("addEventListener('hifi-plugins-changed'"))) {
+  throw 'Missing hifi-plugins-changed addEventListener in spells-data-loader.jsx.'
+}
+
+# SPELL_VERSIONS ainda não pode ser reatribuído por refreshPluginVersions -
+# a checagem geral de reatribuição acima já cobre isto, mas reforçamos que a
+# mutação usa splice/push, não uma nova atribuição.
+if (-not $loader.Contains('SPELL_VERSIONS.splice(')) {
+  throw 'refreshPluginVersions() must mutate SPELL_VERSIONS in place via splice(), not reassign it.'
+}
+if (-not $loader.Contains('SPELL_VERSIONS.push(')) {
+  throw 'refreshPluginVersions() must append new idb entries via push().'
+}
+
+# ── Dono único da resolução de versão inicial (04-02 Task 2) ───────
+foreach ($needle in @(
+  '_wantedVersionKey',
+  'setCurrentVersion(_wantedVersionKey)'
+)) {
+  if (-not $loader.Contains($needle)) {
+    throw "Missing spells-data-loader.jsx single-owner resolution detail: $needle"
+  }
+}
+
+# ── index.html: leitura única da versão inicial (04-02 Task 2) ─────
+$indexPath = Join-Path $repoRoot 'index.html'
+$index = Get-Content -Raw -LiteralPath $indexPath
+
+if (-not $index.Contains('getCurrentSpellVersion')) {
+  throw 'index.html no longer reads window.getCurrentSpellVersion() to seed the initial version.'
+}
+if ($index.Contains('window.setCurrentSpellVersion(versionKey)')) {
+  throw 'index.html still contains the removed mount effect pushing versionKey back to the loader - this races with the 04-02 retry.'
+}
+
+# Compara os índices DENTRO da mesma expressão de estado inicial de idioma
+# (não a primeira ocorrência de "initial.lang" no arquivo inteiro, que aparece
+# antes disso na derivação de initialVersionKey).
+$langStateMatch = [regex]::Match($index, 'React\.useState\(\s*langOfVersionKey\(initialVersionKey\)\s*\|\|\s*initial\.lang')
+if (-not $langStateMatch.Success) {
+  throw 'index.html initial lang state must try langOfVersionKey(initialVersionKey) before initial.lang.'
+}
+
+# ── pack-import-dialog.jsx: avisa o loader depois de instalar (04-02 Task 3) ─
+$dialogPath = Join-Path $repoRoot 'pack-import-dialog.jsx'
+$dialog = Get-Content -Raw -LiteralPath $dialogPath
+
+if (-not $dialog.Contains('refreshPluginVersions')) {
+  throw 'pack-import-dialog.jsx does not call refreshPluginVersions() after a successful install.'
+}
+$idxSetResult = $dialog.IndexOf('setResult(res)')
+$idxRefresh = $dialog.IndexOf('refreshPluginVersions')
+if ($idxSetResult -lt 0 -or $idxRefresh -lt 0 -or -not ($idxSetResult -lt $idxRefresh)) {
+  throw 'pack-import-dialog.jsx must call refreshPluginVersions() after setResult(res), on the success path.'
+}
+
 Write-Output 'Source-dispatch registry and loadVersion() dispatch contract are present.'
