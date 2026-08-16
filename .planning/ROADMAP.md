@@ -123,7 +123,7 @@ Plans:
   2. The SRD pack and any packs already sitting in IndexedDB (installed via Phase 3's pipeline) both load at boot through the same dispatch path, with no separate per-source logic
   3. A previously-selected version preference that no longer resolves (e.g., points at a pack that's gone) still boots into a working version instead of a blank or broken state
 
-**Plans**: 1/4 plans executed
+**Plans**: 3/4 plans executed
 Plans:
 **Wave 1**
 
@@ -131,8 +131,8 @@ Plans:
 
 **Wave 2** *(bloqueada na Wave 1)*
 
-- [ ] 04-02-PLAN.md — enumeração dos packs de IndexedDB no boot (`refreshPluginVersions`, evento `hifi-plugins-changed`), dono único da resolução de versão inicial e derivação de idioma a partir da versão ativa (SRD-03)
-- [ ] 04-03-PLAN.md — packs SRD no `PRECACHE` do `sw.js`, comparador de edições casando por `edition`, e fixture de QA com payload hostil commitado (SRD-03)
+- [x] 04-02-PLAN.md — enumeração dos packs de IndexedDB no boot (`refreshPluginVersions`, evento `hifi-plugins-changed`), dono único da resolução de versão inicial e derivação de idioma a partir da versão ativa (SRD-03)
+- [x] 04-03-PLAN.md — packs SRD no `PRECACHE` do `sw.js`, comparador de edições casando por `edition`, e fixture de QA com payload hostil commitado (SRD-03)
 
 **Wave 3** *(bloqueada na Wave 2)*
 
@@ -198,6 +198,6 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 1. Animation Verification & Polish | Pre-milestone | ad hoc | Complete | 2026-07-17 |
 | 2. Plugin Storage Foundation | v2.0 | 2/2 | Complete    | 2026-07-18 |
 | 3. SRD Pack & Import Pipeline | v2.0 | 8/8 | Complete    | 2026-08-11 |
-| 4. Loader Integration (Source-Dispatch) | v2.0 | 1/4 | In Progress|  |
+| 4. Loader Integration (Source-Dispatch) | v2.0 | 3/4 | In Progress|  |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 0/TBD | Not started | - |
 | 6. Decommissioning & Migration | v2.0 | 0/TBD | Not started | - |
