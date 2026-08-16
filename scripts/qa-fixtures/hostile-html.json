@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "source": "qa-hostile-html",
+    "name": "QA Fixture - Hostile HTML Payload",
+    "version": "1.0.0",
+    "author": "Grimorio do Jogador QA",
+    "lang": "en",
+    "license": {
+      "id": "unspecified",
+      "attribution": "QA fixture only - not real game content, this attribution text exists solely to satisfy pack.schema.json."
+    }
+  },
+  "spells": [
+    {
+      "name": "qa-hostile-description",
+      "displayName": "QA - Hostile Description Payload",
+      "level": 3,
+      "school": "evocation",
+      "description": "<p>Benign paragraph before the payload.</p><img src=\"x\" onerror=\"alert(1)\"><script>alert(document.cookie)</script><p>Benign paragraph after the payload.</p>",
+      "upgradeDescription": "<p onclick=\"alert(1)\">At higher levels this field carries an inline event-handler attribute on an allowed element.</p>"
+    },
+    {
+      "name": "qa-benign-control",
+      "displayName": "QA - Benign Control",
+      "level": 1,
+      "school": "abjuration",
+      "description": "<p>This description block is entirely benign and serves as a control - if it renders the same and the hostile one renders clean, the difference is attributable to content, not to the render path.</p>"
+    }
+  ]
+}
