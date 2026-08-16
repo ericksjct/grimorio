@@ -73,9 +73,14 @@ if ($sw -notlike "*const CACHE_VERSION = 'grimorio-v1';*") {
   throw "sw.js CACHE_VERSION changed - acrescimo puro ao PRECACHE nao justifica bump e bumpar re-baixaria os JSONs de magias ja cacheados."
 }
 
-# 7. Pacotes SRD ainda fora do PRECACHE (escopo da Fase 4, SRD-03).
-if ($sw -like '*srd-2014-en.json*' -or $sw -like '*srd-2024-en.json*') {
-  throw 'sw.js must not precache srd-2014-en.json or srd-2024-en.json yet - isso e escopo da Fase 4 (SRD-03).'
+# 7. Pacotes SRD agora obrigatorios no PRECACHE (Fase 4, SRD-03).
+if ($sw -notlike '*srd-2014-en.json*' -or $sw -notlike '*srd-2024-en.json*') {
+  throw 'sw.js must precache srd-2014-en.json and srd-2024-en.json - a ausencia quebra o modo offline do pack embutido (SRD-03).'
+}
+
+# 8. Fixtures de QA nunca entram no app shell offline.
+if ($sw -like '*qa-fixtures*') {
+  throw 'sw.js must not reference qa-fixtures in PRECACHE - payload de teste nao entra no app shell offline de ninguem.'
 }
 
 Write-Output 'Import pipeline is wired, pinned and precached.'

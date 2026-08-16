@@ -36,6 +36,8 @@ const PRECACHE = [
   './spells-5E-2014-PTBR.json',
   './spells-5E-2024-EN.json',
   './spells-5E-2014-EN.json',
+  './srd-2024-en.json', // ponytail: CACHE_VERSION não muda — acréscimo puro, os JSONs de magias já cacheados não são re-baixados
+  './srd-2014-en.json',
   'https://unpkg.com/react@18.3.1/umd/react.production.min.js',
   'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js',
   'https://unpkg.com/@babel/standalone@7.29.0/babel.min.js',
