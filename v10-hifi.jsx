@@ -1014,7 +1014,14 @@ function useEditionCompare(sel, versionKey, versions, lang, showToast) {
   // Trocar de magia ou de versão desliga a comparação.
   React.useEffect(() => { setAlt(null); }, [sel, versionKey]);
   const cur = versions.find(v => v.key === versionKey) || null;
-  const other = cur ? (versions.find(v => v.lang === cur.lang && v.key !== cur.key) || null) : null;
+  // Casa pela edição declarada, não pela "primeira outra entrada do mesmo idioma" —
+  // com o registro crescendo (SRD + legado + packs instalados), essa heurística
+  // antiga passaria a oferecer um pack de terceiro como se fosse a outra edição.
+  // Sem `edition` na versão atual (pack de terceiro sem o campo), não há "a outra
+  // edição" honesta para oferecer.
+  const other = (cur && cur.edition)
+    ? (versions.find(v => v.lang === cur.lang && v.edition && v.edition !== cur.edition) || null)
+    : null;
   const toggle = React.useCallback(async () => {
     if (alt) { setAlt(null); return; }
     if (!sel || !other || loading) return;
