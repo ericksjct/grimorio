@@ -50,6 +50,84 @@ function _defaultVersion() {
 }
 
 // ──────────────────────────────────────────────────────────────────
+// ENUMERAÇÃO DE PACKS DO INDEXEDDB (plano 04-02)
+// ──────────────────────────────────────────────────────────────────
+// Converte um `meta` de pack (ver plugin-store.jsx) numa entrada de versão do
+// registro. Os recortes de tamanho são mitigação de T-04-02: meta.name/
+// meta.edition vêm de arquivo de terceiro e viram texto de UI sem passo de
+// import intermediário — React escapa o texto, então o recorte é a única
+// mitigação necessária em L1.
+function _packToVersion(meta) {
+  const source = String(meta.source);
+  const name = String(meta.name || meta.source);
+  return {
+    key: 'plugin-' + source,
+    source: 'idb',
+    packId: source,
+    lang: meta.lang === 'ptbr' ? 'ptbr' : 'en',
+    edition: String(meta.edition || '').slice(0, 24),
+    labelPt: name.slice(0, 48),
+    labelEn: name.slice(0, 48),
+    short: name.slice(0, 14),
+  };
+}
+
+// Único ponto do app que sincroniza o registro de versões com o IndexedDB.
+// Estritamente de leitura (proibição P-02 em must_haves.prohibitions): nunca
+// chama nenhuma operação de escrita do pluginStore. Best-effort — uma falha de
+// enumeração (aba bloqueada, aba privada, quota, promise rejeitada) nunca pode
+// derrubar o boot; degrada para lista vazia com console.warn e sem toast (um
+// usuário sem nenhum pack instalado não deve ver mensagem de erro por isso).
+async function refreshPluginVersions() {
+  if (!window.pluginStore || typeof window.pluginStore.listPacks !== 'function') {
+    return [];
+  }
+
+  let metas;
+  try {
+    metas = await window.pluginStore.listPacks();
+  } catch (e) {
+    console.warn('[spells-data-loader] Falha ao enumerar packs do IndexedDB:', e);
+    return [];
+  }
+
+  // Registros corrompidos (sem source string não-vazia) são descartados em vez
+  // de virarem entrada quebrada no seletor.
+  const entries = (metas || [])
+    .filter(m => m && typeof m.source === 'string' && m.source !== '')
+    .map(_packToVersion);
+  const newKeys = new Set(entries.map(e => e.key));
+
+  // Mutação IN PLACE do registro vivo (regra dura, ver comentário de
+  // SPELL_VERSIONS acima): remove de trás pra frente todas as entradas idb
+  // antigas, depois acrescenta as novas com push. As entradas builtin nunca
+  // são tocadas. Nunca reatribuir o array.
+  const oldIdbKeys = [];
+  for (let i = SPELL_VERSIONS.length - 1; i >= 0; i--) {
+    if (SPELL_VERSIONS[i].source === 'idb') {
+      oldIdbKeys.push(SPELL_VERSIONS[i].key);
+      SPELL_VERSIONS.splice(i, 1);
+    }
+  }
+  entries.forEach(e => SPELL_VERSIONS.push(e));
+
+  // Invalida o cache das chaves plugin-* que não estão mais na lista nova —
+  // senão as magias de um pack removido continuariam servidas de memória.
+  oldIdbKeys.forEach(key => {
+    if (!newKeys.has(key)) {
+      delete _cache[key];
+      delete _rawCache[key];
+    }
+  });
+
+  // Evento novo da fase, espelhando a convenção já usada por
+  // hifi-spells-source-changed e hifi-chars-changed.
+  window.dispatchEvent(new CustomEvent('hifi-plugins-changed', { detail: entries.length }));
+
+  return entries;
+}
+
+// ──────────────────────────────────────────────────────────────────
 // MAPEAMENTOS
 // ──────────────────────────────────────────────────────────────────
 const SCHOOL_INDEX = {
@@ -352,6 +430,16 @@ function useSpellVersions() {
     return () => window.removeEventListener('hifi-spells-source-changed', onChange);
   }, []);
 
+  // SPELL_VERSIONS é mutado in place (push/splice) por refreshPluginVersions()
+  // — mutar não provoca re-render por si só, então mantemos uma cópia rasa em
+  // estado React e a renovamos quando o evento de sincronização dispara.
+  const [versions, setVersions] = React.useState(() => SPELL_VERSIONS.slice());
+  React.useEffect(() => {
+    const onPluginsChanged = () => setVersions(SPELL_VERSIONS.slice());
+    window.addEventListener('hifi-plugins-changed', onPluginsChanged);
+    return () => window.removeEventListener('hifi-plugins-changed', onPluginsChanged);
+  }, []);
+
   const switchVersion = React.useCallback((key) => {
     setCurrentVersion(key);
     // Atualiza imediatamente se já está em cache
@@ -359,7 +447,7 @@ function useSpellVersions() {
   }, []);
 
   return {
-    versions: SPELL_VERSIONS,
+    versions,
     current,
     spells,
     loaded,
@@ -504,12 +592,21 @@ window.useSpellVersions = useSpellVersions;
 window.VersionSelector = VersionSelector;
 window.adaptSpell = adaptSpell;
 window.adaptSpells = adaptSpells;
+window.refreshPluginVersions = refreshPluginVersions;
 
-// Pre-carrega a versão default assim que o DOM estiver pronto
+// Pre-carrega a versão default assim que o DOM estiver pronto. A enumeração de
+// packs do IndexedDB roda em paralelo, fire-and-forget: sem await e sem
+// encadear o pré-carregamento nela, porque o primeiro paint não pode depender
+// de IndexedDB. O .catch() evita rejeição não tratada (a própria função já
+// degrada para lista vazia internamente; isto é só uma rede de segurança).
 if (typeof document !== 'undefined') {
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => loadVersion(_currentVersion));
+    document.addEventListener('DOMContentLoaded', () => {
+      loadVersion(_currentVersion);
+      refreshPluginVersions().catch(e => console.warn('[spells-data-loader] refreshPluginVersions falhou no boot:', e));
+    });
   } else {
     loadVersion(_currentVersion);
+    refreshPluginVersions().catch(e => console.warn('[spells-data-loader] refreshPluginVersions falhou no boot:', e));
   }
 }

@@ -88,4 +88,37 @@ foreach ($forbidden in @('putPack', 'deletePack', 'exportPack')) {
   }
 }
 
+# ── Enumeração de packs do IndexedDB no boot (04-02 Task 1) ────────
+foreach ($needle in @(
+  'function _packToVersion(',
+  'async function refreshPluginVersions(',
+  'pluginStore.listPacks(',
+  'window.refreshPluginVersions'
+)) {
+  if (-not $loader.Contains($needle)) {
+    throw "Missing spells-data-loader.jsx plugin-enumeration detail: $needle"
+  }
+}
+
+$pluginsChangedCount = ([regex]::Matches($loader, 'hifi-plugins-changed')).Count
+if ($pluginsChangedCount -lt 2) {
+  throw "Expected at least 2 occurrences of hifi-plugins-changed (one dispatchEvent, one addEventListener), found $pluginsChangedCount."
+}
+if (-not ($loader.Contains("dispatchEvent(new CustomEvent('hifi-plugins-changed'"))) {
+  throw 'Missing hifi-plugins-changed dispatchEvent in spells-data-loader.jsx.'
+}
+if (-not ($loader.Contains("addEventListener('hifi-plugins-changed'"))) {
+  throw 'Missing hifi-plugins-changed addEventListener in spells-data-loader.jsx.'
+}
+
+# SPELL_VERSIONS ainda não pode ser reatribuído por refreshPluginVersions -
+# a checagem geral de reatribuição acima já cobre isto, mas reforçamos que a
+# mutação usa splice/push, não uma nova atribuição.
+if (-not $loader.Contains('SPELL_VERSIONS.splice(')) {
+  throw 'refreshPluginVersions() must mutate SPELL_VERSIONS in place via splice(), not reassign it.'
+}
+if (-not $loader.Contains('SPELL_VERSIONS.push(')) {
+  throw 'refreshPluginVersions() must append new idb entries via push().'
+}
+
 Write-Output 'Source-dispatch registry and loadVersion() dispatch contract are present.'
