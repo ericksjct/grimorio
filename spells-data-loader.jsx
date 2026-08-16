@@ -124,6 +124,14 @@ async function refreshPluginVersions() {
   // hifi-spells-source-changed e hifi-chars-changed.
   window.dispatchEvent(new CustomEvent('hifi-plugins-changed', { detail: entries.length }));
 
+  // Preferência pendente: se a chave desejada crua agora resolve e é diferente
+  // da versão corrente, honra sem esperar recarga. Se não resolver, nada de
+  // troca silenciosa (proibição P-01) — o seletor tem de continuar mostrando
+  // a versão realmente em uso.
+  if (_wantedVersionKey && _wantedVersionKey !== _currentVersion && _versionByKey(_wantedVersionKey)) {
+    setCurrentVersion(_wantedVersionKey);
+  }
+
   return entries;
 }
 
@@ -282,12 +290,18 @@ const _rawCache = {};  // key → raw JSON
 // na primeira visita, a versão que casa com o idioma do navegador. Assim o app
 // já PRÉ-CARREGA a língua certa — sem flash de PT-BR pra quem é EN, sem fetch
 // desperdiçado. O index.html (App) deriva o mesmo, então não há troca dupla.
+// Chave desejada crua (?v= ou preferência salva), registrada mesmo quando não
+// resolve ainda — é o que refreshPluginVersions() usa pra honrar, via retry,
+// uma preferência que aponta pra um pack de IndexedDB ainda não enumerado.
+let _wantedVersionKey = null;
+
 function _initialVersionKey() {
   try {
     // ?v= de link compartilhado vence a preferência salva (o App faz o mesmo).
     const urlV = new URL(window.location.href).searchParams.get('v');
-    if (urlV && _versionByKey(urlV)) return urlV;
     const prefs = JSON.parse(localStorage.getItem('spellbook-ui-prefs') || '{}');
+    _wantedVersionKey = urlV || prefs.versionKey || null;
+    if (urlV && _versionByKey(urlV)) return urlV;
     if (prefs.versionKey && _versionByKey(prefs.versionKey)) {
       return prefs.versionKey;
     }

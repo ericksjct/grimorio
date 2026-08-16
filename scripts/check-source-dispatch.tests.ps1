@@ -121,4 +121,33 @@ if (-not $loader.Contains('SPELL_VERSIONS.push(')) {
   throw 'refreshPluginVersions() must append new idb entries via push().'
 }
 
+# ── Dono único da resolução de versão inicial (04-02 Task 2) ───────
+foreach ($needle in @(
+  '_wantedVersionKey',
+  'setCurrentVersion(_wantedVersionKey)'
+)) {
+  if (-not $loader.Contains($needle)) {
+    throw "Missing spells-data-loader.jsx single-owner resolution detail: $needle"
+  }
+}
+
+# ── index.html: leitura única da versão inicial (04-02 Task 2) ─────
+$indexPath = Join-Path $repoRoot 'index.html'
+$index = Get-Content -Raw -LiteralPath $indexPath
+
+if (-not $index.Contains('getCurrentSpellVersion')) {
+  throw 'index.html no longer reads window.getCurrentSpellVersion() to seed the initial version.'
+}
+if ($index.Contains('window.setCurrentSpellVersion(versionKey)')) {
+  throw 'index.html still contains the removed mount effect pushing versionKey back to the loader - this races with the 04-02 retry.'
+}
+
+# Compara os índices DENTRO da mesma expressão de estado inicial de idioma
+# (não a primeira ocorrência de "initial.lang" no arquivo inteiro, que aparece
+# antes disso na derivação de initialVersionKey).
+$langStateMatch = [regex]::Match($index, 'React\.useState\(\s*langOfVersionKey\(initialVersionKey\)\s*\|\|\s*initial\.lang')
+if (-not $langStateMatch.Success) {
+  throw 'index.html initial lang state must try langOfVersionKey(initialVersionKey) before initial.lang.'
+}
+
 Write-Output 'Source-dispatch registry and loadVersion() dispatch contract are present.'

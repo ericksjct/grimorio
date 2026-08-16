@@ -394,19 +394,23 @@ function App() {
   const [charName, setCharName] = React.useState(initial.characterName || null);
   // Versão de magias ativa (PT/EN × 2014/2024). É a fonte única de verdade do
   // idioma: ?v= na URL (link compartilhado) → salva → idioma do navegador.
-  // O loader deriva o MESMO, então não há troca dupla nem flash no boot.
-  const urlVersionKey = (() => {
-    try {
-      const v = new URL(window.location.href).searchParams.get('v');
-      return (window.SPELL_VERSIONS || []).some(x => x.key === v) ? v : null;
-    } catch (e) { return null; }
-  })();
-  const initialVersionKey = urlVersionKey || initial.versionKey || defaultVersionKeyForLang(initial.lang || detectLang());
+  // O loader é o DONO ÚNICO dessa resolução (spells-data-loader.jsx,
+  // _initialVersionKey) — lemos aqui a chave que ele já resolveu em vez de
+  // re-derivar (evita duas resoluções discordando quando a lista de versões
+  // cresce de forma assíncrona). Cadeia antiga mantida só como degrau de
+  // segurança, para o caso de o loader não ter carregado.
+  const initialVersionKey =
+    (typeof window.getCurrentSpellVersion === 'function' && window.getCurrentSpellVersion()?.key)
+    || initial.versionKey
+    || defaultVersionKeyForLang(initial.lang || detectLang());
   const [versionKey, setVersionKey] = React.useState(initialVersionKey);
-  // Idioma do chrome — segue a versão (acoplado): usa lang salvo, senão o da
-  // versão inicial, senão detecta. Mantido em sincronia pelo effect abaixo.
+  // Idioma do chrome — segue a versão ativa (acoplado, decisão do projeto):
+  // a versão resolvida é a fonte única de verdade do idioma, não uma
+  // preferência de idioma salva que pode discordar dela. `initial.lang` é
+  // só o segundo degrau, pra quando a chave não mapeia nenhuma versão
+  // conhecida. Mantido em sincronia pelo effect abaixo.
   const [lang, setLang] = React.useState(
-    initial.lang || langOfVersionKey(initialVersionKey) || detectLang()
+    langOfVersionKey(initialVersionKey) || initial.lang || detectLang()
   );
   const [showOnboarding, setShowOnboarding] = React.useState(() => !hasSeenOnboarding());
   const [onboardingEditorOpen, setOnboardingEditorOpen] = React.useState(false);
@@ -420,14 +424,6 @@ function App() {
   const isMobile = Math.min(w, h) < 768;
 
   const character = chars.find(c => c.name === charName) || chars[0];
-
-  // Restaura a versão de magias salva (ou o default do idioma detectado) no
-  // loader, uma vez, no mount. Dispara o evento que o useSpellVersions escuta.
-  React.useEffect(() => {
-    if (versionKey && typeof window.setCurrentSpellVersion === 'function') {
-      window.setCurrentSpellVersion(versionKey);
-    }
-  }, []);
 
   // Link de build (?build=) abre em QUALQUER visita — não só no onboarding.
   // Importa direto (abrir o link é a intenção), ativa o personagem, tira o
