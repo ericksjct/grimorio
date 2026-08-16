@@ -150,4 +150,17 @@ if (-not $langStateMatch.Success) {
   throw 'index.html initial lang state must try langOfVersionKey(initialVersionKey) before initial.lang.'
 }
 
+# ── pack-import-dialog.jsx: avisa o loader depois de instalar (04-02 Task 3) ─
+$dialogPath = Join-Path $repoRoot 'pack-import-dialog.jsx'
+$dialog = Get-Content -Raw -LiteralPath $dialogPath
+
+if (-not $dialog.Contains('refreshPluginVersions')) {
+  throw 'pack-import-dialog.jsx does not call refreshPluginVersions() after a successful install.'
+}
+$idxSetResult = $dialog.IndexOf('setResult(res)')
+$idxRefresh = $dialog.IndexOf('refreshPluginVersions')
+if ($idxSetResult -lt 0 -or $idxRefresh -lt 0 -or -not ($idxSetResult -lt $idxRefresh)) {
+  throw 'pack-import-dialog.jsx must call refreshPluginVersions() after setResult(res), on the success path.'
+}
+
 Write-Output 'Source-dispatch registry and loadVersion() dispatch contract are present.'
