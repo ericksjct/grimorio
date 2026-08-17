@@ -49,11 +49,22 @@ if ($index -notlike '*src="plugin-store.jsx"*') {
   throw 'index.html is missing the plugin-store.jsx script tag.'
 }
 
-$loaderIdx = $index.IndexOf('spells-data-loader.jsx')
-$storeIdx = $index.IndexOf('plugin-store.jsx')
-$editorIdx = $index.IndexOf('v11-character-editor.jsx')
-if (-not ($loaderIdx -lt $storeIdx -and $storeIdx -lt $editorIdx)) {
-  throw 'plugin-store.jsx script tag is not positioned between spells-data-loader.jsx and v11-character-editor.jsx.'
+# Ancorado em src="..." de proposito: os comentarios de ordem no index.html
+# citam estes nomes de arquivo, entao um IndexOf do nome solto casaria o
+# comentario em vez da tag.
+# A metade "loader antes da store" desta assercao (02-01) ficou obsoleta em
+# 04-05: o loader chama refreshPluginVersions() no boot e enumera nada, em
+# silencio, quando window.pluginStore ainda nao existe. A store precisa vir
+# ANTES do loader. O que a assercao sempre quis garantir de fato -- store antes
+# de quem a consulta -- continua valendo, agora para o loader tambem.
+$loaderIdx = $index.IndexOf('src="spells-data-loader.jsx"')
+$storeIdx = $index.IndexOf('src="plugin-store.jsx"')
+$editorIdx = $index.IndexOf('src="v11-character-editor.jsx"')
+if ($loaderIdx -lt 0 -or $storeIdx -lt 0 -or $editorIdx -lt 0) {
+  throw 'index.html is missing one of the plugin-store / spells-data-loader / v11-character-editor script tags.'
+}
+if (-not ($storeIdx -lt $loaderIdx -and $loaderIdx -lt $editorIdx)) {
+  throw 'plugin-store.jsx script tag must load BEFORE spells-data-loader.jsx (which queries window.pluginStore during boot), and both before v11-character-editor.jsx.'
 }
 
 if ($sw -notlike "*'./plugin-store.jsx'*") {

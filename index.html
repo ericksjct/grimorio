@@ -112,13 +112,19 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
      real JSON data; the plugin store (see below) exposes window.pluginStore and
      must exist before any component that queries it; the editor + hi-fi shell
      consume both. -->
-<!-- pack-import.jsx needs window.pluginStore and the DOMPurify script above, so
+<!-- plugin-store.jsx loads BEFORE spells-data-loader.jsx: the loader calls
+     refreshPluginVersions() during boot, and that call enumerates nothing (and
+     warns nothing) when window.pluginStore is still undefined. Babel standalone
+     executes text/babel scripts in document order at DOMContentLoaded, so the
+     loader's boot branch runs before any later script -- an installed pack would
+     silently vanish from the selector on reload.
+     pack-import.jsx needs window.pluginStore and the DOMPurify script above, so
      it loads right after the plugin store script; pack-import-dialog.jsx uses
      window.useDialogA11y from the v11 editor, so it loads right after it. -->
 <script type="text/babel" src="grimorio-helpers.jsx"></script>
 <script type="text/babel" src="i18n.jsx"></script>
-<script type="text/babel" src="spells-data-loader.jsx"></script>
 <script type="text/babel" src="plugin-store.jsx"></script>
+<script type="text/babel" src="spells-data-loader.jsx"></script>
 <script type="text/babel" src="pack-import.jsx"></script>
 <script type="text/babel" src="v11-character-editor.jsx"></script>
 <script type="text/babel" src="pack-import-dialog.jsx"></script>

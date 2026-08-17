@@ -150,6 +150,21 @@ if (-not $langStateMatch.Success) {
   throw 'index.html initial lang state must try langOfVersionKey(initialVersionKey) before initial.lang.'
 }
 
+# ── Ordem de carga: plugin-store antes do loader (04-05, regressao do passo 12) ─
+# spells-data-loader.jsx chama refreshPluginVersions() no boot, que retorna []
+# em silencio se window.pluginStore ainda nao existe. Como o Babel standalone
+# executa os scripts text/babel em ordem de documento no DOMContentLoaded, o
+# loader cai no ramo else e roda ANTES do proximo script. Se plugin-store.jsx
+# vier depois do loader, nenhum pack instalado aparece apos recarregar.
+$idxPluginStoreTag = $index.IndexOf('src="plugin-store.jsx"')
+$idxLoaderTag = $index.IndexOf('src="spells-data-loader.jsx"')
+if ($idxPluginStoreTag -lt 0 -or $idxLoaderTag -lt 0) {
+  throw 'index.html must load both plugin-store.jsx and spells-data-loader.jsx.'
+}
+if (-not ($idxPluginStoreTag -lt $idxLoaderTag)) {
+  throw 'index.html must load plugin-store.jsx BEFORE spells-data-loader.jsx - the loader calls refreshPluginVersions() at boot and silently enumerates nothing when window.pluginStore does not exist yet.'
+}
+
 # ── pack-import-dialog.jsx: avisa o loader depois de instalar (04-02 Task 3) ─
 $dialogPath = Join-Path $repoRoot 'pack-import-dialog.jsx'
 $dialog = Get-Content -Raw -LiteralPath $dialogPath
