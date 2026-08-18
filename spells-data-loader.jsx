@@ -133,7 +133,6 @@ async function _refreshPluginVersionsInner() {
   oldIdbKeys.forEach(key => {
     if (!newKeys.has(key)) {
       delete _cache[key];
-      delete _rawCache[key];
     }
   });
 
@@ -349,7 +348,6 @@ function adaptSpells(json, versionLang, edition) {
 // CACHE + ESTADO
 // ──────────────────────────────────────────────────────────────────
 const _cache = {};     // key → adapted spells[]
-const _rawCache = {};  // key → raw JSON
 
 // Versão inicial = preferência salva (idioma escolhido na última visita) ou,
 // na primeira visita, a versão que casa com o idioma do navegador. Assim o app
@@ -378,7 +376,6 @@ function _initialVersionKey() {
   return _defaultVersion().key;
 }
 let _currentVersion = _initialVersionKey();
-let _loadingPromise = null;
 
 function getCurrentVersion() {
   return _versionByKey(_currentVersion) || _defaultVersion();
@@ -447,7 +444,6 @@ async function loadVersion(key) {
       // este guard, a escrita abaixo resuscitaria no _cache uma entrada que a
       // invalidação de refreshPluginVersions() acabou de limpar.
       if (_versionByKey(key)) {
-        _rawCache[key] = json;
         _cache[key] = adapted;
       }
       return adapted;
@@ -469,14 +465,6 @@ async function loadVersion(key) {
   } finally {
     delete _pending[key];
   }
-}
-
-// Mantido pra quem quiser aquecer o cache das 4 versões (ex.: service worker /
-// comparador). O boot NÃO chama mais isso — só a versão ativa é baixada.
-async function loadAllVersions() {
-  if (_loadingPromise) return _loadingPromise;
-  _loadingPromise = Promise.all(SPELL_VERSIONS.map(v => loadVersion(v.key)));
-  return _loadingPromise;
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -673,18 +661,13 @@ function VersionSelector({ current, versions, onChange, lang = 'ptbr', dark = fa
 // ──────────────────────────────────────────────────────────────────
 // OVERRIDE: substitui v7BuildSpells global
 // ──────────────────────────────────────────────────────────────────
-// Guarda a original (mock) como fallback
-const _originalV7BuildSpells = window.v7BuildSpells;
-
 window.v7BuildSpells = buildSpellsFromRealData;
 window.SPELL_VERSIONS = SPELL_VERSIONS;
 // Mapas de classe en↔pt — usados pra remapear o filtro de classe ao trocar de idioma.
 window.CLASS_PT = CLASS_PT; // en → pt  (bard → bardo)
 window.CLASS_EN = CLASS_EN; // pt → en  (bardo → bard)
 window.getCurrentSpellVersion = getCurrentVersion;
-window.setCurrentSpellVersion = setCurrentVersion;
 window.loadSpellVersion = loadVersion;
-window.loadAllSpellVersions = loadAllVersions;
 window.useSpellVersions = useSpellVersions;
 window.VersionSelector = VersionSelector;
 window.adaptSpell = adaptSpell;
