@@ -40,6 +40,16 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
   const fileInputRef = React.useRef(null);
   window.useDialogA11y?.(dialogRef, open, onClose);
 
+  // WR-08: PackImportRoot nunca desmonta o diálogo (`open` só faz esta
+  // função devolver null), então result/file/url/error sobreviviam a um
+  // close/reopen. Reabrir depois de um import bem-sucedido caía direto na
+  // tela de sucesso anterior, e `file` continuava setado com hasValue=true —
+  // clicar em enviar de novo reinstalava o mesmo arquivo como pack duplicado.
+  React.useEffect(() => {
+    if (!open) return;
+    setResult(null); setError(''); setFile(null); setUrl(''); setMode('file');
+  }, [open]);
+
   if (!open) return null;
 
   const themeClass = `hifi ${dark ? 'hifi-dark' : 'hifi-light'}${theme && theme !== 'catppuccin' ? ' hifi-theme-' + theme : ''}`;
