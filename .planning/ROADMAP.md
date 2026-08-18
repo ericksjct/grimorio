@@ -19,7 +19,7 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
 - [x] **Phase 1: Animation Verification & Polish** - Confirm the already-implemented menu/filter/panel animations work correctly everywhere they were built for
 - [x] **Phase 2: Plugin Storage Foundation** - IndexedDB persistence layer for spell packs, with persistent-storage request and export/backup (completed 2026-07-18)
 - [x] **Phase 3: SRD Pack & Import Pipeline** - Users install a validated, sanitized pack from file or URL; SRD content exists as a real pack (completed 2026-08-11)
-- [ ] **Phase 4: Loader Integration (Source-Dispatch)** - The loader natively reads SRD + any installed packs through one dispatch point, no hardcoded 4-dataset list
+- [x] **Phase 4: Loader Integration (Source-Dispatch)** - The loader natively reads SRD + any installed packs through one dispatch point, no hardcoded 4-dataset list (completed 2026-08-17)
 - [ ] **Phase 5: Plugin Manager UI & Version Selector** - Install/list/remove UI, dynamic version selector, duplicate-spell notes, empty state, CC-BY attribution
 - [ ] **Phase 6: Decommissioning & Migration** - Remove the 4 protected JSONs from site/repo; migrate existing users without silently dropping references
 
@@ -198,6 +198,6 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 1. Animation Verification & Polish | Pre-milestone | ad hoc | Complete | 2026-07-17 |
 | 2. Plugin Storage Foundation | v2.0 | 2/2 | Complete    | 2026-07-18 |
 | 3. SRD Pack & Import Pipeline | v2.0 | 8/8 | Complete    | 2026-08-11 |
-| 4. Loader Integration (Source-Dispatch) | v2.0 | 4/4 | In Progress|  |
+| 4. Loader Integration (Source-Dispatch) | v2.0 | 4/4 | Complete    | 2026-08-17 |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 0/TBD | Not started | - |
 | 6. Decommissioning & Migration | v2.0 | 0/TBD | Not started | - |

@@ -32,7 +32,7 @@
 
 - [x] **SRD-01**: Dois pacotes SRD EN embutidos, um por edição (5.1/2014 e 5.2/2024), com conteúdo vindo de fonte com licença verificada e registrada — nunca dos arquivos `spells-5E-*.json` atuais; cada pacote carrega em `meta.license` o texto de atribuição verbatim da sua edição mais a nota de modificação
 - [ ] **SRD-02**: Atribuição CC-BY visível no app, com o texto verbatim exato da versão de SRD usada (5.1 e 5.2 têm textos distintos; modificações ao texto-fonte anotadas)
-- [ ] **SRD-03**: Pacote SRD vem pré-instalado — primeira abertura nunca é vazia
+- [x] **SRD-03**: Pacote SRD vem pré-instalado — primeira abertura nunca é vazia
 
 *SRD-01 reescrito em 2026-07 pela decisão D-05 da Fase 3 — ver `.planning/phases/03-srd-pack-import-pipeline/03-CONTEXT.md`.*
 
@@ -76,7 +76,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PKG-04 | Phase 3 | Complete |
 | PKG-05 | Phase 3 | Complete |
 | SRD-01 | Phase 3 | Complete |
-| SRD-03 | Phase 4 | Pending |
+| SRD-03 | Phase 4 | Complete |
 | MGMT-01 | Phase 5 | Pending |
 | MGMT-02 | Phase 5 | Pending |
 | MGMT-03 | Phase 5 | Pending |
