@@ -16,16 +16,29 @@
 // Mapa fixo código→chave i18n. Os cinco valores são o contrato de
 // window.packImport.PACK_ERROR_CODES (strings literais, não o objeto em si —
 // não depende da ordem de carga dos scripts).
-const PACK_ERR_KEY_BY_CODE = {
+// WR-09: sem prototipo — code vem de um erro lancado por qualquer caminho de
+// storage (putPack/_assertPackShape/openDB/IndexedDB), nao so pelos 5 codes
+// pre-storage de window.packImport. Um objeto literal indexado por
+// 'constructor' devolveria a funcao Object herdada (truthy), passando pelo
+// fallback `|| 'packErr.unknown'` e virando filho React invalido em tt().
+const PACK_ERR_KEY_BY_CODE = Object.assign(Object.create(null), {
   'malformed-json': 'packErr.malformedJson',
   'blocked-key': 'packErr.blockedKey',
   'too-large': 'packErr.tooLarge',
   'schema-invalid': 'packErr.schemaInvalid',
   'fetch-failed': 'packErr.fetchFailed',
-};
+});
 
-function packErrKeyFor(code) {
-  return PACK_ERR_KEY_BY_CODE[code] || 'packErr.unknown';
+function packErrKeyFor(err) {
+  const code = err && err.code;
+  if (typeof code === 'string' && PACK_ERR_KEY_BY_CODE[code]) return PACK_ERR_KEY_BY_CODE[code];
+  // WR-09: tudo depois da validacao (putPack's _assertPackShape, openDB's
+  // onblocked, DOMException de verdade) nao tem `.code` nesse conjunto e
+  // colapsava pra packErr.unknown - inclusive a falha mais provavel de
+  // acontecer de verdade num pack de 10 MB: estourar a quota (DOMException
+  // legado usa `.code` NUMERICO 22, nao string).
+  if (err && (err.name === 'QuotaExceededError' || code === 22)) return 'packErr.quota';
+  return 'packErr.unknown';
 }
 
 function PackImportDialog({ lang, dark, theme, open, onClose }) {
@@ -89,7 +102,7 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
       if (typeof window.refreshPluginVersions === 'function') window.refreshPluginVersions();
     } catch (err) {
       const code = err && err.code;
-      const msg = tt(lang, packErrKeyFor(code));
+      const msg = tt(lang, packErrKeyFor(err));
       setError(msg);
       if (code === 'fetch-failed') {
         window.dispatchEvent(new CustomEvent('hifi-toast', { detail: { msg, kind: 'err' } }));

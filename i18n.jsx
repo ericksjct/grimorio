@@ -176,10 +176,12 @@ const STRINGS = {
     'import.title': 'Instalar pacote',
     'import.urlLabel': 'url do pacote',
     'import.urlPlaceholder': 'https://raw.githubusercontent.com/…/meu-pacote.json',
-    // Rejeições do pipeline de import (PKG-04) — uma chave por window.packImport.PACK_ERROR_CODES
+    // Rejeições do pipeline de import (PKG-04) — uma chave por window.packImport.PACK_ERROR_CODES,
+    // mais packErr.quota (WR-09): falha de armazenamento pós-validação, não faz parte do enum.
     'packErr.blockedKey': 'Pacote contém uma chave não permitida e foi rejeitado por segurança.',
     'packErr.fetchFailed': 'Não foi possível buscar essa URL (bloqueio de CORS) — baixe o arquivo e importe por upload.',
     'packErr.malformedJson': 'Arquivo não é um JSON válido — verifique a sintaxe e tente de novo.',
+    'packErr.quota': 'Sem espaço de armazenamento — libere espaço no navegador e tente de novo.',
     'packErr.schemaInvalid': 'Pacote não corresponde ao schema — confira pack.schema.json.',
     'packErr.tooLarge': 'Arquivo maior que 10 MB — reduza o pacote.',
     'packErr.unknown': 'Não foi possível instalar o pacote.',
@@ -346,10 +348,12 @@ const STRINGS = {
     'import.title': 'Install pack',
     'import.urlLabel': 'pack url',
     'import.urlPlaceholder': 'https://raw.githubusercontent.com/…/meu-pacote.json',
-    // Import pipeline rejections (PKG-04) — one key per window.packImport.PACK_ERROR_CODES
+    // Import pipeline rejections (PKG-04) — one key per window.packImport.PACK_ERROR_CODES,
+    // plus packErr.quota (WR-09): a post-validation storage failure, not part of the enum.
     'packErr.blockedKey': 'Pack contains a disallowed key and was rejected for security.',
     'packErr.fetchFailed': 'Could not fetch that URL (CORS block) — download the file and import it by upload.',
     'packErr.malformedJson': 'File is not valid JSON — check the syntax and try again.',
+    'packErr.quota': 'Out of storage space — free up space in your browser and try again.',
     'packErr.schemaInvalid': 'Pack does not match the schema — check pack.schema.json.',
     'packErr.tooLarge': 'File larger than 10 MB — reduce the pack.',
     'packErr.unknown': 'Could not install the pack.',
