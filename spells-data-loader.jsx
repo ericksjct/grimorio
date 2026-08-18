@@ -651,6 +651,9 @@ window.VersionSelector = VersionSelector;
 window.adaptSpell = adaptSpell;
 window.adaptSpells = adaptSpells;
 window.refreshPluginVersions = refreshPluginVersions;
+// WR-01: index.html usa isto pra não sobrescrever prefs.versionKey com o
+// builtin de boot enquanto uma preferência plugin-* ainda não resolveu.
+window.hasPendingSpellVersion = () => !!_wantedVersionKey;
 
 // Pre-carrega a versão default assim que o DOM estiver pronto. A enumeração de
 // packs do IndexedDB roda em paralelo, fire-and-forget: sem await e sem

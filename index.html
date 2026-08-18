@@ -470,8 +470,14 @@ function App() {
   }, []);
 
   // Persist prefs whenever they change (tema, modo, personagem, idioma, versão).
+  // WR-01: enquanto o loader ainda deve uma tentativa de resolver uma
+  // preferência plugin-* (pack ainda não enumerado), não grava por cima —
+  // senão prefs.versionKey vira o builtin de boot antes do retry, e se
+  // refreshPluginVersions() falhar (onblocked, quota, etc.) a preferência
+  // some de vez do localStorage.
   React.useEffect(() => {
-    savePrefs({ dark, theme, characterName: character ? character.name : null, lang, versionKey });
+    if (window.hasPendingSpellVersion?.()) return;
+    savePrefs({ ...loadPrefs(), dark, theme, characterName: character ? character.name : null, lang, versionKey });
   }, [dark, theme, character, lang, versionKey]);
 
   // Paint the page background with the active theme so there's no flash of
