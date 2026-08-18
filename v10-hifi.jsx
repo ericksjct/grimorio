@@ -1036,8 +1036,11 @@ function useEditionCompare(sel, versionKey, versions, lang, showToast) {
   // antiga passaria a oferecer um pack de terceiro como se fosse a outra edição.
   // Sem `edition` na versão atual (pack de terceiro sem o campo), não há "a outra
   // edição" honesta para oferecer.
-  const other = (cur && cur.edition)
-    ? (versions.find(v => v.lang === cur.lang && v.edition && v.edition !== cur.edition) || null)
+  // WR-07: SRD fica nos índices 0-1 do registro, então `find` sozinho oferecia
+  // SRD 5.1 pra quem comparava PHB 2024. Prefere o mesmo `corpus` primeiro.
+  const sameCorpus = v => v.lang === cur.lang && v.edition && v.edition !== cur.edition && v.corpus === cur.corpus;
+  const other = cur && cur.edition
+    ? (versions.find(sameCorpus) || versions.find(v => v.lang === cur.lang && v.edition && v.edition !== cur.edition) || null)
     : null;
   const toggle = React.useCallback(async () => {
     if (alt) { setAlt(null); return; }

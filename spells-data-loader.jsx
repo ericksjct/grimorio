@@ -24,13 +24,17 @@
 // visita para navegador em inglês. Os rótulos SRD nomeiam a edição do SRD
 // (5.1/5.2), não a edição do PHB — isso evita que o usuário leia 319/339
 // magias do SRD como se fosse o PHB completo de 474 (P-03).
+// `corpus` (WR-07): agrupa entradas que são "a mesma obra, outra edição" —
+// usado só pelo comparador de edição (useEditionCompare) pra preferir SRD↔SRD
+// e PHB↔PHB antes de aceitar qualquer edição diferente. Packs de terceiro
+// (_packToVersion) recebem 'pack' e nunca competem por esse par preferencial.
 const BUILTIN_VERSIONS = [
-  { key: 'srd-2024-en', source: 'fetch', file: 'srd-2024-en.json', lang: 'en', edition: '5e 2024', labelPt: 'SRD 5.2 (EN)', labelEn: 'SRD 5.2 (EN)', short: 'SRD 5.2' },
-  { key: 'srd-2014-en', source: 'fetch', file: 'srd-2014-en.json', lang: 'en', edition: '5e 2014', labelPt: 'SRD 5.1 (EN)', labelEn: 'SRD 5.1 (EN)', short: 'SRD 5.1' },
-  { key: 'spells-5E-2024-PTBR', source: 'fetch', file: 'spells-5E-2024-PTBR.json', lang: 'ptbr', edition: '5e 2024', label: 'D&D 5.5E 2024', labelPt: 'D&D 5.5E 2024', labelEn: "D&D 5.5E 2024", short: '5.5E 2024' },
-  { key: 'spells-5E-2014-PTBR', source: 'fetch', file: 'spells-5E-2014-PTBR.json', lang: 'ptbr', edition: '5e 2014', label: 'D&D 5E 2014',   labelPt: 'D&D 5E 2014',   labelEn: "D&D 5E 2014",   short: '5E 2014' },
-  { key: 'spells-5E-2024-EN',   source: 'fetch', file: 'spells-5E-2024-EN.json',   lang: 'en',   edition: '5e 2024', label: "PHB 2024",      labelPt: 'PHB 2024',      labelEn: "PHB 2024",      short: '2024 EN' },
-  { key: 'spells-5E-2014-EN',   source: 'fetch', file: 'spells-5E-2014-EN.json',   lang: 'en',   edition: '5e 2014', label: "PHB 2014",      labelPt: 'PHB 2014',      labelEn: "PHB 2014",      short: '2014 EN' },
+  { key: 'srd-2024-en', source: 'fetch', file: 'srd-2024-en.json', lang: 'en', edition: '5e 2024', corpus: 'srd', labelPt: 'SRD 5.2 (EN)', labelEn: 'SRD 5.2 (EN)', short: 'SRD 5.2' },
+  { key: 'srd-2014-en', source: 'fetch', file: 'srd-2014-en.json', lang: 'en', edition: '5e 2014', corpus: 'srd', labelPt: 'SRD 5.1 (EN)', labelEn: 'SRD 5.1 (EN)', short: 'SRD 5.1' },
+  { key: 'spells-5E-2024-PTBR', source: 'fetch', file: 'spells-5E-2024-PTBR.json', lang: 'ptbr', edition: '5e 2024', corpus: 'phb', label: 'D&D 5.5E 2024', labelPt: 'D&D 5.5E 2024', labelEn: "D&D 5.5E 2024", short: '5.5E 2024' },
+  { key: 'spells-5E-2014-PTBR', source: 'fetch', file: 'spells-5E-2014-PTBR.json', lang: 'ptbr', edition: '5e 2014', corpus: 'phb', label: 'D&D 5E 2014',   labelPt: 'D&D 5E 2014',   labelEn: "D&D 5E 2014",   short: '5E 2014' },
+  { key: 'spells-5E-2024-EN',   source: 'fetch', file: 'spells-5E-2024-EN.json',   lang: 'en',   edition: '5e 2024', corpus: 'phb', label: "PHB 2024",      labelPt: 'PHB 2024',      labelEn: "PHB 2024",      short: '2024 EN' },
+  { key: 'spells-5E-2014-EN',   source: 'fetch', file: 'spells-5E-2014-EN.json',   lang: 'en',   edition: '5e 2014', corpus: 'phb', label: "PHB 2014",      labelPt: 'PHB 2014',      labelEn: "PHB 2014",      short: '2014 EN' },
 ];
 
 // SPELL_VERSIONS é o registro VIVO — extensível em runtime (packs de
@@ -66,6 +70,7 @@ function _packToVersion(meta) {
     packId: source,
     lang: meta.lang === 'ptbr' ? 'ptbr' : 'en',
     edition: String(meta.edition || '').slice(0, 24),
+    corpus: 'pack', // WR-07: nunca compete pelo par preferencial do comparador de edição
     labelPt: name.slice(0, 48),
     labelEn: name.slice(0, 48),
     short: name.slice(0, 14),
