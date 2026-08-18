@@ -1,10 +1,12 @@
 ---
-status: partial
+status: resolved
 phase: 03-srd-pack-import-pipeline
 source: [03-VERIFICATION.md]
 started: 2026-08-11T23:52:24Z
-updated: 2026-08-11T23:52:24Z
-closed_with_open_items: true
+updated: 2026-08-17T00:00:00Z
+closed_with_open_items: false
+resolved_on: 2026-08-17
+resolved_by_phase: 4
 ---
 
 ## Current Test
@@ -57,7 +59,10 @@ result: pass
 
 ### 5. Hostile payload through the 4 live render sinks
 expected: A spell whose description carries `<img onerror=...>` plus an inline `<script>` opens in the card, side panel, and detail screen, and prints, with no `alert` firing and no execution in the console — across all four `dangerouslySetInnerHTML` sinks.
-result: [blocked]
+result: pass
+closed_in_phase: 4
+closed_on: 2026-08-17
+evidence: "Executado no checkpoint 04-04 Task 2, em navegador real, com o fixture scripts/qa-fixtures/hostile-html.json (criado em 04-03). O dono do produto reportou 'aprovado - 4 sinks limpos', nomeando os quatro: card, painel lateral, tela de detalhe e folha de impressao. Nenhum alert disparou. Adicionalmente, o passo 8 foi provado por execucao (Playwright + Chromium real, funil de producao installFromFile): o HTML lido de volta do IndexedDB voltou como '<p>Benign paragraph before the payload.</p><p>Benign paragraph after the payload.</p>' e o upgradeDescription sem o onclick, com changedFields=2 -- fechando tambem a lacuna que 04-03 havia sinalizado, onde a alegacao de que a sanitizacao remove de fato repousava na semantica documentada do DOMPurify e nao numa chamada sanitize() executada. Ver 04-04-SUMMARY.md, cobertura D4 e D5."
 carried_to_phase: 4
 carried_decision: "User decision 2026-08-11 — close Phase 3 and inherit this test as Phase 4 verification debt. Rationale: step 17 already proved the description is sanitized BEFORE the write, so there is no stored payload for any sink to execute; what remains is visual confirmation of a risk already closed at its source. When Phase 4 delivers source-dispatch and an imported pack becomes selectable, this is the FIRST thing to test — install qa-hostile-html, open it in card / side panel / detail, and print it."
 blocked_by: No UI path exists to render a spell from an imported pack in this phase. `spells-data-loader.jsx` still carries a hardcoded 4-entry `SPELL_VERSIONS` and has no `pluginStore` reference; that dispatch is Phase 4 (SRD-03) scope. Test 5 becomes runnable once Phase 4 lands. Partial coverage already obtained: the human ran step 17 on 2026-08-11 and confirmed the STORED description came back as `"<p>Texto normal antes.</p><p>Texto normal depois.</p>"` — the payload was stripped at import, before the write, so no sink can receive it. That covers the underlying risk by substitution but does NOT count as watching the four sinks not execute.
@@ -70,10 +75,10 @@ evidence: "`phase.complete` ran 2026-08-11 and returned `requirements_updated: t
 ## Summary
 
 total: 6
-passed: 4
+passed: 5
 issues: 0
 pending: 0
 skipped: 1
-blocked: 1
+blocked: 0
 
 ## Gaps
