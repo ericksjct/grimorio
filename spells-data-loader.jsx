@@ -128,8 +128,24 @@ async function refreshPluginVersions() {
   // da versão corrente, honra sem esperar recarga. Se não resolver, nada de
   // troca silenciosa (proibição P-01) — o seletor tem de continuar mostrando
   // a versão realmente em uso.
-  if (_wantedVersionKey && _wantedVersionKey !== _currentVersion && _versionByKey(_wantedVersionKey)) {
-    setCurrentVersion(_wantedVersionKey);
+  // Consome de uma vez: assim que a chave desejada RESOLVE, a preferencia
+  // pendente cumpriu seu papel -- seja porque ja e a versao corrente (boot
+  // normal), seja porque acabamos de aplica-la. Mante-la viva depois disso era
+  // o CR-02. Se ela nunca resolver, continua pendente, que e o comportamento
+  // desejado para um pack ainda nao enumerado.
+  if (_wantedVersionKey && _versionByKey(_wantedVersionKey)) {
+    const wanted = _wantedVersionKey;
+    _wantedVersionKey = null;
+    if (wanted !== _currentVersion) setCurrentVersion(wanted);
+  }
+
+  // CR-01 (raiz): o splice acima pode ter removido a entrada idb que estava
+  // selecionada. Um _currentVersion que nao resolve mais faz loadVersion()
+  // cair no redirect de chave desconhecida, que cacheia sob a chave DEFAULT --
+  // _cache[_currentVersion] nunca preenche e todo render tenta de novo.
+  if (!_versionByKey(_currentVersion)) {
+    console.warn('[spells-data-loader] Versao ativa sumiu do registro:', _currentVersion, '- voltando para a padrao.');
+    setCurrentVersion(_defaultVersion().key);
   }
 
   return entries;
@@ -138,7 +154,11 @@ async function refreshPluginVersions() {
 // ──────────────────────────────────────────────────────────────────
 // MAPEAMENTOS
 // ──────────────────────────────────────────────────────────────────
-const SCHOOL_INDEX = {
+// Sem prototipo (CR-03): adaptSpell() indexa esta tabela com strings vindas
+// direto do JSON de um pack de terceiro. Num literal comum, a chave
+// 'constructor' devolveria a funcao herdada -- truthy, entao o fallback
+// `|| c` nao salvaria, e ela chegaria ate .charAt() na tela de detalhe.
+const SCHOOL_INDEX = Object.assign(Object.create(null), {
   abjuration: 0, abjur: 0, abjuração: 0,
   conjuration: 1, conj: 1, conjuração: 1, invocação: 1,
   divination: 2, div: 2, divinação: 2,
@@ -147,29 +167,41 @@ const SCHOOL_INDEX = {
   illusion: 5, ilus: 5, illus: 5, ilusão: 5,
   necromancy: 6, necr: 6, necromancia: 6,
   transmutation: 7, trans: 7, transm: 7, transmutação: 7,
-};
+});
 
 // Inglês → pt-br (para filtros e display)
-const CLASS_PT = {
+// Sem prototipo (CR-03): adaptSpell() indexa esta tabela com strings vindas
+// direto do JSON de um pack de terceiro. Num literal comum, a chave
+// 'constructor' devolveria a funcao herdada -- truthy, entao o fallback
+// `|| c` nao salvaria, e ela chegaria ate .charAt() na tela de detalhe.
+const CLASS_PT = Object.assign(Object.create(null), {
   bard: 'bardo', cleric: 'clérigo', druid: 'druida', sorcerer: 'feiticeiro',
   warlock: 'bruxo', wizard: 'mago', ranger: 'patrulheiro', paladin: 'paladino',
   artificer: 'artífice', monk: 'monge', barbarian: 'bárbaro', fighter: 'guerreiro', rogue: 'ladino',
-};
+});
 
 // pt-br → inglês (para filtros em EN)
-const CLASS_EN = {
+// Sem prototipo (CR-03): adaptSpell() indexa esta tabela com strings vindas
+// direto do JSON de um pack de terceiro. Num literal comum, a chave
+// 'constructor' devolveria a funcao herdada -- truthy, entao o fallback
+// `|| c` nao salvaria, e ela chegaria ate .charAt() na tela de detalhe.
+const CLASS_EN = Object.assign(Object.create(null), {
   bardo: 'bard', 'clérigo': 'cleric', druida: 'druid', feiticeiro: 'sorcerer',
   bruxo: 'warlock', mago: 'wizard', patrulheiro: 'ranger', paladino: 'paladin',
   artífice: 'artificer', monge: 'monk', bárbaro: 'barbarian', guerreiro: 'fighter', ladino: 'rogue',
-};
+});
 
-const SOURCE_CODE = {
+// Sem prototipo (CR-03): adaptSpell() indexa esta tabela com strings vindas
+// direto do JSON de um pack de terceiro. Num literal comum, a chave
+// 'constructor' devolveria a funcao herdada -- truthy, entao o fallback
+// `|| c` nao salvaria, e ela chegaria ate .charAt() na tela de detalhe.
+const SOURCE_CODE = Object.assign(Object.create(null), {
   'Livro do Jogador': 'PHB', "Player's Handbook": 'PHB',
   // Strings reais dos JSONs PT-BR (a forma oficial Galápagos), além das antigas.
   'Guia de Xanathar para Todas as Coisas': 'XGE', 'Guia de Tudo de Xanathar': 'XGE', "Xanathar's Guide to Everything": 'XGE',
   'O Caldeirão de Todas as Coisas de Tasha': 'TCE', 'Caldeirão de Tudo de Tasha': 'TCE', "Tasha's Cauldron of Everything": 'TCE',
   'Tesouros de Fizban dos Dragões': 'FTD', "Fizban's Treasury of Dragons": 'FTD',
-};
+});
 
 // ──────────────────────────────────────────────────────────────────
 // HELPERS
@@ -321,6 +353,11 @@ function getCurrentVersion() {
 
 function setCurrentVersion(key) {
   if (_currentVersion === key) return;
+  // CR-02: qualquer troca EFETIVA cancela a preferencia pendente. Sem isto,
+  // _wantedVersionKey sobrevive a sessao inteira e refreshPluginVersions()
+  // volta a aplica-lo a cada importacao de pack, arrastando o usuario de volta
+  // para a versao do boot -- a troca silenciosa que P-01 proibe.
+  _wantedVersionKey = null;
   _currentVersion = key;
   // Notifica todos os listeners que a fonte mudou
   window.dispatchEvent(new CustomEvent('hifi-spells-source-changed', { detail: key }));
@@ -412,7 +449,14 @@ function buildSpellsFromRealData() {
   if (cached) return cached;
   // Se ainda não carregou, inicia o fetch em background e retorna vazio temporariamente
   loadVersion(key).then(() => {
-    window.dispatchEvent(new CustomEvent('hifi-spells-source-changed', { detail: key }));
+    // CR-01: so avisa se o cache REALMENTE preencheu para esta chave. O
+    // listener de useSpellVersions responde chamando esta funcao de novo; com
+    // o cache ainda vazio (falha de carga, que nao e cacheada de proposito, ou
+    // chave desconhecida, cujo redirect cacheia sob a chave default) o par
+    // dispatch/listener vira um ciclo que nao termina e trava a aba.
+    if (_cache[key]) {
+      window.dispatchEvent(new CustomEvent('hifi-spells-source-changed', { detail: key }));
+    }
   });
   return [];
 }

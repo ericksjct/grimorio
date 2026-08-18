@@ -122,13 +122,16 @@ if (-not $loader.Contains('SPELL_VERSIONS.push(')) {
 }
 
 # ── Dono único da resolução de versão inicial (04-02 Task 2) ───────
-foreach ($needle in @(
-  '_wantedVersionKey',
-  'setCurrentVersion(_wantedVersionKey)'
-)) {
-  if (-not $loader.Contains($needle)) {
-    throw "Missing spells-data-loader.jsx single-owner resolution detail: $needle"
-  }
+# Asserção por INTENÇÃO, não pelo texto exato da chamada. A versão anterior
+# exigia o literal 'setCurrentVersion(_wantedVersionKey)' e por isso quebrou
+# quando 04-05 passou a capturar a chave numa local antes de limpar
+# _wantedVersionKey (CR-02). Uma asserção que trava a forma do código, e não o
+# comportamento, transforma qualquer correção em falha de teste.
+if (-not $loader.Contains('_wantedVersionKey')) {
+  throw 'Missing spells-data-loader.jsx single-owner resolution detail: _wantedVersionKey'
+}
+if ($loader -notmatch 'refreshPluginVersions\(\)[\s\S]*?_wantedVersionKey[\s\S]{0,600}?setCurrentVersion\(') {
+  throw 'refreshPluginVersions() must honor a pending _wantedVersionKey by calling setCurrentVersion once the key resolves.'
 }
 
 # ── index.html: leitura única da versão inicial (04-02 Task 2) ─────
