@@ -6,11 +6,11 @@ current_phase: 5
 current_phase_name: Plugin Manager UI & Version Selector
 status: planning
 stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-08-18T00:53:19.206Z"
+last_updated: "2026-08-18T00:53:57.964Z"
 last_activity: 2026-08-17
 last_activity_desc: Phase 04 complete, transitioned to Phase 5
 progress:
-  total_phases: 3
+  total_phases: 4
   completed_phases: 3
   total_plans: 14
   completed_plans: 14
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-17)
 
 **Core value:** Players can quickly find, prepare, and reference the right spells for their character, fully offline, with zero setup.
-**Current focus:** Phase 04 — loader-integration-source-dispatch
+**Current focus:** Phase 04.1 — desacoplar idioma da UI (pre-requisito da Fase 6)
 
 ## Current Position
 
-Phase: 5 — Plugin Manager UI & Version Selector
+Phase: 04.1 — Desacoplar o idioma da interface do idioma do pacote (INSERIDA)
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-08-17 — Phase 04 complete, transitioned to Phase 5
+Last activity: 2026-08-17 — Phase 04 complete; Phase 04.1 inserted before Phase 5
 
 Progress: [██████████] 100%
 
@@ -90,6 +90,10 @@ None yet. `.planning/codebase/CONCERNS.md` holds candidate future maintenance it
 - Research flags Phase 6 (Decommissioning & Migration) as needing a deeper pass during planning: the migration-detection logic for existing `localStorage` character data is novel to this codebase (no prior versioned-migration pattern to copy).
 - Research flags Phase 3 as needing a concrete file-size cap decided during planning (no byte threshold proposed yet) and a scoping call on whether to add a CSP as defense-in-depth alongside DOMPurify.
 - No automated frontend test suite exists — all phase verification will be manual browser QA, consistent with the rest of the project.
+
+### Roadmap Evolution
+
+- Phase 04.1 inserted after Phase 4: Desacoplar o idioma da interface do idioma do pacote - pre-requisito da Fase 6, levantado no checkpoint 04-04 (URGENT)
 
 ## Quick Tasks Completed
 

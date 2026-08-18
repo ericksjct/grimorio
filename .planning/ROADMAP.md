@@ -20,6 +20,7 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
 - [x] **Phase 2: Plugin Storage Foundation** - IndexedDB persistence layer for spell packs, with persistent-storage request and export/backup (completed 2026-07-18)
 - [x] **Phase 3: SRD Pack & Import Pipeline** - Users install a validated, sanitized pack from file or URL; SRD content exists as a real pack (completed 2026-08-11)
 - [x] **Phase 4: Loader Integration (Source-Dispatch)** - The loader natively reads SRD + any installed packs through one dispatch point, no hardcoded 4-dataset list (completed 2026-08-17)
+- [ ] **Phase 04.1: Desacoplar o idioma da interface do idioma do pacote** (INSERIDA) - uiLang vira estado proprio; pre-requisito da Fase 6, que remove as unicas entradas em portugues
 - [ ] **Phase 5: Plugin Manager UI & Version Selector** - Install/list/remove UI, dynamic version selector, duplicate-spell notes, empty state, CC-BY attribution
 - [ ] **Phase 6: Decommissioning & Migration** - Remove the 4 protected JSONs from site/repo; migrate existing users without silently dropping references
 
@@ -139,6 +140,30 @@ Plans:
 - [x] 04-04-PLAN.md — verificação humana dos 3 critérios da fase e fechamento da dívida herdada do teste 5 do `03-UAT.md` (payload hostil pelos 4 sinks de render)
 
 **Planning route**: PLAN DIRETO (sem discuss). Ponto de integração único (`source: 'fetch'|'idb'` em `loadVersion`) já desenhado em `research/ARCHITECTURE.md`, ancorado no código real de `spells-data-loader.jsx`. Maior risco TÉCNICO do milestone (mexe em código load-bearing) — mitigado por plano bom + verificação, não por discuss. Research do plan: NÃO.
+
+### Phase 04.1: Desacoplar o idioma da interface do idioma do pacote (INSERTED)
+
+**Goal**: O idioma da interface e uma preferencia propria do usuario, persistida e trocavel a qualquer momento, independente de qual pacote de magias esta selecionado — de modo que um usuario brasileiro possa ler magias em ingles com a interface em portugues.
+**Depends on**: Phase 4
+**Requirements**: TBD (definir no discuss — provavelmente uma nova entrada de i18n em REQUIREMENTS.md)
+**Success Criteria** (what must be TRUE):
+
+  1. O idioma da interface e um estado proprio, persistido em `spellbook-ui-prefs`, e sobrevive a recarga independente da versao ativa
+  2. Trocar de versao de magias NAO troca o idioma da interface
+  3. `HifiLangToggle` troca o idioma da interface, e nao a versao ativa — e continua funcionando quando nenhuma versao no registro tem `lang: 'ptbr'`
+  4. Na primeira visita, o idioma da interface vem do navegador (`detectLang()`), nao da versao resolvida
+  5. Um usuario com a interface em portugues lendo um pacote em ingles ve a UI toda em portugues e o conteudo das magias em ingles, sem estado inconsistente
+
+**Plans**: TBD
+**UI hint**: yes
+**Planning route**: DISCUSS antes de planejar. Reverte deliberadamente a decisao original de i18n ACOPLADO (versao = fonte unica de verdade do idioma, sem toggle separado), entao a discussao precisa registrar o que substitui aquela decisao. Research do plan: NAO — o dicionario central ja existe (`i18n.jsx` com blocos `ptbr:`/`en:`, `makeT(lang)`, `tt(lang, key)` e checagem de paridade); o trabalho e fiacao de estado, nao traducao.
+
+**Por que e pre-requisito da Fase 6** (levantado no checkpoint 04-04, ver `.planning/todos/pending/desacoplar-idioma-ui-da-versao.md`):
+`HifiLangToggle` (`v10-hifi.jsx:436`) nao e um seletor de idioma — e um seletor de VERSAO disfarcado: faz `versions.find(v => v.lang === 'ptbr' && ...)` e chama `onSwitch(pt.key)`. O criterio 3 da Fase 6 remove os 4 JSONs protegidos e deixa so o SRD no precache, e os packs SRD sao `lang: 'en'`. Sem nenhuma entrada `ptbr` no registro, o `find` retorna `undefined`, o botao PT fica inerte e `defaultVersionKeyForLang('ptbr')` cai no fallback `vs[0]`. A Fase 6 entregaria um app monolingue em ingles para publico brasileiro, contrariando seu proprio criterio 4.
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 04.1 to break down)
 
 ### Phase 5: Plugin Manager UI & Version Selector
 

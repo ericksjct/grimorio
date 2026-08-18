@@ -1,9 +1,9 @@
 ---
 id: desacoplar-idioma-ui-da-versao
-status: pending
+status: promoted
 created: 2026-08-17
 source: checkpoint 04-04 (verificação humana da Fase 4)
-target: nova Fase 4.1, a inserir entre a Fase 4 e a Fase 5
+target: Fase 04.1 (INSERIDA no ROADMAP em 2026-08-17, entre a Fase 4 e a Fase 5)
 blocks: Phase 6 (MIGR-03)
 ---
 
