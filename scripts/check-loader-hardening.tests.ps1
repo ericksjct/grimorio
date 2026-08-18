@@ -118,7 +118,10 @@ for (const c of (s.classesEn || [])) {
   if (typeof c !== 'string') bad.push('classesEn item is ' + typeof c);
 }
 if (typeof s.src !== 'string') bad.push('src is ' + typeof s.src);
-if (typeof s.school !== 'number') bad.push('school is ' + typeof s.school);
+// WR-05: um nome de escola nao reconhecido agora propaga null (honesto) em vez
+// de inventar 4/Evocacao — o que o CR-03 realmente precisa proibir e um valor
+// herdado do prototipo (funcao/objeto), nao null.
+if (typeof s.school !== 'number' && s.school !== null) bad.push('school is ' + typeof s.school);
 
 // O consumidor real em v10-hifi.jsx:991 faz exatamente isto.
 try {

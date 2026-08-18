@@ -268,11 +268,6 @@ function normalizeComponents(comp) {
   return comp.split(',').map(s => s.trim()).filter(Boolean).join(' ');
 }
 
-function detectEdition(fileName) {
-  if (fileName.includes('2024')) return '5e 2024';
-  return '5e 2014';
-}
-
 // ──────────────────────────────────────────────────────────────────
 // ADAPTADOR: JSON raw → formato do app
 // ──────────────────────────────────────────────────────────────────
@@ -296,7 +291,9 @@ function adaptSpell(s, versionLang, edition) {
     name_pt: ptName,
     name_en: enName,
     lvl: typeof s.level === 'number' ? s.level : parseInt(s.level, 10) || 0,
-    school: typeof schoolIdx === 'number' ? schoolIdx : 4,
+    // WR-05: nao inventamos escola quando o pack usa um nome que a app nao
+    // reconhece — cair pra 4 (Evocacao) apresentava um chute como fato.
+    school: typeof schoolIdx === 'number' ? schoolIdx : null,
     time: s.castTime || '—',
     range: s.range || '—',
     dur: s.duration || '—',
@@ -327,7 +324,10 @@ function adaptSpell(s, versionLang, edition) {
     classesEn,
     src: SOURCE_CODE[s.source] || (s.source || '').slice(0, 4).toUpperCase().trim(),
     sourceFull: s.source || '',
-    edition: edition || detectEdition(''),
+    // WR-05: propaga ausencia em vez de inventar uma edicao — um pack sem
+    // `edition` declarada nao e "5e 2014" por padrao, e useEditionCompare ja
+    // sabe se esconder quando `!cur.edition`.
+    edition: edition || '',
     url: s.url || '',
     ritual: !!s.ritual,
     concentration: !!s.concentration,

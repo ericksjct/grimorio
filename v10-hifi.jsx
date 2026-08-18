@@ -1006,7 +1006,9 @@ function HifiDetailContent({ s, lang }) {
       <div>
         <HifiSectionLabel>{tt(lang, 'spell.source')}</HifiSectionLabel>
         <div style={{ marginTop: 6, fontSize: 13, color: 'var(--subtext0)', fontStyle: 'italic' }}>
-          {s.src} · {s.edition || '5e 2014'}
+          {/* WR-05: sem edicao declarada nao inventamos "5e 2014" — um pack
+              BYOD sem `edition` é honestamente "sem edição", não uma versão. */}
+          {s.src}{s.edition ? ` · ${s.edition}` : ''}
         </div>
       </div>
     </div>
