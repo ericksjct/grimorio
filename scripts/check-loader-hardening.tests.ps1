@@ -137,21 +137,33 @@ if (bad.length) {
 console.log('CR-03 ok: prototype-named keys produce only strings/numbers');
 '@
 
-$tmp = Join-Path $repoRoot '_check_loader_hardening.cjs'
-try {
-  Set-Content -LiteralPath $tmp -Value $nodeScript -Encoding UTF8
-  Push-Location $repoRoot
+# WR-12: o harness costumava ser escrito na RAIZ DO REPO (a mesma pasta que o
+# GitHub Pages publica) e nao estava no .gitignore - uma execucao interrompida
+# ou morta pulava o `finally` e deixava o arquivo pra tras, pronto pra um
+# `git add .` commitar e publicar por acidente. O temp dir do SO nunca pode
+# acabar num deploy. `-Encoding utf8NoBOM` evita o BOM que
+# `-Encoding UTF8` emite no Windows PowerShell 5.1 (Node tolera, mas o CR-03
+# de cima ja usa a versao sem BOM por consistencia).
+$node = Get-Command node -ErrorAction SilentlyContinue
+if (-not $node) {
+  Write-Warning 'node nao encontrado - prova de execucao do CR-03 pulada (assercoes estruturais ja rodaram).'
+} else {
+  $tmp = Join-Path ([System.IO.Path]::GetTempPath()) "check-loader-hardening-$([guid]::NewGuid()).cjs"
   try {
-    $nodeOut = & node $tmp 2>&1
-    $nodeExit = $LASTEXITCODE
+    Set-Content -LiteralPath $tmp -Value $nodeScript -Encoding utf8NoBOM
+    Push-Location $repoRoot
+    try {
+      $nodeOut = & node $tmp 2>&1
+      $nodeExit = $LASTEXITCODE
+    } finally {
+      Pop-Location
+    }
+    if ($nodeExit -ne 0) {
+      throw "CR-03 runtime proof failed: $nodeOut"
+    }
   } finally {
-    Pop-Location
+    if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force }
   }
-  if ($nodeExit -ne 0) {
-    throw "CR-03 runtime proof failed: $nodeOut"
-  }
-} finally {
-  if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force }
 }
 
 Write-Output 'Loader hardening contract present (CR-01 loop guard + hifiFilterConfig prototype-less, CR-02 pending-preference consume, CR-03 prototype-less lookup tables).'
