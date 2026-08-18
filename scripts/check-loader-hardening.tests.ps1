@@ -7,6 +7,8 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $loaderPath = Join-Path $repoRoot 'spells-data-loader.jsx'
 $loader = Get-Content -Raw -LiteralPath $loaderPath
+$hifiPath = Join-Path $repoRoot 'v10-hifi.jsx'
+$hifi = Get-Content -Raw -LiteralPath $hifiPath
 
 # ── CR-03: tabelas de lookup sem prototipo ────────────────────────
 # adaptSpell() indexa CLASS_PT / CLASS_EN / SOURCE_CODE / SCHOOL_INDEX com
@@ -18,6 +20,17 @@ foreach ($table in @('SCHOOL_INDEX', 'CLASS_PT', 'CLASS_EN', 'SOURCE_CODE')) {
   if ($loader -notmatch "const\s+$table\s*=\s*Object\.assign\(\s*Object\.create\(null\)") {
     throw "CR-03: $table must be built with Object.assign(Object.create(null), {...}) - a plain object literal returns inherited functions for keys like 'constructor', and pack data is untrusted."
   }
+}
+
+# ── CR-01: hifiFilterConfig() sem prototipo (mesma classe de defeito do CR-03,
+# so que em v10-hifi.jsx) ──────────────────────────────────────────
+# useHifiAppState monta filters[key] a partir de qualquer ?f.*= na URL, sem
+# whitelist de chave, e depois indexa hifiFilterConfig() com esse key. Com um
+# literal comum, ?f.constructor= devolve a funcao Object herdada -- truthy,
+# entao o guard `sel && sel.size && def` nao salva e def.get(s) estoura dentro
+# do render (ErrorBoundary permanente, o link nunca se recupera sozinho).
+if ($hifi -notmatch "function hifiFilterConfig\([^)]*\)\s*\{[\s\S]*?return\s+Object\.assign\(\s*Object\.create\(null\)") {
+  throw "CR-01: hifiFilterConfig() must return Object.assign(Object.create(null), {...}) - a plain object literal returns the inherited 'constructor' function for a ?f.constructor= URL param, and that value is truthy where the filter code expects a filter definition or undefined."
 }
 
 # ── CR-02: preferencia pendente nao pode ser reaplicada para sempre ─
@@ -138,4 +151,4 @@ try {
   if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force }
 }
 
-Write-Output 'Loader hardening contract present (CR-01 loop guard, CR-02 pending-preference consume, CR-03 prototype-less lookup tables).'
+Write-Output 'Loader hardening contract present (CR-01 loop guard + hifiFilterConfig prototype-less, CR-02 pending-preference consume, CR-03 prototype-less lookup tables).'

@@ -729,7 +729,10 @@ function hifiMaxCircle(classLevels) {
 function hifiFilterConfig(lang) {
 
   const bool = b => (b ? (tt(lang, 'value.yes')) : (tt(lang, 'value.no')));
-  return {
+  // Sem prototipo: cfg[key] e indexado com chaves vindas de ?f.* na URL. Num
+  // literal comum, 'constructor' devolve a funcao herdada -- truthy, entao o
+  // guard `&& def` nao salva e def.get(s) estoura dentro do render.
+  return Object.assign(Object.create(null), {
     level:  { label: tt(lang, 'spell.level'),   base: true, get: s => [s.lvl === 0 ? 'truque' : String(s.lvl)], values: ['truque','1','2','3','4','5','6','7','8','9'] },
     school: { label: tt(lang, 'spell.school'),  base: true, get: s => [schoolKey(s.school)], values: ['evoc','conj','abjur','ench','ilus','div','necr','trans'] },
     class:  { label: tt(lang, 'spell.class'),   base: true, get: s => (s.classes || []) },
@@ -740,7 +743,7 @@ function hifiFilterConfig(lang) {
     dur:    { label: tt(lang, 'spell.duration'), derive: true, get: s => (s.dur ? [s.dur] : []) },
     range:  { label: tt(lang, 'spell.range'),  derive: true, get: s => (s.range ? [s.range] : []) },
     src:    { label: tt(lang, 'spell.source'),   derive: true, get: s => (s.src ? [s.src] : []) },
-  };
+  });
 }
 
 function hifiFilterValues(key, allSpells, lang) {
@@ -792,7 +795,14 @@ function useHifiAppState(preparedKeys, initialFilters, character) {
       const p = new URL(window.location.href).searchParams;
       const view = { q: p.get('q') || '', prep: p.get('prep') === '1', filters: {}, any: false };
       p.forEach((val, key) => {
-        if (key.startsWith('f.')) { view.filters[key.slice(2)] = new Set(val.split('|').filter(Boolean)); view.any = true; }
+        if (key.startsWith('f.')) {
+          const k = key.slice(2);
+          // Belt-and-braces: so aceita chaves que hifiFilterConfig realmente conhece
+          // (cfg ja e sem prototipo, mas nem toda leitura de filters[key] passa por cfg).
+          if (!Object.prototype.hasOwnProperty.call(hifiFilterConfig('en'), k)) return;
+          view.filters[k] = new Set(val.split('|').filter(Boolean));
+          view.any = true;
+        }
       });
       view.any = view.any || !!view.q || view.prep;
       return view;
