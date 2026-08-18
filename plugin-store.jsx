@@ -99,8 +99,14 @@ async function getPack(id) {
 
 async function getSpells(id) {
   const record = await _tx('readonly', (store) => store.get(id));
+  // WR-04: um registro ausente (pack apagado/corrompido) NÃO é o mesmo que um
+  // pack legitimamente vazio — o funil de importação exige minItems: 1, então
+  // um array vazio vindo do storage só pode significar registro sumido. Antes
+  // isto virava `[]`, indistinguível de sucesso: loadVersion() cacheava como
+  // um resultado válido pra sempre, sem toast e sem retry.
+  if (!record) throw new Error(`pluginStore.getSpells: pacote '${id}' não encontrado.`);
   // Array cru, sem transformação/filtro/ordenação — o adaptador de magias é quem normaliza.
-  return record ? record.spells : [];
+  return record.spells;
 }
 
 async function listPacks() {
