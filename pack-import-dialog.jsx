@@ -98,8 +98,16 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
       // Reconstrói o registro de versões do loader e dispara hifi-plugins-changed
       // — a entrada nova aparece no seletor sem recarregar a página (04-02).
       // Sem await: não é preciso segurar o feedback de sucesso na chamada de
-      // storage, e refreshPluginVersions já absorve as próprias falhas.
-      if (typeof window.refreshPluginVersions === 'function') window.refreshPluginVersions();
+      // storage. WR-10: refreshPluginVersions() absorve a PRÓPRIA falha de
+      // enumeração, mas chama setCurrentVersion() e dispara eventos - um throw
+      // futuro ali (ou num listener síncrono no mesmo call frame) virava
+      // rejeição não tratada sem nenhum rastro ligado a este import. Os dois
+      // call sites de boot (spells-data-loader.jsx) já tratam com .catch() por
+      // exatamente este motivo; este era o único que não.
+      if (typeof window.refreshPluginVersions === 'function') {
+        window.refreshPluginVersions().catch(e =>
+          console.warn('[pack-import-dialog] refreshPluginVersions falhou após instalar:', e));
+      }
     } catch (err) {
       const code = err && err.code;
       const msg = tt(lang, packErrKeyFor(err));
