@@ -436,12 +436,17 @@ function HifiThemeToggle({ dark, lang = 'ptbr', style }) {
 function HifiLangToggle({ lang = 'ptbr', versions = [], versionKey, onSwitch }) {
   const cur = versions.find(v => v.key === versionKey);
   const curLang = cur ? cur.lang : lang;
-  const editionOf = (v) => (/2024/.test(v.key) ? '2024' : '2014');
-  const curEdition = cur ? editionOf(cur) : '2024';
+  // WR-06: usa a `edition` DECLARADA na entrada do registro, não um regex
+  // sobre a chave. `key` de um pack é 'plugin-' + meta.source (nome escolhido
+  // pelo autor do pack, third-party) — um regex /2024/ deixava o AUTOR do
+  // pack decidir pra qual idioma/edição o toggle PT/EN pulava.
+  const curEdition = cur ? cur.edition : null;
 
-  // Versões disponíveis para a edição atual
-  const pt = versions.find(v => v.lang === 'ptbr' && editionOf(v) === curEdition);
-  const en = versions.find(v => v.lang === 'en' && editionOf(v) === curEdition);
+  // Versões disponíveis para a edição atual. Sem edição declarada (pack
+  // BYOD sem `edition`), o toggle degrada pra desabilitado em vez de pular
+  // pra um par errado — os botões já no-opam quando pt/en é null.
+  const pt = curEdition ? versions.find(v => v.lang === 'ptbr' && v.edition === curEdition) : null;
+  const en = curEdition ? versions.find(v => v.lang === 'en' && v.edition === curEdition) : null;
 
   const itemStyle = (active) => ({
     ...hifiFooterLink,
