@@ -113,6 +113,7 @@ const STRINGS = {
     'compare.notFound': 'essa magia não existe na {edition}',
     'toast.buildImported': 'personagem “{name}” importado',
     'toast.buildImportFailed': 'não consegui importar a build dessa URL',
+    'toast.versionSwitchedAway': 'o pacote que você estava vendo foi removido — voltamos para {version}',
     // Modo sessão
     'session.title': 'modo sessão',
     'session.enter': 'entrar no modo sessão',
@@ -282,6 +283,7 @@ const STRINGS = {
     'compare.notFound': 'this spell does not exist in {edition}',
     'toast.buildImported': 'character “{name}” imported',
     'toast.buildImportFailed': 'could not import the build from this URL',
+    'toast.versionSwitchedAway': 'the pack you were viewing was removed — switched back to {version}',
     // Session mode
     'session.title': 'session mode',
     'session.enter': 'enter session mode',

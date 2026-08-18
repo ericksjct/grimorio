@@ -91,13 +91,25 @@ foreach ($forbidden in @('putPack', 'deletePack', 'exportPack')) {
 # ── Enumeração de packs do IndexedDB no boot (04-02 Task 1) ────────
 foreach ($needle in @(
   'function _packToVersion(',
-  'async function refreshPluginVersions(',
+  'function refreshPluginVersions(',
+  # WR-02: refreshPluginVersions() ganhou um dedup de chamadas concorrentes
+  # (mesmo idioma do `_pending` do loadVersion) - o trabalho real de
+  # enumeracao agora mora na inner async, com o wrapper sincrono guardando a
+  # promise em voo.
+  'async function _refreshPluginVersionsInner(',
   'pluginStore.listPacks(',
   'window.refreshPluginVersions'
 )) {
   if (-not $loader.Contains($needle)) {
     throw "Missing spells-data-loader.jsx plugin-enumeration detail: $needle"
   }
+}
+
+# WR-02: concurrent refreshPluginVersions() calls (boot + every pack import)
+# must share the same in-flight promise instead of each re-enumerating and
+# racing to write SPELL_VERSIONS last.
+if ($loader -notmatch 'let\s+_refreshInFlight\s*=\s*null') {
+  throw 'WR-02: refreshPluginVersions() must guard against concurrent calls via an in-flight promise (_refreshInFlight), the same dedup idiom already used by _pending/_dbPromise.'
 }
 
 $pluginsChangedCount = ([regex]::Matches($loader, 'hifi-plugins-changed')).Count

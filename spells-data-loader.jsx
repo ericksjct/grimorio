@@ -78,7 +78,19 @@ function _packToVersion(meta) {
 // enumeração (aba bloqueada, aba privada, quota, promise rejeitada) nunca pode
 // derrubar o boot; degrada para lista vazia com console.warn e sem toast (um
 // usuário sem nenhum pack instalado não deve ver mensagem de erro por isso).
-async function refreshPluginVersions() {
+// WR-02: refreshPluginVersions() é chamada fire-and-forget de dois lugares
+// (boot e todo import bem-sucedido) sem nada serializando as chamadas — quem
+// resolver por último escreve o registro. O dedup no `_pending` do loadVersion
+// já usa este idioma; aqui é o mesmo, guardando a promise em voo em vez do
+// próprio trabalho.
+let _refreshInFlight = null;
+function refreshPluginVersions() {
+  if (_refreshInFlight) return _refreshInFlight;
+  _refreshInFlight = _refreshPluginVersionsInner().finally(() => { _refreshInFlight = null; });
+  return _refreshInFlight;
+}
+
+async function _refreshPluginVersionsInner() {
   if (!window.pluginStore || typeof window.pluginStore.listPacks !== 'function') {
     return [];
   }
@@ -146,6 +158,22 @@ async function refreshPluginVersions() {
   if (!_versionByKey(_currentVersion)) {
     console.warn('[spells-data-loader] Versao ativa sumiu do registro:', _currentVersion, '- voltando para a padrao.');
     setCurrentVersion(_defaultVersion().key);
+    // WR-02: setCurrentVersion aqui dispara hifi-spells-source-changed, que
+    // troca o dataset E o idioma inteiro da UI sob o usuário sem aviso — a
+    // troca silenciosa que P-01 proíbe. O console.warn não é visível pra
+    // quem não abriu o devtools; um toast avisa de verdade.
+    try {
+      const fallback = _defaultVersion();
+      const fallbackLabel = (fallback.lang === 'ptbr' ? fallback.labelPt : fallback.labelEn) || fallback.short || fallback.key;
+      window.dispatchEvent(new CustomEvent('hifi-toast', {
+        detail: {
+          msg: window.tt
+            ? window.tt(fallback.lang, 'toast.versionSwitchedAway', { version: fallbackLabel })
+            : 'o pacote que você estava vendo foi removido — voltamos para ' + fallbackLabel,
+          kind: 'err',
+        },
+      }));
+    } catch (e2) {}
   }
 
   return entries;
