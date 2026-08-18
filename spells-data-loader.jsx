@@ -436,9 +436,15 @@ async function loadVersion(key) {
       const json = ver.source === 'idb'
         ? await window.pluginStore.getSpells(ver.packId)
         : await _fetchVersionJson(ver);
-      _rawCache[key] = json;
       const adapted = adaptSpells(json, ver.lang, ver.edition);
-      _cache[key] = adapted;
+      // WR-03: refreshPluginVersions() pode ter removido `key` do registro
+      // enquanto este load estava em voo (pack apagado no meio do fetch). Sem
+      // este guard, a escrita abaixo resuscitaria no _cache uma entrada que a
+      // invalidação de refreshPluginVersions() acabou de limpar.
+      if (_versionByKey(key)) {
+        _rawCache[key] = json;
+        _cache[key] = adapted;
+      }
       return adapted;
     } catch (e) {
       console.warn('[spells-data-loader] Falha ao carregar', key, e);
