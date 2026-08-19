@@ -391,12 +391,18 @@ function getCurrentVersion() {
 }
 
 function setCurrentVersion(key) {
+  // WR-05: o clear é INCONDICIONAL, antes do early-return de no-op. Uma
+  // escolha explícita (inclusive selecionar a versão em que você já está)
+  // sempre cancela a preferência pendente — era a última via de escape
+  // manual pra destravar `_wantedVersionKey` (ver CR-01), e o early-return
+  // acima dela a deixava presa mesmo quando o usuário tentava resolver
+  // ativamente.
+  _wantedVersionKey = null;
   if (_currentVersion === key) return;
   // CR-02: qualquer troca EFETIVA cancela a preferencia pendente. Sem isto,
   // _wantedVersionKey sobrevive a sessao inteira e refreshPluginVersions()
   // volta a aplica-lo a cada importacao de pack, arrastando o usuario de volta
   // para a versao do boot -- a troca silenciosa que P-01 proibe.
-  _wantedVersionKey = null;
   _currentVersion = key;
   // Notifica todos os listeners que a fonte mudou
   window.dispatchEvent(new CustomEvent('hifi-spells-source-changed', { detail: key }));

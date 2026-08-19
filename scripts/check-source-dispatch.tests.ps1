@@ -160,6 +160,25 @@ if ($earlyReturnClears -lt 2) {
   throw "CR-01: both early-return paths of _refreshPluginVersionsInner() (missing pluginStore, rejected listPacks()) must clear _wantedVersionKey before returning [] - found $earlyReturnClears. Otherwise a pending plugin-* preference is stranded for the rest of the session (and, via the index.html guard, so is all other prefs persistence)."
 }
 
+# ── WR-05: setCurrentVersion() must clear _wantedVersionKey UNCONDITIONALLY,
+# before the `_currentVersion === key` no-op early-return. Selecting the
+# version you are already on is the user's manual escape hatch for a stuck
+# pending preference (CR-01) - if the clear sits after the early-return, that
+# escape hatch is a no-op too.
+$setCurMatch = [regex]::Match($loader, 'function setCurrentVersion\(key\)[\s\S]{0,1200}?\r?\n\}')
+if (-not $setCurMatch.Success) {
+  throw 'WR-05: could not locate setCurrentVersion(key) body in spells-data-loader.jsx.'
+}
+$setCurBody = $setCurMatch.Value
+$clearIdx = $setCurBody.IndexOf('_wantedVersionKey = null;')
+$noopIdx = $setCurBody.IndexOf('if (_currentVersion === key) return;')
+if ($clearIdx -lt 0 -or $noopIdx -lt 0) {
+  throw 'WR-05: setCurrentVersion() must contain both the _wantedVersionKey clear and the `_currentVersion === key` no-op check.'
+}
+if (-not ($clearIdx -lt $noopIdx)) {
+  throw 'WR-05: setCurrentVersion() must clear _wantedVersionKey BEFORE the `_currentVersion === key` early-return, not after - otherwise re-selecting the version you are already on (the obvious manual fix) fails to cancel a stuck pending preference.'
+}
+
 # ── index.html: leitura única da versão inicial (04-02 Task 2) ─────
 $indexPath = Join-Path $repoRoot 'index.html'
 $index = Get-Content -Raw -LiteralPath $indexPath
