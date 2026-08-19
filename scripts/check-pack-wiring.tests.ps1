@@ -83,4 +83,73 @@ if ($sw -like '*qa-fixtures*') {
   throw 'sw.js must not reference qa-fixtures in PRECACHE - payload de teste nao entra no app shell offline de ninguem.'
 }
 
+# ── CR-03: um `?build=` compartilhado com slots.total inflado nao pode
+# travar a aba. persistCharacters() e o unico choke point de escrita/
+# broadcast (localStorage.setItem + dispatchEvent) - useCharacters()'s
+# listener faz setChars(e.detail) DIRETO do evento, entao normalizar so em
+# loadCharacters()/update() nao bastava (importSharedBuildUrl grava e
+# emite sem passar por nenhum dos dois).
+$editorPath = Join-Path $repoRoot 'v11-character-editor.jsx'
+$editor = Get-Content -Raw -LiteralPath $editorPath
+$persistMatch = [regex]::Match($editor, 'function persistCharacters\(chars\)[\s\S]{0,900}?\r?\n\}')
+if (-not $persistMatch.Success) {
+  throw 'CR-03: could not locate persistCharacters(chars) body in v11-character-editor.jsx.'
+}
+if ($persistMatch.Value -notmatch '\(chars \|\| \[\]\)\.map\(_normChar\)') {
+  throw 'CR-03: persistCharacters() must map every character through _normChar() before writing to localStorage / broadcasting hifi-chars-changed - otherwise a raw shared-build character (unbounded slots.total) reaches HifiSlotTracker and hangs the tab.'
+}
+if ($persistMatch.Value -match 'JSON\.stringify\(chars\)' -or $persistMatch.Value -match 'detail:\s*chars\s*\}') {
+  throw 'CR-03: persistCharacters() must write/broadcast the normalized (safe) array, not the raw `chars` parameter.'
+}
+
+$node = Get-Command node -ErrorAction SilentlyContinue
+if ($node) {
+  $nodeScript = @'
+const fs = require('fs');
+const src = fs.readFileSync('v11-character-editor.jsx', 'utf8');
+const cut = src.indexOf('function useCharacters');
+if (cut < 0) { console.error('nao achei useCharacters para cortar'); process.exit(1); }
+const body = src.slice(0, cut);
+
+function FakeCustomEvent(type, init) { this.type = type; this.detail = init && init.detail; }
+const sandbox = {
+  localStorage: { setItem() {}, getItem: () => null },
+  window: { dispatchEvent(e) { sandbox.__lastEvent = e; } },
+  CustomEvent: FakeCustomEvent,
+  console,
+};
+sandbox.globalThis = sandbox;
+const vm = require('vm');
+vm.createContext(sandbox);
+vm.runInContext(body + '\nthis.__persistCharacters = persistCharacters;', sandbox);
+
+const hostile = [{ id: 'x', name: 'Evil', slots: { total: { 1: 1e9 }, used: {} } }];
+sandbox.__persistCharacters(hostile);
+const broadcast = sandbox.__lastEvent && sandbox.__lastEvent.detail;
+if (!broadcast || !broadcast[0] || broadcast[0].slots.total[1] > 9) {
+  console.error('CR-03 FAIL: persistCharacters() broadcast an unclamped slots.total: ' + JSON.stringify(broadcast));
+  process.exit(1);
+}
+console.log('CR-03 ok: persistCharacters() clamps slots.total through _normChar before broadcasting.');
+'@
+  $tmp = Join-Path ([System.IO.Path]::GetTempPath()) "check-pack-wiring-$([guid]::NewGuid()).cjs"
+  try {
+    Set-Content -LiteralPath $tmp -Value $nodeScript -Encoding utf8NoBOM
+    Push-Location $repoRoot
+    try {
+      $nodeOut = & node $tmp 2>&1
+      $nodeExit = $LASTEXITCODE
+    } finally {
+      Pop-Location
+    }
+    if ($nodeExit -ne 0) {
+      throw "CR-03 runtime proof failed: $nodeOut"
+    }
+  } finally {
+    if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force }
+  }
+} else {
+  Write-Warning 'node nao encontrado - prova de execucao do CR-03 pulada (assercoes estruturais ja rodaram).'
+}
+
 Write-Output 'Import pipeline is wired, pinned and precached.'

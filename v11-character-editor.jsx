@@ -274,8 +274,15 @@ function loadCharacters() {
 }
 
 function persistCharacters(chars) {
-  try { localStorage.setItem(HIFI_CHARS_KEY, JSON.stringify(chars)); } catch (e) {}
-  window.dispatchEvent(new CustomEvent(HIFI_CHARS_EVENT, { detail: chars }));
+  // CR-03: único choke point de escrita/broadcast de personagens. Sem
+  // normalizar aqui, um `?build=` compartilhado (importSharedBuildUrl) grava
+  // um personagem CRU — `slots.total[lvl]` sem limite vira
+  // `Array.from({ length: 1e9 }, ...)` em HifiSlotTracker e trava a aba.
+  // useCharacters()'s listener faz `setChars(e.detail)` direto do evento,
+  // então normalizar só em loadCharacters()/update() não bastava.
+  const safe = (chars || []).map(_normChar);
+  try { localStorage.setItem(HIFI_CHARS_KEY, JSON.stringify(safe)); } catch (e) {}
+  window.dispatchEvent(new CustomEvent(HIFI_CHARS_EVENT, { detail: safe }));
 }
 
 // Each component subscribes to the custom event, so cross-artboard updates
