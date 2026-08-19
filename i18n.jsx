@@ -378,9 +378,14 @@ function makeT(lang) {
   const L = normLang(lang);
   const dict = STRINGS[L] || STRINGS.ptbr;
   return function t(key, vars) {
-    let s = dict[key];
+    // IN-08: STRINGS é um objeto literal comum (não Object.create(null)) —
+    // um `key` vindo de uma chave de prototipo ('constructor', 'toString',
+    // ...) devolveria a função herdada em vez de undefined, e o `== null`
+    // abaixo não pegaria isso. hasOwnProperty é o guard barato, sem
+    // reescrever o dicionário inteiro pra Object.assign(Object.create(null)).
+    let s = Object.prototype.hasOwnProperty.call(dict, key) ? dict[key] : null;
     if (s == null) {
-      s = STRINGS.ptbr[key];
+      s = Object.prototype.hasOwnProperty.call(STRINGS.ptbr, key) ? STRINGS.ptbr[key] : null;
       if (s == null) {
         if (typeof console !== 'undefined') console.warn('[i18n] chave ausente:', key);
         return key;

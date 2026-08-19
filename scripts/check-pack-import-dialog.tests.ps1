@@ -132,6 +132,61 @@ if ($dialog -notmatch 'submitDisabled\s*=\s*busy\s*\|\|\s*!hasValue\s*\|\|\s*!!r
   throw "WR-04: submitDisabled must also be true when `result` is set (busy || !hasValue || !!result) - otherwise the install button stays live on the success screen and a second click installs a duplicate pack."
 }
 
+# ── IN-08: makeT()'s STRINGS lookup guarda contra chave de prototipo ──
+# STRINGS continua um objeto literal comum (nao Object.create(null) — o
+# dicionario e grande demais pra reescrever sem risco). O guard barato e no
+# PONTO DE LEITURA: hasOwnProperty antes de indexar, tanto no dict do idioma
+# quanto no fallback STRINGS.ptbr. Nao alcancavel hoje (todo call site de
+# tt() usa chave literal/prefixada), mas e a unica tabela que uma chave
+# dinamica futura cairia.
+if ($i18n -notmatch "hasOwnProperty\.call\(dict,\s*key\)") {
+  throw "IN-08: makeT()'s t(key) must guard the dict[key] read with Object.prototype.hasOwnProperty.call(dict, key) - STRINGS is a plain object literal, so an inherited key ('constructor', 'toString', ...) would otherwise return a function instead of undefined."
+}
+if ($i18n -notmatch "hasOwnProperty\.call\(STRINGS\.ptbr,\s*key\)") {
+  throw "IN-08: makeT()'s t(key) must guard the STRINGS.ptbr[key] fallback read the same way as the primary dict read."
+}
+
+$node = Get-Command node -ErrorAction SilentlyContinue
+if ($node) {
+  $nodeScript = @'
+const fs = require('fs');
+const src = fs.readFileSync('i18n.jsx', 'utf8');
+const cut = src.indexOf('// Helper bilíngue');
+if (cut < 0) { console.error('nao achei o corte pos-makeT/tt'); process.exit(1); }
+const body = src.slice(0, cut);
+const sandbox = { console };
+sandbox.globalThis = sandbox;
+const vm = require('vm');
+vm.createContext(sandbox);
+vm.runInContext(body + '\nthis.__makeT = makeT;', sandbox);
+const t = sandbox.__makeT('ptbr');
+const out = t('constructor');
+if (typeof out !== 'string') {
+  console.error('IN-08 FAIL: t("constructor") returned ' + typeof out + ' (' + out + '), expected the literal key string back (missing-key fallback)');
+  process.exit(1);
+}
+console.log('IN-08 ok: makeT() dict lookup does not leak inherited prototype values.');
+'@
+  $tmp = Join-Path ([System.IO.Path]::GetTempPath()) "check-pack-import-dialog-$([guid]::NewGuid()).cjs"
+  try {
+    Set-Content -LiteralPath $tmp -Value $nodeScript -Encoding utf8NoBOM
+    Push-Location $repoRoot
+    try {
+      $nodeOut = & node $tmp 2>&1
+      $nodeExit = $LASTEXITCODE
+    } finally {
+      Pop-Location
+    }
+    if ($nodeExit -ne 0) {
+      throw "IN-08 runtime proof failed: $nodeOut"
+    }
+  } finally {
+    if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force }
+  }
+} else {
+  Write-Warning 'node nao encontrado - prova de execucao do IN-08 pulada (assercoes estruturais ja rodaram).'
+}
+
 # ── Sem catch vazio ──
 
 if ($dialog -match 'catch\s*\([^)]*\)\s*\{\s*\}') {
