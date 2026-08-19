@@ -63,6 +63,16 @@ if ($loader -notmatch '!_versionByKey\(_currentVersion\)[\s\S]{0,400}?setCurrent
   throw 'CR-01: refreshPluginVersions() must repair a dangling _currentVersion after splicing idb entries out - otherwise the selected key resolves to nothing and every render retries forever.'
 }
 
+# ── WR-05: nao inventar escola/edicao pra um pack de terceiro ─────
+# Um schoolIdx nao reconhecido (SCHOOL_INDEX[chave] === undefined) tinha que
+# propagar null (honesto), nao 4/Evocacao. A prova de execucao do CR-03 acima
+# usa 'constructor' como escola e so checa `typeof !== 'number' && !== null` -
+# isso passa tanto com null quanto com o antigo `: 4` (tambem numero), entao
+# nao pega uma reversao. Esta asserção estrutural pega o literal exato.
+if ($loader -notmatch "school: typeof schoolIdx === 'number' \? schoolIdx : null") {
+  throw "WR-05: adaptSpell() must propagate null for an unrecognized school, not default to 4 (Evocação) - a third-party pack whose school name does not match SCHOOL_INDEX must not silently render as a specific school."
+}
+
 # ── Prova de execucao: CR-03 pelo adaptSpell real ─────────────────
 # Roda o adaptSpells() de verdade, do arquivo de producao, com uma magia cujo
 # class/source usam nomes de propriedade do prototipo.
@@ -118,10 +128,12 @@ for (const c of (s.classesEn || [])) {
   if (typeof c !== 'string') bad.push('classesEn item is ' + typeof c);
 }
 if (typeof s.src !== 'string') bad.push('src is ' + typeof s.src);
-// WR-05: um nome de escola nao reconhecido agora propaga null (honesto) em vez
-// de inventar 4/Evocacao — o que o CR-03 realmente precisa proibir e um valor
-// herdado do prototipo (funcao/objeto), nao null.
-if (typeof s.school !== 'number' && s.school !== null) bad.push('school is ' + typeof s.school);
+// WR-05: um nome de escola nao reconhecido ('constructor', que nao existe em
+// SCHOOL_INDEX) tem que propagar EXATAMENTE null - nao 4 (Evocacao antiga) e
+// nao um valor herdado do prototipo (funcao/objeto). Checar so
+// "typeof !== 'number' && !== null" nao pegaria uma reversao pro antigo `: 4`,
+// que tambem e number.
+if (s.school !== null) bad.push('school is ' + JSON.stringify(s.school) + ', expected null for an unrecognized school name');
 
 // O consumidor real em v10-hifi.jsx:991 faz exatamente isto.
 try {

@@ -107,6 +107,22 @@ if ($dialog -notmatch 'setMode\(') {
   throw 'pack-import-dialog.jsx has no mode-state assignment (setMode) - file/URL mode exclusivity requires one.'
 }
 
+# ── WR-09: falha de armazenamento (quota) detectada FORA do enum de
+# PACK_ERROR_CODES e mapeada pra sua propria mensagem, nao empilhada em
+# packErr.unknown. QuotaExceededError acontece DEPOIS da validacao (na
+# escrita do IndexedDB), entao nao tem como vir num dos 5 codigos do
+# pipeline de import.
+if ($dialog -notmatch 'QuotaExceededError') {
+  throw "WR-09: packErrKeyFor() must detect a storage-quota failure (err.name === 'QuotaExceededError', or legacy code 22) and map it to packErr.quota - otherwise it collapses into packErr.unknown, which reads as a generic/unexplained failure to the user."
+}
+if ($dialog -notlike '*packErr.quota*') {
+  throw 'WR-09: pack-import-dialog.jsx does not reference packErr.quota.'
+}
+$quotaCount = ([regex]::Matches($i18n, [regex]::Escape("'packErr.quota'"))).Count
+if ($quotaCount -lt 2) {
+  throw "i18n.jsx is missing packErr.quota in one of the ptbr/en blocks (found $quotaCount occurrence(s), need >= 2)"
+}
+
 # ── Sem catch vazio ──
 
 if ($dialog -match 'catch\s*\([^)]*\)\s*\{\s*\}') {

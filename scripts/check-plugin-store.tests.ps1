@@ -35,6 +35,14 @@ if ($store -match 'catch\s*\([^)]*\)\s*\{\s*\}') {
   throw 'plugin-store.jsx has an empty catch block - the storage layer must not swallow errors.'
 }
 
+# ── WR-04: a missing IndexedDB record must throw, not silently become []. A
+# returned [] gets cached by loadVersion() as a "successful" empty spell list
+# forever - the loader's own catch (which does NOT cache failures and toasts
+# toast.loadFailed) never gets a chance to run.
+if ($store -notmatch 'if \(!record\) throw new Error') {
+  throw "WR-04: getSpells() must throw on a missing record, not return [] - an empty return is cached as success by loadVersion() and never retried."
+}
+
 # 'navigator.storage' removido desta lista no plano 02-02: STOR-02 exige
 # navigator.storage.persist()/.persisted() dentro de plugin-store.jsx no boot
 # (ROADMAP/REQUIREMENTS autoritativos, ver A-03 em 02-02-PLAN.md) — a suposição

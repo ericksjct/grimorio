@@ -179,6 +179,14 @@ if (-not ($clearIdx -lt $noopIdx)) {
   throw 'WR-05: setCurrentVersion() must clear _wantedVersionKey BEFORE the `_currentVersion === key` early-return, not after - otherwise re-selecting the version you are already on (the obvious manual fix) fails to cancel a stuck pending preference.'
 }
 
+# ── WR-03: loadVersion() must re-check _versionByKey(key) before caching an
+# in-flight load's result. Without this, a pack removed mid-fetch (refreshPluginVersions
+# invalidated it via `delete _cache[key]`) gets resurrected in memory the
+# instant the stale fetch resolves.
+if ($loader -notmatch 'if \(_versionByKey\(key\)\)[\s\S]{0,120}?_cache\[key\] = adapted') {
+  throw 'WR-03: loadVersion() must re-check _versionByKey(key) before writing _cache[key] - otherwise an in-flight load for a version removed mid-fetch resurrects it in the cache.'
+}
+
 # ── index.html: leitura única da versão inicial (04-02 Task 2) ─────
 $indexPath = Join-Path $repoRoot 'index.html'
 $index = Get-Content -Raw -LiteralPath $indexPath
