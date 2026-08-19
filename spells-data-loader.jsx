@@ -97,6 +97,12 @@ function refreshPluginVersions() {
 
 async function _refreshPluginVersionsInner() {
   if (!window.pluginStore || typeof window.pluginStore.listPacks !== 'function') {
+    // CR-01: sem isto, uma preferência plugin-* pendente (ou um `?v=`
+    // compartilhado que nunca existiu neste dispositivo) fica armada pra
+    // sempre — o consumo de _wantedVersionKey só acontece mais abaixo, que
+    // este early return nunca alcança.
+    console.warn('[spells-data-loader] window.pluginStore ausente — packs não enumerados.');
+    _wantedVersionKey = null;
     return [];
   }
 
@@ -105,6 +111,9 @@ async function _refreshPluginVersionsInner() {
     metas = await window.pluginStore.listPacks();
   } catch (e) {
     console.warn('[spells-data-loader] Falha ao enumerar packs do IndexedDB:', e);
+    // CR-01: mesmo raciocínio — uma enumeração que falha (onblocked, quota,
+    // storage bloqueado) não pode deixar a preferência pendente pra sempre.
+    _wantedVersionKey = null;
     return [];
   }
 

@@ -471,13 +471,22 @@ function App() {
 
   // Persist prefs whenever they change (tema, modo, personagem, idioma, versão).
   // WR-01: enquanto o loader ainda deve uma tentativa de resolver uma
-  // preferência plugin-* (pack ainda não enumerado), não grava por cima —
-  // senão prefs.versionKey vira o builtin de boot antes do retry, e se
+  // preferência plugin-* (pack ainda não enumerado), não grava versionKey por
+  // cima dela — senão vira o builtin de boot antes do retry, e se
   // refreshPluginVersions() falhar (onblocked, quota, etc.) a preferência
   // some de vez do localStorage.
+  // CR-01: esse guard é só sobre `versionKey`. A rodada anterior gateava o
+  // efeito INTEIRO nele — um link compartilhado com `?v=plugin-x` que nunca
+  // resolve (pack ausente no destinatário) ou um IndexedDB indisponível
+  // deixava _wantedVersionKey armado pra sempre, e dark/theme/character/lang
+  // paravam de persistir pro resto da sessão. Persistir sempre; só o
+  // versionKey espera o retry.
   React.useEffect(() => {
-    if (window.hasPendingSpellVersion?.()) return;
-    savePrefs({ ...loadPrefs(), dark, theme, characterName: character ? character.name : null, lang, versionKey });
+    const prev = loadPrefs();
+    savePrefs({
+      ...prev, dark, theme, characterName: character ? character.name : null, lang,
+      versionKey: window.hasPendingSpellVersion?.() ? (prev.versionKey ?? versionKey) : versionKey,
+    });
   }, [dark, theme, character, lang, versionKey]);
 
   // Paint the page background with the active theme so there's no flash of

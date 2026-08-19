@@ -146,6 +146,20 @@ if ($loader -notmatch 'refreshPluginVersions\(\)[\s\S]*?_wantedVersionKey[\s\S]{
   throw 'refreshPluginVersions() must honor a pending _wantedVersionKey by calling setCurrentVersion once the key resolves.'
 }
 
+# ── CR-01: pluginStore ausente / listPacks() falha não pode deixar a
+# preferência de versão pendente armada pra sempre — os dois early returns
+# de _refreshPluginVersionsInner() precisam limpar _wantedVersionKey antes
+# de devolver [], senão ela nunca mais é reconsiderada (nem quando resolveria
+# de cara numa visita seguinte).
+$innerMatch = [regex]::Match($loader, 'async function _refreshPluginVersionsInner\(\)[\s\S]{0,5000}?\r?\n\}')
+if (-not $innerMatch.Success) {
+  throw 'CR-01: could not locate _refreshPluginVersionsInner() body in spells-data-loader.jsx.'
+}
+$earlyReturnClears = ([regex]::Matches($innerMatch.Value, '_wantedVersionKey\s*=\s*null;\s*\r?\n\s*return \[\];')).Count
+if ($earlyReturnClears -lt 2) {
+  throw "CR-01: both early-return paths of _refreshPluginVersionsInner() (missing pluginStore, rejected listPacks()) must clear _wantedVersionKey before returning [] - found $earlyReturnClears. Otherwise a pending plugin-* preference is stranded for the rest of the session (and, via the index.html guard, so is all other prefs persistence)."
+}
+
 # ── index.html: leitura única da versão inicial (04-02 Task 2) ─────
 $indexPath = Join-Path $repoRoot 'index.html'
 $index = Get-Content -Raw -LiteralPath $indexPath
@@ -163,6 +177,30 @@ if ($index.Contains('window.setCurrentSpellVersion(versionKey)')) {
 $langStateMatch = [regex]::Match($index, 'React\.useState\(\s*langOfVersionKey\(initialVersionKey\)\s*\|\|\s*initial\.lang')
 if (-not $langStateMatch.Success) {
   throw 'index.html initial lang state must try langOfVersionKey(initialVersionKey) before initial.lang.'
+}
+
+# ── CR-01: hasPendingSpellVersion() só pode gatear o campo versionKey do
+# efeito de persistência de prefs, não o efeito inteiro. Round 2 (WR-01)
+# gateava o `return` logo no topo do efeito, o que também suspendia
+# dark/theme/characterName/lang pelo resto da sessão sempre que a
+# preferência de versão não resolvesse (link compartilhado pra um pack
+# ausente, IndexedDB indisponível).
+$prefsEffectMatch = [regex]::Match($index, 'React\.useEffect\(\(\) => \{[\s\S]{0,700}?\}, \[dark, theme, character, lang, versionKey\]\);')
+if (-not $prefsEffectMatch.Success) {
+  throw 'CR-01: could not locate the prefs-persistence React.useEffect in index.html.'
+}
+$prefsEffectBody = $prefsEffectMatch.Value
+if ($prefsEffectBody -match '^\s*React\.useEffect\(\(\) => \{\s*\r?\n\s*if \(window\.hasPendingSpellVersion') {
+  throw 'CR-01: the prefs-persistence effect must not early-return the whole body on hasPendingSpellVersion() - that suspends dark/theme/characterName/lang persistence too, not just versionKey.'
+}
+if ($prefsEffectBody -notmatch 'characterName:\s*character') {
+  throw 'CR-01: prefs-persistence effect must still write characterName unconditionally (not gated by hasPendingSpellVersion()).'
+}
+if ($prefsEffectBody -notmatch 'hasPendingSpellVersion') {
+  throw 'CR-01: prefs-persistence effect lost the hasPendingSpellVersion() guard entirely - a pending plugin-* version preference must not be clobbered by an early savePrefs() write.'
+}
+if ($prefsEffectBody -notmatch 'versionKey:\s*window\.hasPendingSpellVersion') {
+  throw 'CR-01: the hasPendingSpellVersion() guard must be scoped to the versionKey field of the saved prefs object, not the whole effect.'
 }
 
 # ── Ordem de carga: plugin-store antes do loader (04-05, regressao do passo 12) ─
