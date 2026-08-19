@@ -57,23 +57,44 @@ foreach ($entry in $entryLines) {
 }
 
 # ── WR-07: PHB deve comparar com PHB, não com a SRD que ordena primeiro ────
-# `find` respeita a ordem do registro; a SRD ocupa os índices 0-1, então um
-# `find` ingênuo por lang+edição-diferente oferece SRD 5.1 pra quem está
-# comparando o PHB 2024. Prova de execução: replica a seleção de `other` de
-# verdade contra o BUILTIN_VERSIONS de verdade, pro caso concreto PHB-2024-EN.
 foreach ($entry in $entryLines) {
   if ($entry.Value -notmatch "corpus:\s*'[^']+'") {
     throw "WR-07: a BUILTIN_VERSIONS entry is missing a non-empty `corpus` field (used to prefer SRD<->SRD / PHB<->PHB pairs): $($entry.Value)"
   }
 }
-# Checa o corpo INTEIRO da funcao (nao so a linha `const other = ...`) -
-# sameCorpus e definido numa linha separada, e "-match 'corpus'" contra so
-# $otherExpr passaria mesmo se sameCorpus() nunca checasse v.corpus (o
-# identificador "sameCorpus" sozinho ja contem a substring, case-insensitive).
-if ($fnBody -notmatch 'v\.corpus\s*===\s*cur\.corpus') {
-  throw "WR-07: useEditionCompare must prefer a same-`corpus` match (v.corpus === cur.corpus) before falling back to any other edition - otherwise registry order (SRD first) picks the wrong pair for PHB entries."
+
+# ── CR-02 / WR-07: um ÚNICO helper de seleção, usado por AMBOS os call sites ──
+# Round 2 corrigiu só useEditionCompare (WR-07). Round 3 achou o mesmo defeito
+# em HifiLangToggle (CR-02) porque os dois tinham cópias separadas da lógica
+# de preferência de corpus. Structural: hifiSiblingVersion() existe, checa
+# `v.corpus === cur.corpus`, e AMBOS HifiLangToggle e useEditionCompare
+# chamam por ela — se qualquer um dos dois voltar a usar `versions.find(...)`
+# cru, esta asserção falha (o que WR-03 aponta que não existia antes).
+$helperMatch = [regex]::Match($ui, 'function hifiSiblingVersion\([\s\S]{0,600}?\n\}')
+if (-not $helperMatch.Success) {
+  throw 'CR-02: could not locate the shared hifiSiblingVersion() helper in v10-hifi.jsx.'
+}
+$helperBody = $helperMatch.Value
+if ($helperBody -notmatch 'v\.corpus\s*===\s*cur\.corpus') {
+  throw "CR-02: hifiSiblingVersion() must prefer a same-`corpus` match (v.corpus === cur.corpus) before falling back to any other match."
 }
 
+$toggleMatch = [regex]::Match($ui, 'function HifiLangToggle\([\s\S]{0,3000}?\n\}')
+if (-not $toggleMatch.Success) {
+  throw 'CR-02: could not locate HifiLangToggle in v10-hifi.jsx.'
+}
+if ($toggleMatch.Value -notmatch 'hifiSiblingVersion\(') {
+  throw 'CR-02: HifiLangToggle must select its pt/en siblings through hifiSiblingVersion() - the same helper useEditionCompare uses. A separate ad-hoc find() is how round 2 introduced CR-02 (WR-06 got the corpus fix, the sibling call site did not).'
+}
+if ($fnBody -notmatch 'hifiSiblingVersion\(') {
+  throw 'CR-02/WR-07: useEditionCompare must select `other` through hifiSiblingVersion() too, not its own inline corpus logic.'
+}
+
+# ── WR-02: prova de execução real, não uma reimplementação da lógica ────────
+# A versão anterior desta prova reimplementava a expressão de seleção em vez
+# de ler a função de produção — testava a si mesma e continuava verde mesmo
+# se `useEditionCompare`/`HifiLangToggle` fossem revertidos. Agora ela extrai
+# hifiSiblingVersion() de v10-hifi.jsx via regex e faz eval nela mesma.
 $node = Get-Command node -ErrorAction SilentlyContinue
 if ($node) {
   $nodeScript = @'
@@ -83,17 +104,30 @@ const m = src.match(/const BUILTIN_VERSIONS = (\[[\s\S]*?\n\]);/);
 if (!m) { console.error('nao achei BUILTIN_VERSIONS'); process.exit(1); }
 const BUILTIN_VERSIONS = eval(m[1]);
 
-const cur = BUILTIN_VERSIONS.find(v => v.key === 'spells-5E-2024-EN'); // PHB 2024 (EN)
-const sameCorpus = v => v.lang === cur.lang && v.edition && v.edition !== cur.edition && v.corpus === cur.corpus;
-const other = cur && cur.edition
-  ? (BUILTIN_VERSIONS.find(sameCorpus) || BUILTIN_VERSIONS.find(v => v.lang === cur.lang && v.edition && v.edition !== cur.edition) || null)
-  : null;
+const ui = fs.readFileSync('v10-hifi.jsx', 'utf8');
+const helperMatch = ui.match(/function hifiSiblingVersion\([\s\S]*?\n\}/);
+if (!helperMatch) { console.error('nao achei hifiSiblingVersion() em v10-hifi.jsx'); process.exit(1); }
+// WR-02: eval na funcao de PRODUCAO de verdade, nao numa copia da logica.
+eval(helperMatch[0]);
 
+// WR-07: PHB 2024 (EN) deve comparar com PHB 2014 (EN), nao com a SRD que
+// ocupa o indice 0 do registro.
+const curPHB = BUILTIN_VERSIONS.find(v => v.key === 'spells-5E-2024-EN');
+const other = hifiSiblingVersion(BUILTIN_VERSIONS, curPHB, v => v.lang === curPHB.lang && v.edition && v.edition !== curPHB.edition);
 if (!other || other.key !== 'spells-5E-2014-EN') {
   console.error('WR-07 FAIL: PHB 2024 (EN) compared against ' + (other ? other.key : 'null') + ', expected spells-5E-2014-EN (PHB 2014)');
   process.exit(1);
 }
-console.log('WR-07 ok: PHB 2024 (EN) compares against PHB 2014, not SRD 5.1.');
+
+// CR-02: PHB 2024 (PT-BR) -> alternar para EN deve ir para PHB 2024 (EN), nao
+// para srd-2024-en (indice 0, mesmo lang+edicao, corpus diferente).
+const curPTBR = BUILTIN_VERSIONS.find(v => v.key === 'spells-5E-2024-PTBR');
+const en = hifiSiblingVersion(BUILTIN_VERSIONS, curPTBR, v => v.lang === 'en' && v.edition === curPTBR.edition);
+if (!en || en.key !== 'spells-5E-2024-EN') {
+  console.error('CR-02 FAIL: PHB 2024 (PT-BR) lang-toggle-EN resolved to ' + (en ? en.key : 'null') + ', expected spells-5E-2024-EN (PHB 2024 EN)');
+  process.exit(1);
+}
+console.log('WR-07/CR-02 ok: hifiSiblingVersion() prefers same-corpus pairs for both useEditionCompare and HifiLangToggle.');
 '@
   $tmp = Join-Path ([System.IO.Path]::GetTempPath()) "check-edition-compare-$([guid]::NewGuid()).cjs"
   try {
@@ -106,13 +140,13 @@ console.log('WR-07 ok: PHB 2024 (EN) compares against PHB 2014, not SRD 5.1.');
       Pop-Location
     }
     if ($nodeExit -ne 0) {
-      throw "WR-07 runtime proof failed: $nodeOut"
+      throw "WR-07/CR-02 runtime proof failed: $nodeOut"
     }
   } finally {
     if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force }
   }
 } else {
-  Write-Warning 'node nao encontrado - prova de execucao do WR-07 pulada (assercoes estruturais ja rodaram).'
+  Write-Warning 'node nao encontrado - prova de execucao do WR-07/CR-02 pulada (assercoes estruturais ja rodaram).'
 }
 
 Write-Output 'Edition comparator matches by declared edition, and every builtin version declares one.'

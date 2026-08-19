@@ -430,6 +430,20 @@ function HifiThemeToggle({ dark, lang = 'ptbr', style }) {
   );
 }
 
+// Escolhe, dentro de `versions`, a entrada irmã de `cur` que bate `predicate`
+// — preferindo o mesmo `corpus` (SRD<->SRD, PHB<->PHB) antes de aceitar
+// qualquer correspondência. Único ponto de seleção usado por HifiLangToggle
+// (mesma edição, outro idioma) e useEditionCompare (mesmo idioma, outra
+// edição) pra que os dois não possam divergir de novo como em CR-02 — ali
+// WR-06 ganhou a preferência de corpus e o call site irmão, no mesmo passo,
+// não ganhou.
+function hifiSiblingVersion(versions, cur, predicate) {
+  if (!cur) return null;
+  return versions.find(v => predicate(v) && v.corpus === cur.corpus)
+    || versions.find(predicate)
+    || null;
+}
+
 // Seletor de idioma — dois textos clicáveis no rodapé (PT / EN), sempre
 // visíveis. O idioma ativo fica em cor de texto normal; o inativo como link
 // sublinhado clicável. Emoji de bandeirinha ao lado de cada um.
@@ -445,8 +459,10 @@ function HifiLangToggle({ lang = 'ptbr', versions = [], versionKey, onSwitch }) 
   // Versões disponíveis para a edição atual. Sem edição declarada (pack
   // BYOD sem `edition`), o toggle degrada pra desabilitado em vez de pular
   // pra um par errado — os botões já no-opam quando pt/en é null.
-  const pt = curEdition ? versions.find(v => v.lang === 'ptbr' && v.edition === curEdition) : null;
-  const en = curEdition ? versions.find(v => v.lang === 'en' && v.edition === curEdition) : null;
+  // CR-02: hifiSiblingVersion prefere o mesmo `corpus` — sem isso, a SRD
+  // (índices 0-1 do registro) vence qualquer PHB por ordem de `find`.
+  const pt = curEdition ? hifiSiblingVersion(versions, cur, v => v.lang === 'ptbr' && v.edition === curEdition) : null;
+  const en = curEdition ? hifiSiblingVersion(versions, cur, v => v.lang === 'en' && v.edition === curEdition) : null;
 
   const itemStyle = (active) => ({
     ...hifiFooterLink,
@@ -1037,10 +1053,10 @@ function useEditionCompare(sel, versionKey, versions, lang, showToast) {
   // Sem `edition` na versão atual (pack de terceiro sem o campo), não há "a outra
   // edição" honesta para oferecer.
   // WR-07: SRD fica nos índices 0-1 do registro, então `find` sozinho oferecia
-  // SRD 5.1 pra quem comparava PHB 2024. Prefere o mesmo `corpus` primeiro.
-  const sameCorpus = v => v.lang === cur.lang && v.edition && v.edition !== cur.edition && v.corpus === cur.corpus;
+  // SRD 5.1 pra quem comparava PHB 2024. hifiSiblingVersion prefere o mesmo
+  // `corpus` primeiro — mesmo helper usado por HifiLangToggle (CR-02).
   const other = cur && cur.edition
-    ? (versions.find(sameCorpus) || versions.find(v => v.lang === cur.lang && v.edition && v.edition !== cur.edition) || null)
+    ? hifiSiblingVersion(versions, cur, v => v.lang === cur.lang && v.edition && v.edition !== cur.edition)
     : null;
   const toggle = React.useCallback(async () => {
     if (alt) { setAlt(null); return; }
