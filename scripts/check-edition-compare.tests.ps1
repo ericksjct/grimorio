@@ -83,8 +83,19 @@ $toggleMatch = [regex]::Match($ui, 'function HifiLangToggle\([\s\S]{0,3000}?\n\}
 if (-not $toggleMatch.Success) {
   throw 'CR-02: could not locate HifiLangToggle in v10-hifi.jsx.'
 }
-if ($toggleMatch.Value -notmatch 'hifiSiblingVersion\(') {
-  throw 'CR-02: HifiLangToggle must select its pt/en siblings through hifiSiblingVersion() - the same helper useEditionCompare uses. A separate ad-hoc find() is how round 2 introduced CR-02 (WR-06 got the corpus fix, the sibling call site did not).'
+# Mutation-tested: exigir apenas UMA ocorrencia deixava passar a DERIVA
+# PARCIAL -- reverter so a linha `pt` e manter a `en` mantinha os 24 scripts
+# verdes. Deriva parcial entre dois call sites irmaos e exatamente a forma do
+# CR-02, entao o guarda precisa contar os DOIS e proibir find() cru no corpo.
+$toggleCalls = ([regex]::Matches($toggleMatch.Value, 'hifiSiblingVersion\(')).Count
+if ($toggleCalls -lt 2) {
+  throw "CR-02: HifiLangToggle must resolve BOTH its pt and en siblings through hifiSiblingVersion() - found $toggleCalls call(s). Reverting just one of the two lines is the partial drift that produced CR-02 in the first place (WR-06 fixed one call site, its sibling kept the ad-hoc lookup)."
+}
+# Estreito de proposito: `versions.find(v => v.key === versionKey)` resolve a
+# versao CORRENTE e e legitimo. O que nao pode voltar e um find() por IDIOMA,
+# que e a selecao de irmao -- a decisao que pertence a hifiSiblingVersion().
+if ($toggleMatch.Value -match 'versions\.find\([^)]*\.lang\s*===') {
+  throw 'CR-02: HifiLangToggle must not pick a sibling with a bare versions.find(v => v.lang === ...) - sibling selection belongs to hifiSiblingVersion(), which owns the corpus preference. A local lang-based find() bypasses it silently.'
 }
 if ($fnBody -notmatch 'hifiSiblingVersion\(') {
   throw 'CR-02/WR-07: useEditionCompare must select `other` through hifiSiblingVersion() too, not its own inline corpus logic.'
