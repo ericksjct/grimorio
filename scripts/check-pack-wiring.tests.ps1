@@ -83,6 +83,15 @@ if ($sw -like '*qa-fixtures*') {
   throw 'sw.js must not reference qa-fixtures in PRECACHE - payload de teste nao entra no app shell offline de ninguem.'
 }
 
+# 9. IN-04: event.respondWith() nunca pode resolver pra undefined. Offline
+# pra um recurso de app-shell NUNCA cacheado deixa `cached` undefined - sem
+# um fallback Response.error(), respondWith() falha com um NetworkError e um
+# TypeError barulhento no console do SW, em vez de cair no tratamento
+# offline padrao do navegador.
+if ($sw -notmatch "network\.then\(\(res\) => res \|\| cached \|\| Response\.error\(\)\)") {
+  throw "IN-04: the shell branch of the fetch handler must fall back to Response.error() when both network and cache miss (network.then((res) => res || cached || Response.error())) - otherwise event.respondWith() can resolve to undefined."
+}
+
 # ── CR-03: um `?build=` compartilhado com slots.total inflado nao pode
 # travar a aba. persistCharacters() e o unico choke point de escrita/
 # broadcast (localStorage.setItem + dispatchEvent) - useCharacters()'s

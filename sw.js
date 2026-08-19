@@ -5,8 +5,12 @@
 //    mais novo (inclusive em dev); offline cai pro cache.
 //  · Dados e vendors (JSONs de magias, fontes, unpkg): stale-while-revalidate —
 //    responde do cache na hora e atualiza em segundo plano (mudam raramente).
-// Os 4 JSONs são pré-cacheados no install (em background, não bloqueia o boot),
-// então o app inteiro funciona offline já a partir da primeira visita.
+// Os 6 JSONs de magias (4 legado + 2 SRD) são pré-cacheados no install (em
+// background, não bloqueia o boot), então o app inteiro funciona offline já
+// a partir da primeira visita.
+// ponytail: cada entrada nova em PRECACHE é acréscimo puro — CACHE_VERSION
+// não precisa mudar, install() reabre o mesmo cache e só adiciona o que
+// faltar, sem re-baixar os JSONs de magias já cacheados.
 const CACHE_VERSION = 'grimorio-v1';
 
 // Extensões do app shell (código que muda a cada deploy) → network-first.
@@ -20,8 +24,8 @@ const PRECACHE = [
   './grimorio-helpers.jsx',
   './i18n.jsx',
   './spells-data-loader.jsx',
-  './plugin-store.jsx', // ponytail: CACHE_VERSION não muda — install() reabre o mesmo cache e só adiciona este arquivo, sem re-baixar os JSONs de magias já cacheados
-  './pack-import.jsx', // acréscimo puro no mesmo cache — sem bump de CACHE_VERSION, sem re-baixar os JSONs de magias já cacheados
+  './plugin-store.jsx',
+  './pack-import.jsx',
   './v11-character-editor.jsx',
   './pack-import-dialog.jsx',
   './v10-hifi.jsx',
@@ -36,7 +40,7 @@ const PRECACHE = [
   './spells-5E-2014-PTBR.json',
   './spells-5E-2024-EN.json',
   './spells-5E-2014-EN.json',
-  './srd-2024-en.json', // ponytail: CACHE_VERSION não muda — acréscimo puro, os JSONs de magias já cacheados não são re-baixados
+  './srd-2024-en.json',
   './srd-2014-en.json',
   'https://unpkg.com/react@18.3.1/umd/react.production.min.js',
   'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js',
@@ -81,7 +85,12 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => cached); // offline: fica com o cache (ou falha se nunca visto)
       // Shell: rede primeiro (código sempre fresco); dados: cache primeiro.
-      return isShell ? network.then((res) => res || cached) : (cached || network);
+      // IN-04: offline pra um recurso NUNCA cacheado faz `cached` ser
+      // undefined - sem o Response.error() de fallback, respondWith()
+      // resolveria pra undefined e o navegador reportaria um NetworkError
+      // genérico (com TypeError barulhento no console do SW) em vez de cair
+      // no tratamento offline padrão dele.
+      return isShell ? network.then((res) => res || cached || Response.error()) : (cached || network);
     })
   );
 });
