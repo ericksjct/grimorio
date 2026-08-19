@@ -123,6 +123,15 @@ if ($quotaCount -lt 2) {
   throw "i18n.jsx is missing packErr.quota in one of the ptbr/en blocks (found $quotaCount occurrence(s), need >= 2)"
 }
 
+# ── WR-04: o botão de submit deve desabilitar na tela de sucesso ───
+# O botão do rodapé fica FORA do `result ? ... : ...` que decide o conteúdo -
+# na tela de sucesso ele continua visível. WR-08 só reseta o formulário
+# quando o diálogo REABRE, então clicar de novo na tela de sucesso reenvia
+# o mesmo file/url e instala um pack duplicado (freeIdentifier dá um id novo).
+if ($dialog -notmatch 'submitDisabled\s*=\s*busy\s*\|\|\s*!hasValue\s*\|\|\s*!!result') {
+  throw "WR-04: submitDisabled must also be true when `result` is set (busy || !hasValue || !!result) - otherwise the install button stays live on the success screen and a second click installs a duplicate pack."
+}
+
 # ── Sem catch vazio ──
 
 if ($dialog -match 'catch\s*\([^)]*\)\s*\{\s*\}') {

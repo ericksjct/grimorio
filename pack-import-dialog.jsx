@@ -121,7 +121,12 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
   }
 
   const hasValue = mode === 'file' ? !!file : url.trim().length > 0;
-  const submitDisabled = busy || !hasValue;
+  // WR-04: o botão do rodapé fica FORA do `result ? ... : ...` da área de
+  // conteúdo — na tela de sucesso ele continua visível e clicável. WR-08
+  // (rodada 2) só reseta o formulário quando o diálogo REABRE; sem `!!result`
+  // aqui, clicar de novo na tela de sucesso reenvia o mesmo file/url e
+  // freeIdentifier() dá um id novo — instala um pack duplicado de verdade.
+  const submitDisabled = busy || !hasValue || !!result;
 
   return (
     <div
