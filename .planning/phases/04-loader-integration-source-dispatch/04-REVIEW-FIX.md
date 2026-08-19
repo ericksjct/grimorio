@@ -1,177 +1,164 @@
 ---
 phase: 04-loader-integration-source-dispatch
-fixed_at: 2026-08-18T23:18:08Z
 review_path: .planning/phases/04-loader-integration-source-dispatch/04-REVIEW.md
-iteration: 1
-findings_in_scope: 13
-fixed: 13
-skipped: 0
+iterations: 2
 status: all_fixed
+iteration_1:
+  findings_in_scope: 13
+  fixed: 13
+  skipped: 0
+  commits: a8bad64..5b1a9e7
+iteration_2:
+  findings_in_scope: 17
+  fixed: 16
+  no_change_needed: 1
+  commits: 1c95cfa..a4df30f
+  plus: 736ff8e (orchestrator, guard strengthening)
 ---
 
-# Phase 4: Code Review Fix Report
+# Fase 04 — relatório de correções pós-revisão
 
-**Fixed at:** 2026-08-18T23:18:08Z
-**Source review:** .planning/phases/04-loader-integration-source-dispatch/04-REVIEW.md
-**Iteration:** 1
+Duas iterações de `--fix`. A segunda foi invocada com `--all`, então achados
+info entraram no escopo.
 
-**Summary:**
-- Findings in scope: 13 (CR-01, WR-01..WR-12 — Info findings IN-01..IN-07 explicitly out of scope per fix instructions)
-- Fixed: 13
-- Skipped: 0
-
-All 24 `scripts/check-*.tests.ps1` structural tests pass after every commit (verified after each individual fix, not just at the end).
-
-## Fixed Issues
-
-### CR-01: `?f.constructor=` shared link permanently error-screens the app
-
-**Files modified:** `v10-hifi.jsx`, `scripts/check-loader-hardening.tests.ps1`
-**Commit:** `a8bad64`
-**Applied fix:** `hifiFilterConfig()` now returns `Object.assign(Object.create(null), {...})` instead of a plain object literal, closing the same prototype-pollution class CR-03 already fixed in the loader's lookup tables. Added a belt-and-braces key whitelist at the `?f.*=` URL-parsing site (`useHifiAppState`) so unknown keys never enter `filters` state at all. Added a structural assertion to `check-loader-hardening.tests.ps1` in the same style as the existing CR-03 loop, and verified with a standalone Node harness that `?f.constructor=` no longer yields a truthy inherited value.
-
-### WR-01: Mount-time `savePrefs` destroys a saved pack selection before enumeration can honour it
-
-**Files modified:** `index.html`, `spells-data-loader.jsx`
-**Commit:** `231d5e3`
-**Applied fix:** Added `window.hasPendingSpellVersion()` in the loader (`() => !!_wantedVersionKey`). The App's persistence effect in `index.html` now skips the `savePrefs` write while a pending preference is still armed, and merges with `loadPrefs()` instead of overwriting the whole object when it does write.
-
-### WR-02: `refreshPluginVersions()` has no concurrency guard, and the CR-01 repair is a silent switch
-
-**Files modified:** `spells-data-loader.jsx`, `i18n.jsx`, `scripts/check-source-dispatch.tests.ps1`
-**Commit:** `1d2d018`
-**Applied fix:** `refreshPluginVersions()` is now a synchronous wrapper that dedups concurrent calls via `_refreshInFlight` (same idiom as `_pending`/`_dbPromise`); the real work moved to `_refreshPluginVersionsInner()`. The CR-01 repair branch (dangling `_currentVersion`) now dispatches a `hifi-toast` (new i18n key `toast.versionSwitchedAway`, PT+EN) alongside the existing `console.warn`, so the forced version/language switch is explained instead of silently observed. Updated `check-source-dispatch.tests.ps1`'s literal-text assertions to match the new wrapper/inner function split.
-
-### WR-03: Cache invalidation for a removed pack misses `_pending`, resurrecting it
-
-**Files modified:** `spells-data-loader.jsx`
-**Commit:** `15bb077`
-**Applied fix:** The in-flight load in `loadVersion()` only writes `_cache[key]` (and, at the time, `_rawCache[key]`) if `_versionByKey(key)` still resolves when the fetch/adapt completes — an in-flight load for a pack removed mid-fetch no longer resurrects it in memory.
-
-### WR-04: Missing IndexedDB record produces a silently empty spell list cached as success
-
-**Files modified:** `plugin-store.jsx`
-**Commit:** `f4cf1e0`
-**Applied fix:** `getSpells(id)` now throws when the record is absent instead of returning `[]`. The loader's existing catch in `loadVersion()` absorbs this exactly like any other load failure (toasts `toast.loadFailed`, does not cache the failure).
-
-### WR-05: Third-party pack metadata coerced into plausible-but-wrong edition/school values
-
-**Files modified:** `spells-data-loader.jsx`, `v10-hifi.jsx`, `scripts/check-loader-hardening.tests.ps1`
-**Commit:** `81510dc`
-**Applied fix:** `adaptSpell()` now propagates absence instead of inventing it: `edition: edition || ''` (was `edition || detectEdition('')`, which always resolved to `'5e 2014'`) and `school: typeof schoolIdx === 'number' ? schoolIdx : null` (was `: 4`, silently becoming Evocation). Deleted `detectEdition()` — its only call site always passed `''`. Updated the detail-view render site (`v10-hifi.jsx` `{s.src} · {s.edition || '5e 2014'}`) to match the existing honest pattern used elsewhere in the file (`s.edition ? ... : ''`). Updated the CR-03 Node harness in `check-loader-hardening.tests.ps1` to accept `null` for unrecognized school (previously required strictly `'number'`).
-**Partial-scope note:** the review's fix text also said "render ... an escola desconhecida chip." I did not extend this to `schoolKey()`/`schoolName()` in `grimorio-helpers.jsx` (an unreviewed, out-of-scope file) — those helpers still silently default an unrecognized/`null` school index to Evocação/Evocation (`SCHOOL_KEYS[idx] || 'evoc'`, `arr[idx] || arr[4]`), including in `hifiFilterConfig`'s `get` accessor used for filtering. So a pack with an unrecognized school name will still visually and filter-wise present as Evocação, even though `s.school` is now honestly `null`. Closing that fully would require a new filter value, chip styling, and i18n across ~5 render sites in `v10-hifi.jsx` plus the shared helper — a larger, more invasive change than this Warning's stated fix scope. Flagging as a fast-follow rather than silently leaving it unmentioned.
-
-### WR-06: `HifiLangToggle` infers edition from a regex on the pack-author-chosen version key
-
-**Files modified:** `v10-hifi.jsx`
-**Commit:** `32e4fec`
-**Applied fix:** Replaced `const editionOf = (v) => (/2024/.test(v.key) ? '2024' : '2014');` with the declared `v.edition` field, matching the pattern already used in `useEditionCompare`. Without a declared edition the toggle degrades to disabled (buttons already no-op when `pt`/`en` resolve to null) instead of jumping to a wrong dataset/language. Kept the change scoped to the `curEdition`/`pt`/`en` calculation only, per the phase's caution not to redesign this component ahead of Phase 04.1.
-
-### WR-07: Edition comparator offers the first entry of *any* other edition (registry order picks SRD over PHB)
-
-**Files modified:** `spells-data-loader.jsx`, `v10-hifi.jsx`, `scripts/check-edition-compare.tests.ps1`
-**Commit:** `be15b44`
-**Applied fix:** Added a `corpus` field (`'srd' | 'phb' | 'pack'`) to every `BUILTIN_VERSIONS` entry and to `_packToVersion()`. `useEditionCompare`'s `other` selection now tries a same-corpus match first, falling back to any other edition only if none exists. Extended `check-edition-compare.tests.ps1` with the concrete PHB-2024→PHB-2014 pair the review asked for: a Node runtime proof (written to the OS temp dir, not the repo root — pre-empting the WR-12 pattern) plus a structural assertion on the whole function body (not just the `const other = ...` line, since checking only that line would pass even if `sameCorpus()` never actually compared `v.corpus`).
-
-### WR-08: Import dialog never resets, so reopening shows a stale success and re-installs duplicate the pack
-
-**Files modified:** `pack-import-dialog.jsx`
-**Commit:** `2e56930`
-**Applied fix:** Added a `React.useEffect` (positioned above the `if (!open) return null;` early return, per the Rules of Hooks) that resets `result`/`error`/`file`/`url`/`mode` whenever `open` becomes true.
-
-### WR-09: Storage failures collapse to `packErr.unknown` through a prototype-bearing lookup
-
-**Files modified:** `pack-import-dialog.jsx`, `i18n.jsx`
-**Commit:** `ca1234d`
-**Applied fix:** `PACK_ERR_KEY_BY_CODE` now built via `Object.assign(Object.create(null), {...})`. `packErrKeyFor()` was adapted from the review's suggested signature (`packErrKeyFor(err)`) since the actual call site passed only `err.code`, not the full error — updated the call site to pass `err` and added quota detection (`err.name === 'QuotaExceededError' || code === 22`) mapping to a new `packErr.quota` i18n key (PT+EN).
-
-### WR-10: The dialog's `refreshPluginVersions()` call is un-awaited *and* un-caught
-
-**Files modified:** `pack-import-dialog.jsx`
-**Commit:** `1e9d161`
-**Applied fix:** Added `.catch(e => console.warn(...))` to the fire-and-forget `window.refreshPluginVersions()` call after a successful import, matching the pattern already used by both boot call sites in `spells-data-loader.jsx`.
-
-### WR-11: Four dead symbols in the loader
-
-**Files modified:** `spells-data-loader.jsx`
-**Commit:** `39cce8c`
-**Applied fix:** Grepped the whole repo (`*.jsx`/`*.html`/`*.js`/`*.ps1`) for each symbol before removing anything. Deleted `_rawCache` (and its now-orphaned read/write/delete sites), `_originalV7BuildSpells`, `loadAllVersions`/`window.loadAllSpellVersions` (plus its unused `_loadingPromise` memo), and `window.setCurrentSpellVersion` (zero callers; `check-source-dispatch.tests.ps1:156` actively forbids re-adding its only historical caller). None of the four had any reader anywhere in the repo.
-
-### WR-12: `check-loader-hardening.tests.ps1` writes its Node harness into the deployed repo root
-
-**Files modified:** `scripts/check-loader-hardening.tests.ps1`
-**Commit:** `5b1a9e7`
-**Applied fix:** The scratch `.cjs` file is now written to `[System.IO.Path]::GetTempPath()` with a GUID-suffixed name, never the repo root. Added a `Get-Command node` check that degrades to a `Write-Warning` (skip the runtime proof, keep the structural assertions) instead of hard-failing the whole script on a machine without Node on PATH. Switched `-Encoding UTF8` to `-Encoding utf8NoBOM` per the review's note about Windows PowerShell 5.1 BOM emission.
-
-## Skipped Issues
-
-None — all 13 in-scope findings were fixed.
-
-## Verification
-
-All 24 `scripts/check-*.tests.ps1` scripts pass on the final tree:
-
-```
-PASS=24 FAIL=0
-```
-
-This was re-verified after every individual commit (not just once at the end), and in three cases (WR-02, WR-05, WR-07) a check script's own assertions were extended or adapted because the fix legitimately changed code shape the test was pinning (function signature split for the concurrency guard, `school` type widened to include `null`, and a new corpus-matching proof). Each such test change was itself sanity-checked by temporarily re-introducing the bug and confirming the test fails, then restoring the fix and confirming it passes again.
+**Nota sobre este arquivo:** o relatório da iteração 2 escrito pelo agente foi
+perdido — ele o escreveu no worktree isolado sem commitar (conforme instruído,
+já que o orquestrador é quem commita) e a remoção do worktree levou o arquivo
+junto. O conteúdo abaixo referente à iteração 2 foi **reconstruído a partir dos
+commits**, que sobreviveram. É a mesma classe de perda que o protocolo de
+execução alerta para SUMMARY.md em modo worktree; registrado aqui para não ser
+lido como relatório original do agente.
 
 ---
 
-_Fixed: 2026-08-18T23:18:08Z_
-_Fixer: Claude (gsd-code-fixer)_
-_Iteration: 1_
+## Iteração 1 — 13 achados (Critical + Warning)
+
+1 crítico e 12 warnings da segunda revisão, um commit atômico por achado,
+`a8bad64..5b1a9e7`. Detalhe por achado está nas mensagens de commit.
+
+O crítico era `?f.constructor=` num link compartilhado quebrando o app
+permanentemente — a mesma classe de defeito do CR-03 da primeira revisão
+(`Object.create(null)` nas tabelas de lookup), que tinha sido fechada só no
+loader e ficou aberta em `hifiFilterConfig` no `v10-hifi.jsx`.
+
+### O que esta iteração custou
+
+A terceira revisão mostrou que aplicar 13 consertos numa passada **introduziu
+dois criticals**:
+
+- Gatear toda a persistência de prefs numa flag de versão pendente (conserto do
+  WR-01) suspendia tema, personagem e idioma junto — a flag guardava um campo e
+  suprimia cinco.
+- Reescrever `HifiLangToggle` (WR-06) sem a preferência de corpus que o WR-07
+  acabara de adicionar no chamador irmão, no mesmo pass, mandava leitor de PHB
+  para o SRD.
+
+E o sinal de teste era mais fraco do que parecia: **10 dos 13 consertos podiam
+ser revertidos por completo com os 24 scripts verdes.** Um dos "testes de
+execução" reimplementava a expressão de produção em vez de lê-la do arquivo —
+testava a própria cópia.
+
+---
+
+## Iteração 2 — 17 achados (Critical + Warning + Info)
+
+Escopo: `--fix --all`. 16 corrigidos, 1 `no_change_needed`.
+
+Requisito imposto nesta rodada: **mutation testing por conserto** — aplicar,
+reverter só a mudança de produção, confirmar que o script guardião falha,
+restaurar. A ordem de execução também foi imposta, porque dois achados
+interagiam.
+
+| Commit | Achado | Produção | Guarda |
+|--------|--------|----------|--------|
+| `1c95cfa` | CR-02 + WR-06 + WR-02 | `v10-hifi.jsx` | `check-edition-compare` |
+| `163d42c` | CR-01 | `spells-data-loader.jsx` | `check-source-dispatch` |
+| `33f4227` | WR-05 | `spells-data-loader.jsx` | `check-source-dispatch` |
+| `e7935c3` | WR-03 | — (só cobertura) | 3 scripts |
+| `2abe424` | CR-03 | `v11-character-editor.jsx` | — |
+| `c85de29` | WR-01 | `spells-data-loader.jsx` | — |
+| `58e92f6` | WR-04 | `pack-import-dialog.jsx` | `check-pack-import-dialog` |
+| `f8534b5` | IN-01 | `spells-data-loader.jsx` | — |
+| `a9880e5` | IN-03, IN-04 | `sw.js` | — |
+| `f46be4f` | IN-06 | `v10-hifi.jsx` | — |
+| `3f4cccf` | IN-07 | `plugin-store.jsx` | `check-plugin-store` |
+| `a4df30f` | IN-08 | `i18n.jsx` | `check-pack-import-dialog` |
+
+O conserto central foi extrair `hifiSiblingVersion()` como helper único usado
+por `HifiLangToggle` **e** `useEditionCompare`, para que a preferência de corpus
+não possa mais divergir entre os dois — foi a divergência que criou o CR-02.
 
 ---
 
 ## Verificação independente do orquestrador
 
-O relatório acima é do agente que aplicou os consertos. O orquestrador verificou
-por conta própria, sem confiar na alegação:
+O relatório do agente não foi aceito na palavra.
 
-**Suíte estrutural:** 24/24 verde, re-executada do zero. Raiz do repositório sem
-resíduo — o WR-12 de fato moveu o harness Node para o temp do SO.
+### Suíte estrutural
 
-**Regressão comportamental em Chromium real** (Playwright, servidor estático fora
-do repositório, 16 cenários):
+24/24 verde, re-executada do zero. Raiz do repositório sem resíduo.
+
+### Mutation testing próprio — encontrou um buraco no guarda do CR-02
+
+Espelhando o repo via `git archive` e revertendo o conserto do CR-02:
+
+| Mutação | Pego? |
+|---------|-------|
+| Revert **completo** (as duas linhas de seleção de irmão) | ✓ `check-edition-compare` |
+| **Deriva parcial** (só a linha `pt`, mantendo a `en`) | ✗ passava com 24/24 verde |
+
+Deriva parcial entre dois call sites irmãos é **exatamente a forma do CR-02** —
+o guarda cobria o revert completo mas não a forma do próprio bug que guarda.
+
+Corrigido em `736ff8e`: a assertion passa a contar as **duas** chamadas dentro
+de `HifiLangToggle` e a proibir seleção de irmão por idioma via `find()` cru.
+A proibição é estreita de propósito — `versions.find(v => v.key === versionKey)`
+resolve a versão corrente e é legítimo; a primeira versão da assertion proibia
+`find()` em bloco e **reprovava o código bom**, o que só apareceu porque a suíte
+foi rodada antes de commitar.
+
+Revalidado: deriva parcial → exit 1; variante que mantém duas chamadas ao helper
+mas põe um `find()` por idioma ao lado → exit 1; código bom → 24/24.
+
+### Regressão comportamental em Chromium — 16/16
+
+A suíte anterior (16/16 também) **não pegou nenhuma das duas regressões** da
+iteração 1, porque nunca exercitou o toggle PT/EN nem a persistência de tema e
+personagem. Esta cobre os dois buracos:
 
 | Cenário | Resultado |
 |---------|-----------|
-| Boot limpo | 391 magias, 6 versões, 0 pageerror |
-| CR-01 `?f.constructor=` | abre com 391 magias, sem ErrorBoundary |
-| CR-01 `?f.toString=` / `?f.valueOf=` / `?f.hasOwnProperty=` / `?f.__proto__=` | idem, os quatro |
-| Filtro legítimo `?f.level=1` | segue funcionando — a whitelist não matou o caso bom |
-| Sanitização no import | HTML armazenado continua limpo |
-| Selecionar pack **pela UI real** (clique no VersionSelector) | vai para `plugin-qa-hostile-html` |
-| Pack persiste após recarga | `atual=plugin-qa-hostile-html`, 2 magias |
-| Pack renderiza | 2 magias (as do pack, não as 391 do dataset) |
-| WR-01 preferência de pack sobrevive ao mount | `pref=plugin-qa-hostile-html` |
-| Preferência órfã (pack apagado) | volta para builtin, 391 magias, 0 erro |
-| Preferência inventada | idem |
-| WR-02 importar respeita a escolha do usuário | escolheu `srd-2024-en`, seguiu em `srd-2024-en` |
-| Instalação única gera 1 pack (WR-08) | `totalNoStore=1` |
+| **CR-02** toggle EN a partir do PHB 2024 PT-BR | vai para `spells-5E-2024-EN`, **411 magias** (o bug mandava para `srd-2024-en`, 339) |
+| **CR-02** toggle PT de volta | volta para `spells-5E-2024-PTBR` |
+| **CR-01** clique no tema grava nas prefs, com preferência apontando a pack inexistente | `dark:false` → `dark:true` |
+| **CR-01** tema persiste após recarga nesse mesmo estado | prefs idênticas |
+| **CR-01** app não-vazio com preferência pendente morta | 391 magias |
+| **CR-03** `?build=` com 3 payloads hostis (comprimento gigante, `toString` objeto, base64 inválido) | aba responsiva nos três |
+| Rodada 2: `?f.constructor=` e `?f.__proto__=` | seguem fechados |
+| Sanitização no import | HTML armazenado limpo |
+| Selecionar pack pela UI real + persistir após recarga | 2 magias, chave correta |
+| Preferência inventada | cai na padrão |
 
-**16/16.** A troca de versão foi feita clicando no `VersionSelector` de verdade,
-não por atalho de console — mais fiel que as rodadas anteriores desta fase.
+---
 
-### Nota sobre a remoção de `window.setCurrentSpellVersion` (WR-11)
+## Pendências conhecidas, deliberadamente fora de escopo
 
-A remoção está correta e bem justificada (era o chamador que causava a corrida de
-boot da 04-02, e `check-source-dispatch.tests.ps1:156` proíbe reintroduzi-lo).
-Registrando o efeito colateral para quem planejar a **Fase 5**: não existe mais
-nenhum setter público de versão em `window.*` — sobrou só o getter
-`getCurrentSpellVersion`. A UI de gerenciamento de plugins da Fase 5, se precisar
-trocar de versão programaticamente, terá de usar o `onChange` do `VersionSelector`
-ou reintroduzir um setter com guarda contra a corrida de boot. Não é defeito; é
-uma consequência a não redescobrir do zero.
+**`grimorio-helpers.jsx` — escola desconhecida vira Evocação.** O WR-05 fez o
+loader propagar `school: null` honestamente quando o pack de terceiro não
+declara, mas `schoolKey()`/`schoolName()` ainda caem em Evocação para índice
+desconhecido. Um pack com escola não reconhecida **exibe e filtra** como
+Evocação. A terceira revisão confirmou que isso **não piorou** com o WR-05 (o
+loader já substituía por `4` antes). Fechar toca um helper compartilhado não
+revisado, um novo valor de filtro, estilo de chip e i18n em ~5 pontos de render.
 
-### Fast-follow herdado, fora do escopo desta rodada
+**IN-05 — a fixture hostil de QA é servida na origem do deploy.** Marcada
+`no_change_needed` ou não corrigida nesta rodada; continua acessível em
+`scripts/qa-fixtures/hostile-html.json`. Não é executável por si só (é dado, não
+script, e passa pela sanitização no import como qualquer pack), mas vale decidir
+se deve sair do que é publicado.
 
-O WR-05 fez o loader propagar honestamente `edition: ''` / `school: null` quando o
-pack de terceiro não declara. Mas `grimorio-helpers.jsx` (não estava em
-`files_reviewed_list`) ainda faz `schoolKey()`/`schoolName()` caírem em Evocação
-para índice desconhecido/`null` — então um pack com escola não reconhecida ainda
-**exibe e filtra** como Evocação, apesar do dado subjacente agora estar correto.
-Fechar isso toca um helper compartilhado não revisado, um novo valor de filtro,
-estilo de chip e i18n em ~5 pontos de render.
+**Sem setter público de versão.** O WR-11 da iteração 1 removeu
+`window.setCurrentSpellVersion` — correto, era o causador da corrida de boot, e
+um teste proíbe reintroduzi-lo. Sobrou só o getter. A **Fase 5** (Plugin Manager
+UI), se precisar trocar de versão programaticamente, usa o `onChange` do
+`VersionSelector` ou reintroduz um setter com guarda contra a corrida.
