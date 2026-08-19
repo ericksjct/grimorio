@@ -43,6 +43,14 @@ if ($store -notmatch 'if \(!record\) throw new Error') {
   throw "WR-04: getSpells() must throw on a missing record, not return [] - an empty return is cached as success by loadVersion() and never retried."
 }
 
+# ── IN-07: exportPack() deve revogar a Object URL de forma ASSÍNCRONA, não
+# logo após click(). Um revoke síncrono É o próprio caso "cedo demais" que o
+# comentário original tentava evitar - o download pode ainda não ter
+# começado quando a URL é invalidada (Firefox historicamente não sobrevive).
+if ($store -notmatch 'setTimeout\(\(\)\s*=>\s*URL\.revokeObjectURL\(url\)') {
+  throw "IN-07: exportPack() must revoke the object URL asynchronously (setTimeout(() => URL.revokeObjectURL(url), 0)), not synchronously right after click() - a synchronous revoke can cancel the download before the browser starts it."
+}
+
 # 'navigator.storage' removido desta lista no plano 02-02: STOR-02 exige
 # navigator.storage.persist()/.persisted() dentro de plugin-store.jsx no boot
 # (ROADMAP/REQUIREMENTS autoritativos, ver A-03 em 02-02-PLAN.md) — a suposição

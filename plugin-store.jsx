@@ -213,7 +213,12 @@ async function exportPack(id) {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(url); // depois do click — revogar cedo cancela o download em alguns navegadores
+  // IN-07: revogar SÍNCRONO logo após click() é o próprio caso cedo demais —
+  // o download pode ainda não ter sido iniciado quando a URL é invalidada
+  // (Firefox historicamente não sobrevive a isso). setTimeout(0) empurra a
+  // revogação pro próximo turno do event loop, depois que o navegador teve
+  // a chance de começar o download.
+  setTimeout(() => URL.revokeObjectURL(url), 0);
   return text;
 }
 
