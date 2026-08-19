@@ -379,7 +379,11 @@ function _initialVersionKey() {
   try {
     // ?v= de link compartilhado vence a preferência salva (o App faz o mesmo).
     const urlV = new URL(window.location.href).searchParams.get('v');
-    const prefs = JSON.parse(localStorage.getItem('spellbook-ui-prefs') || '{}');
+    // IN-01: parse defensivo isolado — um blob de prefs corrompido não pode
+    // derrubar todo o try e descartar um `?v=` válido em favor do default.
+    // index.html's loadPrefs() já tolera isto da mesma forma.
+    let prefs = {};
+    try { prefs = JSON.parse(localStorage.getItem('spellbook-ui-prefs') || '{}') || {}; } catch (e) {}
     _wantedVersionKey = urlV || prefs.versionKey || null;
     if (urlV && _versionByKey(urlV)) return urlV;
     if (prefs.versionKey && _versionByKey(prefs.versionKey)) {

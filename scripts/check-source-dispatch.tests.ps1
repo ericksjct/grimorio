@@ -167,6 +167,20 @@ if ($earlyReturnClears -lt 2) {
   throw "CR-01: both early-return paths of _refreshPluginVersionsInner() (missing pluginStore, rejected listPacks()) must clear _wantedVersionKey before returning [] - found $earlyReturnClears. Otherwise a pending plugin-* preference is stranded for the rest of the session (and, via the index.html guard, so is all other prefs persistence)."
 }
 
+# ── IN-01: um blob de prefs corrompido não pode descartar um `?v=` válido ──
+# _initialVersionKey() lia urlV E fazia JSON.parse(prefs) dentro do MESMO
+# try - um blob corrompido lançava, o try inteiro desenrolava, e um `?v=`
+# perfeitamente válido de um link compartilhado era silenciosamente
+# descartado em favor do default. O parse de prefs precisa do seu próprio
+# try/catch, isolado do resto da função.
+$initialKeyMatch = [regex]::Match($loader, 'function _initialVersionKey\(\)[\s\S]{0,1300}?\r?\n\}')
+if (-not $initialKeyMatch.Success) {
+  throw 'IN-01: could not locate _initialVersionKey() body in spells-data-loader.jsx.'
+}
+if ($initialKeyMatch.Value -notmatch 'try\s*\{\s*prefs\s*=\s*JSON\.parse') {
+  throw "IN-01: _initialVersionKey() must parse the saved prefs blob in its OWN try/catch (not the outer one shared with urlV) - a corrupt localStorage blob must not discard a valid ?v= from a shared link."
+}
+
 # ── WR-05: setCurrentVersion() must clear _wantedVersionKey UNCONDITIONALLY,
 # before the `_currentVersion === key` no-op early-return. Selecting the
 # version you are already on is the user's manual escape hatch for a stuck
