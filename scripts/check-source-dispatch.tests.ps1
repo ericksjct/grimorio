@@ -92,10 +92,10 @@ foreach ($forbidden in @('putPack', 'deletePack', 'exportPack')) {
 foreach ($needle in @(
   'function _packToVersion(',
   'function refreshPluginVersions(',
-  # WR-02: refreshPluginVersions() ganhou um dedup de chamadas concorrentes
-  # (mesmo idioma do `_pending` do loadVersion) - o trabalho real de
-  # enumeracao agora mora na inner async, com o wrapper sincrono guardando a
-  # promise em voo.
+  # WR-02: o trabalho real de enumeracao mora na inner async; WR-01 trocou o
+  # wrapper sincrono de dedup-por-coalescencia (devolver a MESMA promise em
+  # voo) por uma fila-de-um encadeada, porque coalescer descarta uma chamada
+  # mais nova cuja escrita a enumeracao em voo ainda nao tinha como observar.
   'async function _refreshPluginVersionsInner(',
   'pluginStore.listPacks(',
   'window.refreshPluginVersions'
@@ -105,11 +105,18 @@ foreach ($needle in @(
   }
 }
 
-# WR-02: concurrent refreshPluginVersions() calls (boot + every pack import)
-# must share the same in-flight promise instead of each re-enumerating and
-# racing to write SPELL_VERSIONS last.
-if ($loader -notmatch 'let\s+_refreshInFlight\s*=\s*null') {
-  throw 'WR-02: refreshPluginVersions() must guard against concurrent calls via an in-flight promise (_refreshInFlight), the same dedup idiom already used by _pending/_dbPromise.'
+# WR-01: refreshPluginVersions() must CHAIN concurrent calls (a fila-de-um),
+# não apenas devolver a promise já em voo pra quem chega depois. Coalescer
+# descarta a chamada mais nova: import de pack A dispara a enumeracao sem
+# esperar; enquanto ela ainda le o IndexedDB, a escrita de instalacao do
+# pack B comita; a chamada de B pra refreshPluginVersions() devolveria a
+# promise de A (que ja tinha lido ANTES do commit de B) - B nunca
+# apareceria no seletor.
+if ($loader -notmatch 'let\s+_refreshChain\s*=\s*Promise\.resolve') {
+  throw 'WR-01: refreshPluginVersions() must chain onto a shared _refreshChain promise (not coalesce onto an in-flight one) - a coalescing dedup drops a call whose write the in-flight enumeration started before observing.'
+}
+if ($loader -notmatch '_refreshChain\s*=\s*_refreshChain\s*\.catch\([\s\S]{0,30}?\)\s*\.then\(\s*_refreshPluginVersionsInner\s*\)') {
+  throw 'WR-01: refreshPluginVersions() must reassign _refreshChain to _refreshChain.catch(...).then(_refreshPluginVersionsInner) on every call - a rejected prior link (a failed enumeration) must not poison the chain for later callers.'
 }
 
 $pluginsChangedCount = ([regex]::Matches($loader, 'hifi-plugins-changed')).Count

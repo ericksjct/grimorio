@@ -83,16 +83,24 @@ function _packToVersion(meta) {
 // enumeração (aba bloqueada, aba privada, quota, promise rejeitada) nunca pode
 // derrubar o boot; degrada para lista vazia com console.warn e sem toast (um
 // usuário sem nenhum pack instalado não deve ver mensagem de erro por isso).
-// WR-02: refreshPluginVersions() é chamada fire-and-forget de dois lugares
-// (boot e todo import bem-sucedido) sem nada serializando as chamadas — quem
-// resolver por último escreve o registro. O dedup no `_pending` do loadVersion
-// já usa este idioma; aqui é o mesmo, guardando a promise em voo em vez do
-// próprio trabalho.
-let _refreshInFlight = null;
+// WR-02/WR-01: refreshPluginVersions() é chamada fire-and-forget de dois
+// lugares (boot e todo import bem-sucedido) sem nada serializando as
+// chamadas. Um dedup por promise-em-voo (devolver a MESMA promise pra quem
+// chama enquanto uma já roda) é certo pra uma leitura pura keyada por uma
+// chave imutável — é ERRADO aqui: a enumeração já em voo fez seu
+// listPacks() ANTES da escrita que a chamada mais nova precisa observar.
+// Concreto: importar pack A dispara refreshPluginVersions() sem await;
+// enquanto essa enumeração está em voo, a escrita de instalação do pack B comita;
+// refreshPluginVersions() de B devolve a promise de A — B nunca é
+// enumerado, nunca aparece no seletor, e nenhum erro aparece. Só se
+// autocura num reload.
+// ponytail: fila de um, não dedup. Cada chamada encadeia depois da
+// anterior, então observa o estado (IndexedDB) depois que a anterior
+// terminou — nenhuma chamada é descartada.
+let _refreshChain = Promise.resolve([]);
 function refreshPluginVersions() {
-  if (_refreshInFlight) return _refreshInFlight;
-  _refreshInFlight = _refreshPluginVersionsInner().finally(() => { _refreshInFlight = null; });
-  return _refreshInFlight;
+  _refreshChain = _refreshChain.catch(() => {}).then(_refreshPluginVersionsInner);
+  return _refreshChain;
 }
 
 async function _refreshPluginVersionsInner() {
