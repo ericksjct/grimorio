@@ -821,6 +821,12 @@ function useHifiAppState(preparedKeys, initialFilters, character) {
           // Belt-and-braces: so aceita chaves que hifiFilterConfig realmente conhece
           // (cfg ja e sem prototipo, mas nem toda leitura de filters[key] passa por cfg).
           if (!Object.prototype.hasOwnProperty.call(hifiFilterConfig('en'), k)) return;
+          // IN-06: hifiShareViewUrl só emite class/level/school, que são as
+          // únicas com chip visível em extraFilters pra desfazer. Um `?f.src=`
+          // ou `?f.duration=` feito à mão aplicaria um filtro real e invisível
+          // (contagem cai, nenhum chip explica por quê) — nada que o app
+          // produz sozinho passa por essas outras sete chaves.
+          if (!['class', 'level', 'school'].includes(k)) return;
           view.filters[k] = new Set(val.split('|').filter(Boolean));
           view.any = true;
         }

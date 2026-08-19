@@ -33,6 +33,18 @@ if ($hifi -notmatch "function hifiFilterConfig\([^)]*\)\s*\{[\s\S]*?return\s+Obj
   throw "CR-01: hifiFilterConfig() must return Object.assign(Object.create(null), {...}) - a plain object literal returns the inherited 'constructor' function for a ?f.constructor= URL param, and that value is truthy where the filter code expects a filter definition or undefined."
 }
 
+# ── IN-06: ?f.*= só pode aplicar as chaves que hifiShareViewUrl realmente
+# emite (class/level/school) - essas são as únicas com chip visível em
+# extraFilters pra desfazer. hifiFilterConfig() conhece 10 chaves; um
+# `?f.src=` ou `?f.duration=` à mão aplicava um filtro real e invisível.
+$urlViewMatch = [regex]::Match($hifi, "if \(key\.startsWith\('f\.'\)\)[\s\S]{0,1100}?\r?\n\s*\}")
+if (-not $urlViewMatch.Success) {
+  throw "IN-06: could not locate the ?f.*= URL-parsing block in v10-hifi.jsx (key.startsWith('f.'))."
+}
+if ($urlViewMatch.Value -notmatch "\['class', 'level', 'school'\]\.includes\(k\)") {
+  throw "IN-06: the ?f.*= URL parser must narrow accepted keys to ['class', 'level', 'school'] (what hifiShareViewUrl actually emits) - accepting all 10 hifiFilterConfig keys lets a hand-crafted URL apply a real filter with no visible chip to undo it."
+}
+
 # ── CR-02: preferencia pendente nao pode ser reaplicada para sempre ─
 # _wantedVersionKey era atribuido uma vez na carga do modulo e nunca limpo, e
 # refreshPluginVersions() o reaplicava a cada chamada -- importar um pack fazia
