@@ -42,6 +42,12 @@
 - [ ] **MIGR-02**: Os 4 JSONs protegidos saem do site/repo (HEAD) e do precache do service worker (que passa a precachear só o SRD)
 - [ ] **MIGR-03**: Usuário existente recebe orientação na primeira visita pós-migração de como importar o próprio pacote
 
+### I18N — Idioma da interface
+
+- [ ] **I18N-01**: idioma da interface é estado próprio, persistido em `spellbook-ui-prefs`, independente da versão ativa
+- [ ] **I18N-02**: o toggle controla a interface e funciona com zero entradas `lang: 'ptbr'` no registro de versões
+- [ ] **I18N-03**: modo misto coerente — chrome no idioma da UI, conteúdo no idioma do pack, `lang` marcado por região conforme WCAG 3.1.2
+
 ## Future Requirements (v2.x)
 
 - [ ] Checagem manual de atualização de pack por URL (re-fetch + comparação de versão, confirmação explícita antes de sobrescrever)
@@ -86,11 +92,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MIGR-01 | Phase 6 | Pending |
 | MIGR-02 | Phase 6 | Pending |
 | MIGR-03 | Phase 6 | Pending |
+| I18N-01 | Phase 04.1 | Pending |
+| I18N-02 | Phase 04.1 | Pending |
+| I18N-03 | Phase 04.1 | Pending |
 
 **Coverage:**
 
-- v2.0 requirements: 19 total (corrected from a stale "16 total" note in this file's initial draft — the requirement list itself has always had 5 PKG + 3 STOR + 5 MGMT + 3 SRD + 3 MIGR = 19 items)
-- Mapped to phases: 19
+- v2.0 requirements: 22 total (corrected from a stale "16 total" note in this file's initial draft — the requirement list itself had 5 PKG + 3 STOR + 5 MGMT + 3 SRD + 3 MIGR = 19 items before Phase 04.1 added 3 I18N items)
+- Mapped to phases: 22
 - Unmapped: 0
 
 ---
