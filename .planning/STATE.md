@@ -4,9 +4,9 @@ milestone: v2.0
 milestone_name: Plugins BYOD
 current_phase: 04.1
 current_phase_name: Plugin Manager UI & Version Selector
-status: planning
+status: executing
 stopped_at: Phase 04.1 context gathered
-last_updated: "2026-08-22T01:11:48.303Z"
+last_updated: "2026-08-22T02:28:17.152Z"
 last_activity: 2026-08-17
 last_activity_desc: Phase 04 complete; Phase 04.1 inserted before Phase 5
 progress:
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-17)
 
 Phase: 04.1 — Desacoplar o idioma da interface do idioma do pacote (INSERIDA)
 Plan: Not started
-Status: Ready to plan
+Status: Ready to execute
 Last activity: 2026-08-17 — Phase 04 complete; Phase 04.1 inserted before Phase 5
 
 Progress: [██████████] 100%

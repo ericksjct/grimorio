@@ -162,11 +162,21 @@ Plans:
 `HifiLangToggle` (`v10-hifi.jsx:436`) nao e um seletor de idioma — e um seletor de VERSAO disfarcado: faz `versions.find(v => v.lang === 'ptbr' && ...)` e chama `onSwitch(pt.key)`. O criterio 3 da Fase 6 remove os 4 JSONs protegidos e deixa so o SRD no precache, e os packs SRD sao `lang: 'en'`. Sem nenhuma entrada `ptbr` no registro, o `find` retorna `undefined`, o botao PT fica inerte e `defaultVersionKeyForLang('ptbr')` cai no fallback `vs[0]`. A Fase 6 entregaria um app monolingue em ingles para publico brasileiro, contrariando seu proprio criterio 4.
 
 Plans:
+**Wave 1**
 
 - [ ] 04.1-01-PLAN.md — Wave 1: secao I18N em REQUIREMENTS.md (D-20) + estado uiLang proprio em index.html, `window.__setUiLang`, effect de acoplamento removido (I18N-01)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 04.1-02-PLAN.md — Wave 2: HifiLangToggle reescrito (2 estados, sempre habilitado, `lang` nos botoes), montado no desktop e no mobile, VersionSelector no idioma da UI (I18N-02)
 - [ ] 04.1-03-PLAN.md — Wave 2: CharacterEditor deriva o idioma do pack localmente e usa nele os nomes de magia e a busca (I18N-03)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 04.1-04-PLAN.md — Wave 3: nome/descricao/niveis superiores seguem o pack, `lang` por regiao nos 5 sinks + nome (WCAG 3.1.2), ficha impressa com dois idiomas (I18N-03)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 04.1-05-PLAN.md — Wave 4: rotulos de filtro, escola, classe e Sim/Nao seguem a UI; remapeamento morto removido; scripts em risco corrigidos; checkpoint humano da fase (I18N-03)
 
 ### Phase 5: Plugin Manager UI & Version Selector
