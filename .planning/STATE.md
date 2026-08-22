@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Plugins BYOD
 current_phase: 04.1
-current_phase_name: Plugin Manager UI & Version Selector
+current_phase_name: desacoplar-o-idioma-da-interface-do-idioma-do-pacote
 status: executing
 stopped_at: Phase 04.1 context gathered
-last_updated: "2026-08-22T02:28:17.152Z"
-last_activity: 2026-08-17
-last_activity_desc: Phase 04 complete; Phase 04.1 inserted before Phase 5
+last_updated: "2026-08-22T02:33:33.070Z"
+last_activity: 2026-08-21
+last_activity_desc: Phase 04.1 execution started
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 14
+  total_plans: 19
   completed_plans: 14
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-17)
 
 **Core value:** Players can quickly find, prepare, and reference the right spells for their character, fully offline, with zero setup.
-**Current focus:** Phase 04.1 — desacoplar idioma da UI (pre-requisito da Fase 6)
+**Current focus:** Phase 04.1 — desacoplar-o-idioma-da-interface-do-idioma-do-pacote
 
 ## Current Position
 
-Phase: 04.1 — Desacoplar o idioma da interface do idioma do pacote (INSERIDA)
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-08-17 — Phase 04 complete; Phase 04.1 inserted before Phase 5
+Phase: 04.1 (desacoplar-o-idioma-da-interface-do-idioma-do-pacote) — EXECUTING
+Plan: 1 of 5
+Status: Executing Phase 04.1
+Last activity: 2026-08-21 — Phase 04.1 execution started
 
 Progress: [██████████] 100%
 
