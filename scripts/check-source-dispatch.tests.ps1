@@ -219,12 +219,15 @@ if ($index.Contains('window.setCurrentSpellVersion(versionKey)')) {
   throw 'index.html still contains the removed mount effect pushing versionKey back to the loader - this races with the 04-02 retry.'
 }
 
-# Compara os índices DENTRO da mesma expressão de estado inicial de idioma
-# (não a primeira ocorrência de "initial.lang" no arquivo inteiro, que aparece
-# antes disso na derivação de initialVersionKey).
-$langStateMatch = [regex]::Match($index, 'React\.useState\(\s*langOfVersionKey\(initialVersionKey\)\s*\|\|\s*initial\.lang')
-if (-not $langStateMatch.Success) {
-  throw 'index.html initial lang state must try langOfVersionKey(initialVersionKey) before initial.lang.'
+# Fase 04.1 desacopla o idioma da interface da versão ativa (D-18): o estado
+# uiLang não pode mais derivar de langOfVersionKey/initialVersionKey. Ver
+# scripts/check-ui-lang-state.tests.ps1 para a asserção positiva completa.
+if ($index.Contains('langOfVersionKey')) {
+  throw 'index.html must not contain langOfVersionKey anymore - the language state was decoupled from the active spell version (Phase 04.1).'
+}
+$uiLangStateMatch = [regex]::Match($index, 'React\.useState\(\s*initial\.lang\s*\|\|\s*detectLang\(\)\s*\)')
+if (-not $uiLangStateMatch.Success) {
+  throw 'index.html uiLang state must initialize from initial.lang || detectLang(), independent of the active version.'
 }
 
 # ── CR-01: hasPendingSpellVersion() só pode gatear o campo versionKey do
@@ -233,7 +236,7 @@ if (-not $langStateMatch.Success) {
 # dark/theme/characterName/lang pelo resto da sessão sempre que a
 # preferência de versão não resolvesse (link compartilhado pra um pack
 # ausente, IndexedDB indisponível).
-$prefsEffectMatch = [regex]::Match($index, 'React\.useEffect\(\(\) => \{[\s\S]{0,700}?\}, \[dark, theme, character, lang, versionKey\]\);')
+$prefsEffectMatch = [regex]::Match($index, 'React\.useEffect\(\(\) => \{[\s\S]{0,700}?\}, \[dark, theme, character, uiLang, versionKey\]\);')
 if (-not $prefsEffectMatch.Success) {
   throw 'CR-01: could not locate the prefs-persistence React.useEffect in index.html.'
 }

@@ -147,9 +147,9 @@ function markOnboardingSeen() {
   try { localStorage.setItem(ONBOARDING_SEEN_KEY, '1'); } catch (e) {}
 }
 
-// Idioma da UI segue a VERSÃO de magias ativa (acoplado): não há toggle
-// separado — escolher uma versão EN deixa o chrome em inglês. Na primeira
-// visita (sem versão salva) detectamos pelo idioma do navegador.
+// Idioma da UI é estado próprio (uiLang em App), independente da versão de
+// magias ativa. Na primeira visita (sem `prefs.lang` salvo) detectamos pelo
+// idioma do navegador.
 function browserLanguageCandidates() {
   try {
     return [
@@ -171,12 +171,6 @@ function defaultVersionKeyForLang(lang) {
   const v = vs.find(x => x.lang === lang) || vs[0];
   return v ? v.key : '';
 }
-function langOfVersionKey(key) {
-  const vs = window.SPELL_VERSIONS || [];
-  const v = vs.find(x => x.key === key);
-  return v ? v.lang : null;
-}
-
 function decodeSharedBuildPayload(payload) {
   // searchParams converte '+' em espaço; base64 nunca tem espaço, então
   // restaurar é seguro — cobre links antigos gerados sem encodeURIComponent.
@@ -398,9 +392,10 @@ function App() {
   );
   const [theme, setTheme] = React.useState('daylight');
   const [charName, setCharName] = React.useState(initial.characterName || null);
-  // Versão de magias ativa (PT/EN × 2014/2024). É a fonte única de verdade do
-  // idioma: ?v= na URL (link compartilhado) → salva → idioma do navegador.
-  // O loader é o DONO ÚNICO dessa resolução (spells-data-loader.jsx,
+  // Versão de magias ativa (PT/EN × 2014/2024). Resolução por: ?v= na URL
+  // (link compartilhado) → salva → idioma do navegador (D-12, no-op desta
+  // fase: escolhe a VERSÃO inicial, não o idioma da interface). O loader é
+  // o DONO ÚNICO dessa resolução (spells-data-loader.jsx,
   // _initialVersionKey) — lemos aqui a chave que ele já resolveu em vez de
   // re-derivar (evita duas resoluções discordando quando a lista de versões
   // cresce de forma assíncrona). Cadeia antiga mantida só como degrau de
@@ -410,13 +405,12 @@ function App() {
     || initial.versionKey
     || defaultVersionKeyForLang(initial.lang || detectLang());
   const [versionKey, setVersionKey] = React.useState(initialVersionKey);
-  // Idioma do chrome — segue a versão ativa (acoplado, decisão do projeto):
-  // a versão resolvida é a fonte única de verdade do idioma, não uma
-  // preferência de idioma salva que pode discordar dela. `initial.lang` é
-  // só o segundo degrau, pra quando a chave não mapeia nenhuma versão
-  // conhecida. Mantido em sincronia pelo effect abaixo.
-  const [lang, setLang] = React.useState(
-    langOfVersionKey(initialVersionKey) || initial.lang || detectLang()
+  // Idioma da interface — estado próprio do App, independente da versão de
+  // magias ativa (D-18): a preferência salva em `spellbook-ui-prefs.lang`
+  // manda; sem ela, cai pro idioma do navegador. A versão ativa nunca
+  // escreve aqui (ver o handler de hifi-spells-source-changed abaixo).
+  const [uiLang, setUiLang] = React.useState(
+    initial.lang || detectLang()
   );
   const [showOnboarding, setShowOnboarding] = React.useState(() => !hasSeenOnboarding());
   const [onboardingEditorOpen, setOnboardingEditorOpen] = React.useState(false);
@@ -439,31 +433,28 @@ function App() {
     try { url = new URL(window.location.href); } catch (e) { return; }
     if (!url.searchParams.has('build')) return;
     try {
-      const character = importSharedBuildUrl(window.location.href, lang);
+      const character = importSharedBuildUrl(window.location.href, uiLang);
       markOnboardingSeen();
       setShowOnboarding(false);
       setCharName(character.name);
       window.dispatchEvent(new CustomEvent('hifi-toast', {
-        detail: { msg: makeT(lang)('toast.buildImported', { name: character.name }) },
+        detail: { msg: makeT(uiLang)('toast.buildImported', { name: character.name }) },
       }));
     } catch (e) {
       window.dispatchEvent(new CustomEvent('hifi-toast', {
-        detail: { msg: makeT(lang)('toast.buildImportFailed'), kind: 'err' },
+        detail: { msg: makeT(uiLang)('toast.buildImportFailed'), kind: 'err' },
       }));
     }
     url.searchParams.delete('build');
     history.replaceState(null, '', url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : ''));
   }, []);
 
-  // Acoplamento: a versão ativa é a fonte de verdade do idioma. Quando ela muda
-  // (pelo VersionSelector, em qualquer lugar do app), espelhamos a versão e
-  // derivamos o idioma do chrome — escolher uma versão EN deixa a UI em inglês.
+  // Desacoplado (D-11/D-18): este handler espelha SÓ a versão de magias
+  // ativa. O idioma da interface é estado próprio do App (uiLang acima) e
+  // não é escrito a partir daqui — trocar de versão nunca troca o chrome.
   React.useEffect(() => {
     const onSourceChanged = (e) => {
-      const key = e.detail;
-      setVersionKey(key);
-      const l = langOfVersionKey(key);
-      if (l) setLang(l);
+      setVersionKey(e.detail);
     };
     window.addEventListener('hifi-spells-source-changed', onSourceChanged);
     return () => window.removeEventListener('hifi-spells-source-changed', onSourceChanged);
@@ -484,10 +475,10 @@ function App() {
   React.useEffect(() => {
     const prev = loadPrefs();
     savePrefs({
-      ...prev, dark, theme, characterName: character ? character.name : null, lang,
+      ...prev, dark, theme, characterName: character ? character.name : null, lang: uiLang,
       versionKey: window.hasPendingSpellVersion?.() ? (prev.versionKey ?? versionKey) : versionKey,
     });
-  }, [dark, theme, character, lang, versionKey]);
+  }, [dark, theme, character, uiLang, versionKey]);
 
   // Paint the page background with the active theme so there's no flash of
   // the wrong color around the app (matters on overscroll / safe areas).
@@ -508,11 +499,11 @@ function App() {
   // escolher a pronúncia) e og:locale (preview de compartilhamento).
   React.useEffect(() => {
     try {
-      document.documentElement.setAttribute('lang', lang === 'ptbr' ? 'pt-br' : 'en');
+      document.documentElement.setAttribute('lang', uiLang === 'ptbr' ? 'pt-br' : 'en');
       const og = document.querySelector('meta[property="og:locale"]');
-      if (og) og.setAttribute('content', lang === 'ptbr' ? 'pt_BR' : 'en_US');
+      if (og) og.setAttribute('content', uiLang === 'ptbr' ? 'pt_BR' : 'en_US');
     } catch (e) {}
-  }, [lang]);
+  }, [uiLang]);
 
   // Wire up the global hooks the V11 components call (dark toggle, character
   // switch after create/edit/delete, share-build link).
@@ -523,6 +514,10 @@ function App() {
     window.__setTheme = (t) => setTheme(t);
     // Seletor de temas: aplica tema + modo de uma vez.
     window.__setThemePreset = (t, d) => { setTheme(t); setDark(!!d); };
+    // Setter global do idioma da interface (D-11), consumido pelo toggle no
+    // plano 02. Roteia por normLang (i18n.jsx) pra colapsar qualquer entrada
+    // em 'ptbr'/'en' — este bloco roda em escopo global compartilhado.
+    window.__setUiLang = (v) => setUiLang(normLang ? normLang(v) : v);
     window.__shareBuild = () => {
       const c = chars.find(x => x.name === (character ? character.name : null)) || chars[0];
       if (!c) return;
@@ -549,6 +544,7 @@ function App() {
       window.__setDark = null;
       window.__setTheme = null;
       window.__setThemePreset = null;
+      window.__setUiLang = null;
       window.__shareBuild = null;
     };
   }, [chars, character]);
@@ -565,14 +561,14 @@ function App() {
   return (
     <>
       {isMobile
-        ? <HifiMobile lang={lang} dark={dark} theme={theme} character={character} />
-        : <HifiDesktop lang={lang} dark={dark} theme={theme} character={character} width={w} height={h} />}
+        ? <HifiMobile lang={uiLang} dark={dark} theme={theme} character={character} />
+        : <HifiDesktop lang={uiLang} dark={dark} theme={theme} character={character} width={w} height={h} />}
       <HifiPrintRoot />
       {/* ponytail: montagem provisória de D-12 — a Fase 5 decide onde o import vive na UI final e apaga esta linha. */}
-      <PackImportRoot lang={lang} dark={dark} theme={theme} />
+      <PackImportRoot lang={uiLang} dark={dark} theme={theme} />
       {showOnboarding && (
         <OnboardingModal
-          lang={lang}
+          lang={uiLang}
           dark={dark}
           theme={theme}
           onCreate={() => {
@@ -599,7 +595,7 @@ function App() {
             boxShadow: isMobile ? 'none' : '-8px 0 24px rgba(0,0,0,0.18)',
           }}>
             <CharacterEditor
-              lang={lang}
+              lang={uiLang}
               dark={dark}
               theme={theme}
               charId={null}
