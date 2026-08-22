@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Plugins BYOD
-current_phase: 5
+current_phase: 04.1
 current_phase_name: Plugin Manager UI & Version Selector
 status: planning
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-08-18T00:53:57.964Z"
+stopped_at: Phase 04.1 context gathered
+last_updated: "2026-08-22T01:11:48.303Z"
 last_activity: 2026-08-17
-last_activity_desc: Phase 04 complete, transitioned to Phase 5
+last_activity_desc: Phase 04 complete; Phase 04.1 inserted before Phase 5
 progress:
   total_phases: 4
   completed_phases: 3
@@ -111,6 +111,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-26T01:24:24.449Z
-Stopped at: Phase 3 UI-SPEC approved
-Resume file: .planning/phases/03-srd-pack-import-pipeline/03-UI-SPEC.md
+Last session: 2026-08-22T01:11:48.294Z
+Stopped at: Phase 04.1 context gathered
+Resume file: .planning/phases/04.1-desacoplar-o-idioma-da-interface-do-idioma-do-pacote/04.1-CONTEXT.md
