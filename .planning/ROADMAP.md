@@ -145,7 +145,7 @@ Plans:
 
 **Goal**: O idioma da interface e uma preferencia propria do usuario, persistida e trocavel a qualquer momento, independente de qual pacote de magias esta selecionado — de modo que um usuario brasileiro possa ler magias em ingles com a interface em portugues.
 **Depends on**: Phase 4
-**Requirements**: TBD (definir no discuss — provavelmente uma nova entrada de i18n em REQUIREMENTS.md)
+**Requirements**: I18N-01, I18N-02, I18N-03
 **Success Criteria** (what must be TRUE):
 
   1. O idioma da interface e um estado proprio, persistido em `spellbook-ui-prefs`, e sobrevive a recarga independente da versao ativa
@@ -154,7 +154,7 @@ Plans:
   4. Na primeira visita, o idioma da interface vem do navegador (`detectLang()`), nao da versao resolvida
   5. Um usuario com a interface em portugues lendo um pacote em ingles ve a UI toda em portugues e o conteudo das magias em ingles, sem estado inconsistente
 
-**Plans**: TBD
+**Plans**: 5 plans
 **UI hint**: yes
 **Planning route**: DISCUSS antes de planejar. Reverte deliberadamente a decisao original de i18n ACOPLADO (versao = fonte unica de verdade do idioma, sem toggle separado), entao a discussao precisa registrar o que substitui aquela decisao. Research do plan: NAO — o dicionario central ja existe (`i18n.jsx` com blocos `ptbr:`/`en:`, `makeT(lang)`, `tt(lang, key)` e checagem de paridade); o trabalho e fiacao de estado, nao traducao.
 
@@ -163,7 +163,11 @@ Plans:
 
 Plans:
 
-- [ ] TBD (run /gsd-plan-phase 04.1 to break down)
+- [ ] 04.1-01-PLAN.md — Wave 1: secao I18N em REQUIREMENTS.md (D-20) + estado uiLang proprio em index.html, `window.__setUiLang`, effect de acoplamento removido (I18N-01)
+- [ ] 04.1-02-PLAN.md — Wave 2: HifiLangToggle reescrito (2 estados, sempre habilitado, `lang` nos botoes), montado no desktop e no mobile, VersionSelector no idioma da UI (I18N-02)
+- [ ] 04.1-03-PLAN.md — Wave 2: CharacterEditor deriva o idioma do pack localmente e usa nele os nomes de magia e a busca (I18N-03)
+- [ ] 04.1-04-PLAN.md — Wave 3: nome/descricao/niveis superiores seguem o pack, `lang` por regiao nos 5 sinks + nome (WCAG 3.1.2), ficha impressa com dois idiomas (I18N-03)
+- [ ] 04.1-05-PLAN.md — Wave 4: rotulos de filtro, escola, classe e Sim/Nao seguem a UI; remapeamento morto removido; scripts em risco corrigidos; checkpoint humano da fase (I18N-03)
 
 ### Phase 5: Plugin Manager UI & Version Selector
 
@@ -224,5 +228,6 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 2. Plugin Storage Foundation | v2.0 | 2/2 | Complete    | 2026-07-18 |
 | 3. SRD Pack & Import Pipeline | v2.0 | 8/8 | Complete    | 2026-08-11 |
 | 4. Loader Integration (Source-Dispatch) | v2.0 | 4/4 | Complete    | 2026-08-17 |
+| 04.1. Desacoplar o idioma da interface | v2.0 | 0/5 | Not started | - |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 0/TBD | Not started | - |
 | 6. Decommissioning & Migration | v2.0 | 0/TBD | Not started | - |
