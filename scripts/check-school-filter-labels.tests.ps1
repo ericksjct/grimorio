@@ -16,8 +16,8 @@ if ($ui -notmatch '\{formatValue\(v\)\}') {
   throw 'FilterChipDropdown still renders raw option values.'
 }
 
-if ($ui -notmatch 'hifiSchoolFilterLabel\(v,\s*versionLang\)') {
-  throw 'Mobile school filter pills still render raw school keys.'
+if ($ui -notmatch 'hifiSchoolFilterLabel\(v,\s*uiLang\)') {
+  throw 'Mobile school filter pills must follow the interface language (uiLang), not the pack (D-02).'
 }
 
 Write-Output 'School filter options render formatted labels.'
