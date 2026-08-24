@@ -1098,6 +1098,11 @@ function HifiStat({ label, value }) {
 // DESKTOP
 // ──────────────────────────────────────────────────────────────────
 function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', character, width = 1280, height = 820 }) {
+  // `lang` é o idioma da INTERFACE (chrome), vindo de index.html; `versionLang`
+  // (abaixo, via useHifiAppState) é o idioma do PACK ativo. `uiLang` é um alias
+  // de legibilidade para os call sites que precisam ser explícitos sobre qual
+  // dos dois idiomas estão lendo.
+  const uiLang = lang;
   const { chars, update } = useCharacters();
   const { bookmarks } = useBookmarks();
   // Pick the live character from the store (matched by id or name from prop fallback)
@@ -1416,7 +1421,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
             current={versionKey}
             versions={versions}
             onChange={switchVersion}
-            lang={versionLang}
+            lang={uiLang}
             dark={dark}
           />
         )}
@@ -1582,7 +1587,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
           <a href="https://www.jetbrains.com/lp/mono/" target="_blank" rel="noopener" style={hifiFooterLink}>JetBrains Mono</a>
         </span>
         <div style={{ flex: 1, minWidth: 14 }}/>
-        <HifiLangToggle lang={lang} versions={versions} versionKey={versionKey} onSwitch={switchVersion}/>
+        <HifiLangToggle uiLang={uiLang}/>
         <span style={{ color: 'var(--overlay0)', marginLeft: 4, marginRight: 4 }}>·</span>
         <HifiThemeToggle dark={dark} lang={lang} style={{ width: 30, height: 30, fontSize: 15 }}/>
       </footer>
@@ -2137,6 +2142,11 @@ function HifiSessionMode({ character, update, lang, allSpells, onExit }) {
 // MOBILE
 // ──────────────────────────────────────────────────────────────────
 function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', character, drawerOpen: initialDrawerOpen = false, detailIdx = null }) {
+  // `lang` é o idioma da INTERFACE (chrome), vindo de index.html; `versionLang`
+  // (abaixo, via useHifiAppState) é o idioma do PACK ativo. `uiLang` é um alias
+  // de legibilidade para os call sites que precisam ser explícitos sobre qual
+  // dos dois idiomas estão lendo.
+  const uiLang = lang;
   const { chars, update } = useCharacters();
   const { bookmarks } = useBookmarks();
   const liveChar = React.useMemo(() => {
@@ -2527,11 +2537,9 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
 
             <div>
               <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'section.tools')}</HifiSectionLabel>
-              {/* Sem o toggle 🇧🇷/EN aqui: as pills de "versão" logo acima já
-                  trocam idioma+edição — dois controles pro mesmo estado no
-                  mesmo drawer só confundem. */}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <HifiThemeToggle dark={dark} lang={lang}/>
+                <HifiLangToggle uiLang={uiLang}/>
                 <button
                   onClick={() => {
                     const preparedSet = new Set(liveChar?.prepared || []);
