@@ -127,27 +127,30 @@ function hifiShare(s, uiLang, versionLang, show) {
   }
 }
 
-function hifiPrint(s, lang, show, extras = {}) {
-  show(tt(lang, 'print.preparing'));
-  window.dispatchEvent(new CustomEvent('hifi-print-request', { detail: { spell: s, lang, ...extras } }));
+// uiLang = chrome (toasts, rótulos da ficha); versionLang = conteúdo (nome da
+// magia). D-06: a ficha impressa vira espelho fiel da tela — dois idiomas no
+// payload em vez de um só.
+function hifiPrint(s, uiLang, versionLang, show, extras = {}) {
+  show(tt(uiLang, 'print.preparing'));
+  window.dispatchEvent(new CustomEvent('hifi-print-request', { detail: { spell: s, uiLang, versionLang, ...extras } }));
 }
 
-function hifiPrintList(spells, lang, show, opts = {}) {
-  show(tt(lang, 'print.preparing'));
-  window.dispatchEvent(new CustomEvent('hifi-print-request', { detail: { spells, lang, ...opts } }));
+function hifiPrintList(spells, uiLang, versionLang, show, opts = {}) {
+  show(tt(uiLang, 'print.preparing'));
+  window.dispatchEvent(new CustomEvent('hifi-print-request', { detail: { spells, uiLang, versionLang, ...opts } }));
 }
 
 // Print N spells in compact "pack" mode — multiple spells per A4 page,
 // browser packs them naturally with break-inside: avoid. Spells are
 // sorted by level (low → high) before packing.
-function hifiPrintPrepared(spells, lang, show, opts = {}) {
+function hifiPrintPrepared(spells, uiLang, versionLang, show, opts = {}) {
   if (!spells || !spells.length) {
-    show(tt(lang, 'print.noPrepared'), 'err');
+    show(tt(uiLang, 'print.noPrepared'), 'err');
     return;
   }
-  const sorted = [...spells].sort((a, b) => (a.lvl - b.lvl) || (spellName(a, lang) || '').localeCompare(spellName(b, lang) || ''));
-  show(tt(lang, 'print.printing', { n: spells.length, nounSpell: tt(lang, 'noun.spell.' + i18nPlural(spells.length)) }));
-  window.dispatchEvent(new CustomEvent('hifi-print-request', { detail: { spells: sorted, lang, mode: 'pack', ...opts } }));
+  const sorted = [...spells].sort((a, b) => (a.lvl - b.lvl) || (spellName(a, versionLang) || '').localeCompare(spellName(b, versionLang) || ''));
+  show(tt(uiLang, 'print.printing', { n: spells.length, nounSpell: tt(uiLang, 'noun.spell.' + i18nPlural(spells.length)) }));
+  window.dispatchEvent(new CustomEvent('hifi-print-request', { detail: { spells: sorted, uiLang, versionLang, mode: 'pack', ...opts } }));
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -170,7 +173,13 @@ function HifiPrintRoot() {
   }, []);
 
   if (!payload) return null;
-  const { spell, spells, lang, character, mode: explicitMode } = payload;
+  // D-06: o detail leva duas chaves de idioma. Fallback belt-and-braces: um
+  // `detail` antigo (chave única `lang`, listener é global e o evento é
+  // público) usa essa chave pros dois papéis, em vez de renderizar `undefined`
+  // e cair no ramo inglês por acidente.
+  const { spell, spells, uiLang: uiLangIn, versionLang: versionLangIn, lang: legacyLang, character, mode: explicitMode } = payload;
+  const uiLang = uiLangIn || legacyLang;
+  const versionLang = versionLangIn || legacyLang;
   const list = spells || (spell ? [spell] : []);
   const mode = explicitMode || (spells ? 'list' : 'single');
   if (!list.length) return null;
@@ -180,7 +189,7 @@ function HifiPrintRoot() {
   const cards = [];
   if (mode === 'single' || mode === 'pack') {
     for (const s of list) {
-      const chunks = chunkSpellForPrint(s, lang);
+      const chunks = chunkSpellForPrint(s, versionLang);
       chunks.forEach((chunk, i) => cards.push({ s, chunk, key: `${s.en}-${i}` }));
     }
   } else {
@@ -192,27 +201,27 @@ function HifiPrintRoot() {
       {character && (
         <div className="hifi-print-tracker">
           <div className="hifi-print-tracker-fields">
-            <div className="hifi-print-tracker-title">{hifiCharName(character, lang)}</div>
+            <div className="hifi-print-tracker-title">{hifiCharName(character, uiLang)}</div>
             <div className="hifi-print-tracker-url">{window.location.host || 'grimório'}</div>
             <div className="hifi-print-tracker-row">
-              <span className="hifi-print-tracker-label">{tt(lang, 'spell.class')}</span>
+              <span className="hifi-print-tracker-label">{tt(uiLang, 'spell.class')}</span>
               <span className="hifi-print-tracker-box hifi-print-tracker-box-name"/>
             </div>
             <div className="hifi-print-tracker-row">
-              <span className="hifi-print-tracker-label">{tt(lang, 'spell.level')}</span>
+              <span className="hifi-print-tracker-label">{tt(uiLang, 'spell.level')}</span>
               <span className="hifi-print-tracker-box hifi-print-tracker-box-int"/>
-              <span className="hifi-print-tracker-label">{tt(lang, 'print.dc')}</span>
+              <span className="hifi-print-tracker-label">{tt(uiLang, 'print.dc')}</span>
               <span className="hifi-print-tracker-box hifi-print-tracker-box-int"/>
-              <span className="hifi-print-tracker-label">{tt(lang, 'print.bonus')}</span>
+              <span className="hifi-print-tracker-label">{tt(uiLang, 'print.bonus')}</span>
               <span className="hifi-print-tracker-box hifi-print-tracker-box-int"/>
             </div>
           </div>
           <div className="hifi-print-tracker-slots">
-            <div className="hifi-print-tracker-slots-title">{tt(lang, 'print.spellSlots')}</div>
+            <div className="hifi-print-tracker-slots-title">{tt(uiLang, 'print.spellSlots')}</div>
             <div className="hifi-print-tracker-slots-grid">
               {[1,2,3,4,5,6,7,8,9].map(lvl => (
                 <div className="hifi-print-tracker-slot-row" key={lvl}>
-                  <span className="hifi-print-tracker-slot-label">{tt(lang, 'print.slotShort')} {lvl}</span>
+                  <span className="hifi-print-tracker-slot-label">{tt(uiLang, 'print.slotShort')} {lvl}</span>
                   <span className="hifi-print-tracker-boxes">◯ ◯ ◯ ◯</span>
                 </div>
               ))}
@@ -221,7 +230,7 @@ function HifiPrintRoot() {
         </div>
       )}
       <div className={`hifi-print-flow${mode === 'list' && cards.length > 1 ? ' is-two-col' : ''}`}>
-        {cards.map((c, i) => <HifiPrintCard key={i} s={c.s} chunk={c.chunk} lang={lang}/>)}
+        {cards.map((c, i) => <HifiPrintCard key={i} s={c.s} chunk={c.chunk} uiLang={uiLang} versionLang={versionLang}/>)}
       </div>
     </div>,
     document.body
@@ -235,11 +244,11 @@ function HifiPrintRoot() {
 // In pack mode, each chunk is one card that flows in the page — so chunks
 // only kick in when the *single* description is so long it can't fit a page
 // alone. ~1800 chars at 8.5pt ≈ comfortable page height.
-function chunkSpellForPrint(s, lang, charsPerChunk = 1800) {
-  const desc = window.v8Description ? window.v8Description(s, lang) : '';
-  const descHtml = window.v8DescriptionHtml ? window.v8DescriptionHtml(s, lang) : '';
-  const upgrade = window.v8Upgrade ? window.v8Upgrade(s, lang) : '';
-  const upgradeHtml = window.v8UpgradeHtml ? window.v8UpgradeHtml(s, lang) : '';
+function chunkSpellForPrint(s, versionLang, charsPerChunk = 1800) {
+  const desc = window.v8Description ? window.v8Description(s, versionLang) : '';
+  const descHtml = window.v8DescriptionHtml ? window.v8DescriptionHtml(s, versionLang) : '';
+  const upgrade = window.v8Upgrade ? window.v8Upgrade(s, versionLang) : '';
+  const upgradeHtml = window.v8UpgradeHtml ? window.v8UpgradeHtml(s, versionLang) : '';
 
   // Short enough for one page → one self-contained block carrying the full
   // rich HTML (preserva parágrafos/listas), com o texto achatado de fallback.
@@ -292,12 +301,12 @@ function chunkSpellForPrint(s, lang, charsPerChunk = 1800) {
   }));
 }
 
-function HifiPrintCard({ s, lang, chunk }) {
+function HifiPrintCard({ s, uiLang, versionLang, chunk }) {
   const fallback = {
-    desc: window.v8Description ? window.v8Description(s, lang) : '',
-    descHtml: window.v8DescriptionHtml ? window.v8DescriptionHtml(s, lang) : '',
-    upgrade: window.v8Upgrade ? window.v8Upgrade(s, lang) : '',
-    upgradeHtml: window.v8UpgradeHtml ? window.v8UpgradeHtml(s, lang) : '',
+    desc: window.v8Description ? window.v8Description(s, versionLang) : '',
+    descHtml: window.v8DescriptionHtml ? window.v8DescriptionHtml(s, versionLang) : '',
+    upgrade: window.v8Upgrade ? window.v8Upgrade(s, versionLang) : '',
+    upgradeHtml: window.v8UpgradeHtml ? window.v8UpgradeHtml(s, versionLang) : '',
     partIdx: 0, partTotal: 1,
   };
   const { desc, descHtml, upgrade, upgradeHtml, partIdx, partTotal } = chunk || fallback;
@@ -309,28 +318,28 @@ function HifiPrintCard({ s, lang, chunk }) {
         <div className="hifi-print-spell-headrow">
           <span
             className={`hifi-print-spell-level${isCantrip ? ' is-cantrip' : ''}`}
-            title={isCantrip ? (tt(lang, 'spell.cantrip')) : `${tt(lang, 'spell.level')} ${s.lvl}`}
+            title={isCantrip ? (tt(uiLang, 'spell.cantrip')) : `${tt(uiLang, 'spell.level')} ${s.lvl}`}
           >
-            {isCantrip ? (tt(lang, 'spell.cantripShort')) : s.lvl}
+            {isCantrip ? (tt(uiLang, 'spell.cantripShort')) : s.lvl}
           </span>
-          <div className="hifi-print-spell-name">{spellName(s, lang)}</div>
+          <div className="hifi-print-spell-name">{spellName(s, versionLang)}</div>
         </div>
         <div className="hifi-print-spell-meta">
           {schoolKey(s.school)}
-          {s.conc && <> · <span>{tt(lang, 'spell.concentration')}</span></>}
-          {s.rit && <> · <span>{tt(lang, 'spell.ritual')}</span></>}
+          {s.conc && <> · <span>{tt(uiLang, 'spell.concentration')}</span></>}
+          {s.rit && <> · <span>{tt(uiLang, 'spell.ritual')}</span></>}
         </div>
         {partTotal > 1 && (
           <div className="hifi-print-spell-continuation">
-            {tt(lang, 'spell.part', { i: partIdx + 1, n: partTotal })}
+            {tt(uiLang, 'spell.part', { i: partIdx + 1, n: partTotal })}
           </div>
         )}
       </header>
       <dl className="hifi-print-spell-stats">
-        <div><dt>{tt(lang, 'spell.cast')}</dt><dd>{s.time}</dd></div>
-        <div><dt>{tt(lang, 'spell.range')}</dt><dd>{s.range}</dd></div>
-        <div><dt>{tt(lang, 'spell.duration')}</dt><dd>{s.dur}</dd></div>
-        <div><dt>{tt(lang, 'spell.components')}</dt><dd>{comps.join(' · ') || '—'}</dd></div>
+        <div><dt>{tt(uiLang, 'spell.cast')}</dt><dd>{s.time}</dd></div>
+        <div><dt>{tt(uiLang, 'spell.range')}</dt><dd>{s.range}</dd></div>
+        <div><dt>{tt(uiLang, 'spell.duration')}</dt><dd>{s.dur}</dd></div>
+        <div><dt>{tt(uiLang, 'spell.components')}</dt><dd>{comps.join(' · ') || '—'}</dd></div>
       </dl>
       {(descHtml || desc) && (
         descHtml
@@ -339,7 +348,7 @@ function HifiPrintCard({ s, lang, chunk }) {
       )}
       {(upgradeHtml || upgrade) && (
         <div className="hifi-print-spell-upgrade">
-          <strong>{tt(lang, 'spell.higherLevels')}</strong>{' '}
+          <strong>{tt(uiLang, 'spell.higherLevels')}</strong>{' '}
           {upgradeHtml
             ? <span className="hifi-rich" dangerouslySetInnerHTML={{ __html: upgradeHtml }}/>
             : upgrade}
@@ -1367,7 +1376,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
           onClick={() => {
             const preparedSet = new Set(liveChar?.prepared || []);
             const preparedSpells = allSpells.filter(s => preparedSet.has(hifiSpellKey(s)));
-            hifiPrintPrepared(preparedSpells, lang, showToast, { character: liveChar });
+            hifiPrintPrepared(preparedSpells, uiLang, versionLang, showToast, { character: liveChar });
           }}
           className="hifi-link-action"
           title={tt(lang, 'action.printPreparedTitle')}
@@ -2549,7 +2558,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
                   onClick={() => {
                     const preparedSet = new Set(liveChar?.prepared || []);
                     const preparedSpells = allSpells.filter(s => preparedSet.has(hifiSpellKey(s)));
-                    hifiPrintPrepared(preparedSpells, lang, showToast, { character: liveChar });
+                    hifiPrintPrepared(preparedSpells, uiLang, versionLang, showToast, { character: liveChar });
                   }}
                   className="hifi-icon-btn"
                   title={tt(lang, 'action.printPrepared')}
