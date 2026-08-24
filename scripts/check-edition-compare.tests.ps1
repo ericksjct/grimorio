@@ -63,13 +63,13 @@ foreach ($entry in $entryLines) {
   }
 }
 
-# ── CR-02 / WR-07: um ÚNICO helper de seleção, usado por AMBOS os call sites ──
-# Round 2 corrigiu só useEditionCompare (WR-07). Round 3 achou o mesmo defeito
-# em HifiLangToggle (CR-02) porque os dois tinham cópias separadas da lógica
-# de preferência de corpus. Structural: hifiSiblingVersion() existe, checa
-# `v.corpus === cur.corpus`, e AMBOS HifiLangToggle e useEditionCompare
-# chamam por ela — se qualquer um dos dois voltar a usar `versions.find(...)`
-# cru, esta asserção falha (o que WR-03 aponta que não existia antes).
+# ── CR-02 / WR-07: hifiSiblingVersion() continua declarado e continua sendo
+# usado por useEditionCompare (Fase 04.1 plano 02 desmontou HifiLangToggle do
+# registro de versoes: D-09 - o toggle agora so escreve uiLang via
+# window.__setUiLang e nao consulta mais `versions`/hifiSiblingVersion. O
+# guarda de nao-regressao que sobra e: o helper compartilhado continua vivo e
+# useEditionCompare continua chamando-o - se qualquer um dos dois sumir, esta
+# asserção falha.
 $helperMatch = [regex]::Match($ui, 'function hifiSiblingVersion\([\s\S]{0,600}?\n\}')
 if (-not $helperMatch.Success) {
   throw 'CR-02: could not locate the shared hifiSiblingVersion() helper in v10-hifi.jsx.'
@@ -81,21 +81,17 @@ if ($helperBody -notmatch 'v\.corpus\s*===\s*cur\.corpus') {
 
 $toggleMatch = [regex]::Match($ui, 'function HifiLangToggle\([\s\S]{0,3000}?\n\}')
 if (-not $toggleMatch.Success) {
-  throw 'CR-02: could not locate HifiLangToggle in v10-hifi.jsx.'
+  throw 'Could not locate HifiLangToggle in v10-hifi.jsx.'
 }
-# Mutation-tested: exigir apenas UMA ocorrencia deixava passar a DERIVA
-# PARCIAL -- reverter so a linha `pt` e manter a `en` mantinha os 24 scripts
-# verdes. Deriva parcial entre dois call sites irmaos e exatamente a forma do
-# CR-02, entao o guarda precisa contar os DOIS e proibir find() cru no corpo.
-$toggleCalls = ([regex]::Matches($toggleMatch.Value, 'hifiSiblingVersion\(')).Count
-if ($toggleCalls -lt 2) {
-  throw "CR-02: HifiLangToggle must resolve BOTH its pt and en siblings through hifiSiblingVersion() - found $toggleCalls call(s). Reverting just one of the two lines is the partial drift that produced CR-02 in the first place (WR-06 fixed one call site, its sibling kept the ad-hoc lookup)."
+# Fase 04.1 plano 02, D-09: HifiLangToggle NAO consulta mais o registro de
+# versoes nem hifiSiblingVersion() - controla so uiLang via
+# window.__setUiLang. Uma chamada a hifiSiblingVersion aqui seria a fiacao
+# antiga voltando por engano.
+if ($toggleMatch.Value -match 'hifiSiblingVersion\(') {
+  throw 'D-09: HifiLangToggle must not call hifiSiblingVersion() anymore - it no longer looks up the version registry; it only writes uiLang via window.__setUiLang.'
 }
-# Estreito de proposito: `versions.find(v => v.key === versionKey)` resolve a
-# versao CORRENTE e e legitimo. O que nao pode voltar e um find() por IDIOMA,
-# que e a selecao de irmao -- a decisao que pertence a hifiSiblingVersion().
-if ($toggleMatch.Value -match 'versions\.find\([^)]*\.lang\s*===') {
-  throw 'CR-02: HifiLangToggle must not pick a sibling with a bare versions.find(v => v.lang === ...) - sibling selection belongs to hifiSiblingVersion(), which owns the corpus preference. A local lang-based find() bypasses it silently.'
+if ($toggleMatch.Value -match 'versions\.find\(') {
+  throw 'D-09: HifiLangToggle must not consult `versions` at all - sibling/registry lookups belong to useEditionCompare only.'
 }
 if ($fnBody -notmatch 'hifiSiblingVersion\(') {
   throw 'CR-02/WR-07: useEditionCompare must select `other` through hifiSiblingVersion() too, not its own inline corpus logic.'

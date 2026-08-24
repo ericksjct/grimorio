@@ -444,26 +444,11 @@ function hifiSiblingVersion(versions, cur, predicate) {
     || null;
 }
 
-// Seletor de idioma — dois textos clicáveis no rodapé (PT / EN), sempre
-// visíveis. O idioma ativo fica em cor de texto normal; o inativo como link
-// sublinhado clicável. Emoji de bandeirinha ao lado de cada um.
-function HifiLangToggle({ lang = 'ptbr', versions = [], versionKey, onSwitch }) {
-  const cur = versions.find(v => v.key === versionKey);
-  const curLang = cur ? cur.lang : lang;
-  // WR-06: usa a `edition` DECLARADA na entrada do registro, não um regex
-  // sobre a chave. `key` de um pack é 'plugin-' + meta.source (nome escolhido
-  // pelo autor do pack, third-party) — um regex /2024/ deixava o AUTOR do
-  // pack decidir pra qual idioma/edição o toggle PT/EN pulava.
-  const curEdition = cur ? cur.edition : null;
-
-  // Versões disponíveis para a edição atual. Sem edição declarada (pack
-  // BYOD sem `edition`), o toggle degrada pra desabilitado em vez de pular
-  // pra um par errado — os botões já no-opam quando pt/en é null.
-  // CR-02: hifiSiblingVersion prefere o mesmo `corpus` — sem isso, a SRD
-  // (índices 0-1 do registro) vence qualquer PHB por ordem de `find`.
-  const pt = curEdition ? hifiSiblingVersion(versions, cur, v => v.lang === 'ptbr' && v.edition === curEdition) : null;
-  const en = curEdition ? hifiSiblingVersion(versions, cur, v => v.lang === 'en' && v.edition === curEdition) : null;
-
+// Seletor de idioma da INTERFACE — dois textos clicáveis (PT / EN), sempre
+// habilitados (D-09). Controla só `uiLang`, via `window.__setUiLang`; não lê
+// o registro de versões, então funciona mesmo sem nenhuma entrada `ptbr`
+// (pós-Fase 6). Trocar CONTEÚDO é papel exclusivo do VersionSelector.
+function HifiLangToggle({ uiLang = 'ptbr', style }) {
   const itemStyle = (active) => ({
     ...hifiFooterLink,
     background: 'none',
@@ -478,19 +463,21 @@ function HifiLangToggle({ lang = 'ptbr', versions = [], versionKey, onSwitch }) 
   });
 
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, ...style }}>
       <button
-        onClick={() => { if (!pt || curLang === 'ptbr') return; onSwitch(pt.key); }}
-        aria-label={curLang === 'ptbr' ? 'português (atual)' : 'mudar para português'}
-        title={curLang === 'ptbr' ? 'português (atual)' : 'mudar para português'}
-        style={itemStyle(curLang === 'ptbr')}
+        lang="pt-br"
+        onClick={() => uiLang !== 'ptbr' && window.__setUiLang && window.__setUiLang('ptbr')}
+        aria-label={uiLang === 'ptbr' ? 'português (atual)' : 'mudar para português'}
+        title={uiLang === 'ptbr' ? 'português (atual)' : 'mudar para português'}
+        style={itemStyle(uiLang === 'ptbr')}
       >🇧🇷 PT</button>
       <span style={{ color: 'var(--overlay0)' }}>/</span>
       <button
-        onClick={() => { if (!en || curLang === 'en') return; onSwitch(en.key); }}
-        aria-label={curLang === 'en' ? 'english (current)' : 'switch to english'}
-        title={curLang === 'en' ? 'english (current)' : 'switch to english'}
-        style={itemStyle(curLang === 'en')}
+        lang="en"
+        onClick={() => uiLang !== 'en' && window.__setUiLang && window.__setUiLang('en')}
+        aria-label={uiLang === 'en' ? 'english (current)' : 'switch to english'}
+        title={uiLang === 'en' ? 'english (current)' : 'switch to english'}
+        style={itemStyle(uiLang === 'en')}
       >🇺🇸 EN</button>
     </span>
   );
@@ -1111,6 +1098,11 @@ function HifiStat({ label, value }) {
 // DESKTOP
 // ──────────────────────────────────────────────────────────────────
 function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', character, width = 1280, height = 820 }) {
+  // `lang` é o idioma da INTERFACE (chrome), vindo de index.html; `versionLang`
+  // (abaixo, via useHifiAppState) é o idioma do PACK ativo. `uiLang` é um alias
+  // de legibilidade para os call sites que precisam ser explícitos sobre qual
+  // dos dois idiomas estão lendo.
+  const uiLang = lang;
   const { chars, update } = useCharacters();
   const { bookmarks } = useBookmarks();
   // Pick the live character from the store (matched by id or name from prop fallback)
@@ -1429,7 +1421,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
             current={versionKey}
             versions={versions}
             onChange={switchVersion}
-            lang={versionLang}
+            lang={uiLang}
             dark={dark}
           />
         )}
@@ -1595,7 +1587,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
           <a href="https://www.jetbrains.com/lp/mono/" target="_blank" rel="noopener" style={hifiFooterLink}>JetBrains Mono</a>
         </span>
         <div style={{ flex: 1, minWidth: 14 }}/>
-        <HifiLangToggle lang={lang} versions={versions} versionKey={versionKey} onSwitch={switchVersion}/>
+        <HifiLangToggle uiLang={uiLang}/>
         <span style={{ color: 'var(--overlay0)', marginLeft: 4, marginRight: 4 }}>·</span>
         <HifiThemeToggle dark={dark} lang={lang} style={{ width: 30, height: 30, fontSize: 15 }}/>
       </footer>
@@ -2150,6 +2142,11 @@ function HifiSessionMode({ character, update, lang, allSpells, onExit }) {
 // MOBILE
 // ──────────────────────────────────────────────────────────────────
 function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', character, drawerOpen: initialDrawerOpen = false, detailIdx = null }) {
+  // `lang` é o idioma da INTERFACE (chrome), vindo de index.html; `versionLang`
+  // (abaixo, via useHifiAppState) é o idioma do PACK ativo. `uiLang` é um alias
+  // de legibilidade para os call sites que precisam ser explícitos sobre qual
+  // dos dois idiomas estão lendo.
+  const uiLang = lang;
   const { chars, update } = useCharacters();
   const { bookmarks } = useBookmarks();
   const liveChar = React.useMemo(() => {
@@ -2540,11 +2537,9 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
 
             <div>
               <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'section.tools')}</HifiSectionLabel>
-              {/* Sem o toggle 🇧🇷/EN aqui: as pills de "versão" logo acima já
-                  trocam idioma+edição — dois controles pro mesmo estado no
-                  mesmo drawer só confundem. */}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <HifiThemeToggle dark={dark} lang={lang}/>
+                <HifiLangToggle uiLang={uiLang}/>
                 <button
                   onClick={() => {
                     const preparedSet = new Set(liveChar?.prepared || []);
