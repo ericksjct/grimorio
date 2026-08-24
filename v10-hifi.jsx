@@ -757,7 +757,10 @@ function hifiMaxCircle(classLevels) {
 // `derive: true` = os valores selecionáveis vêm dos próprios dados (JSON).
 function hifiFilterConfig(lang) {
 
-  const bool = b => (b ? (tt(lang, 'value.yes')) : (tt(lang, 'value.no')));
+  // `label` e `formatValue` sao chrome (idioma da interface, chamado com
+  // uiLang pelos call sites de UI); `get` e `values` sao dado (canonico para
+  // conc/rit, valor cru do pack para o resto, sempre indiferentes a `lang`).
+  const bool = v => (v === 'yes' ? (tt(lang, 'value.yes')) : (tt(lang, 'value.no')));
   // Sem prototipo: cfg[key] e indexado com chaves vindas de ?f.* na URL. Num
   // literal comum, 'constructor' devolve a funcao herdada -- truthy, entao o
   // guard `&& def` nao salva e def.get(s) estoura dentro do render.
@@ -766,8 +769,8 @@ function hifiFilterConfig(lang) {
     school: { label: tt(lang, 'spell.school'),  base: true, get: s => [schoolKey(s.school)], values: ['evoc','conj','abjur','ench','ilus','div','necr','trans'] },
     class:  { label: tt(lang, 'spell.class'),   base: true, get: s => (s.classes || []) },
     comp:   { label: tt(lang, 'spell.component'), get: s => (s.comp || '').split(/\s+/).filter(Boolean), values: ['V', 'S', 'M'] },
-    conc:   { label: tt(lang, 'spell.concentration'), get: s => [bool(s.conc)], values: [bool(true), bool(false)] },
-    rit:    { label: tt(lang, 'spell.ritual'),  get: s => [bool(s.rit)], values: [bool(true), bool(false)] },
+    conc:   { label: tt(lang, 'spell.concentration'), get: s => [s.conc ? 'yes' : 'no'], values: ['yes', 'no'], formatValue: bool },
+    rit:    { label: tt(lang, 'spell.ritual'),  get: s => [s.rit ? 'yes' : 'no'], values: ['yes', 'no'], formatValue: bool },
     time:   { label: tt(lang, 'spell.castTime'), derive: true, get: s => (s.time ? [s.time] : []) },
     dur:    { label: tt(lang, 'spell.duration'), derive: true, get: s => (s.dur ? [s.dur] : []) },
     range:  { label: tt(lang, 'spell.range'),  derive: true, get: s => (s.range ? [s.range] : []) },
@@ -1260,12 +1263,12 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
   // Filtros extras (desktop): além de classe/nível/escola, o usuário adiciona
   // outros campos dos JSONs via "+ mais". `extraFilters` = chaves ativas (ordem).
   const [extraFilters, setExtraFilters] = React.useState([]);
-  const filterCfg = React.useMemo(() => hifiFilterConfig(versionLang), [versionLang]);
+  const filterCfg = React.useMemo(() => hifiFilterConfig(uiLang), [uiLang]);
   const filterCats = React.useMemo(() => ([
     { key: 'level',  label: tt(lang, 'spell.level'),  values: hifiFilterValues('level', allSpells, versionLang) },
-    { key: 'school', label: tt(lang, 'spell.school'), values: hifiFilterValues('school', allSpells, versionLang), formatValue: v => hifiSchoolFilterLabel(v, versionLang) },
+    { key: 'school', label: tt(lang, 'spell.school'), values: hifiFilterValues('school', allSpells, versionLang), formatValue: v => hifiSchoolFilterLabel(v, uiLang) },
     { key: 'class',  label: tt(lang, 'spell.class'),  values: hifiFilterValues('class', allSpells, versionLang), formatValue: v => hifiTitleCaseFilterLabel(v) },
-  ]), [lang, allSpells, versionLang]);
+  ]), [lang, uiLang, allSpells, versionLang]);
   // Valores selecionáveis de cada extra: estáticos (config) ou derivados
   // (distintos + ordenados) dos próprios dados quando `derive`.
   const extraValues = React.useMemo(() => {
@@ -1426,6 +1429,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
               count={filters[key]?.size || 0}
               values={extraValues[key] || []}
               selected={filters[key] || new Set()}
+              formatValue={filterCfg[key].formatValue}
               onToggle={(v) => toggleFilter(key, v)}
               onClear={() => setFilters(p => ({ ...p, [key]: new Set() }))}
               onRemove={() => removeExtraFilter(key)}
@@ -2189,7 +2193,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
     school: hifiFilterValues('school', allSpells, versionLang),
     class: hifiFilterValues('class', allSpells, versionLang),
   }), [allSpells, versionLang]);
-  const filterCfg = React.useMemo(() => hifiFilterConfig(versionLang), [versionLang]);
+  const filterCfg = React.useMemo(() => hifiFilterConfig(uiLang), [uiLang]);
   const [extraFilters, setExtraFilters] = React.useState([]);
   const extraValues = React.useMemo(() => {
     const out = {};
@@ -2487,7 +2491,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
               <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'spell.school')}</HifiSectionLabel>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {mobileFilterValues.school.map(v => (
-                  <HifiPill key={v} active={filters.school?.has(v)} onClick={() => toggleFilter('school', v)}>{hifiSchoolFilterLabel(v, versionLang)}</HifiPill>
+                  <HifiPill key={v} active={filters.school?.has(v)} onClick={() => toggleFilter('school', v)}>{hifiSchoolFilterLabel(v, uiLang)}</HifiPill>
                 ))}
               </div>
             </div>
@@ -2513,7 +2517,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
                 </HifiSectionLabel>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {(extraValues[key] || []).map(v => (
-                    <HifiPill key={v} active={filters[key]?.has(v)} onClick={() => toggleFilter(key, v)}>{v}</HifiPill>
+                    <HifiPill key={v} active={filters[key]?.has(v)} onClick={() => toggleFilter(key, v)}>{filterCfg[key].formatValue ? filterCfg[key].formatValue(v) : v}</HifiPill>
                   ))}
                 </div>
               </div>
