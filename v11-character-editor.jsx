@@ -529,6 +529,12 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
     () => (window.v7BuildSpells ? window.v7BuildSpells() : []),
     [spellVersion]
   );
+  // Idioma do PACK ativo (nao da interface) - deriva do mesmo contador
+  // spellVersion que ja reage a hifi-spells-source-changed, sem listener novo.
+  const versionLang = React.useMemo(
+    () => window.getCurrentSpellVersion?.()?.lang || 'ptbr',
+    [spellVersion]
+  );
 
   const filteredSpells = React.useMemo(() => {
     let out = allSpells;
@@ -537,11 +543,11 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
     if (query.trim()) {
       const q = hifiNorm(query.trim());
       out = out.filter(s =>
-        hifiNorm(spellName(s, lang)).includes(q) || hifiNorm(s.en).includes(q)
+        hifiNorm(spellName(s, versionLang)).includes(q) || hifiNorm(s.en).includes(q)
       );
     }
     return out;
-  }, [allSpells, query, tab, prepared, bookmarked]);
+  }, [allSpells, query, tab, prepared, bookmarked, versionLang]);
 
   // Helper bilíngue (pt, en) — mecanismo centralizado no i18n (window.bilingual).
   const T = window.bilingual ? window.bilingual(lang) : (pt, en) => (lang === 'ptbr' ? pt : en);
@@ -948,7 +954,7 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
                   <div className={`hifi-level-bar hifi-level-${s.lvl}`} style={{ position: 'static', width: 3 }}/>
                   <div style={{ flex: 1, minWidth: 0, padding: '8px 12px' }}>
                     <div style={{ fontFamily: "'Texturina', 'Marauder Display', Georgia, serif", fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>
-                      {spellName(s, lang)}
+                      {spellName(s, versionLang)}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--subtext0)', fontStyle: 'italic' }}>
                       {schoolKey(s.school)} · {s.lvl === 0 ? T('truque', 'cantrip') : `${T('círc.', 'lvl')} ${s.lvl}`}
