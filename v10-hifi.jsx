@@ -8,6 +8,11 @@
 
 function hifiSpellKey(s) { return `${s.school}-${s.lvl}-${s.en}`; }
 
+// Converte o idioma interno no valor de atributo HTML lang (D-05, WCAG
+// 3.1.2) — mesma forma do ternário de index.html:511, aplicada por REGIÃO de
+// conteúdo do pack em vez de uma vez só no documento.
+function hifiHtmlLang(lang) { return lang === 'ptbr' ? 'pt-br' : 'en'; }
+
 const hifiFooterLink = {
   color: 'var(--subtext1)',
   textDecoration: 'underline',
@@ -322,7 +327,7 @@ function HifiPrintCard({ s, uiLang, versionLang, chunk }) {
           >
             {isCantrip ? (tt(uiLang, 'spell.cantripShort')) : s.lvl}
           </span>
-          <div className="hifi-print-spell-name">{spellName(s, versionLang)}</div>
+          <div className="hifi-print-spell-name" lang={hifiHtmlLang(versionLang)}>{spellName(s, versionLang)}</div>
         </div>
         <div className="hifi-print-spell-meta">
           {schoolKey(s.school)}
@@ -343,14 +348,14 @@ function HifiPrintCard({ s, uiLang, versionLang, chunk }) {
       </dl>
       {(descHtml || desc) && (
         descHtml
-          ? <div className="hifi-print-spell-desc hifi-rich" dangerouslySetInnerHTML={{ __html: descHtml }}/>
+          ? <div className="hifi-print-spell-desc hifi-rich" lang={hifiHtmlLang(versionLang)} dangerouslySetInnerHTML={{ __html: descHtml }}/>
           : <p className="hifi-print-spell-desc">{desc}</p>
       )}
       {(upgradeHtml || upgrade) && (
         <div className="hifi-print-spell-upgrade">
           <strong>{tt(uiLang, 'spell.higherLevels')}</strong>{' '}
           {upgradeHtml
-            ? <span className="hifi-rich" dangerouslySetInnerHTML={{ __html: upgradeHtml }}/>
+            ? <span className="hifi-rich" lang={hifiHtmlLang(versionLang)} dangerouslySetInnerHTML={{ __html: upgradeHtml }}/>
             : upgrade}
         </div>
       )}
@@ -384,10 +389,11 @@ function HifiSectionLabel({ children, style }) {
   return <div className="hifi-section-label" style={style}>{children}</div>;
 }
 
-function HifiSpellName({ children, size = 17, style }) {
+function HifiSpellName({ children, size = 17, style, lang }) {
   return (
     <span
       className="hifi-display"
+      lang={lang}
       style={{ fontSize: size, color: 'var(--text)', ...style }}
     >{children}</span>
   );
@@ -595,6 +601,7 @@ const HifiSpellCard = React.memo(function HifiSpellCard({ s, lang, versionLang, 
         className="hifi-card-open"
         onClick={() => onClick && onClick(s)}
         aria-label={spellName(s, versionLang)}
+        lang={hifiHtmlLang(versionLang)}
       />
       {/* Ribbon = toggle de "preparada". Sempre clicável; o clique não abre o
           detalhe (stopPropagation). Preenchido quando preparada; fantasma sutil
@@ -631,7 +638,7 @@ const HifiSpellCard = React.memo(function HifiSpellCard({ s, lang, versionLang, 
         )}
       </button>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 'calc(8px * var(--z, 1))', paddingRight: prepared ? 'calc(42px * var(--z, 1))' : 0, minWidth: 0, flexShrink: 0 }}>
-        <HifiSpellName size={compact ? 'calc(16px * var(--z, 1))' : 'calc(17px * var(--z, 1))'} style={{
+        <HifiSpellName size={compact ? 'calc(16px * var(--z, 1))' : 'calc(17px * var(--z, 1))'} lang={hifiHtmlLang(versionLang)} style={{
           display: '-webkit-box',
           WebkitLineClamp: 1,
           WebkitBoxOrient: 'vertical',
@@ -667,7 +674,7 @@ const HifiSpellCard = React.memo(function HifiSpellCard({ s, lang, versionLang, 
           color: 'var(--subtext1)',
         }}>
           {descHtml
-            ? <div className="hifi-rich" dangerouslySetInnerHTML={{ __html: descHtml }}/>
+            ? <div className="hifi-rich" lang={hifiHtmlLang(versionLang)} dangerouslySetInnerHTML={{ __html: descHtml }}/>
             : <p style={{ margin: 0, textWrap: 'pretty' }}>{desc}</p>}
         </div>
       )}
@@ -1008,7 +1015,7 @@ function HifiDetailContent({ s, lang, versionLang }) {
       <div>
         <HifiSectionLabel>{tt(lang, 'spell.description')}</HifiSectionLabel>
         {descHtml
-          ? <div className="hifi-rich" style={{ margin: '8px 0 0', fontSize: 15, lineHeight: 1.6, color: 'var(--text)' }} dangerouslySetInnerHTML={{ __html: descHtml }}/>
+          ? <div className="hifi-rich" style={{ margin: '8px 0 0', fontSize: 15, lineHeight: 1.6, color: 'var(--text)' }} lang={hifiHtmlLang(versionLang)} dangerouslySetInnerHTML={{ __html: descHtml }}/>
           : <p style={{ margin: '8px 0 0', fontSize: 15, lineHeight: 1.6, textWrap: 'pretty', color: 'var(--text)' }}>{desc}</p>}
       </div>
 
@@ -1017,7 +1024,7 @@ function HifiDetailContent({ s, lang, versionLang }) {
         <div>
           <HifiSectionLabel>{tt(lang, 'spell.higherLevelsLabel')}</HifiSectionLabel>
           {upgradeHtml
-            ? <div className="hifi-rich" style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--subtext1)', fontStyle: 'italic' }} dangerouslySetInnerHTML={{ __html: upgradeHtml }}/>
+            ? <div className="hifi-rich" style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--subtext1)', fontStyle: 'italic' }} lang={hifiHtmlLang(versionLang)} dangerouslySetInnerHTML={{ __html: upgradeHtml }}/>
             : <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.6, textWrap: 'pretty', color: 'var(--subtext1)', fontStyle: 'italic' }}>{upgrade}</p>}
         </div>
       )}
@@ -1518,7 +1525,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
               <>
                 <div className="hifi-panel-header">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <HifiSpellName size={26}>{spellName(shownSpell, versionLang)}</HifiSpellName>
+                    <HifiSpellName size={26} lang={hifiHtmlLang(versionLang)}>{spellName(shownSpell, versionLang)}</HifiSpellName>
                     <div style={{ flex: 1 }}/>
                     {/* Botões deslocados ~6px pra baixo: alinhamento óptico com o
                         título serifado (o centro matemático fica visualmente alto). */}
@@ -2024,7 +2031,7 @@ function HifiSessionMode({ character, update, lang, versionLang, allSpells, onEx
             return (
               <div key={k} className="hifi-card compact" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', cursor: 'pointer', flexShrink: 0 }} onClick={() => setDetail(s)}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <HifiSpellName size={14} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{spellName(s, versionLang)}</HifiSpellName>
+                  <HifiSpellName size={14} lang={hifiHtmlLang(versionLang)} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{spellName(s, versionLang)}</HifiSpellName>
                   <div style={{ fontSize: 11, color: 'var(--subtext0)', fontStyle: 'italic', fontFamily: "'Marauder Text', Georgia, serif" }}>
                     {schoolKey(s.school)} · {s.lvl === 0 ? tt(lang, 'spell.cantrip') : tt(lang, 'session.groupCircle', { n: s.lvl })}
                     {s.conc && <span style={{ color: 'var(--yellow)' }}> · C</span>}
@@ -2039,7 +2046,7 @@ function HifiSessionMode({ character, update, lang, versionLang, allSpells, onEx
           return (
             <div key={k} className="hifi-card compact" style={{ padding: '12px 13px', display: 'flex', flexDirection: 'column', gap: 4, cursor: 'pointer', flexShrink: 0, position: 'relative', overflow: 'hidden' }} onClick={() => setDetail(s)}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, minWidth: 0 }}>
-                <HifiSpellName size={16} style={{ display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{spellName(s, versionLang)}</HifiSpellName>
+                <HifiSpellName size={16} lang={hifiHtmlLang(versionLang)} style={{ display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{spellName(s, versionLang)}</HifiSpellName>
               </div>
               <div style={{ fontStyle: 'italic', fontSize: 12, color: 'var(--subtext0)', fontFamily: "'Marauder Text', Georgia, serif", display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span>{schoolKey(s.school)}</span>
@@ -2075,7 +2082,7 @@ function HifiSessionMode({ character, update, lang, versionLang, allSpells, onEx
           </header>
           <div style={{ flex: 1, overflow: 'auto' }}>
             <div style={{ padding: '20px 18px 14px' }}>
-              <HifiSpellName size={32}>{spellName(detailSpell, versionLang)}</HifiSpellName>
+              <HifiSpellName size={32} lang={hifiHtmlLang(versionLang)}>{spellName(detailSpell, versionLang)}</HifiSpellName>
               <div style={{ marginTop: 6, fontSize: 14, color: 'var(--subtext0)', fontStyle: 'italic' }}>
                 {schoolName(detailSpell.school, lang)} · {detailSpell.lvl === 0 ? tt(lang, 'spell.cantrip') : `${tt(lang, 'spell.level')} ${detailSpell.lvl}`}
                 {detailSpell.conc && <span> · <span style={{ color: 'var(--yellow)' }}>conc.</span></span>}
@@ -2326,7 +2333,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
           </header>
           <div style={{ flex: 1, overflow: 'auto' }}>
             <div style={{ padding: '20px 18px 14px' }}>
-              <HifiSpellName size={32}>{spellName(shownSpell, versionLang)}</HifiSpellName>
+              <HifiSpellName size={32} lang={hifiHtmlLang(versionLang)}>{spellName(shownSpell, versionLang)}</HifiSpellName>
               <div style={{ marginTop: 6, fontSize: 14, color: 'var(--subtext0)', fontStyle: 'italic' }}>
                 {schoolName(shownSpell.school, lang)} · {shownSpell.lvl === 0 ? (tt(lang, 'spell.cantrip')) : `${tt(lang, 'spell.level')} ${shownSpell.lvl}`}
                 {shownSpell.conc && <span> · <span style={{ color: 'var(--yellow)' }}>conc.</span></span>}
