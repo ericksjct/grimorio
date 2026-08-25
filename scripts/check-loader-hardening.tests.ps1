@@ -37,7 +37,10 @@ if ($hifi -notmatch "function hifiFilterConfig\([^)]*\)\s*\{[\s\S]*?return\s+Obj
 # emite (class/level/school) - essas são as únicas com chip visível em
 # extraFilters pra desfazer. hifiFilterConfig() conhece 10 chaves; um
 # `?f.src=` ou `?f.duration=` à mão aplicava um filtro real e invisível.
-$urlViewMatch = [regex]::Match($hifi, "if \(key\.startsWith\('f\.'\)\)[\s\S]{0,1100}?\r?\n\s*\}")
+# A janela de captura precisa caber o bloco inteiro: ele cresceu com a
+# normalizacao pt -> en da classe (CR-01 da Fase 04.1). A assercao abaixo e a
+# mesma; so a janela acompanhou o tamanho do bloco.
+$urlViewMatch = [regex]::Match($hifi, "if \(key\.startsWith\('f\.'\)\)[\s\S]{0,2000}?\r?\n\s*\}")
 if (-not $urlViewMatch.Success) {
   throw "IN-06: could not locate the ?f.*= URL-parsing block in v10-hifi.jsx (key.startsWith('f.'))."
 }

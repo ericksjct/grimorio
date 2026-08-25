@@ -754,7 +754,14 @@ function hifiFilterConfig(lang) {
   return Object.assign(Object.create(null), {
     level:  { label: tt(lang, 'spell.level'),   base: true, get: s => [s.lvl === 0 ? 'truque' : String(s.lvl)], values: ['truque','1','2','3','4','5','6','7','8','9'] },
     school: { label: tt(lang, 'spell.school'),  base: true, get: s => [schoolKey(s.school)], values: ['evoc','conj','abjur','ench','ilus','div','necr','trans'] },
-    class:  { label: tt(lang, 'spell.class'),   base: true, get: s => (s.classes || []) },
+    // CR-01: o filtro casa sempre pelo valor CANONICO (ingles), nunca pelo
+    // `s.classes` do pack ativo. `s.classes` muda de idioma junto com o pack
+    // (spells-data-loader: `classes: versionLang === 'ptbr' ? classesPt :
+    // classesEn`), entao um Set gravado como {'mago'} num pack PT nao casava
+    // com nada depois de trocar pra um pack EN — grimorio vazio, chip ainda
+    // contando 1. `classesEn` existe em toda magia; a traducao pra tela fica
+    // por conta de `hifiClassFilterLabel(value, uiLang)`.
+    class:  { label: tt(lang, 'spell.class'),   base: true, get: s => (s.classesEn || s.classes || []) },
     comp:   { label: tt(lang, 'spell.component'), get: s => (s.comp || '').split(/\s+/).filter(Boolean), values: ['V', 'S', 'M'] },
     conc:   { label: tt(lang, 'spell.concentration'), get: s => [s.conc ? 'yes' : 'no'], values: ['yes', 'no'], formatValue: bool },
     rit:    { label: tt(lang, 'spell.ritual'),  get: s => [s.rit ? 'yes' : 'no'], values: ['yes', 'no'], formatValue: bool },
@@ -838,7 +845,15 @@ function useHifiAppState(preparedKeys, initialFilters, character) {
           // (contagem cai, nenhum chip explica por quê) — nada que o app
           // produz sozinho passa por essas outras sete chaves.
           if (!['class', 'level', 'school'].includes(k)) return;
-          view.filters[k] = new Set(val.split('|').filter(Boolean));
+          let vals = val.split('|').filter(Boolean);
+          // CR-01: links antigos carregam a classe no idioma do pack de quem
+          // compartilhou (`?f.class=mago`). O filtro casa por valor canônico,
+          // então normaliza pt → en na entrada; valor já canônico passa igual.
+          if (k === 'class') {
+            const ptToEn = window.CLASS_EN || {};
+            vals = vals.map(v => ptToEn[String(v).toLowerCase()] || v);
+          }
+          view.filters[k] = new Set(vals);
           view.any = true;
         }
       });
@@ -885,8 +900,10 @@ function useHifiAppState(preparedKeys, initialFilters, character) {
     if (skipCharFilterRef.current) { skipCharFilterRef.current = false; return; }
     const cls = character?.classes || [];
     if (!cls.length) return;
-    const dict = window.CLASS_PT || {};
-    const classSet = new Set(cls.map(c => (versionLang === 'ptbr' ? (dict[c.class] || c.class) : c.class)));
+    // CR-01: as classes do personagem já são canônicas (inglês) e o filtro de
+    // classe agora casa por `classesEn`, então nada de traduzir pro idioma do
+    // pack aqui — traduzir voltaria a gravar um valor que morre na troca de pack.
+    const classSet = new Set(cls.map(c => c.class));
     const maxC = hifiMaxCircle(cls);
     const levelSet = new Set(['truque']);
     for (let i = 1; i <= maxC; i++) levelSet.add(String(i));
