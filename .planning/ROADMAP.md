@@ -154,7 +154,7 @@ Plans:
   4. Na primeira visita, o idioma da interface vem do navegador (`detectLang()`), nao da versao resolvida
   5. Um usuario com a interface em portugues lendo um pacote em ingles ve a UI toda em portugues e o conteudo das magias em ingles, sem estado inconsistente
 
-**Plans**: 4/5 plans executed
+**Plans**: 5/5 plans executed
 **UI hint**: yes
 **Planning route**: DISCUSS antes de planejar. Reverte deliberadamente a decisao original de i18n ACOPLADO (versao = fonte unica de verdade do idioma, sem toggle separado), entao a discussao precisa registrar o que substitui aquela decisao. Research do plan: NAO — o dicionario central ja existe (`i18n.jsx` com blocos `ptbr:`/`en:`, `makeT(lang)`, `tt(lang, key)` e checagem de paridade); o trabalho e fiacao de estado, nao traducao.
 
@@ -177,7 +177,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 04.1-05-PLAN.md — Wave 4: rotulos de filtro, escola, classe e Sim/Nao seguem a UI; remapeamento morto removido; scripts em risco corrigidos; checkpoint humano da fase (I18N-03)
+- [x] 04.1-05-PLAN.md — Wave 4: rotulos de filtro, escola, classe e Sim/Nao seguem a UI; remapeamento morto removido; scripts em risco corrigidos; checkpoint humano da fase (I18N-03)
 
 ### Phase 5: Plugin Manager UI & Version Selector
 
@@ -238,6 +238,6 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 2. Plugin Storage Foundation | v2.0 | 2/2 | Complete    | 2026-07-18 |
 | 3. SRD Pack & Import Pipeline | v2.0 | 8/8 | Complete    | 2026-08-11 |
 | 4. Loader Integration (Source-Dispatch) | v2.0 | 4/4 | Complete    | 2026-08-17 |
-| 04.1. Desacoplar o idioma da interface | v2.0 | 4/5 | In Progress|  |
+| 04.1. Desacoplar o idioma da interface | v2.0 | 5/5 | In Progress|  |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 0/TBD | Not started | - |
 | 6. Decommissioning & Migration | v2.0 | 0/TBD | Not started | - |
