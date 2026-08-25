@@ -20,10 +20,13 @@ Players can quickly find, prepare, and reference the right spells for their char
 - ✓ Print prepared spells to a formatted sheet (`hifi-print-request` → print portal)
 - ✓ Share a character build via URL (base64-encoded `?build=` parameter)
 - ✓ Offline-first PWA via service worker — precaches app shell + all 4 spell datasets
-- ✓ 6 visual themes (Catppuccin, Nord, Monokai, Solarized, Parchment, Daylight) × light/dark, with PT-BR/EN localization tied to spell version
+- ✓ 6 visual themes (Catppuccin, Nord, Monokai, Solarized, Parchment, Daylight) × light/dark, with PT-BR/EN localization. **Nota (Fase 04.1):** a localização deixou de ser derivada da versão de magias — o idioma da interface é preferência própria do usuário
 - ✓ Menu/filter/panel open-close micro-animations — desktop character menu, filter dropdowns, "+ mais" filter menu, character editor, side detail panel; mobile character sheet, fullscreen editor, spell detail screen. Implemented per `docs/superpowers/specs/2026-07-05-animacoes-menus-filtros-design.md` (commits `e733b1c`..`463fb7d`). Manual verification pass (cross-theme, reduced-motion, keyboard focus) confirmed done by the user on 2026-07-17.
 - ✓ Session mode (mobile): dedicated in-game screen with derived caster stats (spell DC / attack / modifier / proficiency from class+level+ability scores), compact BG3-style slot tracker, prepared-spells list (cards/list views), cast action with school-colored spark animation and upcast sheet. Spec: `docs/superpowers/specs/2026-07-17-modo-sessao-mobile-design.md`.
 - ✓ Plugin storage foundation (STOR-01/02/03) — `plugin-store.jsx`: IndexedDB CRUD (`grimorio-plugins` v1, store `packs`, records `{id, meta, spells}`), persistent-storage request at boot, and verbatim pack export to a downloaded JSON file. Writes fail cleanly: shape validated before any transaction opens, transactions resolve only on `oncomplete`, no partial state on error. Validated in Phase 2: Plugin Storage Foundation.
+- ✓ Pipeline de import de pack (Fase 3, verificação `passed`, 6/6 must-haves) — o usuário instala um pack de magias por arquivo ou URL compatível, com validação contra o schema publicado e sanitização do HTML antes de qualquer escrita. Pendem 6 itens de verificação humana em navegador (ver `03-UAT.md`)
+- ✓ Loader com despacho por fonte (Fase 4, verificação `passed`, 18/18 must-haves) — um único ponto de despacho serve tanto o pack SRD embutido quanto qualquer número de packs instalados pelo usuário, sem caminho especial embutido
+- ✓ Idioma da interface desacoplado do pacote (Fase 04.1, verificação `passed`, 5/5 critérios, I18N-01/02/03) — `uiLang` é estado próprio persistido em `spellbook-ui-prefs`, semeado pelo navegador na primeira visita e trocável a qualquer momento; o chrome segue a interface, o conteúdo das magias segue o pack, com `lang` marcado por região (WCAG 3.1.2). Um usuário brasileiro pode ler magias em inglês com a interface em português. Pré-requisito da Fase 6, que remove os JSONs PT-BR e deixaria o app monolíngue
 
 ### Active
 
@@ -93,4 +96,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-18 — Phase 2 complete (plugin storage foundation: IndexedDB layer, persistent storage, export)*
+*Last updated: 2026-08-24 — Phase 04.1 complete (idioma da interface desacoplado do idioma do pacote); registra também as Fases 3 e 4, que haviam ficado fora deste arquivo*
