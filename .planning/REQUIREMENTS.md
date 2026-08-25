@@ -46,7 +46,7 @@
 
 - [ ] **I18N-01**: idioma da interface é estado próprio, persistido em `spellbook-ui-prefs`, independente da versão ativa
 - [x] **I18N-02**: o toggle controla a interface e funciona com zero entradas `lang: 'ptbr'` no registro de versões
-- [ ] **I18N-03**: modo misto coerente — chrome no idioma da UI, conteúdo no idioma do pack, `lang` marcado por região conforme WCAG 3.1.2
+- [x] **I18N-03**: modo misto coerente — chrome no idioma da UI, conteúdo no idioma do pack, `lang` marcado por região conforme WCAG 3.1.2
 
 ## Future Requirements (v2.x)
 
@@ -94,7 +94,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MIGR-03 | Phase 6 | Pending |
 | I18N-01 | Phase 04.1 | Pending |
 | I18N-02 | Phase 04.1 | Complete |
-| I18N-03 | Phase 04.1 | Pending |
+| I18N-03 | Phase 04.1 | Complete |
 
 **Coverage:**
 
