@@ -5,12 +5,12 @@ milestone_name: Plugins BYOD
 current_phase: 5
 current_phase_name: Plugin Manager UI & Version Selector
 status: planning
-stopped_at: Phase 04.1 context gathered
-last_updated: "2026-08-25T00:48:18.505Z"
+stopped_at: Phase 5 context gathered
+last_updated: "2026-08-27T22:29:56.375Z"
 last_activity: 2026-08-24
 last_activity_desc: Phase 04.1 complete, transitioned to Phase 5
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 4
   total_plans: 19
   completed_plans: 19
@@ -112,6 +112,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-22T01:11:48.294Z
-Stopped at: Phase 04.1 context gathered
-Resume file: .planning/phases/04.1-desacoplar-o-idioma-da-interface-do-idioma-do-pacote/04.1-CONTEXT.md
+Last session: 2026-08-27T22:29:56.365Z
+Stopped at: Phase 5 context gathered
+Resume file: .planning/phases/05-plugin-manager-ui-version-selector/05-CONTEXT.md
