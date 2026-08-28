@@ -193,9 +193,27 @@ Plans:
   5. With zero packs installed, the empty state explains what a pack is and links directly to import (MGMT-05)
   6. The app displays the verbatim CC-BY attribution text matching the exact SRD edition bundled (5.1 or 5.2), including notes on any modifications to the source text (SRD-02)
 
-**Plans**: TBD
+**Plans**: 5 plans
 **UI hint**: yes
 **Planning route**: DISCUSS antes de planejar. Decisões de UX genuínas: onde o gerenciador vive (drawer/tela própria), desktop vs mobile, onde a atribuição aparece. Candidata a sketch de mockup (como no modo sessão). Research do plan: NÃO — é design de UI, não pesquisa técnica.
+
+Plans:
+**Wave 1**
+
+- [ ] 05-01-PLAN.md — Wave 1: `pack-manager.jsx` novo (modal `PackManager` + `PackManagerRoot` + `window.__openPackManager`), lista de packs instalados, linhas SRD embutidas com atribuição CC-BY verbatim, estado vazio, `window.getVersionMeta` no loader, script de teste novo (MGMT-01, MGMT-05, SRD-02)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 05-02-PLAN.md — Wave 2: montagem em `index.html` + PRECACHE em `sw.js`, remoção do gatilho flutuante provisório de import (D-03), realinhamento dos dois scripts de teste que o exigiam (MGMT-05)
+- [ ] 05-03-PLAN.md — Wave 2: `window.packSpellIndex()` (índice de magias memoizado), contagem agregada de duplicatas por linha, remoção com confirmação inline e impacto concreto sem tocar em dado de personagem (MGMT-02, MGMT-04)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 05-04-PLAN.md — Wave 3: item "Gerenciar pacotes…" no `VersionSelector` + guarda de lista vazia (D-19), linha de gerenciar na seção VERSÃO do drawer mobile, nota "Também em:" no detalhe da magia (MGMT-03, MGMT-04)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 05-05-PLAN.md — Wave 4: checkpoint humano dos seis critérios do ROADMAP (390×844 nos dois temas, ciclo preparar→remover→reinstalar, fidelidade da atribuição) e fechamento do todo do botão flutuante
 
 ### Phase 6: Decommissioning & Migration
 
