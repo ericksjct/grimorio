@@ -589,6 +589,9 @@ function useSpellVersions() {
 function VersionSelector({ current, versions, onChange, lang = 'ptbr', dark = false, style, compact = false }) {
   const [open, setOpen] = React.useState(false);
   const currentVer = versions.find(v => v.key === current) || versions[0];
+  // D-19: versions[0] é undefined com lista vazia; currentVer.lang é
+  // desreferenciado logo abaixo nos dois ramos — guarda de raiz, não patch local.
+  if (!currentVer) return null;
 
   const langDot = (v) => ({
     width: 6, height: 6, borderRadius: '50%',
@@ -644,6 +647,18 @@ function VersionSelector({ current, versions, onChange, lang = 'ptbr', dark = fa
                   )}
                 </button>
               ))}
+              <div style={{ borderTop: '1px solid var(--surface1)', margin: '4px 0' }}/>
+              <button
+                type="button"
+                onClick={() => { window.__openPackManager?.(); setOpen(false); }}
+                className="hifi-btn-ghost"
+                style={{
+                  display: 'flex', width: '100%', alignItems: 'center', gap: 10,
+                  padding: '10px 14px', textAlign: 'left', fontSize: 14,
+                }}
+              >
+                {window.tt(lang, 'version.manage')}
+              </button>
             </div>
           </>
         )}
@@ -694,6 +709,18 @@ function VersionSelector({ current, versions, onChange, lang = 'ptbr', dark = fa
                 )}
               </button>
             ))}
+            <div style={{ borderTop: '1px solid var(--surface1)', margin: '4px 0' }}/>
+            <button
+              type="button"
+              onClick={() => { window.__openPackManager?.(); setOpen(false); }}
+              className="hifi-btn-ghost"
+              style={{
+                display: 'flex', width: '100%', alignItems: 'center', gap: 10,
+                padding: '8px 12px', textAlign: 'left',
+              }}
+            >
+              {window.tt(lang, 'version.manage')}
+            </button>
           </div>
         </>
       )}
