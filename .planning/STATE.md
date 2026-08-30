@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Plugins BYOD
-current_phase: 5
-current_phase_name: Plugin Manager UI & Version Selector
+current_phase: 05
+current_phase_name: plugin-manager-ui-version-selector
 status: executing
 stopped_at: Phase 5 context gathered
-last_updated: "2026-08-28T01:30:53.163Z"
-last_activity: 2026-08-24
-last_activity_desc: Phase 04.1 complete, transitioned to Phase 5
+last_updated: "2026-08-30T22:11:21.144Z"
+last_activity: 2026-08-30
+last_activity_desc: Phase 05 execution started
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 19
+  total_plans: 24
   completed_plans: 19
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-17)
 
 **Core value:** Players can quickly find, prepare, and reference the right spells for their character, fully offline, with zero setup.
-**Current focus:** Phase 04.1 — desacoplar-o-idioma-da-interface-do-idioma-do-pacote
+**Current focus:** Phase 05 — plugin-manager-ui-version-selector
 
 ## Current Position
 
-Phase: 5 — Plugin Manager UI & Version Selector
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-08-24 — Phase 04.1 complete, transitioned to Phase 5
+Phase: 05 (plugin-manager-ui-version-selector) — EXECUTING
+Plan: 1 of 5
+Status: Executing Phase 05
+Last activity: 2026-08-30 — Phase 05 execution started
 
 Progress: [██████████] 100%
 
