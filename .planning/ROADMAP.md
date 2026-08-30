@@ -193,7 +193,7 @@ Plans:
   5. With zero packs installed, the empty state explains what a pack is and links directly to import (MGMT-05)
   6. The app displays the verbatim CC-BY attribution text matching the exact SRD edition bundled (5.1 or 5.2), including notes on any modifications to the source text (SRD-02)
 
-**Plans**: 3/5 plans executed
+**Plans**: 4/5 plans executed
 **UI hint**: yes
 **Planning route**: DISCUSS antes de planejar. Decisões de UX genuínas: onde o gerenciador vive (drawer/tela própria), desktop vs mobile, onde a atribuição aparece. Candidata a sketch de mockup (como no modo sessão). Research do plan: NÃO — é design de UI, não pesquisa técnica.
 
@@ -209,7 +209,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 05-04-PLAN.md — Wave 3: item "Gerenciar pacotes…" no `VersionSelector` + guarda de lista vazia (D-19), linha de gerenciar na seção VERSÃO do drawer mobile, nota "Também em:" no detalhe da magia (MGMT-03, MGMT-04)
+- [x] 05-04-PLAN.md — Wave 3: item "Gerenciar pacotes…" no `VersionSelector` + guarda de lista vazia (D-19), linha de gerenciar na seção VERSÃO do drawer mobile, nota "Também em:" no detalhe da magia (MGMT-03, MGMT-04)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -257,5 +257,5 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 3. SRD Pack & Import Pipeline | v2.0 | 8/8 | Complete    | 2026-08-11 |
 | 4. Loader Integration (Source-Dispatch) | v2.0 | 4/4 | Complete    | 2026-08-17 |
 | 04.1. Desacoplar o idioma da interface | v2.0 | 5/5 | Complete    | 2026-08-24 |
-| 5. Plugin Manager UI & Version Selector | v2.0 | 3/5 | In Progress|  |
+| 5. Plugin Manager UI & Version Selector | v2.0 | 4/5 | In Progress|  |
 | 6. Decommissioning & Migration | v2.0 | 0/TBD | Not started | - |
