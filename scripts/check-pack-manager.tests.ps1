@@ -4,9 +4,11 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $managerPath = Join-Path $repoRoot 'pack-manager.jsx'
 $loaderPath = Join-Path $repoRoot 'spells-data-loader.jsx'
 $i18nPath = Join-Path $repoRoot 'i18n.jsx'
+$hifiPath = Join-Path $repoRoot 'v10-hifi.jsx'
 $manager = Get-Content -Raw -LiteralPath $managerPath
 $loader = Get-Content -Raw -LiteralPath $loaderPath
 $i18n = Get-Content -Raw -LiteralPath $i18nPath
+$hifi = Get-Content -Raw -LiteralPath $hifiPath
 
 # ── 1. Estrutura do módulo ──
 
@@ -182,6 +184,76 @@ foreach ($needle in @('perder', 'perdida', 'lose', 'lost')) {
   $badLines = ($i18n -split "`n") | Where-Object { $_ -like "*manager.impact*" -and $_ -like "*$needle*" }
   if ($badLines) {
     throw "Tone violation in i18n.jsx: a manager.impact* line contains '$needle' - nothing is lost when a pack is removed (D-07), the keys stay intact and resolve again on reinstall."
+  }
+}
+
+# ── 19. Gatilho desktop (MGMT-03/D-02) — VersionSelector, ambos os ramos ──
+
+$verManageInLoader = ([regex]::Matches($loader, 'version\.manage')).Count
+if ($verManageInLoader -lt 2) {
+  throw "MGMT-03/D-02: spells-data-loader.jsx must render the 'Gerenciar pacotes...' item in both VersionSelector branches (compact and desktop) - found $verManageInLoader occurrences of version.manage."
+}
+if ($loader -notlike '*__openPackManager*') {
+  throw "MGMT-03/D-02: spells-data-loader.jsx's VersionSelector is missing the window.__openPackManager trigger."
+}
+
+# ── 20. Guarda D-19 ──
+
+if ($loader -notlike '*if (!currentVer) return null;*') {
+  throw "D-19: spells-data-loader.jsx must guard VersionSelector with 'if (!currentVer) return null;' - versions[0] is undefined for an empty list and currentVer.lang is dereferenced right after."
+}
+
+# ── 21. Motor de enumeração intacto (D-18) ──
+
+if ($loader -notmatch 'const SPELL_VERSIONS\s*=\s*BUILTIN_VERSIONS\.slice\(\)') {
+  throw "D-18: spells-data-loader.jsx's SPELL_VERSIONS registry initialization changed - MGMT-03's remaining work is surface only, the Phase 4 enumeration engine must not be rewritten."
+}
+if ($loader -notmatch 'function refreshPluginVersions') {
+  throw "D-18: spells-data-loader.jsx is missing refreshPluginVersions - MGMT-03's remaining work is surface only, the Phase 4 enumeration engine must not be rewritten."
+}
+
+# ── 22. Gatilho mobile (D-02) — drawer VERSÃO ──
+
+if ($hifi -notlike '*version.manage*') {
+  throw "D-02: v10-hifi.jsx's drawer VERSÃO section is missing the 'Gerenciar pacotes' row."
+}
+if ($hifi -notlike '*__openPackManager*') {
+  throw "D-02: v10-hifi.jsx's drawer VERSÃO row is missing the window.__openPackManager trigger."
+}
+
+# ── 23. Nota de duplicata no detalhe (MGMT-04/D-09) ──
+
+if ($hifi -notlike '*spell.alsoIn*') {
+  throw "MGMT-04/D-09: v10-hifi.jsx's spell detail is missing the 'Também em: ...' note."
+}
+if ($hifi -notlike '*packSpellIndex*') {
+  throw "MGMT-04/D-09: v10-hifi.jsx's spell detail does not consume window.packSpellIndex() for the duplicate note."
+}
+
+# ── 24. Sem sink novo de HTML bruto (contagem travada em 5) ──
+# planner-discipline-allow: dangerouslySetInnerHTML
+
+$sinkLines = [regex]::Matches($hifi, '(?m)^.*dangerouslySetInnerHTML.*$')
+if ($sinkLines.Count -ne 5) {
+  throw "v10-hifi.jsx must contain exactly 5 dangerouslySetInnerHTML sinks - found $($sinkLines.Count). The duplicate note is plain text and must not introduce a 6th sink."
+}
+
+# ── 25. Sem badge de duplicata no grid (D-09) ──
+
+$cardMatch = [regex]::Match($hifi, 'const HifiSpellCard = React\.memo\(function HifiSpellCard[\s\S]{0,8000}?\r?\n\);')
+if (-not $cardMatch.Success) {
+  throw "Could not locate HifiSpellCard's body in v10-hifi.jsx to check for a duplicate badge."
+}
+if ($cardMatch.Value -like '*alsoIn*' -or $cardMatch.Value -like '*packSpellIndex*') {
+  throw "D-09: HifiSpellCard must not render a duplicate badge/marker - the grid has hundreds of items and a per-duplicate marker becomes constant visual noise."
+}
+
+# ── 26. Paridade i18n — version.manage e spell.alsoIn ──
+
+foreach ($key in @('version.manage', 'spell.alsoIn')) {
+  $count = ([regex]::Matches($i18n, [regex]::Escape("'$key'"))).Count
+  if ($count -ne 2) {
+    throw "i18n.jsx does not have exactly 2 occurrences of $key (one per ptbr/en block) - found $count"
   }
 }
 
