@@ -1016,6 +1016,29 @@ function HifiDetailContent({ s, lang, versionLang }) {
   const descHtml = window.v8DescriptionHtml ? window.v8DescriptionHtml(s, versionLang) : '';
   const upgradeHtml = window.v8UpgradeHtml ? window.v8UpgradeHtml(s, versionLang) : '';
 
+  // MGMT-04/D-09: nota "Também em: ..." — le o mesmo indice que alimenta a
+  // contagem agregada do gerenciador (uma derivacao, dois consumidores).
+  const [alsoIn, setAlsoIn] = React.useState([]);
+  const activeVersion = window.getCurrentSpellVersion ? window.getCurrentSpellVersion() : null;
+  const versionKey = activeVersion ? activeVersion.key : null;
+  React.useEffect(() => {
+    let cancelled = false;
+    if (typeof window.packSpellIndex !== 'function') {
+      setAlsoIn([]);
+      return undefined;
+    }
+    window.packSpellIndex().then((index) => {
+      if (cancelled || !index || !index.byName || !index.corpusOf) return;
+      const nameKey = String(s.en || '').toLowerCase();
+      const keys = [...new Set(index.byName.get(nameKey) || [])].filter((k) => k !== versionKey);
+      const activeCorpus = index.corpusOf.get(versionKey);
+      // A-05: SRD 5.1 e SRD 5.2 nunca contam como duplicata uma da outra.
+      const others = keys.filter((k) => !(index.corpusOf.get(k) === 'srd' && activeCorpus === 'srd'));
+      setAlsoIn(others.map((k) => index.labelOf.get(k) || k));
+    }).catch(() => { if (!cancelled) setAlsoIn([]); });
+    return () => { cancelled = true; };
+  }, [s, versionKey]);
+
   return (
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Stats grid */}
@@ -1060,6 +1083,11 @@ function HifiDetailContent({ s, lang, versionLang }) {
               BYOD sem `edition` é honestamente "sem edição", não uma versão. */}
           {s.src}{s.edition ? ` · ${s.edition}` : ''}
         </div>
+        {alsoIn.length > 0 && (
+          <div style={{ marginTop: 4, fontSize: 12, color: 'var(--subtext0)' }}>
+            {tt(lang, 'spell.alsoIn', { sources: alsoIn.join(', ') })}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2570,6 +2598,18 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
                   </HifiPill>
                 ))}
               </div>
+              <button
+                className="hifi-btn-secondary"
+                style={{ width: '100%', marginTop: 8 }}
+                onClick={() => {
+                  // D-02: gatilho mobile pro gerenciador — sem toast, pois nao
+                  // troca versao (toast marca mudanca de estado, nao navegacao).
+                  setDrawerOpen(false);
+                  window.__openPackManager && window.__openPackManager();
+                }}
+              >
+                {tt(lang, 'version.manage')}
+              </button>
             </div>
 
             <div>
