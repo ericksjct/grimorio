@@ -140,11 +140,45 @@ function _computeDupCounts(index) {
   return counts;
 }
 
+// Impacto concreto de remover `versionKey` (MGMT-02/D-06) — puro, estritamente de leitura via
+// window.loadCharacters()/window.loadBookmarks(). Uma chave "deixa de resolver" quando o índice a
+// lista, contém `versionKey`, e tem comprimento 1 — este pack é a ÚNICA fonte indexada daquela
+// chave; se outra fonte também a provê, a preparada continua resolvendo e não entra na contagem.
+// Nada aqui é persistido: é derivado no momento do render.
+function _removalImpact(versionKey, index) {
+  const impact = { prepared: 0, characters: 0, bookmarked: 0 };
+  if (!index || !index.byKey) return impact;
+
+  const staleKey = (key) => {
+    const sources = index.byKey.get(key);
+    return !!sources && sources.length === 1 && sources[0] === versionKey;
+  };
+
+  const chars = window.loadCharacters ? window.loadCharacters() : [];
+  (chars || []).forEach((c) => {
+    let charAffected = false;
+    (Array.isArray(c.prepared) ? c.prepared : []).forEach((key) => {
+      if (staleKey(key)) {
+        impact.prepared += 1;
+        charAffected = true;
+      }
+    });
+    if (charAffected) impact.characters += 1;
+  });
+
+  const bookmarks = window.loadBookmarks ? window.loadBookmarks() : [];
+  (bookmarks || []).forEach((key) => {
+    if (staleKey(key)) impact.bookmarked += 1;
+  });
+
+  return impact;
+}
+
 // ──────────────────────────────────────────────────────────────────
 // LINHA
 // ──────────────────────────────────────────────────────────────────
 
-function PackManagerRow({ lang, row, dupCount }) {
+function PackManagerRow({ lang, row, dupCount, confirming, impact, onRequestRemove, onCancelRemove, onConfirmRemove }) {
   const hasCount = typeof row.count === 'number' && Number.isFinite(row.count);
   // Nome/versão vêm de arquivo de terceiro (T-05-01): sempre filho de texto React, recortado.
   const name = String(row.name || '').slice(0, 64);
@@ -164,6 +198,32 @@ function PackManagerRow({ lang, row, dupCount }) {
         <div style={{ marginTop: 2, fontSize: 12, color: 'var(--subtext0)' }}>
           {tt(lang, 'manager.duplicates', { n: dupCount })}
         </div>
+      )}
+      {row.origin === 'installed' && (
+        confirming ? (
+          <div style={{ marginTop: 8 }}>
+            <div style={{ fontSize: 12, color: 'var(--subtext0)', marginBottom: 6 }}>
+              {impact && impact.prepared > 0 && (
+                <div>{tt(lang, 'manager.impactPrepared', { n: impact.prepared, c: impact.characters })}</div>
+              )}
+              {impact && impact.bookmarked > 0 && (
+                <div>{tt(lang, 'manager.impactBookmarked', { n: impact.bookmarked })}</div>
+              )}
+              {impact && impact.prepared === 0 && impact.bookmarked === 0 && (
+                <div>{tt(lang, 'manager.impactNone')}</div>
+              )}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 13 }}>{tt(lang, 'manager.removeConfirm')}</span>
+              <button type="button" className="hifi-btn-primary" onClick={onConfirmRemove}>{tt(lang, 'manager.yes')}</button>
+              <button type="button" className="hifi-btn-ghost" onClick={onCancelRemove}>{tt(lang, 'manager.no')}</button>
+            </div>
+          </div>
+        ) : (
+          <div style={{ marginTop: 8 }}>
+            <button type="button" className="hifi-btn-secondary" onClick={onRequestRemove}>{tt(lang, 'manager.remove')}</button>
+          </div>
+        )
       )}
       {row.license && (
         <details style={{ marginTop: 8 }}>
@@ -194,6 +254,8 @@ function PackManager({ lang, dark, theme, open, onClose, onOpenImport }) {
   const [packs, setPacks] = React.useState(null); // null = carregando; [] = vazio
   const [licenses, setLicenses] = React.useState({}); // versionKey → license dos builtins
   const [dupCounts, setDupCounts] = React.useState({}); // versionKey → contagem agregada de duplicatas (D-10)
+  const [confirmingId, setConfirmingId] = React.useState(null); // id (pluginStore) da linha em confirmação — só uma por vez (D-05)
+  const [impact, setImpact] = React.useState(null); // { prepared, characters, bookmarked } da linha em confirmação
 
   const dialogRef = React.useRef(null);
   window.useDialogA11y?.(dialogRef, open, onClose);
@@ -228,6 +290,52 @@ function PackManager({ lang, dark, theme, open, onClose, onOpenImport }) {
     return () => window.removeEventListener('hifi-plugins-changed', reloadDupCounts);
   }, [open, reloadDupCounts]);
 
+  // installedRows recomputado a cada render a partir de `packs` — leve o bastante (lista de
+  // packs instalados) pra não precisar de memoização, e os handlers de remoção abaixo precisam
+  // dele pra resolver versionKey/name a partir do id em confirmação.
+  const installedRows = packs ? _installedRows(packs) : [];
+
+  // Impacto concreto da linha em confirmação (D-06) — recalcula sempre que a confirmação abre ou
+  // que o índice muda. Nunca persistido.
+  React.useEffect(() => {
+    if (!confirmingId) { setImpact(null); return; }
+    const row = installedRows.find((r) => r.id === confirmingId);
+    if (!row) { setImpact(null); return; }
+    let cancelled = false;
+    packSpellIndex().then((index) => {
+      if (cancelled) return;
+      setImpact(_removalImpact(row.versionKey, index));
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [confirmingId, packs]);
+
+  const handleRequestRemove = React.useCallback((id) => {
+    setConfirmingId(id); // D-05: abrir a confirmação de outra linha fecha a anterior (um só estado)
+  }, []);
+
+  const handleCancelRemove = React.useCallback(() => {
+    setConfirmingId(null);
+  }, []);
+
+  const handleConfirmRemove = React.useCallback(async (row) => {
+    try {
+      await window.pluginStore.deletePack(row.id);
+      window.dispatchEvent(new CustomEvent('hifi-toast', { detail: { msg: tt(lang, 'manager.removed', { name: row.name }) } }));
+      // Sem await — mesmo padrão de pack-import-dialog.jsx. A fila _refreshChain do loader já
+      // serializa; nenhuma serialização nova é necessária aqui.
+      window.refreshPluginVersions().catch((e) =>
+        console.warn('[pack-manager] refreshPluginVersions falhou após remover:', e));
+      // A lista se atualiza pelo listener de hifi-plugins-changed já existente (reload) — nunca
+      // por manipulação manual do array local.
+    } catch (e) {
+      console.warn('[pack-manager] falha ao remover pacote:', e);
+      window.dispatchEvent(new CustomEvent('hifi-toast', { detail: { msg: tt(lang, 'manager.removeFailed'), kind: 'err' } }));
+    } finally {
+      setConfirmingId(null);
+    }
+  }, [lang]);
+
   // ponytail: as duas licenças SRD carregam na abertura do gerenciador (custo: os dois JSONs
   // SRD, já pré-cacheados pelo service worker) — se isso pesar, o caminho de upgrade é carregar
   // sob o primeiro toggle do bloco de licença, não no efeito de abertura.
@@ -247,7 +355,6 @@ function PackManager({ lang, dark, theme, open, onClose, onOpenImport }) {
   if (!open) return null;
 
   const themeClass = `hifi ${dark ? 'hifi-dark' : 'hifi-light'}${theme && theme !== 'catppuccin' ? ' hifi-theme-' + theme : ''}`;
-  const installedRows = packs ? _installedRows(packs) : [];
   const builtinRows = _builtinRows(window.SPELL_VERSIONS, licenses);
   // D-19: zero pacotes instalados pelo usuário — nunca "zero versões" (as duas linhas builtin
   // continuam presentes abaixo, sempre).
@@ -312,7 +419,16 @@ function PackManager({ lang, dark, theme, open, onClose, onOpenImport }) {
           ) : (
             <div style={{ marginBottom: 8 }}>
               <div className="hifi-section-label">{tt(lang, 'manager.sectionInstalled')}</div>
-              {installedRows.map((row) => <PackManagerRow key={row.id} lang={lang} row={row} dupCount={dupCounts[row.versionKey]} />)}
+              {installedRows.map((row) => (
+                <PackManagerRow
+                  key={row.id} lang={lang} row={row} dupCount={dupCounts[row.versionKey]}
+                  confirming={confirmingId === row.id}
+                  impact={impact}
+                  onRequestRemove={() => handleRequestRemove(row.id)}
+                  onCancelRemove={handleCancelRemove}
+                  onConfirmRemove={() => handleConfirmRemove(row)}
+                />
+              ))}
             </div>
           )}
 
