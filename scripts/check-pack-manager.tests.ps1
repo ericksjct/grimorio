@@ -117,4 +117,72 @@ foreach ($needle in @('window.getVersionMeta', '_metaCache')) {
   }
 }
 
+# ── 11. Índice de magias (MGMT-04) ──
+
+foreach ($needle in @('function packSpellIndex', 'window.packSpellIndex', 'new Map(', 'window.hifiSpellKey')) {
+  if ($manager -notlike "*$needle*") {
+    throw "Missing spell index wiring in pack-manager.jsx: $needle"
+  }
+}
+if ($manager -like '*s.school}-*') {
+  throw "pack-manager.jsx redefines the hifiSpellKey formula ('`${s.school}-...') instead of reusing window.hifiSpellKey from v10-hifi.jsx - this would create a second, divergent concept of preparation-key identity."
+}
+
+# ── 12. Regra de mesma obra (A-05) ──
+
+if ($manager -notmatch "corpus.{0,40}'srd'") {
+  throw "A-05: pack-manager.jsx is missing a corpus comparison against 'srd' - without it, every SRD spell would count as a duplicate of the other edition, drowning the MGMT-04 signal in noise."
+}
+
+# ── 13. Curto-circuito de custo ──
+
+if ($manager -notmatch "'idb'") {
+  throw "Missing cost short-circuit in pack-manager.jsx: a user with zero installed packs must not pay the parse cost of both SRD JSONs just to build the spell index."
+}
+
+# ── 14. Remoção (MGMT-02) ──
+
+foreach ($needle in @('pluginStore.deletePack', 'refreshPluginVersions', 'hifi-toast', 'manager.removeConfirm', 'manager.impactPrepared')) {
+  if ($manager -notlike "*$needle*") {
+    throw "Missing pack removal wiring in pack-manager.jsx: $needle"
+  }
+}
+
+# ── 15. Proibição P-01 (D-07) — remoção nunca escreve em dado de personagem ──
+
+foreach ($needle in @('localStorage', 'persistCharacters', 'persistBookmarks', 'togglePreparedFor', 'toggleBookmarkedFor')) {
+  if ($manager -like "*$needle*") {
+    throw "P-01: pack-manager.jsx must never write character data ($needle) - removing a pack must never destroy the user's authored data; this is what lets prepared spells resolve again on reinstall."
+  }
+}
+
+# ── 16. Um nível de overlay (D-05) ──
+
+$dialogCount = ([regex]::Matches($manager, 'role="dialog"')).Count
+if ($dialogCount -ne 1) {
+  throw "D-05: pack-manager.jsx must contain exactly 1 role=`"dialog`" - found $dialogCount. The inline remove confirmation must never become a second stacked dialog."
+}
+
+# ── 17. Paridade i18n das 10 chaves novas de remoção/duplicata ──
+
+$removalKeys = @(
+  'manager.remove', 'manager.removeConfirm', 'manager.yes', 'manager.no', 'manager.impactPrepared',
+  'manager.impactBookmarked', 'manager.impactNone', 'manager.removed', 'manager.removeFailed', 'manager.duplicates'
+)
+foreach ($key in $removalKeys) {
+  $count = ([regex]::Matches($i18n, [regex]::Escape("'$key'"))).Count
+  if ($count -ne 2) {
+    throw "i18n.jsx does not have exactly 2 occurrences of $key (one per ptbr/en block) - found $count"
+  }
+}
+
+# ── 18. Tom das mensagens — nada é "perdido", só deixa de resolver (D-07) ──
+
+foreach ($needle in @('perder', 'perdida', 'lose', 'lost')) {
+  $badLines = ($i18n -split "`n") | Where-Object { $_ -like "*manager.impact*" -and $_ -like "*$needle*" }
+  if ($badLines) {
+    throw "Tone violation in i18n.jsx: a manager.impact* line contains '$needle' - nothing is lost when a pack is removed (D-07), the keys stay intact and resolve again on reinstall."
+  }
+}
+
 Write-Output 'Pack manager surface is wired, attributed and parity-checked.'
