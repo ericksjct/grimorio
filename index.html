@@ -128,6 +128,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 <script type="text/babel" src="pack-import.jsx"></script>
 <script type="text/babel" src="v11-character-editor.jsx"></script>
 <script type="text/babel" src="pack-import-dialog.jsx"></script>
+<script type="text/babel" src="pack-manager.jsx"></script>
 <script type="text/babel" src="v10-hifi.jsx"></script>
 
 <script type="text/babel">
@@ -564,8 +565,7 @@ function App() {
         ? <HifiMobile lang={uiLang} dark={dark} theme={theme} character={character} />
         : <HifiDesktop lang={uiLang} dark={dark} theme={theme} character={character} width={w} height={h} />}
       <HifiPrintRoot />
-      {/* ponytail: montagem provisória de D-12 — a Fase 5 decide onde o import vive na UI final e apaga esta linha. */}
-      <PackImportRoot lang={uiLang} dark={dark} theme={theme} />
+      <PackManagerRoot lang={uiLang} dark={dark} theme={theme} />
       {showOnboarding && (
         <OnboardingModal
           lang={uiLang}
