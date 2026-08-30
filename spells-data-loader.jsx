@@ -365,8 +365,8 @@ function adaptSpells(json, versionLang, edition) {
 // CACHE + ESTADO
 // ──────────────────────────────────────────────────────────────────
 const _cache = {};     // key → adapted spells[]
-// key → json.meta cru do pack (Fase 5/MGMT-01, SRD-02). adaptSpells() só
-// consome json.spells, então o meta (nome/versão/licença CC-BY) seria
+// key → json.meta cru do pack (Fase 5/MGMT-01, SRD-02). O adaptador de magias
+// só consome json.spells, então o meta (nome/versão/licença CC-BY) seria
 // descartado sem este cache — só preenchido pra source 'fetch' (builtins);
 // packs de IndexedDB já expõem meta via pluginStore.listPacks().
 const _metaCache = {};
