@@ -24,8 +24,8 @@
 
 - [ ] **MGMT-01**: Usuário vê a lista de pacotes instalados (nome, versão, nº de magias, source)
 - [ ] **MGMT-02**: Usuário pode remover um pacote; preparadas/favoritas que referenciam magias do pack removido degradam graciosamente (somem da lista ativa sem crash, voltam se o pack for reinstalado)
-- [ ] **MGMT-03**: Seletor de versões enumera os pacotes instalados dinamicamente (substitui as 4 entradas fixas de `SPELL_VERSIONS`)
-- [ ] **MGMT-04**: Duplicatas entre pacotes são nota informativa ("2 versões de Bola de Fogo: SRD, MeuPack"), não conflito bloqueante — identidade de magia é `(source, name)`
+- [x] **MGMT-03**: Seletor de versões enumera os pacotes instalados dinamicamente (substitui as 4 entradas fixas de `SPELL_VERSIONS`)
+- [x] **MGMT-04**: Duplicatas entre pacotes são nota informativa ("2 versões de Bola de Fogo: SRD, MeuPack"), não conflito bloqueante — identidade de magia é `(source, name)`
 - [ ] **MGMT-05**: Estado vazio (zero pacotes instalados) explica o que é um pacote e aponta para o import
 
 ### SRD — Pacote embutido
@@ -85,8 +85,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SRD-03 | Phase 4 | Complete |
 | MGMT-01 | Phase 5 | Pending |
 | MGMT-02 | Phase 5 | Pending |
-| MGMT-03 | Phase 5 | Pending |
-| MGMT-04 | Phase 5 | Pending |
+| MGMT-03 | Phase 5 | Complete |
+| MGMT-04 | Phase 5 | Complete |
 | MGMT-05 | Phase 5 | Pending |
 | SRD-02 | Phase 5 | Pending |
 | MIGR-01 | Phase 6 | Pending |
