@@ -170,6 +170,17 @@ None - no external service configuration required.
   - With the plan mounted (or the component rendered by hand in console), confirm: with zero packs in IndexedDB the empty state renders alongside both SRD rows; expanding "Licença e atribuição" on the SRD 5.2 row shows text starting with "This work includes material from the System Reference Document 5.2"; clicking "Instalar pacote de magias" swaps to the import dialog and closing it returns to the manager.
   - No mount point exists yet in `index.html`/`v10-hifi.jsx`/`VersionSelector` — `PackManagerRoot` is not reachable from the running app until plan 05-02 wires a trigger and mounts it. This is expected per this plan's explicit scope boundary ("NÃO montar nada em index.html neste plano").
 
+## Self-Check: PASSED
+
+- FOUND: `pack-manager.jsx`
+- FOUND: `scripts/check-pack-manager.tests.ps1`
+- FOUND: `.planning/phases/05-plugin-manager-ui-version-selector/05-01-SUMMARY.md`
+- FOUND: commit `1a8b39c` (Task 1)
+- FOUND: commit `6f57ec6` (Task 2)
+- FOUND: commit `6136dd6` (Task 3)
+- FOUND: commit `2ad01eb` (Task 4)
+- FOUND: commit `e420bfa` (this SUMMARY)
+
 ---
 *Phase: 05-plugin-manager-ui-version-selector*
 *Completed: 2026-08-30*
