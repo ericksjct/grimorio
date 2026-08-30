@@ -365,6 +365,11 @@ function adaptSpells(json, versionLang, edition) {
 // CACHE + ESTADO
 // ──────────────────────────────────────────────────────────────────
 const _cache = {};     // key → adapted spells[]
+// key → json.meta cru do pack (Fase 5/MGMT-01, SRD-02). O adaptador de magias
+// só consome json.spells, então o meta (nome/versão/licença CC-BY) seria
+// descartado sem este cache — só preenchido pra source 'fetch' (builtins);
+// packs de IndexedDB já expõem meta via pluginStore.listPacks().
+const _metaCache = {};
 
 // Versão inicial = preferência salva (idioma escolhido na última visita) ou,
 // na primeira visita, a versão que casa com o idioma do navegador. Assim o app
@@ -465,6 +470,11 @@ async function loadVersion(key) {
       const json = ver.source === 'idb'
         ? await window.pluginStore.getSpells(ver.packId)
         : await _fetchVersionJson(ver);
+      // source 'idb' devolve um array cru (pluginStore.getSpells) — a guarda
+      // de objeto não-array abaixo naturalmente só preenche builtins.
+      if (json && !Array.isArray(json) && typeof json.meta === 'object' && json.meta) {
+        _metaCache[key] = json.meta;
+      }
       const adapted = adaptSpells(json, ver.lang, ver.edition);
       // WR-03: refreshPluginVersions() pode ter removido `key` do registro
       // enquanto este load estava em voo (pack apagado no meio do fetch). Sem
@@ -492,6 +502,12 @@ async function loadVersion(key) {
   } finally {
     delete _pending[key];
   }
+}
+
+// Meta cru (nome/versão/licença) do pack builtin já carregado por loadVersion().
+// Convenção do projeto: devolve null, nunca undefined.
+function getVersionMeta(key) {
+  return _metaCache[key] || null;
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -695,6 +711,7 @@ window.CLASS_PT = CLASS_PT; // en → pt  (bard → bardo)
 window.CLASS_EN = CLASS_EN; // pt → en  (bardo → bard)
 window.getCurrentSpellVersion = getCurrentVersion;
 window.loadSpellVersion = loadVersion;
+window.getVersionMeta = getVersionMeta;
 window.useSpellVersions = useSpellVersions;
 window.VersionSelector = VersionSelector;
 window.adaptSpell = adaptSpell;
