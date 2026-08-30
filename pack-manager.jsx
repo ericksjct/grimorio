@@ -298,9 +298,10 @@ function PackManager({ lang, dark, theme, open, onClose, onOpenImport }) {
   // Impacto concreto da linha em confirmação (D-06) — recalcula sempre que a confirmação abre ou
   // que o índice muda. Nunca persistido.
   React.useEffect(() => {
-    if (!confirmingId) { setImpact(null); return; }
+    setImpact(null); // evita mostrar o impacto da linha anterior enquanto o novo cálculo carrega
+    if (!confirmingId) return;
     const row = installedRows.find((r) => r.id === confirmingId);
-    if (!row) { setImpact(null); return; }
+    if (!row) return;
     let cancelled = false;
     packSpellIndex().then((index) => {
       if (cancelled) return;
