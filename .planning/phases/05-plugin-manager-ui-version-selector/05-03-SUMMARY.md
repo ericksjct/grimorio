@@ -171,3 +171,16 @@ None - no external service configuration required.
   - Install a pack sharing at least one spell name with SRD 5.2: `(await window.packSpellIndex()).byName.get('<name>')` returns an array with two elements, and that pack's row in the manager shows the aggregate duplicate count.
   - With a pack installed and at least one of its spells prepared on a character: open the manager, click Remove on that pack's row -> confirms inline with Sim/Não and a nonzero impact count, no second overlay; note `localStorage.getItem('hifi_chars_v1')`/`hifi_bookmarks_v1'`; click Sim -> success toast, row disappears without page reload, the two localStorage strings stay byte-identical, and the prepared spell disappears from the active list without a console exception; reinstall the same pack via the manager's import button -> the spell resolves as prepared again with no extra user action.
   - Remove the pack that was selected in the version selector -> the loader's existing version-switched-away toast fires (no new/silent switch).
+
+## Self-Check: PASSED
+
+- FOUND: `pack-manager.jsx`
+- FOUND: `i18n.jsx`
+- FOUND: `scripts/check-pack-manager.tests.ps1`
+- FOUND: `.planning/phases/05-plugin-manager-ui-version-selector/05-03-SUMMARY.md`
+- FOUND: commit `70da5fa` (Task 1)
+- FOUND: commit `72b84b6` (Task 2)
+- FOUND: commit `b204ae1` (Task 3)
+- FOUND: commit `e221a2e` (Task 4)
+- FOUND: commit `4e2cc78` (follow-up fix)
+- FOUND: commit `e33cba2` (this SUMMARY)
