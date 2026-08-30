@@ -1,12 +1,14 @@
-// Pack Manager — superfície de leitura do gerenciador de pacotes (MGMT-01, MGMT-05, SRD-02).
+// Pack Manager — superfície de leitura do gerenciador de pacotes (MGMT-01, MGMT-04, MGMT-05, SRD-02).
 //
 // Este módulo possui: `PackManager` (lista de packs instalados, linhas builtin do SRD com
-// atribuição CC-BY verbatim recolhível, estado vazio) e `PackManagerRoot` (estado de qual
-// diálogo está visível + o global window.__openPackManager).
+// atribuição CC-BY verbatim recolhível, estado vazio, contagem agregada de duplicatas por linha)
+// e `PackManagerRoot` (estado de qual diálogo está visível + o global window.__openPackManager).
+// Também possui `packSpellIndex()` — índice de magias por nome e por chave de preparação,
+// memoizado e invalidado em `hifi-plugins-changed` (MGMT-04) — e o fluxo de remoção com
+// confirmação inline e impacto concreto (MGMT-02).
 //
 // Este módulo NÃO possui: import/validação/gravação de pacote (delega a `PackImportDialog` e a
-// `window.pluginStore`), remoção de pacote, contagem de duplicatas nem índice de magias — esses
-// entram nos planos 05-02/05-03, sobre esta base.
+// `window.pluginStore`).
 //
 // Uso: incluir este arquivo no HTML depois de `pack-import-dialog.jsx` (precisa de
 // `PackImportDialog`) e antes de `v10-hifi.jsx` (que vai consumir `window.__openPackManager`).
@@ -16,9 +18,14 @@
 // ──────────────────────────────────────────────────────────────────
 
 // meta de pack instalado (plugin-store.jsx listPacks()) → linha de exibição.
+// `id` é o id do pluginStore (usado por deletePack); `versionKey` é a chave em
+// window.SPELL_VERSIONS ('plugin-' + source, ver _packToVersion em
+// spells-data-loader.jsx) — os dois divergem, por isso ficam em campos
+// separados em vez de reusar um só pro índice de duplicatas (D-10) e pra remoção (MGMT-02).
 function _installedRows(metas) {
   return (metas || []).map((meta) => ({
     id: meta.source,
+    versionKey: 'plugin-' + meta.source,
     name: meta.name,
     version: meta.version,
     count: meta.spellCount,
@@ -38,6 +45,7 @@ function _builtinRows(versions, licenses) {
       const meta = window.getVersionMeta ? window.getVersionMeta(v.key) : null;
       return {
         id: v.key,
+        versionKey: v.key,
         name: v.labelEn,
         version: v.short,
         count: meta && typeof meta.spellCount === 'number' ? meta.spellCount : null,
@@ -48,10 +56,95 @@ function _builtinRows(versions, licenses) {
 }
 
 // ──────────────────────────────────────────────────────────────────
+// ÍNDICE DE MAGIAS (MGMT-04)
+// ──────────────────────────────────────────────────────────────────
+
+// Duas versões "contam como duplicata" uma da outra, exceto quando ambas são
+// o mesmo corpus SRD (A-05): SRD 5.1 e SRD 5.2 são a mesma obra em edições
+// diferentes, já servidas pelo comparador de edição — contá-las como
+// duplicata faria toda magia do SRD virar ruído constante na contagem.
+function _countsAsDuplicate(corpusA, corpusB) {
+  return !(corpusA === 'srd' && corpusB === 'srd');
+}
+
+async function _buildSpellIndex() {
+  const all = (window.SPELL_VERSIONS || []).filter((v) => v.source === 'idb' || v.corpus === 'srd');
+
+  // ponytail: sem nenhum pack instalado, duplicata entre pacotes não existe —
+  // devolve índice vazio sem pagar o parse dos dois JSONs SRD. Upgrade path se
+  // isso um dia precisar mudar: construir sob demanda no primeiro toggle da
+  // seção de duplicatas, não na abertura do gerenciador.
+  if (!all.some((v) => v.source === 'idb')) {
+    return { byName: new Map(), byKey: new Map(), corpusOf: new Map(), labelOf: new Map() };
+  }
+
+  const byName = new Map();
+  const byKey = new Map();
+  const corpusOf = new Map();
+  const labelOf = new Map();
+  const hasSpellKey = typeof window.hifiSpellKey === 'function';
+  if (!hasSpellKey) {
+    console.warn('[pack-manager] window.hifiSpellKey ausente — índice byKey não será construído.');
+  }
+
+  for (const v of all) {
+    corpusOf.set(v.key, v.corpus);
+    labelOf.set(v.key, v.labelEn || v.short || v.key);
+    let spells;
+    try {
+      spells = await window.loadSpellVersion(v.key);
+    } catch (e) {
+      console.warn('[pack-manager] falha ao carregar versão para índice:', v.key, e);
+      continue;
+    }
+    (spells || []).forEach((spell) => {
+      const nameKey = String(spell.en || '').toLowerCase();
+      if (nameKey) {
+        if (!byName.has(nameKey)) byName.set(nameKey, []);
+        byName.get(nameKey).push(v.key);
+      }
+      if (hasSpellKey) {
+        const k = window.hifiSpellKey(spell);
+        if (!byKey.has(k)) byKey.set(k, []);
+        byKey.get(k).push(v.key);
+      }
+    });
+  }
+
+  return { byName, byKey, corpusOf, labelOf };
+}
+
+let _indexPromise = null;
+function packSpellIndex() {
+  return _indexPromise || (_indexPromise = _buildSpellIndex());
+}
+// Instalar/remover um pack invalida o índice — a próxima chamada reconstrói do zero.
+window.addEventListener('hifi-plugins-changed', () => { _indexPromise = null; });
+window.packSpellIndex = packSpellIndex;
+
+// Contagem agregada de duplicatas por versão (D-10): quantas entradas de
+// byName que incluem esta versão também incluem pelo menos uma outra versão
+// que conta como duplicata dela (A-05). Informativo — não altera ordenação,
+// não desabilita nada, não muda qual fonte está ativa (D-11/P-04).
+function _computeDupCounts(index) {
+  const counts = {};
+  if (!index || !index.byName || !index.corpusOf) return counts;
+  index.corpusOf.forEach((_corpus, key) => { counts[key] = 0; });
+  index.byName.forEach((keys) => {
+    const uniqueKeys = [...new Set(keys)];
+    uniqueKeys.forEach((k) => {
+      const isDup = uniqueKeys.some((k2) => k2 !== k && _countsAsDuplicate(index.corpusOf.get(k), index.corpusOf.get(k2)));
+      if (isDup) counts[k] = (counts[k] || 0) + 1;
+    });
+  });
+  return counts;
+}
+
+// ──────────────────────────────────────────────────────────────────
 // LINHA
 // ──────────────────────────────────────────────────────────────────
 
-function PackManagerRow({ lang, row }) {
+function PackManagerRow({ lang, row, dupCount }) {
   const hasCount = typeof row.count === 'number' && Number.isFinite(row.count);
   // Nome/versão vêm de arquivo de terceiro (T-05-01): sempre filho de texto React, recortado.
   const name = String(row.name || '').slice(0, 64);
@@ -67,6 +160,11 @@ function PackManagerRow({ lang, row }) {
           {row.origin === 'installed' ? tt(lang, 'manager.originInstalled') : tt(lang, 'manager.originBuiltin')}
         </span>
       </div>
+      {typeof dupCount === 'number' && dupCount > 0 && (
+        <div style={{ marginTop: 2, fontSize: 12, color: 'var(--subtext0)' }}>
+          {tt(lang, 'manager.duplicates', { n: dupCount })}
+        </div>
+      )}
       {row.license && (
         <details style={{ marginTop: 8 }}>
           <summary style={{ cursor: 'pointer', fontSize: 12, color: 'var(--accent)' }}>{tt(lang, 'manager.license')}</summary>
@@ -95,6 +193,7 @@ function PackManagerRow({ lang, row }) {
 function PackManager({ lang, dark, theme, open, onClose, onOpenImport }) {
   const [packs, setPacks] = React.useState(null); // null = carregando; [] = vazio
   const [licenses, setLicenses] = React.useState({}); // versionKey → license dos builtins
+  const [dupCounts, setDupCounts] = React.useState({}); // versionKey → contagem agregada de duplicatas (D-10)
 
   const dialogRef = React.useRef(null);
   window.useDialogA11y?.(dialogRef, open, onClose);
@@ -115,6 +214,19 @@ function PackManager({ lang, dark, theme, open, onClose, onOpenImport }) {
     window.addEventListener('hifi-plugins-changed', reload);
     return () => window.removeEventListener('hifi-plugins-changed', reload);
   }, [open, reload]);
+
+  const reloadDupCounts = React.useCallback(() => {
+    packSpellIndex()
+      .then((index) => setDupCounts(_computeDupCounts(index)))
+      .catch((e) => console.warn('[pack-manager] falha ao calcular duplicatas:', e));
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    reloadDupCounts();
+    window.addEventListener('hifi-plugins-changed', reloadDupCounts);
+    return () => window.removeEventListener('hifi-plugins-changed', reloadDupCounts);
+  }, [open, reloadDupCounts]);
 
   // ponytail: as duas licenças SRD carregam na abertura do gerenciador (custo: os dois JSONs
   // SRD, já pré-cacheados pelo service worker) — se isso pesar, o caminho de upgrade é carregar
@@ -200,13 +312,13 @@ function PackManager({ lang, dark, theme, open, onClose, onOpenImport }) {
           ) : (
             <div style={{ marginBottom: 8 }}>
               <div className="hifi-section-label">{tt(lang, 'manager.sectionInstalled')}</div>
-              {installedRows.map((row) => <PackManagerRow key={row.id} lang={lang} row={row} />)}
+              {installedRows.map((row) => <PackManagerRow key={row.id} lang={lang} row={row} dupCount={dupCounts[row.versionKey]} />)}
             </div>
           )}
 
           <div style={{ marginTop: 16 }}>
             <div className="hifi-section-label">{tt(lang, 'manager.sectionBuiltin')}</div>
-            {builtinRows.map((row) => <PackManagerRow key={row.id} lang={lang} row={row} />)}
+            {builtinRows.map((row) => <PackManagerRow key={row.id} lang={lang} row={row} dupCount={dupCounts[row.versionKey]} />)}
           </div>
         </div>
 
