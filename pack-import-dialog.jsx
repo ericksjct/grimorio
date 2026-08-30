@@ -1,17 +1,16 @@
 // Pack Import Dialog — superfície mínima de import de arquivo/URL (PKG-02/PKG-03, D-12).
 //
 // Este módulo possui: `PackImportDialog` (o diálogo em si — alternador de modo
-// arquivo/URL, envio, erro inline, sucesso com identificador aplicado) e
-// `PackImportRoot` (estado `open` + botão gatilho provisório).
+// arquivo/URL, envio, erro inline, sucesso com identificador aplicado).
 //
 // Este módulo NÃO possui: validação/sanitização/gravação de pacote — chama
 // as duas funções de instalação de window.packImport (contrato dos planos
-// 03-03/03-05) e nunca abre IndexedDB por conta própria; onde o import "vive"
-// na UI final é decisão da Fase 5 (D-12) — PackImportRoot é só o mínimo pra
-// PKG-02/PKG-03 serem alcançáveis nesta fase.
+// 03-03/03-05) e nunca abre IndexedDB por conta própria; também não possui
+// gatilho nem estado de abertura próprios — quem decide quando o diálogo abre
+// é PackManagerRoot, que o monta como diálogo irmão do gerenciador.
 //
-// Uso: incluir este arquivo no HTML depois de i18n.jsx e de pack-import.jsx
-// (plano 03-07 decide a montagem exata em index.html).
+// Uso: incluir este arquivo no HTML depois de i18n.jsx e de pack-import.jsx e
+// antes de pack-manager.jsx.
 
 // Mapa fixo código→chave i18n. Os cinco valores são o contrato de
 // window.packImport.PACK_ERROR_CODES (strings literais, não o objeto em si —
@@ -53,7 +52,7 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
   const fileInputRef = React.useRef(null);
   window.useDialogA11y?.(dialogRef, open, onClose);
 
-  // WR-08: PackImportRoot nunca desmonta o diálogo (`open` só faz esta
+  // WR-08: quem monta este diálogo nunca o desmonta (`open` só faz esta
   // função devolver null), então result/file/url/error sobreviviam a um
   // close/reopen. Reabrir depois de um import bem-sucedido caía direto na
   // tela de sucesso anterior, e `file` continuava setado com hasValue=true —
@@ -271,23 +270,5 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
         </footer>
       </section>
     </div>
-  );
-}
-
-function PackImportRoot({ lang, dark, theme }) {
-  const [open, setOpen] = React.useState(false);
-  return (
-    <>
-      {/* ponytail: gatilho provisório de D-12 — a Fase 5 decide onde o import
-          vive na UI final; até lá é só um botão fixo pra PKG-02/PKG-03 serem
-          alcançáveis. Apagar esta tag na Fase 5. */}
-      <button
-        type="button"
-        className="hifi-btn-secondary"
-        onClick={() => setOpen(true)}
-        style={{ position: 'fixed', left: 16, bottom: 16, zIndex: 90 }}
-      >{tt(lang, 'import.open')}</button>
-      <PackImportDialog lang={lang} dark={dark} theme={theme} open={open} onClose={() => setOpen(false)} />
-    </>
   );
 }

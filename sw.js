@@ -28,6 +28,7 @@ const PRECACHE = [
   './pack-import.jsx',
   './v11-character-editor.jsx',
   './pack-import-dialog.jsx',
+  './pack-manager.jsx',
   './v10-hifi.jsx',
   './favicon.svg',
   './manifest.json',

@@ -10,7 +10,6 @@ $i18n = Get-Content -Raw -LiteralPath $i18nPath
 
 foreach ($needle in @(
   'function PackImportDialog',
-  'function PackImportRoot',
   'role="dialog"',
   'aria-modal="true"',
   'useDialogA11y',
@@ -30,6 +29,13 @@ foreach ($needle in @(
   if ($dialog -notlike "*$needle*") {
     throw "Missing pack-import-dialog.jsx implementation detail: $needle"
   }
+}
+
+# ── D-03: o gatilho fixo provisorio foi aposentado na Fase 5 - o import so e
+# alcancavel de dentro do gerenciador (PackManagerRoot) e do estado vazio. Se
+# este identificador reaparecer, o gatilho flutuante voltou.
+if ($dialog -like '*PackImportRoot*') {
+  throw 'pack-import-dialog.jsx references PackImportRoot - o gatilho fixo foi aposentado na Fase 5 (D-03); o import agora so e alcancado por dentro do gerenciador.'
 }
 
 # ── Contrato com o pipeline (planos 03-03/03-05) ──

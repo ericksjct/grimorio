@@ -29,6 +29,8 @@ $packImportIdx = $index.IndexOf('src="pack-import.jsx"')
 $purifyIdx = $purifyMatch.Index
 $editorIdx = $index.IndexOf('src="v11-character-editor.jsx"')
 $dialogIdx = $index.IndexOf('src="pack-import-dialog.jsx"')
+$packManagerIdx = $index.IndexOf('src="pack-manager.jsx"')
+$hifiIdx = $index.IndexOf('src="v10-hifi.jsx"')
 
 if (-not ($pluginStoreIdx -lt $packImportIdx)) {
   throw 'plugin-store.jsx must appear before pack-import.jsx in index.html.'
@@ -39,20 +41,31 @@ if (-not ($purifyIdx -lt $packImportIdx)) {
 if (-not ($editorIdx -lt $dialogIdx)) {
   throw 'v11-character-editor.jsx must appear before pack-import-dialog.jsx in index.html.'
 }
+if (-not ($dialogIdx -lt $packManagerIdx)) {
+  throw 'pack-import-dialog.jsx must appear before pack-manager.jsx in index.html.'
+}
+if (-not ($packManagerIdx -lt $hifiIdx)) {
+  throw 'pack-manager.jsx must appear before v10-hifi.jsx in index.html.'
+}
 
-# 3. Montagem: PackImportRoot montado exatamente uma vez, depois de HifiPrintRoot.
-$rootMatches = [regex]::Matches($index, '<PackImportRoot')
+# 3. Montagem: PackManagerRoot montado exatamente uma vez, depois de HifiPrintRoot.
+# (D-03: o gatilho fixo provisorio PackImportRoot foi aposentado na Fase 5 - o
+# gerenciador e agora o unico ponto de montagem para packs e import.)
+$rootMatches = [regex]::Matches($index, '<PackManagerRoot')
 if ($rootMatches.Count -ne 1) {
-  throw "Expected exactly one <PackImportRoot mount in index.html, found $($rootMatches.Count) - o gatilho tem de estar montado dentro do App para o import ser alcancavel."
+  throw "Expected exactly one <PackManagerRoot mount in index.html, found $($rootMatches.Count) - o gerenciador tem de estar montado dentro do App para packs e import serem alcancaveis."
 }
 $hifiPrintIdx = $index.IndexOf('<HifiPrintRoot')
-$packImportRootIdx = $index.IndexOf('<PackImportRoot')
-if (-not ($hifiPrintIdx -lt $packImportRootIdx)) {
-  throw '<PackImportRoot must be mounted after <HifiPrintRoot in the App render tree.'
+$packManagerRootIdx = $index.IndexOf('<PackManagerRoot')
+if (-not ($hifiPrintIdx -lt $packManagerRootIdx)) {
+  throw '<PackManagerRoot must be mounted after <HifiPrintRoot in the App render tree.'
+}
+if ($index -like '*PackImportRoot*') {
+  throw 'index.html references PackImportRoot - o gatilho fixo provisorio foi aposentado na Fase 5 (D-03) e nao pode voltar.'
 }
 
-# 4. Paridade PRECACHE: os quatro arquivos novos precisam estar no sw.js.
-foreach ($needle in @('./pack-import.jsx', './pack-import-dialog.jsx', './pack-docs.html', './pack.schema.json')) {
+# 4. Paridade PRECACHE: os cinco arquivos novos precisam estar no sw.js.
+foreach ($needle in @('./pack-import.jsx', './pack-import-dialog.jsx', './pack-manager.jsx', './pack-docs.html', './pack.schema.json')) {
   if ($sw -notlike "*'$needle'*") {
     throw "sw.js is missing $needle from PRECACHE - a ausencia quebra o modo offline."
   }
