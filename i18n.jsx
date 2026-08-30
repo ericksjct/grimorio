@@ -185,6 +185,20 @@ const STRINGS = {
     'packErr.schemaInvalid': 'Pacote não corresponde ao schema — confira pack.schema.json.',
     'packErr.tooLarge': 'Arquivo maior que 10 MB — reduza o pacote.',
     'packErr.unknown': 'Não foi possível instalar o pacote.',
+    // Gerenciador de pacotes (MGMT-01/MGMT-05, SRD-02) — .planning/phases/05-plugin-manager-ui-version-selector/05-01-PLAN.md Task 1
+    'manager.emptyBody': 'Um pacote é um arquivo JSON com suas próprias magias, que você instala no app e passa a ver junto com o conteúdo embutido. Você pode instalar quantos quiser e remover a qualquer momento.',
+    'manager.emptyHeading': 'Nenhum pacote instalado',
+    'manager.license': 'Licença e atribuição',
+    'manager.loading': 'Carregando…',
+    'manager.modifications': 'Modificações',
+    'manager.originBuiltin': 'embutido',
+    'manager.originInstalled': 'instalado',
+    'manager.sectionBuiltin': 'embutidos',
+    'manager.sectionInstalled': 'instalados',
+    'manager.spellCount': '{n} magias',
+    'manager.spellCountUnknown': 'contagem de magias indisponível',
+    'manager.title': 'Meus pacotes',
+    'manager.versionLabel': 'versão {v}',
   },
 
   en: {
@@ -357,6 +371,20 @@ const STRINGS = {
     'packErr.schemaInvalid': 'Pack does not match the schema — check pack.schema.json.',
     'packErr.tooLarge': 'File larger than 10 MB — reduce the pack.',
     'packErr.unknown': 'Could not install the pack.',
+    // Pack manager (MGMT-01/MGMT-05, SRD-02) — .planning/phases/05-plugin-manager-ui-version-selector/05-01-PLAN.md Task 1
+    'manager.emptyBody': 'A pack is a JSON file with your own spells that you install into the app and browse alongside the built-in content. You can install as many as you like and remove them at any time.',
+    'manager.emptyHeading': 'No packs installed',
+    'manager.license': 'License and attribution',
+    'manager.loading': 'Loading…',
+    'manager.modifications': 'Modifications',
+    'manager.originBuiltin': 'built-in',
+    'manager.originInstalled': 'installed',
+    'manager.sectionBuiltin': 'built-in',
+    'manager.sectionInstalled': 'installed',
+    'manager.spellCount': '{n} spells',
+    'manager.spellCountUnknown': 'spell count unavailable',
+    'manager.title': 'My packs',
+    'manager.versionLabel': 'version {v}',
   },
 };
 
