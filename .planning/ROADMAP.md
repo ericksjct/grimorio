@@ -21,7 +21,7 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
 - [x] **Phase 3: SRD Pack & Import Pipeline** - Users install a validated, sanitized pack from file or URL; SRD content exists as a real pack (completed 2026-08-11)
 - [x] **Phase 4: Loader Integration (Source-Dispatch)** - The loader natively reads SRD + any installed packs through one dispatch point, no hardcoded 4-dataset list (completed 2026-08-17)
 - [x] **Phase 04.1: Desacoplar o idioma da interface do idioma do pacote** (INSERIDA) - uiLang vira estado proprio; pre-requisito da Fase 6, que remove as unicas entradas em portugues (completed 2026-08-24)
-- [ ] **Phase 5: Plugin Manager UI & Version Selector** - Install/list/remove UI, dynamic version selector, duplicate-spell notes, empty state, CC-BY attribution
+- [x] **Phase 5: Plugin Manager UI & Version Selector** - Install/list/remove UI, dynamic version selector, duplicate-spell notes, empty state, CC-BY attribution (completed 2026-08-30)
 - [ ] **Phase 6: Decommissioning & Migration** - Remove the 4 protected JSONs from site/repo; migrate existing users without silently dropping references
 
 ## Phase Details
@@ -257,5 +257,5 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 3. SRD Pack & Import Pipeline | v2.0 | 8/8 | Complete    | 2026-08-11 |
 | 4. Loader Integration (Source-Dispatch) | v2.0 | 4/4 | Complete    | 2026-08-17 |
 | 04.1. Desacoplar o idioma da interface | v2.0 | 5/5 | Complete    | 2026-08-24 |
-| 5. Plugin Manager UI & Version Selector | v2.0 | 5/5 | In Progress|  |
+| 5. Plugin Manager UI & Version Selector | v2.0 | 5/5 | Complete    | 2026-08-30 |
 | 6. Decommissioning & Migration | v2.0 | 0/TBD | Not started | - |
