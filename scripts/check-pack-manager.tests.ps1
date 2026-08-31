@@ -257,4 +257,55 @@ foreach ($key in @('version.manage', 'spell.alsoIn')) {
   }
 }
 
+# ── 27. CR-01 — byKey indexa TODA versão, não só idb + srd ──
+# hifiSpellKey é `school-lvl-en`, independente de versão: 322 das 339 magias do
+# SRD 5.2 têm nome idêntico no PHB 2024 EN. Se o índice de RESOLUÇÃO filtrasse os
+# builtins PHB, a confirmação de remoção diria "deixa de resolver" sobre magias
+# que o PHB continua servindo — números errados numa ação destrutiva.
+
+if ($manager -notlike '*function _indexPopulation*') {
+  throw "CR-01: pack-manager.jsx must split the index population - _indexPopulation() separates the resolution set (every version, PHB included) from the display set (idb + srd only)."
+}
+$popMatch = [regex]::Match($manager, 'function _indexPopulation\(\)[\s\S]{0,1200}?\r?\n\}')
+if (-not $popMatch.Success) {
+  throw "Could not locate _indexPopulation's body in pack-manager.jsx."
+}
+if ($popMatch.Value -notlike '*resolution: versions*') {
+  throw "CR-01: _indexPopulation must expose the UNFILTERED version list as resolution - filtering it is what made removal impact overstate the damage."
+}
+if ($popMatch.Value -notlike "*v.source === 'idb' || v.corpus === 'srd'*") {
+  throw "CR-01: _indexPopulation must still restrict the DISPLAY set to idb + srd (A-01) - widening it would make every SRD row announce ~322 duplicates."
+}
+
+$buildMatch = [regex]::Match($manager, 'async function _buildSpellIndex\(\)[\s\S]{0,4000}?\r?\n\}')
+if (-not $buildMatch.Success) {
+  throw "Could not locate _buildSpellIndex's body in pack-manager.jsx."
+}
+if ($buildMatch.Value.Contains('SPELL_VERSIONS || []).filter')) {
+  throw "CR-01: _buildSpellIndex must not re-filter SPELL_VERSIONS inline - the resolution/display split belongs in _indexPopulation()."
+}
+
+# ── 28. CR-02 — byName e byKey guardam Set, nunca array ──
+# Um pack que lista a mesma magia duas vezes gerava ['plugin-x','plugin-x'], e o
+# teste de fonte única em staleKey passava a ser falso: a magia era relatada como
+# NÃO impactada pela remoção do único pack que a servia.
+
+if ($buildMatch.Value -notlike '*byName.set(nameKey, new Set())*') {
+  throw "CR-02: byName entries must be Set, not array - array entries let a pack listing a spell twice defeat the single-source test in staleKey."
+}
+if ($buildMatch.Value -notlike '*byKey.set(k, new Set())*') {
+  throw "CR-02: byKey entries must be Set, not array - array entries let a pack listing a spell twice defeat the single-source test in staleKey."
+}
+if ($buildMatch.Value -like '*.push(v.key)*') {
+  throw "CR-02: _buildSpellIndex must add to the index with Set.add, not Array.push - push is what allowed duplicate sources."
+}
+
+$impactMatch = [regex]::Match($manager, 'function _removalImpact\([\s\S]{0,2000}?\r?\n\}')
+if (-not $impactMatch.Success) {
+  throw "Could not locate _removalImpact's body in pack-manager.jsx."
+}
+if ($impactMatch.Value -notlike '*sources.size === 1*' -or $impactMatch.Value -notlike '*sources.has(versionKey)*') {
+  throw "CR-02: staleKey must test sources.size === 1 and sources.has(versionKey) on a Set - the old length===1 array form silently mis-reported duplicated entries."
+}
+
 Write-Output 'Pack manager surface is wired, attributed and parity-checked.'
