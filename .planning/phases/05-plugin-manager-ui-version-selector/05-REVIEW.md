@@ -15,14 +15,41 @@ files_reviewed_list:
   - sw.js
   - v10-hifi.jsx
 findings:
-  critical: 2
+  critical: 0
+  critical_resolved: 2
   warning: 5
   info: 4
   total: 11
+  resolved: 3
 status: issues_found
+resolution: "CR-01, CR-02 and WR-01 fixed in 918809f + 1acae8e; remaining Warning/Info findings untouched"
 ---
 
 # Phase 5: Code Review Report
+
+> **Resolução (2026-08-30).** As duas Critical foram corrigidas e fixadas em gate estático antes
+> da verificação da fase; a suíte completa e as três suítes de navegador que exercitam o índice
+> voltaram verdes (48/48). Commits `918809f` (fix) e `1acae8e` (gates 27 e 28).
+>
+> - **CR-01 — corrigida.** `_indexPopulation()` passou a separar as duas populações que estavam
+>   indevidamente unificadas: `resolution` (toda versão indexável, PHB incluído) alimenta `byKey`,
+>   que responde "esta chave ainda resolve?"; `display` (só `idb` + `corpus:'srd'`, regra A-01)
+>   alimenta `byName`, `corpusOf` e `labelOf`, que alimentam a contagem exibida e a nota
+>   "Também em:". Alargar as duas juntas teria feito toda linha SRD anunciar ~322 duplicatas — o
+>   mesmo ruído constante que A-05 existe para evitar. Confirmado independentemente que 322 das
+>   339 magias do SRD 5.2 compartilham `name` exato com o PHB 2024 EN, que é o que tornava o
+>   filtro antigo incorreto.
+> - **CR-02 — corrigida.** `byName` e `byKey` guardam `Set`, e `staleKey` testa
+>   `sources.size === 1 && sources.has(versionKey)`. A unicidade virou estrutural, então a
+>   assimetria que escondia o bug (`_computeDupCounts` deduplicava, `_removalImpact` não) deixou
+>   de ser possível.
+> - **WR-01 — corrigida no comentário.** O comentário de `_removalImpact` não afirma mais leitura
+>   pura incondicional: registra que a garantia P-01/D-07 depende de `window.loadBookmarks()` já
+>   ter passado pelo seu ramo de migração no boot, e que um gate de texto não enxerga chamada
+>   indireta via `window.*`.
+>
+> As demais Warning e Info seguem abertas, registradas abaixo.
+
 
 **Reviewed:** 2026-08-31T02:30:10Z
 **Depth:** standard
