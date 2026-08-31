@@ -29,3 +29,20 @@ abaixo de VERSÃO e não é afetada pela sobreposição).
 Ou o botão flutuante recolhe/esconde enquanto o drawer está aberto, ou o drawer
 ganha padding inferior equivalente à altura do botão. A primeira opção é menor:
 o botão não tem função com o drawer aberto.
+
+## Resolvido
+
+Fechado em 2026-08-30 pela Fase 5 (Plugin Manager UI & Version Selector).
+
+A Fase 5 não reposicionou o botão nem deu padding ao drawer: resolveu o problema
+pela raiz. A decisão D-03 removeu o gatilho flutuante de importação por completo —
+`PackImportRoot` deixou de existir em `pack-import-dialog.jsx` e em `index.html`.
+O import passou a ser alcançado só de dentro do gerenciador de pacotes, pelo botão
+primário da lista e pelo convite do estado vazio. Sem elemento flutuante, não há o
+que sobrepor.
+
+Confirmação visual obtida no checkpoint humano do plano 05-05, em 390×844, com o
+drawer aberto na seção VERSÃO, nos temas claro e escuro: nenhum elemento fora do
+drawer cobre a seção (verificado por `elementFromPoint` sobre uma grade de pontos
+da seção inteira), e não existe nenhum elemento posicionado de "instalar pacote"
+em canto nenhum da tela, nem em 390×844 nem em 1440px.
