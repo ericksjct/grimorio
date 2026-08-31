@@ -67,16 +67,44 @@ function _countsAsDuplicate(corpusA, corpusB) {
   return !(corpusA === 'srd' && corpusB === 'srd');
 }
 
-async function _buildSpellIndex() {
-  const all = (window.SPELL_VERSIONS || []).filter((v) => v.source === 'idb' || v.corpus === 'srd');
+// CR-01: `byName` e `byKey` respondem perguntas DIFERENTES e por isso têm
+// populações diferentes.
+//
+// `byName` alimenta a contagem de duplicatas exibida (MGMT-04) e a nota "Também
+// em:". É display, então segue as regras de display: só os packs do usuário e as
+// duas edições SRD com manifesto de licença (A-01). Incluir os quatro builtins
+// PHB aqui faria toda linha SRD anunciar ~322 duplicatas — o mesmo ruído
+// constante que A-05 existe para evitar, só que noutro par.
+//
+// `byKey` responde "esta chave preparada/favoritada ainda resolve se eu remover
+// este pack?" (MGMT-02). Isso é resolução, não display: QUALQUER versão que
+// sirva a chave conta, PHB inclusive. `hifiSpellKey` é `school-lvl-en`, e
+// `adaptSpell` normaliza school pra índice numérico e `en` pro nome em inglês
+// cru — então a chave é independente de versão, e 322 das 339 magias do SRD
+// 5.2 têm nome idêntico no PHB 2024 EN. Filtrar PHB daqui fazia a confirmação
+// de remoção dizer "deixa de resolver" sobre magias que o PHB continua servindo.
+function _indexPopulation() {
+  const versions = window.SPELL_VERSIONS || [];
+  return {
+    // toda versão indexável — base da resolução (byKey)
+    resolution: versions,
+    // subconjunto de display — base da contagem de duplicatas (byName)
+    display: new Set(versions.filter((v) => v.source === 'idb' || v.corpus === 'srd').map((v) => v.key)),
+  };
+}
 
-  // ponytail: sem nenhum pack instalado, duplicata entre pacotes não existe —
-  // devolve índice vazio sem pagar o parse dos dois JSONs SRD. Upgrade path se
-  // isso um dia precisar mudar: construir sob demanda no primeiro toggle da
-  // seção de duplicatas, não na abertura do gerenciador.
-  if (!all.some((v) => v.source === 'idb')) {
+async function _buildSpellIndex() {
+  const { resolution, display } = _indexPopulation();
+
+  // ponytail: sem nenhum pack instalado, não há duplicata entre pacotes E não há
+  // remoção possível — os dois consumidores do índice ficam sem pergunta a fazer.
+  // Devolve índice vazio sem pagar o parse de nenhum JSON. Upgrade path se isso
+  // um dia precisar mudar: construir sob demanda no primeiro toggle da seção de
+  // duplicatas, não na abertura do gerenciador.
+  if (!resolution.some((v) => v.source === 'idb')) {
     return { byName: new Map(), byKey: new Map(), corpusOf: new Map(), labelOf: new Map() };
   }
+  const all = resolution;
 
   const byName = new Map();
   const byKey = new Map();
@@ -88,8 +116,13 @@ async function _buildSpellIndex() {
   }
 
   for (const v of all) {
-    corpusOf.set(v.key, v.corpus);
-    labelOf.set(v.key, v.labelEn || v.short || v.key);
+    // corpusOf/labelOf só descrevem linhas de display — _computeDupCounts itera
+    // corpusOf pra semear as contagens, então incluir PHB aqui inventaria linhas.
+    const isDisplay = display.has(v.key);
+    if (isDisplay) {
+      corpusOf.set(v.key, v.corpus);
+      labelOf.set(v.key, v.labelEn || v.short || v.key);
+    }
     let spells;
     try {
       spells = await window.loadSpellVersion(v.key);
@@ -97,16 +130,24 @@ async function _buildSpellIndex() {
       console.warn('[pack-manager] falha ao carregar versão para índice:', v.key, e);
       continue;
     }
+    // CR-02: Set, não array. Um pack que lista a mesma magia duas vezes gerava
+    // ['plugin-x','plugin-x'], e o `length === 1` de staleKey passava a ser falso
+    // — a magia era relatada como NÃO impactada pela remoção do único pack que a
+    // servia. Com Set a unicidade é estrutural, e não depende de cada consumidor
+    // lembrar de deduplicar (era essa assimetria — _computeDupCounts deduplicava,
+    // _removalImpact não — que escondia o bug).
     (spells || []).forEach((spell) => {
-      const nameKey = String(spell.en || '').toLowerCase();
-      if (nameKey) {
-        if (!byName.has(nameKey)) byName.set(nameKey, []);
-        byName.get(nameKey).push(v.key);
+      if (isDisplay) {
+        const nameKey = String(spell.en || '').toLowerCase();
+        if (nameKey) {
+          if (!byName.has(nameKey)) byName.set(nameKey, new Set());
+          byName.get(nameKey).add(v.key);
+        }
       }
       if (hasSpellKey) {
         const k = window.hifiSpellKey(spell);
-        if (!byKey.has(k)) byKey.set(k, []);
-        byKey.get(k).push(v.key);
+        if (!byKey.has(k)) byKey.set(k, new Set());
+        byKey.get(k).add(v.key);
       }
     });
   }
@@ -131,7 +172,8 @@ function _computeDupCounts(index) {
   if (!index || !index.byName || !index.corpusOf) return counts;
   index.corpusOf.forEach((_corpus, key) => { counts[key] = 0; });
   index.byName.forEach((keys) => {
-    const uniqueKeys = [...new Set(keys)];
+    // byName já é um Set (CR-02) — a unicidade vem do índice, não daqui.
+    const uniqueKeys = [...keys];
     uniqueKeys.forEach((k) => {
       const isDup = uniqueKeys.some((k2) => k2 !== k && _countsAsDuplicate(index.corpusOf.get(k), index.corpusOf.get(k2)));
       if (isDup) counts[k] = (counts[k] || 0) + 1;
@@ -140,18 +182,26 @@ function _computeDupCounts(index) {
   return counts;
 }
 
-// Impacto concreto de remover `versionKey` (MGMT-02/D-06) — puro, estritamente de leitura via
-// window.loadCharacters()/window.loadBookmarks(). Uma chave "deixa de resolver" quando o índice a
-// lista, contém `versionKey`, e tem comprimento 1 — este pack é a ÚNICA fonte indexada daquela
-// chave; se outra fonte também a provê, a preparada continua resolvendo e não entra na contagem.
-// Nada aqui é persistido: é derivado no momento do render.
+// Impacto concreto de remover `versionKey` (MGMT-02/D-06) — derivado no render, nunca persistido
+// por este módulo. Uma chave "deixa de resolver" quando o índice a lista e `versionKey` é a ÚNICA
+// fonte dela; se qualquer outra versão também a provê — pack, SRD ou PHB (CR-01) — a preparada
+// continua resolvendo e não entra na contagem.
+//
+// WR-01, ressalva honesta: este módulo não escreve nada, mas `window.loadBookmarks()`
+// (v11-character-editor.jsx) TEM um ramo que persiste — a migração única de favoritas por
+// personagem pra lista global, que dispara quando a chave `hifi_bookmarks_v1` ainda não existe no
+// armazenamento do navegador. Na prática esse ramo já rodou no boot (useBookmarks), então chamá-lo
+// aqui é leitura pura; mas a garantia P-01/D-07 de bytes idênticos depende desse fato externo, não
+// de uma propriedade local deste arquivo. O gate estático do bloco 8 não enxerga isso: ele procura
+// a chamada de armazenamento NESTE arquivo, e uma chamada indireta via window.* é invisível pra um
+// gate de texto.
 function _removalImpact(versionKey, index) {
   const impact = { prepared: 0, characters: 0, bookmarked: 0 };
   if (!index || !index.byKey) return impact;
 
   const staleKey = (key) => {
     const sources = index.byKey.get(key);
-    return !!sources && sources.length === 1 && sources[0] === versionKey;
+    return !!sources && sources.size === 1 && sources.has(versionKey);
   };
 
   const chars = window.loadCharacters ? window.loadCharacters() : [];
