@@ -227,7 +227,27 @@ Plans:
   3. The 4 protected JSON files are gone from the deployed site and repo HEAD, and the service worker precache list contains only the SRD file (MIGR-02)
   4. An existing user's first visit after the update shows clear, actionable guidance on how to import their own pack to restore full spell content (MIGR-03)
 
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 06-01-PLAN.md — Wave 1: loader — mapa de fallback de versão por edição (D-04), `window.resolvableSpellKeys()`, nome legível EN e conversão mínima de markdown no adaptador SRD (todo `srd-pack-nomes-slug-e-markdown-cru`), 2 gates novos (MIGR-01)
+- [ ] 06-02-PLAN.md — Wave 1: `peekBookmarks()` de leitura pura em `v11-character-editor.jsx`, `pack-manager.jsx` migrado para ele, gate que prova a pureza por execução (WR-01 do review da Fase 5) (MIGR-01)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 06-03-PLAN.md — Wave 2: `hifiOrphanFromKey()` e a seção de magias órfãs ao final das abas `prepared`/`bookmarked` do editor, com contagem, explicação e toggle individual (D-10/D-11/D-12) (MIGR-01)
+- [ ] 06-04-PLAN.md — Wave 2: `transition-banner.jsx` novo, chaves `migration.*` em `i18n.jsx`, montagem em `index.html`, entrada em `PRECACHE`, dispensa em `spellbook-ui-prefs` (D-05..D-08, D-13) (MIGR-03)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 06-05-PLAN.md — Wave 3: commit atômico único — `git rm` dos 4 JSONs, remoção das 4 entradas de `BUILTIN_VERSIONS` e das 4 linhas de `PRECACHE`, bump de `CACHE_VERSION`, realinhamento de 4 gates legados e gate de descomissionamento novo (D-14..D-17) (MIGR-02)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 06-06-PLAN.md — Wave 4: checkpoint humano dos 4 critérios de sucesso (390×844 nos dois temas, dado do usuário comparado byte a byte antes/depois, Cache Storage conferido) e fechamento dos dois todos incorporados ao escopo (MIGR-01, MIGR-02, MIGR-03)
+
 **UI hint**: yes
 **Planning route**: DISCUSS antes de planejar. Decisões delicadas: como o usuário existente vivencia a transição (aviso/tela de boas-vindas, como as órfãs aparecem), sequência do deploy. Research marcou a detecção de migração como território novo do codebase. Fase IRREVERSÍVEL — discutir sai mais barato que corrigir. Research do plan: possível research LEVE na lógica de detecção/preservação de referências órfãs (novidade no codebase), a confirmar no discuss.
 
