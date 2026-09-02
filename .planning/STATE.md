@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Plugins BYOD
-current_phase: 6
-current_phase_name: Decommissioning & Migration
+current_phase: 06
+current_phase_name: decommissioning-migration
 status: executing
 stopped_at: Phase 6 context gathered
-last_updated: "2026-09-02T22:43:57.061Z"
-last_activity: 2026-08-30
-last_activity_desc: Phase 05 complete, transitioned to Phase 6
+last_updated: "2026-09-02T23:53:30.002Z"
+last_activity: 2026-09-02
+last_activity_desc: Phase 06 execution started
 progress:
   total_phases: 6
   completed_phases: 5
-  total_plans: 24
+  total_plans: 30
   completed_plans: 24
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-17)
 
 **Core value:** Players can quickly find, prepare, and reference the right spells for their character, fully offline, with zero setup.
-**Current focus:** Phase 05 — plugin-manager-ui-version-selector
+**Current focus:** Phase 06 — decommissioning-migration
 
 ## Current Position
 
-Phase: 6 — Decommissioning & Migration
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-08-30 — Phase 05 complete, transitioned to Phase 6
+Phase: 06 (decommissioning-migration) — EXECUTING
+Plan: 1 of 6
+Status: Executing Phase 06
+Last activity: 2026-09-02 — Phase 06 execution started
 
 Progress: [██████████] 100%
 
