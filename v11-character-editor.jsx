@@ -1076,6 +1076,61 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
                   : T('nenhuma magia encontrada', 'no spells found')}
               </div>
             )}
+            {/* MIGR-01: secao de orfas — sinaliza, nunca descarta (D-09/D-11/D-12) */}
+            {orphanSpells.length > 0 && (
+              <div style={{ borderTop: '1px solid var(--surface1)', background: 'var(--crust)' }}>
+                <div style={{ padding: '10px 12px 6px' }}>
+                  <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)' }}>
+                    {orphanSpells.length === 1
+                      ? T('1 magia em um pacote que você não tem', "1 spell in a pack you don't have")
+                      : T(`${orphanSpells.length} magias em pacotes que você não tem`, `${orphanSpells.length} spells in packs you don't have`)}
+                  </div>
+                  <div style={{ marginTop: 2, fontSize: 12, color: 'var(--subtext0)' }}>
+                    {T(
+                      'Continuam salvas. Voltam sozinhas quando você instalar um pacote que as tenha.',
+                      "Still saved. They come back on their own once you install a pack that has them."
+                    )}
+                  </div>
+                </div>
+                {orphanSpells.map((o, i) => (
+                  <div key={o.key} style={{
+                    display: 'flex', alignItems: 'stretch',
+                    borderBottom: i < orphanSpells.length - 1 ? '1px solid var(--surface1)' : 'none',
+                  }}>
+                    {o.lvl != null && <div className={`hifi-level-bar hifi-level-${o.lvl}`} style={{ position: 'static', width: 3 }}/>}
+                    <div style={{ flex: 1, minWidth: 0, padding: '8px 12px', opacity: 0.65 }}>
+                      <div style={{ fontFamily: "'Texturina', 'Marauder Display', Georgia, serif", fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>
+                        {o.title}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--subtext0)', fontStyle: 'italic' }}>
+                        {o.school != null ? schoolKey(o.school) : T('escola desconhecida', 'unknown school')}
+                        {o.lvl != null ? ` · ${o.lvl === 0 ? T('truque', 'cantrip') : `${T('círc.', 'lvl')} ${o.lvl}`}` : ''}
+                      </div>
+                    </div>
+                    {tab === 'prepared' && (
+                      <button onClick={() => setPrepared(prev => { const n = new Set(prev); n.delete(o.key); return n; })}
+                        style={{
+                          width: 36, border: 'none', background: 'transparent', cursor: 'pointer',
+                          color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                        title={T('preparar', 'prepare')}>
+                        <HifiBookmarkIcon size={14} filled={true}/>
+                      </button>
+                    )}
+                    {tab === 'bookmarked' && (
+                      <button onClick={() => toggleBookmark(o.key)}
+                        style={{
+                          width: 36, border: 'none', background: 'transparent', cursor: 'pointer',
+                          color: 'var(--yellow)', fontSize: 16,
+                        }}
+                        title={T('favorita', 'bookmark')}>
+                        ★
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
