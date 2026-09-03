@@ -143,3 +143,11 @@ None - no external service configuration required.
 - WR-01 is closed at the code level: `pack-manager.jsx` has no reachable write path, direct or via `window.*`, and that guarantee is now local to the file rather than dependent on `v11-character-editor.jsx`'s boot order.
 - **Action required before this plan is considered fully verified:** run `pwsh -NoProfile -File scripts/run-tests.ps1` in an environment where `pwsh` can be invoked (outside this worktree's Bash-tool sandbox, or via the orchestrator/user's own shell) and confirm it prints `All test scripts passed.` and exits 0. If it fails, the most likely failure point is a PowerShell-syntax issue in the new `scripts/check-bookmarks-read-purity.tests.ps1` here-string (the embedded Node logic itself is confirmed correct via direct `node` execution).
 - 06-04 (transition banner) depends on this plan: its "existing user" signal reads `hifi_bookmarks_v1` via a read accessor and must not create that key as a side effect. `peekBookmarks()` now provides exactly that guarantee for any future consumer, not just `pack-manager.jsx`.
+
+## Self-Check: PASSED
+
+- FOUND: `.planning/phases/06-decommissioning-migration/06-02-SUMMARY.md`
+- FOUND: `scripts/check-bookmarks-read-purity.tests.ps1`
+- FOUND: commit `bec7b8b` (Task 1: peekBookmarks extraction)
+- FOUND: commit `8ec6b5a` (Task 2: pack-manager.jsx migration + gate)
+- FOUND: commit `004d308` (this SUMMARY.md)
