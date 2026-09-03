@@ -120,7 +120,10 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
      silently vanish from the selector on reload.
      pack-import.jsx needs window.pluginStore and the DOMPurify script above, so
      it loads right after the plugin store script; pack-import-dialog.jsx uses
-     window.useDialogA11y from the v11 editor, so it loads right after it. -->
+     window.useDialogA11y from the v11 editor, so it loads right after it.
+     The transition-banner module (06-04) consumes window.__openPackManager
+     (exposed above) and window.peekBookmarks (exposed by the v11 editor), so it
+     loads right after the pack manager script and before the hi-fi shell. -->
 <script type="text/babel" src="grimorio-helpers.jsx"></script>
 <script type="text/babel" src="i18n.jsx"></script>
 <script type="text/babel" src="plugin-store.jsx"></script>
@@ -129,6 +132,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 <script type="text/babel" src="v11-character-editor.jsx"></script>
 <script type="text/babel" src="pack-import-dialog.jsx"></script>
 <script type="text/babel" src="pack-manager.jsx"></script>
+<script type="text/babel" src="transition-banner.jsx"></script>
 <script type="text/babel" src="v10-hifi.jsx"></script>
 
 <script type="text/babel">
@@ -566,6 +570,7 @@ function App() {
         : <HifiDesktop lang={uiLang} dark={dark} theme={theme} character={character} width={w} height={h} />}
       <HifiPrintRoot />
       <PackManagerRoot lang={uiLang} dark={dark} theme={theme} />
+      <TransitionBannerRoot lang={uiLang} dark={dark} theme={theme} />
       {showOnboarding && (
         <OnboardingModal
           lang={uiLang}
