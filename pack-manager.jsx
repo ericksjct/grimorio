@@ -187,14 +187,12 @@ function _computeDupCounts(index) {
 // fonte dela; se qualquer outra versão também a provê — pack, SRD ou PHB (CR-01) — a preparada
 // continua resolvendo e não entra na contagem.
 //
-// WR-01, ressalva honesta: este módulo não escreve nada, mas `window.loadBookmarks()`
-// (v11-character-editor.jsx) TEM um ramo que persiste — a migração única de favoritas por
-// personagem pra lista global, que dispara quando a chave `hifi_bookmarks_v1` ainda não existe no
-// armazenamento do navegador. Na prática esse ramo já rodou no boot (useBookmarks), então chamá-lo
-// aqui é leitura pura; mas a garantia P-01/D-07 de bytes idênticos depende desse fato externo, não
-// de uma propriedade local deste arquivo. O gate estático do bloco 8 não enxerga isso: ele procura
-// a chamada de armazenamento NESTE arquivo, e uma chamada indireta via window.* é invisível pra um
-// gate de texto.
+// WR-01, fechado: este módulo lê favoritas pelo acessor puro `peekBookmarks()`
+// (v11-character-editor.jsx, exportado em window), sem nenhum ramo de escrita — nunca chama `setItem`,
+// `removeItem` ou `dispatchEvent`. A garantia P-01/D-07 de bytes idênticos é uma propriedade
+// local desta chamada, não depende mais do acessor migratório (que TEM ramo de escrita)
+// já ter rodado no boot antes deste módulo abrir. A pureza é provada por execução, não por
+// leitura de texto, em `scripts/check-bookmarks-read-purity.tests.ps1` (MGMT-02).
 function _removalImpact(versionKey, index) {
   const impact = { prepared: 0, characters: 0, bookmarked: 0 };
   if (!index || !index.byKey) return impact;
@@ -216,7 +214,7 @@ function _removalImpact(versionKey, index) {
     if (charAffected) impact.characters += 1;
   });
 
-  const bookmarks = window.loadBookmarks ? window.loadBookmarks() : [];
+  const bookmarks = window.peekBookmarks ? window.peekBookmarks() : [];
   (bookmarks || []).forEach((key) => {
     if (staleKey(key)) impact.bookmarked += 1;
   });
