@@ -11,7 +11,12 @@
 // script share the global lexical scope, so the bare references resolve.
 
 // ── name: adapted spells carry { pt, en } (see spells-data-loader.jsx) ──
-function spellName(s, lang) { return (lang === 'ptbr' ? s.pt : s.en) || s.pt || s.en || ''; }
+// Todo folded srd-pack-nomes-slug-e-markdown-cru: no ramo não-PT, prefere
+// `name_en` (nome legível, ex. "Acid Splash") antes de `s.en` (o slug de
+// identidade, ex. "acid-splash") — s.en nunca muda, então hifiSpellSlug()
+// (que chama spellName(s,'en')) continua gerando o mesmo slug quando
+// name_en não existir (packs legados/BYOD sem displayName).
+function spellName(s, lang) { return (lang === 'ptbr' ? s.pt : (s.name_en || s.en)) || s.pt || s.en || ''; }
 
 // Normaliza pra busca: minúsculas e sem diacríticos ("Bênção" → "bencao"),
 // pra "druidica" achar "Arte Druídica". Usada pelo grid (v10) e pelo editor (v11).

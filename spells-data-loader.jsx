@@ -310,6 +310,32 @@ function normalizeComponents(comp) {
   return comp.split(',').map(s => s.trim()).filter(Boolean).join(' ');
 }
 
+// Conversão mínima de markdown pro adaptador SRD (todo folded
+// srd-pack-nomes-slug-e-markdown-cru): os JSONs SRD usam `**negrito**` e
+// `*itálico*`/`_itálico_` cru dentro da descrição em HTML. Não é um parser de
+// markdown — só negrito e itálico, nada de listas/links/títulos/código.
+//
+// T-06-01-01 (mitigate, high): a conversão só pode rodar sobre nós de TEXTO,
+// nunca dentro da marcação de uma tag. A regex abaixo alterna entre um trecho
+// que começa com `<` e vai até o próximo `>` (passa intocado) e um trecho de
+// texto puro (convertido). Sem essa separação, um `alt="** onerror=... **"`
+// vindo de um pack de terceiro viraria `alt="<strong> onerror=... </strong>"`
+// — o parser do navegador fecharia o atributo no primeiro `<` novo e o resto
+// viraria atributo injetado num sink de dangerouslySetInnerHTML.
+// T-06-01-02 (mitigate, medium): só emite os literais `<strong>`/`<em>`, já
+// presentes em ALLOWED_TAGS de sanitizePack (pack-import.jsx) — nenhum
+// atributo é emitido, então a conversão não amplia a superfície sanitizada.
+function mdToHtml(html) {
+  if (!html) return '';
+  return String(html).replace(/<[^>]*>|[^<]+/g, (chunk) => {
+    if (chunk.charAt(0) === '<') return chunk;
+    return chunk
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      .replace(/_([^_]+)_/g, '<em>$1</em>');
+  });
+}
+
 // ──────────────────────────────────────────────────────────────────
 // ADAPTADOR: JSON raw → formato do app
 // ──────────────────────────────────────────────────────────────────
@@ -325,13 +351,23 @@ function adaptSpell(s, versionLang, edition) {
   // Nome: displayName (pt) ou name (en slug)
   const ptName = s.displayName || s.name || '';
   const enName = s.name || '';
+  // Nome legível em inglês (todo folded srd-pack-nomes-slug-e-markdown-cru):
+  // os packs SRD trazem `displayName` já legível ("Acid Splash"), mas o
+  // adaptador ignorava e devolvia o slug (`acid-splash`) pro caminho EN.
+  // `en:` continua intocado (`enName = s.name`) — é a chave de identidade
+  // usada por hifiSpellKey, pelo índice `byName` de pack-manager.jsx e pelo
+  // pareamento de edição de v10-hifi.jsx; mudá-la invalidaria em silêncio
+  // toda preparada/favorita já salva de todo usuário. A condição é pela lang
+  // do PACOTE (`versionLang`), nunca a da interface (D-01) — num pack PT-BR o
+  // `displayName` é o nome em português e não pode vazar pro slot EN.
+  const nameEn = versionLang === 'en' ? (s.displayName || s.name || '') : (s.name || '');
 
   return {
     en: enName,
     pt: ptName,
     displayName: ptName,
     name_pt: ptName,
-    name_en: enName,
+    name_en: nameEn,
     lvl: typeof s.level === 'number' ? s.level : parseInt(s.level, 10) || 0,
     // WR-05: nao inventamos escola quando o pack usa um nome que a app nao
     // reconhece — cair pra 4 (Evocacao) apresentava um chute como fato.
@@ -345,21 +381,34 @@ function adaptSpell(s, versionLang, edition) {
     conc: !!s.concentration,
     rit: !!s.ritual,
     known: false,
+    // Markdown cru convertido (todo folded srd-pack-nomes-slug-e-markdown-cru):
+    // os SRD usam `**negrito**`/`*itálico*` dentro de `description`. mdToHtml
+    // roda ANTES de stripHtml pra descHtml/desc: assim o negrito vira
+    // <strong> pra renderização rica, e o texto achatado (`desc`) perde a
+    // marcação junto com o `**` — nenhum campo mostra markdown cru.
     desc: {
-      pt: stripHtml(s.description),
-      en: stripHtml(s.description),
+      pt: stripHtml(mdToHtml(s.description)),
+      en: stripHtml(mdToHtml(s.description)),
     },
     descHtml: {
-      pt: s.description || '',
-      en: s.description || '',
+      pt: mdToHtml(s.description) || '',
+      en: mdToHtml(s.description) || '',
     },
+    // `upgrade`/`upgradeHtml` NÃO passam por mdToHtml aqui: o vizinho
+    // scripts/check-upgrade-heading-strip.tests.ps1 trava o literal exato
+    // `stripHtml(stripUpgradeHeading(s.upgradeDescription))` pro campo plano.
+    // Nenhum upgradeDescription dos JSONs embutidos hoje contém `**` (só
+    // `description` tem, 36 ocorrências em srd-2024-en.json) — sem impacto de
+    // dado real. upgradeHtml já recebe stripUpgradeHeading, então uma futura
+    // edição do SRD com markdown ali passaria só por mdToHtml, não por
+    // stripHtml — igual ao par desc/descHtml acima nesse aspecto.
     upgrade: {
       pt: stripHtml(stripUpgradeHeading(s.upgradeDescription)),
       en: stripHtml(stripUpgradeHeading(s.upgradeDescription)),
     },
     upgradeHtml: {
-      pt: stripUpgradeHeading(s.upgradeDescription),
-      en: stripUpgradeHeading(s.upgradeDescription),
+      pt: mdToHtml(stripUpgradeHeading(s.upgradeDescription)),
+      en: mdToHtml(stripUpgradeHeading(s.upgradeDescription)),
     },
     classes: versionLang === 'ptbr' ? classesPt : classesEn,
     classesPt,
