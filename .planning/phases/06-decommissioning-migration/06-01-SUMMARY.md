@@ -159,6 +159,10 @@ _No plan-metadata commit is created by this worktree agent — the orchestrator 
 - The 4 legacy `BUILTIN_VERSIONS` entries and their `spells-5E-*.json` files are untouched (verified via `git diff` scope and gate assertions) — 06-05's removal is unblocked and this plan's safety net is fully in place and tested ahead of it.
 - No blockers. The one open item (D2/`resolvableSpellKeys()` end-to-end integration) is naturally covered by 06-03's own implementation and verification work, not a gap in this plan.
 
+## Self-Check: PASSED
+
+All created/modified files and all commit hashes referenced above were verified present on disk and in `git log` after commit.
+
 ---
 *Phase: 06-decommissioning-migration*
 *Completed: 2026-09-03*
