@@ -38,7 +38,7 @@
 
 ### MIGR — Descomissionamento
 
-- [ ] **MIGR-01**: Migração preserva referências de preparadas/favoritas de usuários existentes; referências que ficarem órfãs são sinalizadas, nunca descartadas em silêncio
+- [x] **MIGR-01**: Migração preserva referências de preparadas/favoritas de usuários existentes; referências que ficarem órfãs são sinalizadas, nunca descartadas em silêncio
 - [ ] **MIGR-02**: Os 4 JSONs protegidos saem do site/repo (HEAD) e do precache do service worker (que passa a precachear só o SRD)
 - [ ] **MIGR-03**: Usuário existente recebe orientação na primeira visita pós-migração de como importar o próprio pacote
 
@@ -89,7 +89,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MGMT-04 | Phase 5 | Complete |
 | MGMT-05 | Phase 5 | Complete |
 | SRD-02 | Phase 5 | Complete |
-| MIGR-01 | Phase 6 | Pending |
+| MIGR-01 | Phase 6 | Complete |
 | MIGR-02 | Phase 6 | Pending |
 | MIGR-03 | Phase 6 | Pending |
 | I18N-01 | Phase 04.1 | Complete |
