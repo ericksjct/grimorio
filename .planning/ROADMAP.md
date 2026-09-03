@@ -227,7 +227,7 @@ Plans:
   3. The 4 protected JSON files are gone from the deployed site and repo HEAD, and the service worker precache list contains only the SRD file (MIGR-02)
   4. An existing user's first visit after the update shows clear, actionable guidance on how to import their own pack to restore full spell content (MIGR-03)
 
-**Plans**: 2/6 plans executed
+**Plans**: 4/6 plans executed
 
 Plans:
 **Wave 1**
@@ -237,8 +237,8 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 06-03-PLAN.md — Wave 2: `hifiOrphanFromKey()` e a seção de magias órfãs ao final das abas `prepared`/`bookmarked` do editor, com contagem, explicação e toggle individual (D-10/D-11/D-12) (MIGR-01)
-- [ ] 06-04-PLAN.md — Wave 2: `transition-banner.jsx` novo, chaves `migration.*` em `i18n.jsx`, montagem em `index.html`, entrada em `PRECACHE`, dispensa em `spellbook-ui-prefs` (D-05..D-08, D-13) (MIGR-03)
+- [x] 06-03-PLAN.md — Wave 2: `hifiOrphanFromKey()` e a seção de magias órfãs ao final das abas `prepared`/`bookmarked` do editor, com contagem, explicação e toggle individual (D-10/D-11/D-12) (MIGR-01)
+- [x] 06-04-PLAN.md — Wave 2: `transition-banner.jsx` novo, chaves `migration.*` em `i18n.jsx`, montagem em `index.html`, entrada em `PRECACHE`, dispensa em `spellbook-ui-prefs` (D-05..D-08, D-13) (MIGR-03)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -278,4 +278,4 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 4. Loader Integration (Source-Dispatch) | v2.0 | 4/4 | Complete    | 2026-08-17 |
 | 04.1. Desacoplar o idioma da interface | v2.0 | 5/5 | Complete    | 2026-08-24 |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 5/5 | Complete    | 2026-08-30 |
-| 6. Decommissioning & Migration | v2.0 | 2/6 | In Progress|  |
+| 6. Decommissioning & Migration | v2.0 | 4/6 | In Progress|  |
