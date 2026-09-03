@@ -53,6 +53,27 @@ function _defaultVersion() {
   return SPELL_VERSIONS[0];
 }
 
+// D-04: uma preferência salva (`spellbook-ui-prefs.versionKey`) apontando pra
+// uma das 4 chaves legadas (removidas em 06-05) cai no SRD da MESMA EDIÇÃO,
+// não no default cego — um usuário de 2014 caindo em 5.2 leria a mudança de
+// estatísticas como bug, não como migração. Tabela fechada: uma chave
+// desconhecida qualquer não casa e segue pra cadeia de default já existente
+// (T-06-01-03, accept).
+// Sem prototipo (mesmo motivo de SCHOOL_INDEX/CLASS_PT abaixo): indexada por
+// uma string vinda de localStorage.
+const LEGACY_VERSION_FALLBACK = Object.assign(Object.create(null), {
+  'spells-5E-2024-PTBR': 'srd-2024-en',
+  'spells-5E-2024-EN': 'srd-2024-en',
+  'spells-5E-2014-PTBR': 'srd-2014-en',
+  'spells-5E-2014-EN': 'srd-2014-en',
+});
+
+// Sinal de leitura pro banner de transição (06-04): { from, to } quando o
+// fallback acima disparou neste boot, `null` caso contrário. Inicializado
+// aqui, antes de `_initialVersionKey()` rodar (mais abaixo), pro global
+// existir sempre — inclusive quando nenhum fallback dispara.
+window.__legacyVersionFallback = null;
+
 // ──────────────────────────────────────────────────────────────────
 // ENUMERAÇÃO DE PACKS DO INDEXEDDB (plano 04-02)
 // ──────────────────────────────────────────────────────────────────
@@ -289,6 +310,32 @@ function normalizeComponents(comp) {
   return comp.split(',').map(s => s.trim()).filter(Boolean).join(' ');
 }
 
+// Conversão mínima de markdown pro adaptador SRD (todo folded
+// srd-pack-nomes-slug-e-markdown-cru): os JSONs SRD usam `**negrito**` e
+// `*itálico*`/`_itálico_` cru dentro da descrição em HTML. Não é um parser de
+// markdown — só negrito e itálico, nada de listas/links/títulos/código.
+//
+// T-06-01-01 (mitigate, high): a conversão só pode rodar sobre nós de TEXTO,
+// nunca dentro da marcação de uma tag. A regex abaixo alterna entre um trecho
+// que começa com `<` e vai até o próximo `>` (passa intocado) e um trecho de
+// texto puro (convertido). Sem essa separação, um `alt="** onerror=... **"`
+// vindo de um pack de terceiro viraria `alt="<strong> onerror=... </strong>"`
+// — o parser do navegador fecharia o atributo no primeiro `<` novo e o resto
+// viraria atributo injetado num sink de dangerouslySetInnerHTML.
+// T-06-01-02 (mitigate, medium): só emite os literais `<strong>`/`<em>`, já
+// presentes em ALLOWED_TAGS de sanitizePack (pack-import.jsx) — nenhum
+// atributo é emitido, então a conversão não amplia a superfície sanitizada.
+function mdToHtml(html) {
+  if (!html) return '';
+  return String(html).replace(/<[^>]*>|[^<]+/g, (chunk) => {
+    if (chunk.charAt(0) === '<') return chunk;
+    return chunk
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      .replace(/_([^_]+)_/g, '<em>$1</em>');
+  });
+}
+
 // ──────────────────────────────────────────────────────────────────
 // ADAPTADOR: JSON raw → formato do app
 // ──────────────────────────────────────────────────────────────────
@@ -304,13 +351,23 @@ function adaptSpell(s, versionLang, edition) {
   // Nome: displayName (pt) ou name (en slug)
   const ptName = s.displayName || s.name || '';
   const enName = s.name || '';
+  // Nome legível em inglês (todo folded srd-pack-nomes-slug-e-markdown-cru):
+  // os packs SRD trazem `displayName` já legível ("Acid Splash"), mas o
+  // adaptador ignorava e devolvia o slug (`acid-splash`) pro caminho EN.
+  // `en:` continua intocado (`enName = s.name`) — é a chave de identidade
+  // usada por hifiSpellKey, pelo índice `byName` de pack-manager.jsx e pelo
+  // pareamento de edição de v10-hifi.jsx; mudá-la invalidaria em silêncio
+  // toda preparada/favorita já salva de todo usuário. A condição é pela lang
+  // do PACOTE (`versionLang`), nunca a da interface (D-01) — num pack PT-BR o
+  // `displayName` é o nome em português e não pode vazar pro slot EN.
+  const nameEn = versionLang === 'en' ? (s.displayName || s.name || '') : (s.name || '');
 
   return {
     en: enName,
     pt: ptName,
     displayName: ptName,
     name_pt: ptName,
-    name_en: enName,
+    name_en: nameEn,
     lvl: typeof s.level === 'number' ? s.level : parseInt(s.level, 10) || 0,
     // WR-05: nao inventamos escola quando o pack usa um nome que a app nao
     // reconhece — cair pra 4 (Evocacao) apresentava um chute como fato.
@@ -324,21 +381,34 @@ function adaptSpell(s, versionLang, edition) {
     conc: !!s.concentration,
     rit: !!s.ritual,
     known: false,
+    // Markdown cru convertido (todo folded srd-pack-nomes-slug-e-markdown-cru):
+    // os SRD usam `**negrito**`/`*itálico*` dentro de `description`. mdToHtml
+    // roda ANTES de stripHtml pra descHtml/desc: assim o negrito vira
+    // <strong> pra renderização rica, e o texto achatado (`desc`) perde a
+    // marcação junto com o `**` — nenhum campo mostra markdown cru.
     desc: {
-      pt: stripHtml(s.description),
-      en: stripHtml(s.description),
+      pt: stripHtml(mdToHtml(s.description)),
+      en: stripHtml(mdToHtml(s.description)),
     },
     descHtml: {
-      pt: s.description || '',
-      en: s.description || '',
+      pt: mdToHtml(s.description) || '',
+      en: mdToHtml(s.description) || '',
     },
+    // `upgrade`/`upgradeHtml` NÃO passam por mdToHtml aqui: o vizinho
+    // scripts/check-upgrade-heading-strip.tests.ps1 trava o literal exato
+    // `stripHtml(stripUpgradeHeading(s.upgradeDescription))` pro campo plano.
+    // Nenhum upgradeDescription dos JSONs embutidos hoje contém `**` (só
+    // `description` tem, 36 ocorrências em srd-2024-en.json) — sem impacto de
+    // dado real. upgradeHtml já recebe stripUpgradeHeading, então uma futura
+    // edição do SRD com markdown ali passaria só por mdToHtml, não por
+    // stripHtml — igual ao par desc/descHtml acima nesse aspecto.
     upgrade: {
       pt: stripHtml(stripUpgradeHeading(s.upgradeDescription)),
       en: stripHtml(stripUpgradeHeading(s.upgradeDescription)),
     },
     upgradeHtml: {
-      pt: stripUpgradeHeading(s.upgradeDescription),
-      en: stripUpgradeHeading(s.upgradeDescription),
+      pt: mdToHtml(stripUpgradeHeading(s.upgradeDescription)),
+      en: mdToHtml(stripUpgradeHeading(s.upgradeDescription)),
     },
     classes: versionLang === 'ptbr' ? classesPt : classesEn,
     classesPt,
@@ -393,6 +463,15 @@ function _initialVersionKey() {
     if (urlV && _versionByKey(urlV)) return urlV;
     if (prefs.versionKey && _versionByKey(prefs.versionKey)) {
       return prefs.versionKey;
+    }
+    // D-04: chave legada que não resolve mais cai no SRD da mesma edição —
+    // zera _wantedVersionKey (nenhum pack jamais resolve uma chave legada) e
+    // grava __legacyVersionFallback, o sinal que o banner de transição lê.
+    if (prefs.versionKey && LEGACY_VERSION_FALLBACK[prefs.versionKey]) {
+      const fallbackTo = LEGACY_VERSION_FALLBACK[prefs.versionKey];
+      window.__legacyVersionFallback = { from: prefs.versionKey, to: fallbackTo };
+      _wantedVersionKey = null;
+      return fallbackTo;
     }
     const nav = (navigator.languages && navigator.languages[0]) || navigator.language || '';
     const lang = String(nav).toLowerCase().startsWith('pt') ? 'ptbr' : 'en';
@@ -509,6 +588,47 @@ async function loadVersion(key) {
 function getVersionMeta(key) {
   return _metaCache[key] || null;
 }
+
+// ──────────────────────────────────────────────────────────────────
+// ÍNDICE DE CHAVES RESOLVÍVEIS (consumido por 06-03 "órfãs" e pelo banner 06-04)
+// ──────────────────────────────────────────────────────────────────
+// ponytail: função dedicada em vez de reusar packSpellIndex() de
+// pack-manager.jsx — o early-return de _buildSpellIndex() devolve índice
+// vazio quando não há pack `idb` instalado, o que marcaria TODAS as
+// preparadas como órfãs justo no caso mais comum (usuário sem nenhum pack
+// importado). Esta função sempre carrega TODAS as SPELL_VERSIONS, builtin
+// incluso.
+let _resolvableKeysPromise = null;
+function resolvableSpellKeys() {
+  if (_resolvableKeysPromise) return _resolvableKeysPromise;
+  const attempt = (async () => {
+    if (typeof window.hifiSpellKey !== 'function') return null;
+    const keys = new Set();
+    for (const v of SPELL_VERSIONS) {
+      await loadVersion(v.key);
+      // loadVersion() nunca lança — falha de fetch degrada silenciosamente
+      // pra [] e, de propósito, NÃO cacheia a falha (ver comentário acima em
+      // loadVersion). Ausência em _cache é o único sinal confiável de "esta
+      // versão falhou", distinto de uma versão que carregou e genuinamente
+      // não tem magias.
+      if (!_cache[v.key]) return null;
+      _cache[v.key].forEach((spell) => keys.add(window.hifiSpellKey(spell)));
+    }
+    return keys;
+  })();
+  _resolvableKeysPromise = attempt;
+  return attempt.then((result) => {
+    // null é indeterminado, não "zero chaves resolvem": não memoiza, pra a
+    // próxima chamada tentar de novo em vez de uma falha transitória de
+    // fetch fazer a UI declarar as magias do usuário como perdidas pra sempre.
+    if (result === null && _resolvableKeysPromise === attempt) _resolvableKeysPromise = null;
+    return result;
+  });
+}
+// Instalar/remover um pack pode mudar quais chaves resolvem — mesmo padrão de
+// invalidação que pack-manager.jsx usa pra _indexPromise.
+window.addEventListener('hifi-plugins-changed', () => { _resolvableKeysPromise = null; });
+window.resolvableSpellKeys = resolvableSpellKeys;
 
 // ──────────────────────────────────────────────────────────────────
 // API PÚBLICA — substitui v7BuildSpells

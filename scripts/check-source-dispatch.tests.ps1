@@ -173,7 +173,10 @@ if ($earlyReturnClears -lt 2) {
 # perfeitamente válido de um link compartilhado era silenciosamente
 # descartado em favor do default. O parse de prefs precisa do seu próprio
 # try/catch, isolado do resto da função.
-$initialKeyMatch = [regex]::Match($loader, 'function _initialVersionKey\(\)[\s\S]{0,1300}?\r?\n\}')
+# 06-01: a janela de captura cresceu de 1300 para 2000 quando D-04 (fallback
+# de versão legada) acrescentou um ramo à função - mesmo ajuste já feito em
+# check-edition-compare.tests.ps1 (WR-02) quando um bloco irmão cresceu.
+$initialKeyMatch = [regex]::Match($loader, 'function _initialVersionKey\(\)[\s\S]{0,2000}?\r?\n\}')
 if (-not $initialKeyMatch.Success) {
   throw 'IN-01: could not locate _initialVersionKey() body in spells-data-loader.jsx.'
 }
