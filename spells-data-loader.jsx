@@ -53,6 +53,27 @@ function _defaultVersion() {
   return SPELL_VERSIONS[0];
 }
 
+// D-04: uma preferência salva (`spellbook-ui-prefs.versionKey`) apontando pra
+// uma das 4 chaves legadas (removidas em 06-05) cai no SRD da MESMA EDIÇÃO,
+// não no default cego — um usuário de 2014 caindo em 5.2 leria a mudança de
+// estatísticas como bug, não como migração. Tabela fechada: uma chave
+// desconhecida qualquer não casa e segue pra cadeia de default já existente
+// (T-06-01-03, accept).
+// Sem prototipo (mesmo motivo de SCHOOL_INDEX/CLASS_PT abaixo): indexada por
+// uma string vinda de localStorage.
+const LEGACY_VERSION_FALLBACK = Object.assign(Object.create(null), {
+  'spells-5E-2024-PTBR': 'srd-2024-en',
+  'spells-5E-2024-EN': 'srd-2024-en',
+  'spells-5E-2014-PTBR': 'srd-2014-en',
+  'spells-5E-2014-EN': 'srd-2014-en',
+});
+
+// Sinal de leitura pro banner de transição (06-04): { from, to } quando o
+// fallback acima disparou neste boot, `null` caso contrário. Inicializado
+// aqui, antes de `_initialVersionKey()` rodar (mais abaixo), pro global
+// existir sempre — inclusive quando nenhum fallback dispara.
+window.__legacyVersionFallback = null;
+
 // ──────────────────────────────────────────────────────────────────
 // ENUMERAÇÃO DE PACKS DO INDEXEDDB (plano 04-02)
 // ──────────────────────────────────────────────────────────────────
@@ -394,6 +415,15 @@ function _initialVersionKey() {
     if (prefs.versionKey && _versionByKey(prefs.versionKey)) {
       return prefs.versionKey;
     }
+    // D-04: chave legada que não resolve mais cai no SRD da mesma edição —
+    // zera _wantedVersionKey (nenhum pack jamais resolve uma chave legada) e
+    // grava __legacyVersionFallback, o sinal que o banner de transição lê.
+    if (prefs.versionKey && LEGACY_VERSION_FALLBACK[prefs.versionKey]) {
+      const fallbackTo = LEGACY_VERSION_FALLBACK[prefs.versionKey];
+      window.__legacyVersionFallback = { from: prefs.versionKey, to: fallbackTo };
+      _wantedVersionKey = null;
+      return fallbackTo;
+    }
     const nav = (navigator.languages && navigator.languages[0]) || navigator.language || '';
     const lang = String(nav).toLowerCase().startsWith('pt') ? 'ptbr' : 'en';
     const v = SPELL_VERSIONS.find(x => x.lang === lang);
@@ -509,6 +539,47 @@ async function loadVersion(key) {
 function getVersionMeta(key) {
   return _metaCache[key] || null;
 }
+
+// ──────────────────────────────────────────────────────────────────
+// ÍNDICE DE CHAVES RESOLVÍVEIS (consumido por 06-03 "órfãs" e pelo banner 06-04)
+// ──────────────────────────────────────────────────────────────────
+// ponytail: função dedicada em vez de reusar packSpellIndex() de
+// pack-manager.jsx — o early-return de _buildSpellIndex() devolve índice
+// vazio quando não há pack `idb` instalado, o que marcaria TODAS as
+// preparadas como órfãs justo no caso mais comum (usuário sem nenhum pack
+// importado). Esta função sempre carrega TODAS as SPELL_VERSIONS, builtin
+// incluso.
+let _resolvableKeysPromise = null;
+function resolvableSpellKeys() {
+  if (_resolvableKeysPromise) return _resolvableKeysPromise;
+  const attempt = (async () => {
+    if (typeof window.hifiSpellKey !== 'function') return null;
+    const keys = new Set();
+    for (const v of SPELL_VERSIONS) {
+      await loadVersion(v.key);
+      // loadVersion() nunca lança — falha de fetch degrada silenciosamente
+      // pra [] e, de propósito, NÃO cacheia a falha (ver comentário acima em
+      // loadVersion). Ausência em _cache é o único sinal confiável de "esta
+      // versão falhou", distinto de uma versão que carregou e genuinamente
+      // não tem magias.
+      if (!_cache[v.key]) return null;
+      _cache[v.key].forEach((spell) => keys.add(window.hifiSpellKey(spell)));
+    }
+    return keys;
+  })();
+  _resolvableKeysPromise = attempt;
+  return attempt.then((result) => {
+    // null é indeterminado, não "zero chaves resolvem": não memoiza, pra a
+    // próxima chamada tentar de novo em vez de uma falha transitória de
+    // fetch fazer a UI declarar as magias do usuário como perdidas pra sempre.
+    if (result === null && _resolvableKeysPromise === attempt) _resolvableKeysPromise = null;
+    return result;
+  });
+}
+// Instalar/remover um pack pode mudar quais chaves resolvem — mesmo padrão de
+// invalidação que pack-manager.jsx usa pra _indexPromise.
+window.addEventListener('hifi-plugins-changed', () => { _resolvableKeysPromise = null; });
+window.resolvableSpellKeys = resolvableSpellKeys;
 
 // ──────────────────────────────────────────────────────────────────
 // API PÚBLICA — substitui v7BuildSpells
