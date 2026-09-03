@@ -116,6 +116,18 @@ const STRINGS = {
     'toast.buildImported': 'personagem “{name}” importado',
     'toast.buildImportFailed': 'não consegui importar a build dessa URL',
     'toast.versionSwitchedAway': 'o pacote que você estava vendo foi removido — voltamos para {version}',
+    // Banner de transição (MIGR-03) — D-08: ordem fixa (o que mudou, o que
+    // continua, órfãs quando houver, a ação). D-02: nunca oferece pack PT-BR.
+    'migration.title': 'O Grimório mudou',
+    'migration.removed': 'Os pacotes de magias D&D 5E 2014 e D&D 5.5E 2024 saíram do aplicativo.',
+    'migration.kept': 'O SRD 5.1 e o SRD 5.2 continuam embutidos, e as suas magias preparadas e favoritas continuam salvas.',
+    'migration.orphansOne': '1 das suas magias está num pacote que você não tem instalado. Ela aparece marcada na ficha; não foi apagada.',
+    'migration.orphansMany': '{n} das suas magias estão em pacotes que você não tem instalados. Elas aparecem marcadas na ficha; não foram apagadas.',
+    'migration.importCta': 'Para ter o conteúdo completo de volta, importe o seu próprio pacote.',
+    'migration.openManager': 'Gerenciar pacotes',
+    'migration.learnMore': 'Como montar um pacote',
+    'migration.dismiss': 'Entendi',
+    'migration.dismissAria': 'dispensar o aviso de transição',
     // Modo sessão
     'session.title': 'modo sessão',
     'session.enter': 'entrar no modo sessão',
@@ -314,6 +326,18 @@ const STRINGS = {
     'toast.buildImported': 'character “{name}” imported',
     'toast.buildImportFailed': 'could not import the build from this URL',
     'toast.versionSwitchedAway': 'the pack you were viewing was removed — switched back to {version}',
+    // Transition banner (MIGR-03) — D-08: fixed order (what changed, what
+    // stays, orphans when any, the action). D-02: never offers a PT-BR pack.
+    'migration.title': 'The Grimoire has changed',
+    'migration.removed': 'The D&D 5E 2014 and D&D 5.5E 2024 spell packs have been removed from the app.',
+    'migration.kept': 'SRD 5.1 and SRD 5.2 are still built in, and your prepared and bookmarked spells are still saved.',
+    'migration.orphansOne': '1 of your spells is in a pack you don\'t have installed. It is flagged on your sheet, not deleted.',
+    'migration.orphansMany': '{n} of your spells are in packs you don\'t have installed. They are flagged on your sheet, not deleted.',
+    'migration.importCta': 'To get the full content back, import your own pack.',
+    'migration.openManager': 'Manage packs',
+    'migration.learnMore': 'How to build a pack',
+    'migration.dismiss': 'Got it',
+    'migration.dismissAria': 'dismiss the transition notice',
     // Session mode
     'session.title': 'session mode',
     'session.enter': 'enter session mode',
