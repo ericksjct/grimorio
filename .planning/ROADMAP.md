@@ -227,13 +227,13 @@ Plans:
   3. The 4 protected JSON files are gone from the deployed site and repo HEAD, and the service worker precache list contains only the SRD file (MIGR-02)
   4. An existing user's first visit after the update shows clear, actionable guidance on how to import their own pack to restore full spell content (MIGR-03)
 
-**Plans**: 6 plans
+**Plans**: 2/6 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 06-01-PLAN.md — Wave 1: loader — mapa de fallback de versão por edição (D-04), `window.resolvableSpellKeys()`, nome legível EN e conversão mínima de markdown no adaptador SRD (todo `srd-pack-nomes-slug-e-markdown-cru`), 2 gates novos (MIGR-01)
-- [ ] 06-02-PLAN.md — Wave 1: `peekBookmarks()` de leitura pura em `v11-character-editor.jsx`, `pack-manager.jsx` migrado para ele, gate que prova a pureza por execução (WR-01 do review da Fase 5) (MIGR-01)
+- [x] 06-01-PLAN.md — Wave 1: loader — mapa de fallback de versão por edição (D-04), `window.resolvableSpellKeys()`, nome legível EN e conversão mínima de markdown no adaptador SRD (todo `srd-pack-nomes-slug-e-markdown-cru`), 2 gates novos (MIGR-01)
+- [x] 06-02-PLAN.md — Wave 1: `peekBookmarks()` de leitura pura em `v11-character-editor.jsx`, `pack-manager.jsx` migrado para ele, gate que prova a pureza por execução (WR-01 do review da Fase 5) (MIGR-01)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -278,4 +278,4 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 4. Loader Integration (Source-Dispatch) | v2.0 | 4/4 | Complete    | 2026-08-17 |
 | 04.1. Desacoplar o idioma da interface | v2.0 | 5/5 | Complete    | 2026-08-24 |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 5/5 | Complete    | 2026-08-30 |
-| 6. Decommissioning & Migration | v2.0 | 0/TBD | Not started | - |
+| 6. Decommissioning & Migration | v2.0 | 2/6 | In Progress|  |
