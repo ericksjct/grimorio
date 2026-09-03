@@ -28,8 +28,8 @@ if ($loader -match 'upgrade(Html)?:\s*\{[^}]*(pt|en):\s*(stripHtml\()?s\.upgrade
   throw 'adaptSpell() still passes raw s.upgradeDescription through — the heading would render twice.'
 }
 
-# The 4 bundled JSONs all carry the heading; assert the pattern still matches it.
-$sample = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'spells-5E-2024-PTBR.json')
+# The bundled SRD JSON carries the heading; assert the pattern still matches it.
+$sample = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'srd-2024-en.json')
 if ($sample -notmatch '<strong><em>[^<]{1,40}[.:]</em></strong>') {
   throw 'Bundled spell data no longer carries the embedded upgrade heading — revisit stripUpgradeHeading.'
 }

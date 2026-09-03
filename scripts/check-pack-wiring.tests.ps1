@@ -81,9 +81,10 @@ if ($sw -notlike "*$purifyUrl*") {
   throw "sw.js does not contain the exact DOMPurify URL from index.html. index.html: $purifyUrl"
 }
 
-# 6. CACHE_VERSION intacto.
-if ($sw -notlike "*const CACHE_VERSION = 'grimorio-v1';*") {
-  throw "sw.js CACHE_VERSION changed - acrescimo puro ao PRECACHE nao justifica bump e bumpar re-baixaria os JSONs de magias ja cacheados."
+# 6. CACHE_VERSION: pós-06-05 o valor esperado é grimorio-v2 (o bump é
+#    obrigatorio ali, D-14 - decomissao de arquivo exige apagar cache antigo).
+if ($sw -notlike "*const CACHE_VERSION = 'grimorio-v2';*") {
+  throw "sw.js CACHE_VERSION nao e 'grimorio-v2' - o bump de decomissao (D-14, 06-05) deveria ja ter acontecido."
 }
 
 # 7. Pacotes SRD agora obrigatorios no PRECACHE (Fase 4, SRD-03).

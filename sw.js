@@ -5,13 +5,14 @@
 //    mais novo (inclusive em dev); offline cai pro cache.
 //  · Dados e vendors (JSONs de magias, fontes, unpkg): stale-while-revalidate —
 //    responde do cache na hora e atualiza em segundo plano (mudam raramente).
-// Os 6 JSONs de magias (4 legado + 2 SRD) são pré-cacheados no install (em
-// background, não bloqueia o boot), então o app inteiro funciona offline já
-// a partir da primeira visita.
-// ponytail: cada entrada nova em PRECACHE é acréscimo puro — CACHE_VERSION
-// não precisa mudar, install() reabre o mesmo cache e só adiciona o que
-// faltar, sem re-baixar os JSONs de magias já cacheados.
-const CACHE_VERSION = 'grimorio-v1';
+// Os 2 JSONs de magias (SRD) são pré-cacheados no install (em background,
+// não bloqueia o boot), então o app inteiro funciona offline já a partir da
+// primeira visita.
+// ponytail: a dispensa de bump vale só pra ACRÉSCIMO em PRECACHE —
+// install() reabre o mesmo cache e só adiciona o que faltar, sem re-baixar
+// o que já está cacheado. REMOÇÃO de entrada exige bump de CACHE_VERSION:
+// só o activate() apaga cache cujo nome difere do atual.
+const CACHE_VERSION = 'grimorio-v2';
 
 // Extensões do app shell (código que muda a cada deploy) → network-first.
 const SHELL_RE = /\.(html|css|jsx)$/;
@@ -38,10 +39,6 @@ const PRECACHE = [
   './fonts/texturina-latin-ext.woff2',
   './fonts/jetbrainsmono-latin.woff2',
   './fonts/jetbrainsmono-latin-ext.woff2',
-  './spells-5E-2024-PTBR.json',
-  './spells-5E-2014-PTBR.json',
-  './spells-5E-2024-EN.json',
-  './spells-5E-2014-EN.json',
   './srd-2024-en.json',
   './srd-2014-en.json',
   'https://unpkg.com/react@18.3.1/umd/react.production.min.js',

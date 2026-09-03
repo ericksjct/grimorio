@@ -58,9 +58,12 @@ if ($fallbackBranchMatch.Value -notmatch '_wantedVersionKey\s*=\s*null') {
   throw '_wantedVersionKey must be zeroed inside the LEGACY_VERSION_FALLBACK branch of _initialVersionKey() (D-04): a legacy key will never resolve from any pack, so leaving it pending arms hasPendingSpellVersion() forever.'
 }
 
-# 6. BUILTIN_VERSIONS não pode ser tocado por esta fase (a remoção pertence a 06-05).
-if ($loader -notmatch "key:\s*'spells-5E-2024-PTBR'") {
-  throw 'BUILTIN_VERSIONS must still declare the 4 legacy keys in this plan - their removal belongs to 06-05.'
+# 6. Pós-06-05: as 4 chaves legadas saíram de BUILTIN_VERSIONS (D-15/D-17) -
+#    LEGACY_VERSION_FALLBACK continua vivo (é o que resolve uma preferência
+#    salva apontando pra uma delas), mas o registro embutido agora só declara
+#    as 2 entradas SRD.
+if ($loader -match "key:\s*'spells-5E-2024-PTBR'") {
+  throw 'BUILTIN_VERSIONS ainda declara uma chave legada - a decomissao (06-05) deveria te-la removido.'
 }
 
 # ── Prova de execução real: extrai o mapa de produção via regex e faz eval ──

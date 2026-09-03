@@ -46,8 +46,8 @@ if ($persistMatch.Value -match 'migrationNoticeDismissed') {
 if ($sw -notlike "*'./transition-banner.jsx'*") {
   throw 'sw.js is missing ./transition-banner.jsx from PRECACHE - the banner would break offline.'
 }
-if ($sw -notlike "*const CACHE_VERSION = 'grimorio-v1';*") {
-  throw 'sw.js CACHE_VERSION changed - pure PRECACHE addition does not justify a bump (the bump is 06-05''s job, D-14).'
+if ($sw -notlike "*const CACHE_VERSION = 'grimorio-v2';*") {
+  throw 'sw.js CACHE_VERSION is not grimorio-v2 - the decommission bump (D-14, 06-05) should already have happened.'
 }
 
 # ── 5. Assertivas de texto em transition-banner.jsx ──
