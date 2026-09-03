@@ -347,13 +347,24 @@ function longRestFor(charId, update) {
 const HIFI_BOOKMARKS_KEY = 'hifi_bookmarks_v1';
 const HIFI_BOOKMARKS_EVENT = 'hifi-bookmarks-changed';
 
-function loadBookmarks() {
+// Leitor puro: qualquer módulo pode chamar isto em qualquer ponto do ciclo de
+// vida sem alterar um byte do localStorage. Ao contrário de loadBookmarks(),
+// nunca dispara a migração de favoritas por personagem — a garantia de bytes
+// idênticos de um leitor externo passa a ser propriedade desta função, não da
+// ordem de boot de outro módulo (WR-01).
+function peekBookmarks() {
   try {
     const s = localStorage.getItem(HIFI_BOOKMARKS_KEY);
-    if (s !== null) {
-      const parsed = JSON.parse(s);
-      if (Array.isArray(parsed)) return parsed;
-    } else {
+    if (s === null) return [];
+    const parsed = JSON.parse(s);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {}
+  return [];
+}
+
+function loadBookmarks() {
+  try {
+    if (localStorage.getItem(HIFI_BOOKMARKS_KEY) === null) {
       // Migração única: junta as favoritas que estavam salvas por personagem
       // (modelo antigo) numa lista global, pra ninguém perder o que marcou.
       const migrated = new Set();
@@ -366,7 +377,7 @@ function loadBookmarks() {
       return arr;
     }
   } catch (e) {}
-  return [];
+  return peekBookmarks();
 }
 
 function persistBookmarks(keys) {
@@ -1042,7 +1053,7 @@ Object.assign(window, {
   paletteFor, paletteForTheme, accentOf, normalizeAccentId,
   HIFI_DEFAULT_CHARS,
   loadCharacters, persistCharacters, useCharacters,
-  loadBookmarks, persistBookmarks, useBookmarks,
+  loadBookmarks, persistBookmarks, useBookmarks, peekBookmarks,
   togglePreparedFor, toggleBookmarkedFor,
   setSlotUsedFor, longRestFor, _normSlots,
   CASTER_CLASSES, _normClassLevels, hifiSuggestedSlots,
