@@ -117,21 +117,28 @@ if (!helperMatch) { console.error('nao achei hifiSiblingVersion() em v10-hifi.js
 // WR-02: eval na funcao de PRODUCAO de verdade, nao numa copia da logica.
 eval(helperMatch[0]);
 
-// WR-07: PHB 2024 (EN) deve comparar com PHB 2014 (EN), nao com a SRD que
-// ocupa o indice 0 do registro.
-const curPHB = BUILTIN_VERSIONS.find(v => v.key === 'spells-5E-2024-EN');
-const other = hifiSiblingVersion(BUILTIN_VERSIONS, curPHB, v => v.lang === curPHB.lang && v.edition && v.edition !== curPHB.edition);
-if (!other || other.key !== 'spells-5E-2014-EN') {
-  console.error('WR-07 FAIL: PHB 2024 (EN) compared against ' + (other ? other.key : 'null') + ', expected spells-5E-2014-EN (PHB 2014)');
+// WR-07: par preferencial por corpus, edicao diferente. Com a decomissao de
+// 06-05 o registro so tem 2 entradas SRD - o par preferencial srd-2024-en
+// deve resolver para srd-2014-en (mesmo corpus 'srd', edicao diferente).
+const curSrd2024 = BUILTIN_VERSIONS.find(v => v.key === 'srd-2024-en');
+const other = hifiSiblingVersion(BUILTIN_VERSIONS, curSrd2024, v => v.lang === curSrd2024.lang && v.edition && v.edition !== curSrd2024.edition);
+if (!other || other.key !== 'srd-2014-en') {
+  console.error('WR-07 FAIL: srd-2024-en compared against ' + (other ? other.key : 'null') + ', expected srd-2014-en');
   process.exit(1);
 }
 
-// CR-02: PHB 2024 (PT-BR) -> alternar para EN deve ir para PHB 2024 (EN), nao
-// para srd-2024-en (indice 0, mesmo lang+edicao, corpus diferente).
-const curPTBR = BUILTIN_VERSIONS.find(v => v.key === 'spells-5E-2024-PTBR');
-const en = hifiSiblingVersion(BUILTIN_VERSIONS, curPTBR, v => v.lang === 'en' && v.edition === curPTBR.edition);
-if (!en || en.key !== 'spells-5E-2024-EN') {
-  console.error('CR-02 FAIL: PHB 2024 (PT-BR) lang-toggle-EN resolved to ' + (en ? en.key : 'null') + ', expected spells-5E-2024-EN (PHB 2024 EN)');
+// CR-02: alternancia de idioma preferindo o mesmo corpus, agora com um pack
+// BYOD sintetico no lugar do par PHB PT-BR/EN removido em 06-05. O registro
+// e uma COPIA de BUILTIN_VERSIONS acrescida de uma entrada de pack; o irmao
+// em lang 'en' da mesma edicao deve resolver pro SRD (mesmo corpus), nao
+// para o pack (corpus diferente).
+const withPack = BUILTIN_VERSIONS.concat([
+  { key: 'plugin-teste', source: 'idb', lang: 'ptbr', edition: '5e 2024', corpus: 'pack', labelPt: 'Pack de teste', labelEn: 'Test pack', short: 'teste' },
+]);
+const curPack = withPack.find(v => v.key === 'plugin-teste');
+const en = hifiSiblingVersion(withPack, curPack, v => v.lang === 'en' && v.edition === curPack.edition);
+if (!en || en.key !== 'srd-2024-en') {
+  console.error('CR-02 FAIL: pack BYOD (PT-BR) lang-toggle-EN resolved to ' + (en ? en.key : 'null') + ', expected srd-2024-en');
   process.exit(1);
 }
 console.log('WR-07/CR-02 ok: hifiSiblingVersion() prefers same-corpus pairs for both useEditionCompare and HifiLangToggle.');
