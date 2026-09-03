@@ -485,6 +485,62 @@ function useHifiTransition(open, duration = 180) {
 }
 if (typeof window !== 'undefined') window.useHifiTransition = useHifiTransition;
 
+// ──────────────────────────────────────────────────────────────────
+// MAGIAS ÓRFÃS (MIGR-01) — uma chave preparada/favoritada que já não resolve
+// contra window.SPELL_VERSIONS nunca é descartada, só sinalizada. Ver
+// 06-03-PLAN.md para o must_haves completo.
+// ──────────────────────────────────────────────────────────────────
+
+// Desmonta a string que hifiSpellKey() (v10-hifi.jsx) montou — `${school}-${lvl}-${en}`
+// — usando só os dois primeiros hífens, porque o slug (`en`) pode conter hífens.
+// Nunca devolve null: uma chave que não tem cara de chave ainda vira uma linha
+// renderizável, com o texto que der para derivar (descartar é a perda silenciosa
+// que MIGR-01 proíbe).
+function hifiOrphanFromKey(key) {
+  const raw = String(key || '');
+  const i1 = raw.indexOf('-');
+  const i2 = i1 >= 0 ? raw.indexOf('-', i1 + 1) : -1;
+  if (i1 < 0 || i2 < 0) {
+    return { key: raw, school: null, lvl: null, title: raw.slice(0, 64) };
+  }
+  const schoolStr = raw.slice(0, i1);
+  const lvlStr = raw.slice(i1 + 1, i2);
+  const slug = raw.slice(i2 + 1);
+  const schoolNum = /^\d+$/.test(schoolStr) ? parseInt(schoolStr, 10) : NaN;
+  const school = (Number.isInteger(schoolNum) && schoolNum >= 0 && schoolNum < SCHOOL_KEYS.length) ? schoolNum : null;
+  const lvlNum = /^\d+$/.test(lvlStr) ? parseInt(lvlStr, 10) : NaN;
+  const lvl = (Number.isInteger(lvlNum) && lvlNum >= 0 && lvlNum <= 9) ? lvlNum : null;
+  const title = slug
+    ? slug.split('-').filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ').slice(0, 64)
+    : raw.slice(0, 64);
+  return { key: raw, school, lvl, title };
+}
+
+// Índice de chaves resolvíveis hoje, na forma de hook — estado inicial `null`
+// (indeterminado) até a primeira resposta de window.resolvableSpellKeys().
+// Reage a `spellVersion` (mesmo contador que já ouve hifi-spells-source-changed)
+// e a hifi-plugins-changed, com o mesmo formato de guarda `cancelled` do efeito
+// de packSpellIndex() em v10-hifi.jsx. Uma falha de fetch cai em `.catch()` e
+// volta pra `null`, nunca vira um Set vazio (isso declararia perda de dado).
+function useResolvableKeys(spellVersion) {
+  const [pluginVersion, setPluginVersion] = React.useState(0);
+  React.useEffect(() => {
+    const onChange = () => setPluginVersion(v => v + 1);
+    window.addEventListener('hifi-plugins-changed', onChange);
+    return () => window.removeEventListener('hifi-plugins-changed', onChange);
+  }, []);
+  const [keys, setKeys] = React.useState(null);
+  React.useEffect(() => {
+    let cancelled = false;
+    if (typeof window.resolvableSpellKeys !== 'function') { setKeys(null); return undefined; }
+    window.resolvableSpellKeys().then((result) => {
+      if (!cancelled) setKeys(result);
+    }).catch(() => { if (!cancelled) setKeys(null); });
+    return () => { cancelled = true; };
+  }, [spellVersion, pluginVersion]);
+  return keys;
+}
+
 function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', charId = null, mode = 'panel', onClose }) {
   const { chars, update } = useCharacters();
   const isNew = !charId;
@@ -559,6 +615,26 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
     }
     return out;
   }, [allSpells, query, tab, prepared, bookmarked, versionLang]);
+
+  // MIGR-01: chaves preparadas/favoritadas que já não resolvem contra nenhuma
+  // SPELL_VERSIONS — sinalizadas, nunca descartadas. `filteredSpells` acima não
+  // é tocado: as duas listas são disjuntas por construção.
+  const resolvableKeys = useResolvableKeys(spellVersion);
+  const orphanSpells = React.useMemo(() => {
+    if (tab === 'all' || resolvableKeys === null) return [];
+    const activeSet = tab === 'prepared' ? prepared : bookmarked;
+    let out = [...activeSet].filter(k => !resolvableKeys.has(k)).map(hifiOrphanFromKey);
+    if (query.trim()) {
+      const q = hifiNorm(query.trim());
+      out = out.filter(o => hifiNorm(o.title).includes(q) || hifiNorm(o.key).includes(q));
+    }
+    out.sort((a, b) => {
+      const al = a.lvl == null ? 99 : a.lvl;
+      const bl = b.lvl == null ? 99 : b.lvl;
+      return al !== bl ? al - bl : a.title.localeCompare(b.title);
+    });
+    return out;
+  }, [tab, resolvableKeys, prepared, bookmarked, query]);
 
   // Helper bilíngue (pt, en) — mecanismo centralizado no i18n (window.bilingual).
   const T = window.bilingual ? window.bilingual(lang) : (pt, en) => (lang === 'ptbr' ? pt : en);
@@ -1000,6 +1076,61 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
                   : T('nenhuma magia encontrada', 'no spells found')}
               </div>
             )}
+            {/* MIGR-01: secao de orfas — sinaliza, nunca descarta (D-09/D-11/D-12) */}
+            {orphanSpells.length > 0 && (
+              <div style={{ borderTop: '1px solid var(--surface1)', background: 'var(--crust)' }}>
+                <div style={{ padding: '10px 12px 6px' }}>
+                  <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)' }}>
+                    {orphanSpells.length === 1
+                      ? T('1 magia em um pacote que você não tem', "1 spell in a pack you don't have")
+                      : T(`${orphanSpells.length} magias em pacotes que você não tem`, `${orphanSpells.length} spells in packs you don't have`)}
+                  </div>
+                  <div style={{ marginTop: 2, fontSize: 12, color: 'var(--subtext0)' }}>
+                    {T(
+                      'Continuam salvas. Voltam sozinhas quando você instalar um pacote que as tenha.',
+                      "Still saved. They come back on their own once you install a pack that has them."
+                    )}
+                  </div>
+                </div>
+                {orphanSpells.map((o, i) => (
+                  <div key={o.key} style={{
+                    display: 'flex', alignItems: 'stretch',
+                    borderBottom: i < orphanSpells.length - 1 ? '1px solid var(--surface1)' : 'none',
+                  }}>
+                    {o.lvl != null && <div className={`hifi-level-bar hifi-level-${o.lvl}`} style={{ position: 'static', width: 3 }}/>}
+                    <div style={{ flex: 1, minWidth: 0, padding: '8px 12px', opacity: 0.65 }}>
+                      <div style={{ fontFamily: "'Texturina', 'Marauder Display', Georgia, serif", fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>
+                        {o.title}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--subtext0)', fontStyle: 'italic' }}>
+                        {o.school != null ? schoolKey(o.school) : T('escola desconhecida', 'unknown school')}
+                        {o.lvl != null ? ` · ${o.lvl === 0 ? T('truque', 'cantrip') : `${T('círc.', 'lvl')} ${o.lvl}`}` : ''}
+                      </div>
+                    </div>
+                    {tab === 'prepared' && (
+                      <button onClick={() => setPrepared(prev => { const n = new Set(prev); n.delete(o.key); return n; })}
+                        style={{
+                          width: 36, border: 'none', background: 'transparent', cursor: 'pointer',
+                          color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                        title={T('preparar', 'prepare')}>
+                        <HifiBookmarkIcon size={14} filled={true}/>
+                      </button>
+                    )}
+                    {tab === 'bookmarked' && (
+                      <button onClick={() => toggleBookmark(o.key)}
+                        style={{
+                          width: 36, border: 'none', background: 'transparent', cursor: 'pointer',
+                          color: 'var(--yellow)', fontSize: 16,
+                        }}
+                        title={T('favorita', 'bookmark')}>
+                        ★
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1062,4 +1193,5 @@ Object.assign(window, {
   charHasPrepared, charHasBookmarked,
   CharacterEditor,
   useHifiTransition,
+  hifiOrphanFromKey,
 });
