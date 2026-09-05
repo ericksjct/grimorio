@@ -384,7 +384,13 @@ function loadBookmarks() {
         if (Array.isArray(cs)) cs.forEach(c => (c.bookmarked || []).forEach(k => migrated.add(k)));
       } catch (e) {}
       const arr = [...migrated];
-      try { localStorage.setItem(HIFI_BOOKMARKS_KEY, JSON.stringify(arr)); } catch (e) {}
+      // Só persiste quando há de fato algo migrado — a chave hifi_bookmarks_v1 não
+      // pode nascer de uma LEITURA num Local Storage virgem (Gap 2, 06-UAT). Sem
+      // nada a migrar esse ramo reavalia a cada chamada em vez de gravar uma vez;
+      // a primeira favorita real do usuário grava via persistBookmarks().
+      if (arr.length > 0) {
+        try { localStorage.setItem(HIFI_BOOKMARKS_KEY, JSON.stringify(arr)); } catch (e) {}
+      }
       return arr;
     }
   } catch (e) {}
