@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: partial
 phase: 06-decommissioning-migration
 source: [06-01-SUMMARY.md, 06-02-SUMMARY.md, 06-03-SUMMARY.md, 06-04-SUMMARY.md, 06-05-SUMMARY.md]
 started: 2026-09-05T01:32:03Z
-updated: 2026-09-05T01:32:03Z
+updated: 2026-09-05T02:10:00Z
 ---
 
 ## Current Test
@@ -80,10 +80,11 @@ evidence: |
 
 ### 5. Contraprova de instalação nova (D-06)
 expected: em instalação nova o banner NÃO aparece, e depois da visita a chave `hifi_bookmarks_v1` continua ausente
-result: issue
-reported: "Verificado em perfil de Chrome e origem virgens (porta 8199, nunca visitada). Banner aparece: true (esperado false). hifi_bookmarks_v1: \"[]\" (esperado ausente)."
+result: pass
+reported: "Falhou na primeira rodada (banner: true, hifi_bookmarks_v1: \"[]\"). Reverificado apos o plano 06-07 mesclar, em perfil de Chrome e origem virgens: banner false, hifi_bookmarks_v1 null, peekCharacters() []. Contraprova inversa tambem confirmada: os 3 sinais de usuario existente (personagem salvo, favoritas salvas, preferencia de versao legada) seguem disparando o banner — MIGR-03 sem regressao. loadCharacters() preserva o default ["aventureiro"], entao o app continua abrindo com personagem."
 severity: major
 test: 5
+closed_by: 06-07
 
 ### 6. Clareza do texto do banner (teste de aceitação informal de 06-CONTEXT)
 expected: uma pessoa que não conhece o projeto entende o que mudou, o que continua salvo e o que fazer
@@ -98,8 +99,8 @@ reason: exige montar um pacote válido conforme `pack.schema.json`; não coberto
 ## Summary
 
 total: 7
-passed: 4
-issues: 1
+passed: 5
+issues: 0
 pending: 0
 skipped: 2
 blocked: 0
@@ -107,7 +108,7 @@ blocked: 0
 ## Gaps
 
 - truth: "Numa instalação nova o banner de transição não aparece (D-06)"
-  status: failed
+  status: resolved
   reason: "User reported: banner aparece em perfil e origem virgens — verificado isolando os três sinais de _hasExistingUserSignal(): __legacyVersionFallback=null (não dispara), peekBookmarks().length=0 (não dispara), loadCharacters().length=1 (dispara), devolvendo o personagem sintetizado 'aventureiro'."
   severity: major
   test: 5
@@ -115,9 +116,10 @@ blocked: 0
   artifacts: [v11-character-editor.jsx, transition-banner.jsx]
   missing: ["acessor de leitura pura para personagens (espelho de peekBookmarks) que distinga 'nenhum personagem salvo' de 'personagem default', e uso dele no sinal 2 de _hasExistingUserSignal"]
   debug_session: ""
+  resolved_by: "06-07 (peekCharacters + guarda de escrita em loadBookmarks); verificado headless em perfil/origem virgens"
 
 - truth: "Numa instalação nova a chave hifi_bookmarks_v1 continua ausente no Local Storage após a visita"
-  status: failed
+  status: resolved
   reason: "User reported: hifi_bookmarks_v1 = \"[]\" após a primeira carga em perfil e origem virgens; esperado null."
   severity: minor
   test: 5
@@ -125,3 +127,4 @@ blocked: 0
   artifacts: [v11-character-editor.jsx]
   missing: ["condicionar a escrita de migração em loadBookmarks() a haver de fato chaves migradas (migrated.size > 0), preservando a migração para quem tem favoritas por personagem"]
   debug_session: ""
+  resolved_by: "06-07 (peekCharacters + guarda de escrita em loadBookmarks); verificado headless em perfil/origem virgens"

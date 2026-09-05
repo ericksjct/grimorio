@@ -227,7 +227,7 @@ Plans:
   3. The 4 protected JSON files are gone from the deployed site and repo HEAD, and the service worker precache list contains only the SRD file (MIGR-02)
   4. An existing user's first visit after the update shows clear, actionable guidance on how to import their own pack to restore full spell content (MIGR-03)
 
-**Plans**: 5/7 plans executed
+**Plans**: 6/7 plans executed
 
 Plans:
 **Wave 1**
@@ -250,7 +250,7 @@ Plans:
 
 **Wave 5** *(gap closure — os 2 defeitos que a UAT reprovou; o checkpoint de 06-06 tem de ser RE-EXECUTADO depois deste plano)*
 
-- [ ] 06-07-PLAN.md — Wave 5: `peekCharacters()` de leitura pura em `v11-character-editor.jsx` e banner consumindo ele (banner aparecia em instalação nova, D-06), escrita de migração de `loadBookmarks()` condicionada a haver algo a migrar (`hifi_bookmarks_v1` nascia vazia no boot), 4 provas de execução acrescentadas aos 2 gates existentes (MIGR-03)
+- [x] 06-07-PLAN.md — Wave 5: `peekCharacters()` de leitura pura em `v11-character-editor.jsx` e banner consumindo ele (banner aparecia em instalação nova, D-06), escrita de migração de `loadBookmarks()` condicionada a haver algo a migrar (`hifi_bookmarks_v1` nascia vazia no boot), 4 provas de execução acrescentadas aos 2 gates existentes (MIGR-03)
 
 **UI hint**: yes
 **Planning route**: DISCUSS antes de planejar. Decisões delicadas: como o usuário existente vivencia a transição (aviso/tela de boas-vindas, como as órfãs aparecem), sequência do deploy. Research marcou a detecção de migração como território novo do codebase. Fase IRREVERSÍVEL — discutir sai mais barato que corrigir. Research do plan: possível research LEVE na lógica de detecção/preservação de referências órfãs (novidade no codebase), a confirmar no discuss.
@@ -282,4 +282,4 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 4. Loader Integration (Source-Dispatch) | v2.0 | 4/4 | Complete    | 2026-08-17 |
 | 04.1. Desacoplar o idioma da interface | v2.0 | 5/5 | Complete    | 2026-08-24 |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 5/5 | Complete    | 2026-08-30 |
-| 6. Decommissioning & Migration | v2.0 | 5/6 | In Progress|  |
+| 6. Decommissioning & Migration | v2.0 | 6/7 | In Progress|  |
