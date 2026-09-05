@@ -227,7 +227,7 @@ Plans:
   3. The 4 protected JSON files are gone from the deployed site and repo HEAD, and the service worker precache list contains only the SRD file (MIGR-02)
   4. An existing user's first visit after the update shows clear, actionable guidance on how to import their own pack to restore full spell content (MIGR-03)
 
-**Plans**: 5/6 plans executed
+**Plans**: 5/7 plans executed
 
 Plans:
 **Wave 1**
@@ -247,6 +247,10 @@ Plans:
 **Wave 4** *(blocked on Wave 3 completion)*
 
 - [ ] 06-06-PLAN.md — Wave 4: checkpoint humano dos 4 critérios de sucesso (390×844 nos dois temas, dado do usuário comparado byte a byte antes/depois, Cache Storage conferido) e fechamento dos dois todos incorporados ao escopo (MIGR-01, MIGR-02, MIGR-03)
+
+**Wave 5** *(gap closure — os 2 defeitos que a UAT reprovou; o checkpoint de 06-06 tem de ser RE-EXECUTADO depois deste plano)*
+
+- [ ] 06-07-PLAN.md — Wave 5: `peekCharacters()` de leitura pura em `v11-character-editor.jsx` e banner consumindo ele (banner aparecia em instalação nova, D-06), escrita de migração de `loadBookmarks()` condicionada a haver algo a migrar (`hifi_bookmarks_v1` nascia vazia no boot), 4 provas de execução acrescentadas aos 2 gates existentes (MIGR-03)
 
 **UI hint**: yes
 **Planning route**: DISCUSS antes de planejar. Decisões delicadas: como o usuário existente vivencia a transição (aviso/tela de boas-vindas, como as órfãs aparecem), sequência do deploy. Research marcou a detecção de migração como território novo do codebase. Fase IRREVERSÍVEL — discutir sai mais barato que corrigir. Research do plan: possível research LEVE na lógica de detecção/preservação de referências órfãs (novidade no codebase), a confirmar no discuss.
