@@ -144,4 +144,115 @@ try {
   if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force }
 }
 
-Write-Output 'Transition banner is wired (load order, mount, PRECACHE), safe (no write path, no auto-dismiss, safe external link), and migration.* i18n keys have full parity.'
+# ── 7. Prova de execução: _hasExistingUserSignal() contra os leitores de produção ──
+# 06-07 (06-UAT.md ## Gaps): a garantia D-06 ("banner nunca aparece em instalação nova")
+# e a não-regressão de MIGR-03 ("banner continua aparecendo pra usuário existente") são
+# provadas EXECUTANDO _hasExistingUserSignal() de verdade contra peekCharacters() e
+# peekBookmarks() de verdade e um localStorage falso - nunca por grep no fonte.
+$node2 = Get-Command node -ErrorAction SilentlyContinue
+if (-not $node2) {
+  Write-Warning 'node nao encontrado - prova de execucao de _hasExistingUserSignal() pulada (assercoes estruturais ja rodaram).'
+  Write-Output 'Transition banner structural checks passed (existing-user signal proof skipped: node not found).'
+  return
+}
+
+$nodeScript2 = @'
+const fs = require('fs');
+const editorSrc = fs.readFileSync('v11-character-editor.jsx', 'utf8');
+const bannerSrc = fs.readFileSync('transition-banner.jsx', 'utf8');
+
+const charsKeyMatch = editorSrc.match(/const HIFI_CHARS_KEY = ('[^']+');/);
+const bookmarksKeyMatch = editorSrc.match(/const HIFI_BOOKMARKS_KEY = ('[^']+');/);
+if (!charsKeyMatch || !bookmarksKeyMatch) { console.error('nao achei HIFI_CHARS_KEY/HIFI_BOOKMARKS_KEY'); process.exit(1); }
+const HIFI_CHARS_KEY = eval(charsKeyMatch[1]);
+const HIFI_BOOKMARKS_KEY = eval(bookmarksKeyMatch[1]);
+
+const peekCharsMatch = editorSrc.match(/function peekCharacters\(\)[\s\S]*?\n\}/);
+const peekBookmarksMatch = editorSrc.match(/function peekBookmarks\(\)[\s\S]*?\n\}/);
+const signalMatch = bannerSrc.match(/function _hasExistingUserSignal\(\)[\s\S]*?\n\}/);
+if (!peekCharsMatch) { console.error('nao achei peekCharacters() em v11-character-editor.jsx'); process.exit(1); }
+if (!peekBookmarksMatch) { console.error('nao achei peekBookmarks() em v11-character-editor.jsx'); process.exit(1); }
+if (!signalMatch) { console.error('nao achei _hasExistingUserSignal() em transition-banner.jsx'); process.exit(1); }
+
+function makeFakeStorage(initial) {
+  const store = Object.assign({}, initial);
+  const calls = { getItem: 0, setItem: 0, removeItem: 0 };
+  return {
+    getItem(k) { calls.getItem++; return Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null; },
+    setItem(k, v) { calls.setItem++; store[k] = String(v); },
+    removeItem(k) { calls.removeItem++; delete store[k]; },
+    _calls: calls,
+  };
+}
+
+// Prova de execucao nas funcoes de PRODUCAO de verdade, nao numa reimplementacao.
+eval(peekCharsMatch[0]);
+eval(peekBookmarksMatch[0]);
+eval(signalMatch[0]);
+
+let failures = 0;
+function check(label, cond, detail) {
+  if (!cond) { console.error('FAIL: ' + label + (detail ? ' - ' + detail : '')); failures++; }
+}
+
+function setScenario(storageInitial, legacyFallback) {
+  global.localStorage = makeFakeStorage(storageInitial);
+  global.window = { __legacyVersionFallback: legacyFallback, peekCharacters, peekBookmarks };
+}
+
+// (a) D-06: storage vazio e __legacyVersionFallback nulo - instalacao nova, banner NAO
+// pode aparecer, e a checagem em si nao pode deixar rastro no localStorage falso.
+{
+  setScenario({}, null);
+  const r = _hasExistingUserSignal();
+  check('(a) instalacao virgem: _hasExistingUserSignal() e false (D-06)', r === false);
+  check('(a) instalacao virgem: a checagem nao escreve no localStorage', global.localStorage._calls.setItem === 0 && global.localStorage._calls.removeItem === 0);
+}
+
+// (b) MIGR-03 nao-regressao: hifi_chars_v1 com um personagem salvo de verdade.
+{
+  setScenario({ [HIFI_CHARS_KEY]: JSON.stringify([{ id: 'meu-personagem' }]) }, null);
+  const r = _hasExistingUserSignal();
+  check('(b) personagem salvo de verdade: _hasExistingUserSignal() e true (MIGR-03)', r === true);
+}
+
+// (c) MIGR-03 nao-regressao: hifi_bookmarks_v1 com uma favorita, nenhum personagem.
+{
+  setScenario({ [HIFI_BOOKMARKS_KEY]: JSON.stringify(['spell-a']) }, null);
+  const r = _hasExistingUserSignal();
+  check('(c) favorita global salva: _hasExistingUserSignal() e true (MIGR-03)', r === true);
+}
+
+// (d) MIGR-03 nao-regressao: storage vazio mas __legacyVersionFallback aponta uma das
+// 4 chaves de versao removidas.
+{
+  setScenario({}, 'spells-5E-2024-PTBR');
+  const r = _hasExistingUserSignal();
+  check('(d) legacyVersionFallback presente: _hasExistingUserSignal() e true (MIGR-03)', r === true);
+}
+
+if (failures > 0) {
+  console.error(failures + ' verificacao(oes) do sinal de usuario existente falharam.');
+  process.exit(1);
+}
+console.log('_hasExistingUserSignal(): falso em instalacao virgem (D-06), verdadeiro para personagem salvo, favorita salva e legacyVersionFallback (MIGR-03, sem regressao).');
+'@
+
+$tmp2 = Join-Path ([System.IO.Path]::GetTempPath()) "check-transition-banner-signal-$([guid]::NewGuid()).cjs"
+try {
+  Set-Content -LiteralPath $tmp2 -Value $nodeScript2 -Encoding utf8NoBOM
+  Push-Location $repoRoot
+  try {
+    $nodeOut2 = & node $tmp2 2>&1
+    $nodeExit2 = $LASTEXITCODE
+  } finally {
+    Pop-Location
+  }
+  if ($nodeExit2 -ne 0) {
+    throw "_hasExistingUserSignal() execution proof failed: $nodeOut2"
+  }
+} finally {
+  if (Test-Path -LiteralPath $tmp2) { Remove-Item -LiteralPath $tmp2 -Force }
+}
+
+Write-Output 'Transition banner is wired (load order, mount, PRECACHE), safe (no write path, no auto-dismiss, safe external link), migration.* i18n keys have full parity, and _hasExistingUserSignal() is proven false on a fresh install (D-06) and true for a real existing user (MIGR-03, no regression).'

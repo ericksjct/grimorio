@@ -262,14 +262,25 @@ function _normChar(c) {
   };
 }
 
-function loadCharacters() {
+// Leitor puro: qualquer módulo pode perguntar "existe personagem REALMENTE salvo?" sem
+// receber de volta o personagem que o app inventou pra ter o que mostrar na tela. Ao
+// contrário de loadCharacters(), nunca devolve HIFI_DEFAULT_CHARS — é o que fecha o
+// defeito do banner de migração aparecendo em instalação nova (D-06): o sinal de
+// "usuário existente" não pode mais ser satisfeito por um valor sintetizado pelo app.
+// Espelha peekBookmarks() linha a linha: mesmo contrato, mesma degradação para [].
+function peekCharacters() {
   try {
     const s = localStorage.getItem(HIFI_CHARS_KEY);
-    if (s) {
-      const parsed = JSON.parse(s);
-      if (Array.isArray(parsed) && parsed.length) return parsed.map(_normChar);
-    }
+    if (s === null) return [];
+    const parsed = JSON.parse(s);
+    return Array.isArray(parsed) ? parsed : [];
   } catch (e) {}
+  return [];
+}
+
+function loadCharacters() {
+  const chars = peekCharacters();
+  if (Array.isArray(chars) && chars.length) return chars.map(_normChar);
   return HIFI_DEFAULT_CHARS.map(_normChar);
 }
 
@@ -373,7 +384,13 @@ function loadBookmarks() {
         if (Array.isArray(cs)) cs.forEach(c => (c.bookmarked || []).forEach(k => migrated.add(k)));
       } catch (e) {}
       const arr = [...migrated];
-      try { localStorage.setItem(HIFI_BOOKMARKS_KEY, JSON.stringify(arr)); } catch (e) {}
+      // Só persiste quando há de fato algo migrado — a chave hifi_bookmarks_v1 não
+      // pode nascer de uma LEITURA num Local Storage virgem (Gap 2, 06-UAT). Sem
+      // nada a migrar esse ramo reavalia a cada chamada em vez de gravar uma vez;
+      // a primeira favorita real do usuário grava via persistBookmarks().
+      if (arr.length > 0) {
+        try { localStorage.setItem(HIFI_BOOKMARKS_KEY, JSON.stringify(arr)); } catch (e) {}
+      }
       return arr;
     }
   } catch (e) {}
@@ -1183,7 +1200,7 @@ Object.assign(window, {
   HIFI_PALETTE, ACCENT_SLOTS, THEME_PALETTES,
   paletteFor, paletteForTheme, accentOf, normalizeAccentId,
   HIFI_DEFAULT_CHARS,
-  loadCharacters, persistCharacters, useCharacters,
+  loadCharacters, persistCharacters, useCharacters, peekCharacters,
   loadBookmarks, persistBookmarks, useBookmarks, peekBookmarks,
   togglePreparedFor, toggleBookmarkedFor,
   setSlotUsedFor, longRestFor, _normSlots,
