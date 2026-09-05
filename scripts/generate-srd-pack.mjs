@@ -21,11 +21,18 @@
 //     scripts/srd-sources/srd-5.2-spells.json — this script never fetches it
 //     live, at generation time or otherwise.
 //     https://gist.github.com/dmcb/4b67869f962e3adaa3d0f7e5ca8f4912
+//   - SRD 5.1 class lists ONLY: 5e-bits/5e-database's 2014 spell file, used as a
+//     transcription of the spell→class associations because the Tabyltop dump
+//     corrupts the PDF's "Spell Lists" appendix (see the D-06 amendment dated
+//     2026-09-05 in 03-SRD-SOURCE.md for the measurements and the licence
+//     reasoning). Nothing else is taken from it — no description, name, level or
+//     school. The pack stays CC-BY-4.0, attributed to WotC.
+//     https://raw.githubusercontent.com/5e-bits/5e-database/main/src/2014/en/5e-SRD-Spells.json
 //
 // Re-run when the SRD text is updated (WotC errata) or a source moves.
 //
 // D-05 (locked): no byte of description text from spells-5E-*.json ever
-// enters these packs. The two sources above are the ONLY input; this script
+// enters these packs. The sources listed above are the ONLY input; this script
 // never reads any spells-5E-*.json file.
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
@@ -360,6 +367,22 @@ const EDITIONS = [
     attribution:
       'This work includes material taken from the System Reference Document 5.1 (“SRD 5.1”) by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode.',
     extract: parseSrd51,
+    // O 5.1 traz a lista por classe num APÊNDICE do PDF ("Spell Lists"), fora da
+    // descrição de cada magia — e a extração da Tabyltop corrompe esse apêndice
+    // (colapsa as duas colunas: o Bardo sai com 54 das ~110 entradas, e 31
+    // magias não aparecem em lista nenhuma). Sem isto, 0 das 319 magias do 5.1
+    // tinham classe e o painel mostrava a seção CLASSES vazia.
+    //
+    // Este arquivo é usado como TRANSCRIÇÃO de conveniência, não como
+    // licenciante: o que se extrai dele são as associações magia→classe, que são
+    // fatos do SRD 5.1 — documento que a WotC licencia sob CC-BY-4.0 desde
+    // jan/2023. A compilação do 5e-bits é oferecida sob OGL 1.0a; não é a
+    // compilação deles que entra aqui, e a atribuição do pacote continua sendo à
+    // WotC sob CC-BY-4.0. Reverte parcialmente a rejeição de D-06 em
+    // .planning/phases/03-srd-pack-import-pipeline/03-SRD-SOURCE.md — leia a
+    // emenda registrada lá antes de mexer.
+    classListSource: 'srd-2014-en-classlists',
+    classListUrl: 'https://raw.githubusercontent.com/5e-bits/5e-database/main/src/2014/en/5e-SRD-Spells.json',
   },
   {
     file: 'srd-2024-en.json',
@@ -374,7 +397,55 @@ const EDITIONS = [
   },
 ];
 
+// ── listas por classe (só o 5.1 precisa; ver classListSource acima) ──────
+
+// Casa por nome normalizado. Se a cobertura não for total o gerador PARA em vez
+// de escrever um pacote pela metade: classe faltando numa magia é dado errado
+// silencioso, e o usuário confia nisso pra preparar magia.
+function applyClassLists(records, classSource, file) {
+  const norm = (s) => String(s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '');
+
+  const byName = new Map();
+  for (const s of classSource) {
+    const classes = (s.classes || []).map((c) => c.name).filter(Boolean);
+    if (classes.length) byName.set(norm(s.name), classes);
+  }
+
+  const semPar = [];
+  for (const r of records) {
+    const hit = byName.get(norm(r.displayName));
+    if (hit) r.class = hit;
+    else semPar.push(r.displayName);
+  }
+  if (semPar.length) {
+    throw new Error(
+      `${file}: ${semPar.length} spell(s) found no class list entry — refusing to write a pack with missing class data. ` +
+      `First few: ${semPar.slice(0, 5).join(', ')}`,
+    );
+  }
+  return records;
+}
+
 // ── fetch/cache ──────────────────────────────────────────────────────────
+
+async function fetchJson(url, cacheName) {
+  await mkdir(CACHE_DIR, { recursive: true });
+  const cachePath = path.join(CACHE_DIR, `${cacheName}.json`);
+  try {
+    return JSON.parse(await readFile(cachePath, 'utf8'));
+  } catch {
+    // not cached yet — fetch live below
+  }
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status} ${res.statusText}`);
+  const text = await res.text();
+  await writeFile(cachePath, text, 'utf8');
+  return JSON.parse(text);
+}
 
 async function fetchSource(edition) {
   if (edition.localSourcePath) {
@@ -513,7 +584,11 @@ async function main() {
 
   for (const edition of EDITIONS) {
     const source = await fetchSource(edition);
-    const rawRecords = edition.extract(source);
+    let rawRecords = edition.extract(source);
+    if (edition.classListUrl) {
+      const classSource = await fetchJson(edition.classListUrl, edition.classListSource);
+      rawRecords = applyClassLists(rawRecords, classSource, edition.file);
+    }
     const usedNames = new Set();
     const spells = rawRecords.map((r) => toSpell(r, usedNames));
     const pack = buildPack(edition, spells);

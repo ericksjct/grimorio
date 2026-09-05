@@ -78,3 +78,43 @@ foreach ($needle in @('readdir', 'readdirSync', 'glob(')) {
 }
 
 Write-Output 'SRD packs validate and carry their own licence text.'
+
+# ── Cobertura de classe por magia (emenda a D-06, 2026-09-05) ─────────────
+# O 5.1 traz a lista por classe num apêndice do PDF, fora da descrição; sem o
+# join de applyClassLists() o pacote saía com 0 de 319 magias com `class` e o
+# painel mostrava a seção CLASSES vazia. Classe faltando é erro silencioso que
+# leva o usuário a preparar magia errada, então a cobertura é travada aqui.
+
+$genSrc = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'scripts' 'generate-srd-pack.mjs')
+if ($genSrc -notmatch 'function\s+applyClassLists') {
+  throw 'generate-srd-pack.mjs lost applyClassLists() — the 5.1 pack would regenerate with no class data.'
+}
+
+foreach ($pack in @('srd-2014-en.json', 'srd-2024-en.json')) {
+  $j = Get-Content -Raw -LiteralPath (Join-Path $repoRoot $pack) | ConvertFrom-Json
+  $total = $j.spells.Count
+  $sem = @($j.spells | Where-Object { -not $_.class -or $_.class.Count -eq 0 }).Count
+  if ($sem -gt 0) {
+    throw "$pack : $sem de $total magias sem `class` — regenere com scripts/generate-srd-pack.mjs."
+  }
+  Write-Output "  $pack : $total/$total magias com classe."
+}
+
+# Fatos conhecidos: um join que casa nomes errados passaria na contagem acima.
+$p51 = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'srd-2014-en.json') | ConvertFrom-Json
+$esperado = @{
+  'Fireball'        = @('Sorcerer', 'Wizard')
+  'Cure Wounds'     = @('Bard', 'Cleric', 'Druid', 'Paladin', 'Ranger')
+  'Bless'           = @('Cleric', 'Paladin')
+  'Vicious Mockery' = @('Bard')
+}
+foreach ($nome in $esperado.Keys) {
+  $s = $p51.spells | Where-Object { $_.displayName -eq $nome }
+  if (-not $s) { throw "srd-2014-en.json: magia de referência '$nome' não encontrada." }
+  $got = ($s.class | Sort-Object) -join ','
+  $want = ($esperado[$nome] | Sort-Object) -join ','
+  if ($got -ne $want) {
+    throw "srd-2014-en.json: '$nome' tem classes [$got], esperado [$want] — o join por nome saiu errado."
+  }
+}
+Write-Output '  Classes conferidas contra fatos conhecidos do SRD 5.1.'
