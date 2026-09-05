@@ -1067,13 +1067,19 @@ function HifiDetailContent({ s, lang, versionLang }) {
         </div>
       )}
 
-      {/* Classes */}
-      <div>
-        <HifiSectionLabel>{tt(lang, 'spell.classes')}</HifiSectionLabel>
-        <p style={{ margin: '8px 0 0', fontSize: 15, lineHeight: 1.6, color: 'var(--text)' }}>
-          {(s.classes || []).map(c => c ? c.charAt(0).toUpperCase() + c.slice(1) : c).join(', ')}
-        </p>
-      </div>
+      {/* Classes — só quando há o que listar. O SRD 5.1 não traz classe por
+          magia (a lista por classe vive num apêndice do PDF, fora da descrição),
+          e um pack BYOD pode simplesmente não declarar `class`. Sem esta guarda
+          o rótulo aparecia sozinho, sugerindo dado perdido em vez de dado
+          ausente na fonte. Mesmo padrão da linha de meta logo acima. */}
+      {(s.classes || []).length > 0 && (
+        <div>
+          <HifiSectionLabel>{tt(lang, 'spell.classes')}</HifiSectionLabel>
+          <p style={{ margin: '8px 0 0', fontSize: 15, lineHeight: 1.6, color: 'var(--text)' }}>
+            {(s.classes || []).map(c => c ? c.charAt(0).toUpperCase() + c.slice(1) : c).join(', ')}
+          </p>
+        </div>
+      )}
 
       {/* Source */}
       <div>
