@@ -151,9 +151,14 @@ function TransitionBanner({ lang, dark, theme, orphanCount, onDismiss }) {
             </a>
           </div>
         </div>
+        {/* Dispensar usa `hifi-btn-secondary`, não `hifi-btn-ghost`: a variante
+            ghost não tem borda nem fundo e usa `--subtext0`, a afordância mais
+            fraca do sistema. Num banner que ocupa ~40% da tela no celular, a
+            única saída precisa parecer clicável. Fica abaixo do CTA primário
+            (roxo) na hierarquia, mas acima de "texto solto". */}
         <button
           type="button"
-          className="hifi-btn-ghost"
+          className="hifi-btn-secondary"
           onClick={onDismiss}
           aria-label={tt(lang, 'migration.dismissAria')}
           style={{ flex: '0 0 auto' }}
