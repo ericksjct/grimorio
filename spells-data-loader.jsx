@@ -43,6 +43,22 @@ function _versionByKey(key) {
   return SPELL_VERSIONS.find(v => v.key === key) || null;
 }
 
+// Idioma da INTERFACE, para os toasts deste módulo. Os toasts são chrome: quem
+// manda neles é a preferência de interface, nunca o idioma do pacote envolvido
+// (que é justamente o pacote que sumiu ou falhou ao carregar). Lê o mesmo blob
+// que index.html grava, com o mesmo parse defensivo do resto do arquivo —
+// declarar `const UI_PREFS_KEY` aqui colidiria com o bloco inline do index.html
+// no escopo global compartilhado entre scripts clássicos.
+function _uiLang() {
+  try {
+    const prefs = JSON.parse(localStorage.getItem('spellbook-ui-prefs') || '{}') || {};
+    const raw = String(prefs.lang || '').toLowerCase().replace(/[_-]/g, '');
+    if (raw.startsWith('pt')) return 'ptbr';
+    if (raw.startsWith('en')) return 'en';
+  } catch (e) {}
+  return 'ptbr';
+}
+
 function _defaultVersion() {
   return SPELL_VERSIONS[0];
 }
@@ -200,11 +216,16 @@ async function _refreshPluginVersionsInner() {
     // quem não abriu o devtools; um toast avisa de verdade.
     try {
       const fallback = _defaultVersion();
+      const ui = _uiLang();
+      // O RÓTULO da versão é conteúdo do pacote, então segue o idioma do pacote;
+      // a FRASE em volta é chrome e segue a interface. Antes o `tt()` recebia
+      // `fallback.lang`, e uma interface em pt-br caindo no SRD EN levava o aviso
+      // inteiro pra inglês — o acoplamento que a Fase 04.1 removeu, sobrevivendo aqui.
       const fallbackLabel = (fallback.lang === 'ptbr' ? fallback.labelPt : fallback.labelEn) || fallback.short || fallback.key;
       window.dispatchEvent(new CustomEvent('hifi-toast', {
         detail: {
           msg: window.tt
-            ? window.tt(fallback.lang, 'toast.versionSwitchedAway', { version: fallbackLabel })
+            ? window.tt(ui, 'toast.versionSwitchedAway', { version: fallbackLabel })
             : 'o pacote que você estava vendo foi removido — voltamos para ' + fallbackLabel,
           kind: 'err',
         },
@@ -563,7 +584,8 @@ async function loadVersion(key) {
       // tenta de novo. Avisa o usuário em vez de mostrar "0 magias" em silêncio.
       try {
         window.dispatchEvent(new CustomEvent('hifi-toast', {
-          detail: { msg: window.tt ? window.tt(ver.lang, 'toast.loadFailed') : 'falha ao carregar as magias', kind: 'err' },
+          // chrome: segue a interface, não o idioma do pacote que falhou.
+          detail: { msg: window.tt ? window.tt(_uiLang(), 'toast.loadFailed') : 'falha ao carregar as magias', kind: 'err' },
         }));
       } catch (e2) {}
       return [];
