@@ -88,8 +88,21 @@ closed_by: 06-07
 
 ### 6. Clareza do texto do banner (teste de aceitação informal de 06-CONTEXT)
 expected: uma pessoa que não conhece o projeto entende o que mudou, o que continua salvo e o que fazer
-result: skipped
-reason: exige julgamento humano; nenhum gate nem automação decide isso. O texto renderizado e o screenshot em 390×844 estão disponíveis para a conferência.
+result: issue
+reported: "o botao \"entendi\" ta muito apagado. ele tem que ficar mais evidente"
+severity: minor
+test: 6
+resolution: |
+  Corrigido em `45c6570`. Causa: o botao usava `hifi-btn-ghost`
+  (`background: transparent`, `border: none`, `color: var(--subtext0)`) — a
+  afordancia mais fraca do design system, carregando a UNICA saida de um banner
+  que ocupa ~40% da viewport no celular.
+  Trocado para `hifi-btn-secondary`, classe que ja existia: borda em pilula e
+  fundo `--surface0` com texto em contraste cheio, mantendo-se abaixo do CTA
+  primario na hierarquia (peso normal contra o serifado negrito do primario, e
+  posicionado fora da linha de CTAs). Verificado nos dois temas em 390x844.
+  Nenhum gate cravava a classe antiga; suite segue verde.
+pending: veredito humano sobre o TEXTO em si (as tres perguntas de compreensao) ainda nao dado
 
 ### 7. Contraprova do desfecho esperado (D-12)
 expected: importar um pack que contenha uma órfã faz ela migrar sozinha para a lista normal, sem ação sobre o dado salvo
