@@ -293,9 +293,25 @@ function stripHtml(s) {
 // cabeçalho (3 magias de 2014 PT-BR), devolve '' e a seção inteira desaparece
 // em vez de mostrar um título solto.
 const UPGRADE_HEADING = /^(\s*<p[^>]*>)?\s*<strong>\s*<em>\s*[^<]{1,40}[.:]\s*<\/em>\s*<\/strong>\s*/i;
+
+// O SRD 5.1 (2014) embute o MESMO cabeçalho sem marcação nenhuma
+// (`<p>At Higher Levels. When you cast…`), então não há estrutura pra casar e o
+// regex acima passa direto — 92 das 319 magias do 5.1 imprimiam o título duas
+// vezes. Não existe regra estrutural segura pro caso sem marcação: "At Higher
+// Levels. When you cast…" e "The damage increases by 1d4. When you cast…" têm a
+// mesma forma, e a segunda é conteúdo legítimo. Por isso aqui é uma lista
+// FECHADA de rótulos conhecidos, não um padrão genérico — falhar em remover é
+// feio, remover a primeira frase de uma descrição é perda de conteúdo.
+const UPGRADE_HEADING_LABELS = /^(\s*<p[^>]*>)?\s*(at higher levels|cantrip upgrade|em n[ií]veis superiores|aprimoramento de truque)\s*[.:]\s*/i;
+
 function stripUpgradeHeading(html) {
   if (!html) return '';
-  const out = String(html).replace(UPGRADE_HEADING, (m, openP) => (openP ? openP.trimStart() : ''));
+  let out = String(html).replace(UPGRADE_HEADING, (m, openP) => (openP ? openP.trimStart() : ''));
+  // Só tenta a lista de rótulos se a regra estrutural não pegou nada — packs
+  // com marcação continuam resolvidos por estrutura, sem depender de idioma.
+  if (out === String(html)) {
+    out = out.replace(UPGRADE_HEADING_LABELS, (m, openP) => (openP ? openP.trimStart() : ''));
+  }
   return stripHtml(out) ? out : '';
 }
 
