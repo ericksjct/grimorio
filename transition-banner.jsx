@@ -6,10 +6,12 @@
 //
 // Este módulo NÃO possui: nenhum caminho de escrita em `hifi_bookmarks_v1` ou
 // `hifi_chars_v1` — o sinal de usuário existente e a contagem de órfãs só LEEM, via
-// `window.peekBookmarks()` (leitor puro entregue em 06-02) e `window.loadCharacters()`.
-// Não oferece, linka ou nomeia nenhum pack em português (D-02) — a única saída pra
-// conteúdo completo é "importe o seu próprio pacote". Não introduz nenhum aviso
-// recorrente novo (D-03): dispensado uma vez, nunca mais aparece.
+// `peekBookmarks()` (entregue em 06-02) e `peekCharacters()` (entregue em 06-07 pra
+// fechar o defeito de `loadCharacters()` sintetizando o personagem default como
+// evidência de usuário existente). Não oferece, linka ou nomeia nenhum pack em
+// português (D-02) — a única saída pra conteúdo completo é "importe o seu próprio
+// pacote". Não introduz nenhum aviso recorrente novo (D-03): dispensado uma vez,
+// nunca mais aparece.
 //
 // Uso: incluir este arquivo no HTML depois de `pack-manager.jsx` (consome
 // `window.__openPackManager`) e antes de `v10-hifi.jsx`. Monta `<TransitionBannerRoot
@@ -17,13 +19,15 @@
 // recebendo SEMPRE `uiLang` — nunca uma derivação da versão de magias ativa (D-01).
 
 // D-06: sinal de "usuário existente", avaliado UMA vez (inicializador de estado, não a
-// cada render). Qualquer um dos três basta. `peekBookmarks()` é OBRIGATÓRIO aqui —
-// `loadBookmarks()` tem um ramo de escrita (migração de favoritas por personagem) que
-// CRIARIA `hifi_bookmarks_v1` numa instalação nova, exatamente o usuário que D-06 manda
-// nunca ver o banner (WR-01, fechado em 06-02).
+// cada render). Qualquer um dos três basta. `peekCharacters()` e `peekBookmarks()` são
+// OBRIGATÓRIOS aqui — `loadCharacters()` sintetiza o personagem default quando não há
+// nada salvo (o defeito que 06-07 fecha) e `loadBookmarks()` tem um ramo de escrita
+// (migração de favoritas por personagem) que CRIARIA `hifi_bookmarks_v1` numa
+// instalação nova (WR-01, fechado em 06-02) — os dois atravessariam a fronteira
+// "leitor de estado → decisão de produto" como se fossem fato sobre o usuário.
 function _hasExistingUserSignal() {
   if (window.__legacyVersionFallback != null) return true;
-  const chars = typeof window.loadCharacters === 'function' ? window.loadCharacters() : [];
+  const chars = typeof window.peekCharacters === 'function' ? window.peekCharacters() : [];
   if (Array.isArray(chars) && chars.length > 0) return true;
   const bookmarks = typeof window.peekBookmarks === 'function' ? window.peekBookmarks() : [];
   if (Array.isArray(bookmarks) && bookmarks.length > 0) return true;
@@ -39,12 +43,13 @@ function _peekUiPrefsBlob() {
   try { return JSON.parse(localStorage.getItem('spellbook-ui-prefs')) || {}; } catch (e) { return {}; }
 }
 
-// D-13: une as chaves de `prepared` de todos os personagens com as de `peekBookmarks()`
-// e conta as ausentes de `resolvable`. `resolvable === null` é "ainda não sei" (fetch
-// falhou ou indeterminado) e devolve `null` — nunca "zero órfãs" por omissão.
+// D-13: une as chaves de `prepared` de todos os personagens (via `peekCharacters()`)
+// com as de `peekBookmarks()` e conta as ausentes de `resolvable`. `resolvable === null`
+// é "ainda não sei" (fetch falhou ou indeterminado) e devolve `null` — nunca "zero
+// órfãs" por omissão.
 function _countOrphans(resolvable) {
   if (!resolvable) return null;
-  const chars = typeof window.loadCharacters === 'function' ? window.loadCharacters() : [];
+  const chars = typeof window.peekCharacters === 'function' ? window.peekCharacters() : [];
   const bookmarks = typeof window.peekBookmarks === 'function' ? window.peekBookmarks() : [];
   const userKeys = new Set(Array.isArray(bookmarks) ? bookmarks : []);
   (Array.isArray(chars) ? chars : []).forEach((c) => {
