@@ -1564,8 +1564,17 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
           display: 'flex', flexDirection: 'column',
           position: 'relative',
         }}>
+          {/* O wrapper de animação precisa participar da coluna flex do painel.
+              Sem isto ele vira um bloco de altura-de-conteúdo, seus filhos deixam
+              de ser itens flex, o `flex: 1` do corpo rolável fica inerte e a
+              descrição longa é cortada pelo `overflow: hidden` do painel em vez
+              de rolar. `minHeight: 0` é obrigatório: itens flex nascem com
+              `min-height: auto` e se recusam a encolher abaixo do conteúdo. */}
           {detailTransition.mounted && (
-            <div className={open ? 'hifi-slide-in-right' : detailTransition.cls}>
+            <div
+              className={open ? 'hifi-slide-in-right' : detailTransition.cls}
+              style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}
+            >
               <>
                 <div className="hifi-panel-header">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
