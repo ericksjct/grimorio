@@ -147,6 +147,10 @@ None - no external service configuration required.
 - Per the plan's sequencing notes, `06-06-PLAN.md` must be RE-EXECUTED after this plan merges, with UAT test 5 (fresh-install contraprova) redone on a genuinely virgin browser profile/origin — that is out of scope for this plan and is the one item left as `human_judgment: true` in the coverage table above (D5).
 - No blockers for that re-run: both fixes are self-contained in `v11-character-editor.jsx` / `transition-banner.jsx`, and no other file in the phase was touched.
 
+## Self-Check: PASSED
+
+All 4 modified files confirmed present on disk; all 4 commits (`83d000b`, `f4d66b2`, `3fe7429`, `8fd5cd8`) confirmed present in `git log`.
+
 ---
 *Phase: 06-decommissioning-migration*
 *Completed: 2026-09-04*
