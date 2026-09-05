@@ -23,6 +23,7 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
 - [x] **Phase 04.1: Desacoplar o idioma da interface do idioma do pacote** (INSERIDA) - uiLang vira estado proprio; pre-requisito da Fase 6, que remove as unicas entradas em portugues (completed 2026-08-24)
 - [x] **Phase 5: Plugin Manager UI & Version Selector** - Install/list/remove UI, dynamic version selector, duplicate-spell notes, empty state, CC-BY attribution (completed 2026-08-30)
 - [ ] **Phase 6: Decommissioning & Migration** - Remove the 4 protected JSONs from site/repo; migrate existing users without silently dropping references
+- [ ] **Phase 7: Tradução dos SRDs para pt-BR** - Devolver conteúdo em português ao app por tradução do SRD, com procedência CC-BY limpa
 
 ## Phase Details
 
@@ -255,6 +256,47 @@ Plans:
 **UI hint**: yes
 **Planning route**: DISCUSS antes de planejar. Decisões delicadas: como o usuário existente vivencia a transição (aviso/tela de boas-vindas, como as órfãs aparecem), sequência do deploy. Research marcou a detecção de migração como território novo do codebase. Fase IRREVERSÍVEL — discutir sai mais barato que corrigir. Research do plan: possível research LEVE na lógica de detecção/preservação de referências órfãs (novidade no codebase), a confirmar no discuss.
 
+### Phase 7: Tradução dos SRDs para pt-BR
+
+**Goal:** O usuário brasileiro volta a ler as magias em português, com conteúdo de
+procedência limpa — sem reintroduzir nenhum dos 4 datasets que a Fase 6 removeu.
+
+**Requirements**: TBD
+**Depends on:** Phase 6
+**Plans:** 0 plans
+
+**Contexto:** a Fase 6 removeu as únicas entradas em português do app por
+procedência incerta (D-05). Os dois SRD embutidos são EN. Traduzir o SRD é o
+caminho limpo de devolver português: é obra derivada de conteúdo que a WotC
+licencia sob CC-BY-4.0, o que a licença permite desde que haja atribuição e
+indicação de que houve mudança.
+
+**Restrições que a fase precisa respeitar:**
+
+- `MODIFICATION_NOTE` em `scripts/generate-srd-pack.mjs` hoje afirma "conteúdo da
+  magia não foi alterado". Num pacote traduzido isso passa a ser FALSO — a nota
+  precisa declarar a tradução, senão a atribuição CC-BY fica incorreta.
+- D-05 continua valendo: nenhum byte dos `spells-5E-*.json` pode entrar. Uma
+  tradução existente de proveniência incerta é exatamente o que a Fase 6 removeu.
+- O app já é bilíngue por pacote: `versionLang` governa conteúdo e `uiLang`
+  governa chrome (D-01 da Fase 04.1). Um SRD pt-BR entra como pacote novo no
+  registro, não como tradução em tempo de execução.
+- Volume: 319 magias (5.1) + 339 (5.2) = 658 descrições. O método de tradução e o
+  critério de qualidade são a decisão central da fase.
+
+**Decisões em aberto para o discuss-phase:**
+
+- Como a tradução é produzida e revisada, e o que conta como "boa o suficiente"
+  para regra de jogo (termo errado muda o efeito da magia na mesa).
+- Traduzir as duas edições ou só a 5.2, que é a padrão.
+- Nomes de magia traduzidos ou mantidos em inglês — afeta `hifiSpellKey`, que usa
+  o slug EN, e portanto a resolubilidade das preparadas/favoritas já salvas.
+- Se o pacote pt-BR é embutido ou distribuído como pacote BYOD instalável.
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 7 to break down)
+
 ## Planning Routes (resumo)
 
 Registrado 2026-07-18. Regra: discuss só quando há decisão de produto/UX que o planner não pode tomar sozinho.
@@ -283,3 +325,4 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 04.1. Desacoplar o idioma da interface | v2.0 | 5/5 | Complete    | 2026-08-24 |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 5/5 | Complete    | 2026-08-30 |
 | 6. Decommissioning & Migration | v2.0 | 6/7 | In Progress|  |
+| 7. Tradução dos SRDs para pt-BR | v2.0 | 0/0 | Not Started |  |
