@@ -120,6 +120,20 @@ const DURATION_LABEL_RE = /^Duration\s*:\s*/i;
 const DURATION_VALUE_RE =
   /^(Instantaneous|Special|Until dispelled(?: or triggered)?|(?:Up to )?\d+\s*(?:round|minute|hour|day)s?|Concentration,?\s*up to [A-Za-z0-9]+\s*(?:round|minute|hour|day)s?)\.?/i;
 const AT_HIGHER_LEVELS_RE = /^\s*At Higher Levels\.?/i;
+// O 5.2 vem da fonte com o cabeçalho enfatizado
+// (`<strong><em>At Higher Levels.</em></strong>`); este dump de texto do PDF não
+// carrega ênfase nenhuma, então o cabeçalho sairia como texto solto e o app o
+// imprimiria ao lado do próprio rótulo de seção. Emitir a MESMA forma dos dois
+// lados deixa os packs simétricos e permite que o strip do app case por
+// ESTRUTURA, sem precisar de uma lista de rótulos por idioma no código do site.
+// Cabe em MODIFICATION_NOTE: é reformatação estrutural, não altera o conteúdo.
+function markUpgradeHeading(text) {
+  const m = text.match(AT_HIGHER_LEVELS_RE);
+  if (!m) return htmlEscape(text);
+  const heading = m[0].trim().replace(/\.?$/, '.');
+  const rest = text.slice(m[0].length).trim();
+  return `<strong><em>${htmlEscape(heading)}</em></strong>${rest ? ` ${htmlEscape(rest)}` : ''}`;
+}
 // ponytail: the source text stream occasionally splits a label word across a
 // PDF page break ("At" / "Higher Levels...", "Casting " / "Time:1 action" —
 // both confirmed present in the dump). Merge a lone dangling label fragment
@@ -251,7 +265,7 @@ function parseSrd51(doc) {
         if (bodyStart) {
           if (AT_HIGHER_LEVELS_RE.test(bodyStart)) {
             current.inUpgrade = true;
-            current.upgradeParts.push(`<p>${htmlEscape(bodyStart)}</p>`);
+            current.upgradeParts.push(`<p>${markUpgradeHeading(bodyStart)}</p>`);
           } else {
             current.bodyParts.push(`<p>${htmlEscape(bodyStart)}</p>`);
           }
@@ -266,7 +280,7 @@ function parseSrd51(doc) {
 
     if (AT_HIGHER_LEVELS_RE.test(trimmed)) current.inUpgrade = true;
     const target = current.inUpgrade ? current.upgradeParts : current.bodyParts;
-    target.push(`<p>${htmlEscape(trimmed)}</p>`);
+    target.push(`<p>${target === current.upgradeParts ? markUpgradeHeading(trimmed) : htmlEscape(trimmed)}</p>`);
   }
   if (current) records.push(current);
 

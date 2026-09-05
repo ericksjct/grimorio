@@ -28,28 +28,31 @@ if ($loader -match 'upgrade(Html)?:\s*\{[^}]*(pt|en):\s*(stripHtml\()?s\.upgrade
   throw 'adaptSpell() still passes raw s.upgradeDescription through — the heading would render twice.'
 }
 
-# The bundled SRD JSON carries the heading; assert the pattern still matches it.
-$sample = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'srd-2024-en.json')
-if ($sample -notmatch '<strong><em>[^<]{1,40}[.:]</em></strong>') {
-  throw 'Bundled spell data no longer carries the embedded upgrade heading — revisit stripUpgradeHeading.'
+# ── O contrato vive no PACK, não no código do site ────────────────────────
+# O SRD 5.1 vem de um dump de texto do PDF, que não carrega ênfase. Sem
+# normalizar na geração, o cabeçalho saía como texto solto e 92 das 319 magias
+# imprimiam o título duas vezes. A correção certa é o pack entregar a mesma
+# forma marcada que o 5.2 já entrega (scripts/generate-srd-pack.mjs), e NÃO uma
+# lista de rótulos por idioma dentro do loader — assim o strip do app continua
+# casando por ESTRUTURA e segue valendo para packs BYOD em qualquer idioma.
+
+foreach ($pack in @('srd-2024-en.json', 'srd-2014-en.json')) {
+  $raw = Get-Content -Raw -LiteralPath (Join-Path $repoRoot $pack)
+  if ($raw -notmatch '<strong><em>[^<]{1,40}[.:]</em></strong>') {
+    throw "$pack no longer carries the MARKED upgrade heading — regenerate with scripts/generate-srd-pack.mjs."
+  }
+  if ($raw -match '<p>At Higher Levels\.') {
+    throw "$pack carries an UNMARKED 'At Higher Levels.' heading — the app would print the title twice. Regenerate the pack; do not add a per-language label list to the loader."
+  }
 }
 
-Write-Output 'Upgrade heading is stripped once, at the data adapter.'
-
-# ── Execução: as DUAS formas de cabeçalho precisam sair ────────────────────
-# O 5.2 marca o cabeçalho (`<strong><em>`) e o 5.1 NÃO marca
-# (`<p>At Higher Levels. …`). O gate acima só amostrava o 5.2, e por isso as 92
-# magias do 5.1 que imprimiam o título duas vezes passaram despercebidas.
-# Aqui as funções reais são extraídas do loader e executadas.
-
-$sample2014 = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'srd-2014-en.json')
-if ($sample2014 -notmatch '<p>At Higher Levels\.') {
-  throw 'srd-2014-en.json no longer carries the UNMARKED upgrade heading — revisit UPGRADE_HEADING_LABELS.'
-}
-if ($loader -notmatch 'const\s+UPGRADE_HEADING_LABELS\s*=') {
-  throw 'Missing UPGRADE_HEADING_LABELS in spells-data-loader.jsx — the unmarked 5.1 heading would render twice.'
+# O gerador precisa continuar emitindo a forma marcada.
+$gen = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'scripts' 'generate-srd-pack.mjs')
+if ($gen -notmatch 'function\s+markUpgradeHeading') {
+  throw 'generate-srd-pack.mjs lost markUpgradeHeading() — a regeneration would reintroduce the unmarked 5.1 heading.'
 }
 
+# ── Prova por execução ────────────────────────────────────────────────────
 $node = @'
 const fs = require('fs');
 const src = fs.readFileSync(process.argv[2], 'utf8');
@@ -57,7 +60,6 @@ const grab = (re, what) => { const m = src.match(re); if (!m) throw new Error('n
 const body = [
   grab(/function stripHtml\(s\)[\s\S]*?\n}/, 'stripHtml'),
   grab(/const UPGRADE_HEADING = [^\n]*/, 'UPGRADE_HEADING'),
-  grab(/const UPGRADE_HEADING_LABELS = [^\n]*/, 'UPGRADE_HEADING_LABELS'),
   grab(/function stripUpgradeHeading\(html\)[\s\S]*?\n}/, 'stripUpgradeHeading'),
 ].join('\n');
 const strip = new Function(body + '\nreturn stripUpgradeHeading;')();
@@ -72,21 +74,16 @@ const check = (nome, entrada, deveSumir, devePermanecer) => {
   }
 };
 
-// 5.2 — cabecalho MARCADO
-check('5.2 marcado', '<p><strong><em>At Higher Levels.</em></strong> The damage increases by 1d4.</p>',
+check('marcado en', '<p><strong><em>At Higher Levels.</em></strong> The damage increases by 1d4.</p>',
       'At Higher Levels', 'The damage increases by 1d4.');
-// 5.1 — cabecalho SEM marcacao (a regressao que este bloco existe pra travar)
-check('5.1 sem marcacao', '<p>At Higher Levels. When you cast this spell using a higher slot, it hurts more.</p>',
-      'At Higher Levels', 'When you cast this spell');
-check('5.1 truque', '<p>Cantrip Upgrade. The damage increases at level 5.</p>',
-      'Cantrip Upgrade', 'The damage increases at level 5.');
-check('pt sem marcacao', '<p>Em Niveis Superiores. O dano aumenta 1d4.</p>',
+check('marcado pt', '<p><strong><em>Em Niveis Superiores.</em></strong> O dano aumenta 1d4.</p>',
       'Em Niveis Superiores', 'O dano aumenta 1d4.');
 
-// NAO pode comer a primeira frase de um texto legitimo — a lista e fechada de proposito.
+// A primeira frase de um texto legitimo NAO pode ser comida. A regra casa por
+// estrutura justamente pra nunca precisar adivinhar isso.
 const legit = '<p>The damage increases by 1d4. When you cast this spell using a higher slot, it hurts more.</p>';
-if (!strip(legit).includes('The damage increases by 1d4.')) {
-  console.error('FALHA [conteudo legitimo]: primeira frase foi removida indevidamente'); fails++;
+if (strip(legit) !== legit) {
+  console.error('FALHA [conteudo legitimo]: texto sem cabecalho foi alterado -> ' + strip(legit).slice(0, 90)); fails++;
 }
 
 // Dados reais: nenhuma magia dos dois SRD pode sobrar com o cabecalho.
@@ -101,7 +98,7 @@ for (const f of ['srd-2024-en.json', 'srd-2014-en.json']) {
   }
 }
 if (fails) process.exit(1);
-console.log('  upgrade heading: marcado e nao-marcado removidos, conteudo legitimo preservado, 2 SRD limpos.');
+console.log('  upgrade heading: os 2 SRD chegam marcados, o strip remove por estrutura, conteudo legitimo intacto.');
 '@
 
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("upgrade-heading-" + [guid]::NewGuid().ToString('N') + ".cjs")
@@ -111,4 +108,4 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'Upgrade heading strip failed its execution proof.' }
 } finally { Remove-Item -LiteralPath $tmp -ErrorAction SilentlyContinue }
 
-Write-Output 'Upgrade heading is stripped once for BOTH the marked (5.2) and unmarked (5.1) forms.'
+Write-Output 'Upgrade heading: both SRD packs ship it marked up, and the adapter strips it structurally.'
