@@ -93,16 +93,30 @@ reason: exige julgamento humano; nenhum gate nem automação decide isso. O text
 
 ### 7. Contraprova do desfecho esperado (D-12)
 expected: importar um pack que contenha uma órfã faz ela migrar sozinha para a lista normal, sem ação sobre o dado salvo
-result: skipped
-reason: exige montar um pacote válido conforme `pack.schema.json`; não coberto nesta rodada.
+result: pass
+evidence: |
+  Pacote fixture valido (1 magia, `friends`/enchantment/nivel 0) servido por HTTP e
+  instalado pela via real do app: `window.packImport.installFromUrl()` -> ok,
+  identifier `teste-d12`, spellCount 1.
+  `resolvableSpellKeys().has('3-0-friends')`: false ANTES do import, true DEPOIS.
+  A magia voltou para a lista normal so com a instalacao, sem nenhuma acao do
+  usuario sobre o dado salvo. `hifi_chars_v1` byte a byte identico antes/depois.
+  O pack registrou-se em SPELL_VERSIONS como `plugin-teste-d12`.
+
+  Nota de metodo: a primeira rodada deste teste falhou por erro do fixture, nao do
+  app — a chave orfa foi cravada como `ench-0-friends` por suposicao. A chave real
+  usa o INDICE numerico da escola (`3-0-friends`, SCHOOL_KEYS[3]='ench'), que e a
+  representacao interna de longa data; a UI mapeia indice->nome so na exibicao. O
+  caminho de pacote importado e o do conteudo embutido geram a MESMA forma de
+  chave (o SRD embutido produz `4-2-acid-arrow`), entao nao ha inconsistencia.
 
 ## Summary
 
 total: 7
-passed: 5
+passed: 6
 issues: 0
 pending: 0
-skipped: 2
+skipped: 1
 blocked: 0
 
 ## Gaps
