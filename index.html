@@ -561,6 +561,21 @@ function App() {
     }
   }, [chars, charName]);
 
+  // O acento do personagem publicado em :root. Sem isto ele só existe dentro do
+  // container de HifiDesktop/HifiMobile, e todo root montado ao lado deles —
+  // gerenciador de pacotes, banner de transição, onboarding — cai no fallback
+  // `var(--accent, var(--mauve))` (ou, em pack-manager.jsx, num `var(--accent)`
+  // sem fallback nenhum). Publicar aqui faz a cor escolhida na ficha valer no
+  // app inteiro; os containers que já declaram `--accent` continuam vencendo
+  // por especificidade, então nada regride.
+  React.useEffect(() => {
+    if (!character || typeof window.accentOf !== 'function') return undefined;
+    const accent = window.accentOf(character, dark, theme);
+    if (!accent) return undefined;
+    document.documentElement.style.setProperty('--accent', accent);
+    return () => { document.documentElement.style.removeProperty('--accent'); };
+  }, [character, dark, theme]);
+
   if (!character) return null;
 
   return (
