@@ -12,7 +12,13 @@
 // install() reabre o mesmo cache e só adiciona o que faltar, sem re-baixar
 // o que já está cacheado. REMOÇÃO de entrada exige bump de CACHE_VERSION:
 // só o activate() apaga cache cujo nome difere do atual.
-const CACHE_VERSION = 'grimorio-v2';
+//
+// MUDAR O CONTEÚDO de um arquivo já listado no PRECACHE também exige bump, pelo
+// mesmo motivo: install() não re-baixa o que já está no cache, e o navegador só
+// reinstala o SW quando o próprio sw.js muda. Sem bump, quem já tinha o cache
+// anterior continua servindo o arquivo antigo indefinidamente — foi o que
+// aconteceu ao regenerar srd-2014-en.json com as listas de classe (v2 → v3).
+const CACHE_VERSION = 'grimorio-v3';
 
 // Extensões do app shell (código que muda a cada deploy) → network-first.
 const SHELL_RE = /\.(html|css|jsx)$/;

@@ -83,8 +83,11 @@ if ($sw -notlike "*$purifyUrl*") {
 
 # 6. CACHE_VERSION: pós-06-05 o valor esperado é grimorio-v2 (o bump é
 #    obrigatorio ali, D-14 - decomissao de arquivo exige apagar cache antigo).
-if ($sw -notlike "*const CACHE_VERSION = 'grimorio-v2';*") {
-  throw "sw.js CACHE_VERSION nao e 'grimorio-v2' - o bump de decomissao (D-14, 06-05) deveria ja ter acontecido."
+if ($sw -notmatch "const CACHE_VERSION = 'grimorio-v(\d+)';") {
+  throw "sw.js nao declara um CACHE_VERSION no formato 'grimorio-vN'."
+}
+if ([int]$Matches[1] -lt 2) {
+  throw "sw.js CACHE_VERSION e 'grimorio-v$($Matches[1])' - o bump de decomissao (D-14, 06-05) deveria ja ter acontecido."
 }
 
 # 7. Pacotes SRD agora obrigatorios no PRECACHE (Fase 4, SRD-03).

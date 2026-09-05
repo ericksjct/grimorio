@@ -53,8 +53,15 @@ foreach ($f in $removedFiles) {
   }
 }
 
-if ($sw -notmatch "const CACHE_VERSION = 'grimorio-v2';") {
-  throw "sw.js CACHE_VERSION nao e 'grimorio-v2' - o bump (D-14) e obrigatorio pra apagar o cache antigo com os 4 JSONs."
+# O invariante de D-14 e "o bump de descomissionamento aconteceu", nao "a versao
+# e literalmente v2 para sempre". Cravar o literal fazia qualquer bump posterior
+# (ex.: v3, ao regenerar um pack ja precacheado) quebrar este gate sem que nada
+# de descomissionamento tivesse regredido.
+if ($sw -notmatch "const CACHE_VERSION = 'grimorio-v(\d+)';") {
+  throw "sw.js nao declara um CACHE_VERSION no formato 'grimorio-vN'."
+}
+if ([int]$Matches[1] -lt 2) {
+  throw "sw.js CACHE_VERSION e 'grimorio-v$($Matches[1])' - o bump (D-14) e obrigatorio pra apagar o cache antigo com os 4 JSONs."
 }
 
 if ($sw -notlike "*'./srd-2024-en.json'*" -or $sw -notlike "*'./srd-2014-en.json'*") {

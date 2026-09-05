@@ -87,8 +87,11 @@ if ($sw -notlike "*'./plugin-store.jsx'*") {
   throw 'sw.js is missing ./plugin-store.jsx in PRECACHE.'
 }
 
-if ($sw -notlike "*const CACHE_VERSION = 'grimorio-v2';*") {
-  throw 'sw.js CACHE_VERSION is not grimorio-v2 - the Phase 6 decommission bump must be present.'
+if ($sw -notmatch "const CACHE_VERSION = 'grimorio-v(\d+)';") {
+  throw "sw.js does not declare a CACHE_VERSION in the 'grimorio-vN' form."
+}
+if ([int]$Matches[1] -lt 2) {
+  throw "sw.js CACHE_VERSION is 'grimorio-v$($Matches[1])' - the Phase 6 decommission bump must be present."
 }
 
 Write-Output 'Plugin store (IndexedDB) wiring, schema constants and failure semantics are present.'
