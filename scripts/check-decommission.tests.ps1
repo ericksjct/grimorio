@@ -8,10 +8,12 @@ $ErrorActionPreference = 'Stop'
 #
 # Nota (D-04): o mapa LEGACY_VERSION_FALLBACK em spells-data-loader.jsx
 # deliberadamente RETEM as 4 chaves antigas como string keys - ele existe pra
-# redirecionar uma preferencia salva antiga (spellbook-ui-prefs.versionKey)
-# pro SRD da mesma edicao. Essas 4 ocorrencias sao esperadas e nao violam a
-# regra: o que este gate proibe e a presenca dos ARQUIVOS (.json) e das
-# entradas em BUILTIN_VERSIONS/PRECACHE, nao o texto da chave de fallback.
+# redirecionar uma preferencia salva antiga (spellbook-ui-prefs.versionKey).
+# Fase 7 (D-08): as chaves PT-BR agora redirecionam para o SRD 5.2 PT-BR
+# embutido, as chaves EN continuam indo pro SRD da mesma edicao. Essas 4
+# ocorrencias sao esperadas e nao violam a regra: o que este gate proibe e a
+# presenca dos ARQUIVOS (.json) e das entradas em BUILTIN_VERSIONS/PRECACHE,
+# nao o texto da chave de fallback.
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 
@@ -64,8 +66,8 @@ if ([int]$Matches[1] -lt 2) {
   throw "sw.js CACHE_VERSION e 'grimorio-v$($Matches[1])' - o bump (D-14) e obrigatorio pra apagar o cache antigo com os 4 JSONs."
 }
 
-if ($sw -notlike "*'./srd-2024-en.json'*" -or $sw -notlike "*'./srd-2014-en.json'*") {
-  throw "sw.js PRECACHE deve conter './srd-2024-en.json' e './srd-2014-en.json'."
+if ($sw -notlike "*'./srd-2024-en.json'*" -or $sw -notlike "*'./srd-2014-en.json'*" -or $sw -notlike "*'./srd-2024-ptbr.json'*") {
+  throw "sw.js PRECACHE deve conter './srd-2024-en.json', './srd-2014-en.json' e './srd-2024-ptbr.json'."
 }
 
 $precacheMatch = [regex]::Match($sw, 'const PRECACHE = \[[\s\S]*?\n\];')
@@ -75,8 +77,8 @@ if (-not $precacheMatch.Success) {
 $spellJsonEntries = [regex]::Matches($precacheMatch.Value, "'\./[^']*\.json'") | Where-Object {
   $_.Value -notmatch 'manifest\.json' -and $_.Value -notmatch 'pack\.schema\.json'
 }
-if ($spellJsonEntries.Count -ne 2) {
-  throw "PRECACHE deve listar exatamente 2 JSONs de magia (SRD); encontrados $($spellJsonEntries.Count): $($spellJsonEntries.Value -join ', ')"
+if ($spellJsonEntries.Count -ne 3) {
+  throw "PRECACHE deve listar exatamente 3 JSONs de magia (SRD); encontrados $($spellJsonEntries.Count): $($spellJsonEntries.Value -join ', ')"
 }
 
 if ($sw -notmatch 'REMO[CÇ][AÃ]O.{0,80}bump|remo[cç][aã]o.{0,80}bump') {
@@ -108,8 +110,8 @@ const src = fs.readFileSync("spells-data-loader.jsx", "utf8");
 const m = src.match(/const BUILTIN_VERSIONS = (\[[\s\S]*?\n\]);/);
 if (!m) { console.error("nao achei BUILTIN_VERSIONS"); process.exit(1); }
 const BUILTIN_VERSIONS = eval(m[1]);
-if (BUILTIN_VERSIONS.length !== 2) {
-  console.error("Esperava 2 entradas em BUILTIN_VERSIONS, achei " + BUILTIN_VERSIONS.length);
+if (BUILTIN_VERSIONS.length !== 3) {
+  console.error("Esperava 3 entradas em BUILTIN_VERSIONS, achei " + BUILTIN_VERSIONS.length);
   process.exit(1);
 }
 for (const v of BUILTIN_VERSIONS) {
@@ -120,7 +122,7 @@ for (const v of BUILTIN_VERSIONS) {
     process.exit(1);
   }
 }
-console.log("BUILTIN_VERSIONS ok: 2 entradas SRD, todas com source fetch e arquivo existente.");
+console.log("BUILTIN_VERSIONS ok: 3 entradas SRD, todas com source fetch e arquivo existente.");
 '@
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) "check-decommission-$([guid]::NewGuid()).cjs"
 try {
@@ -139,4 +141,4 @@ try {
   if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force }
 }
 
-Write-Output 'Decommission gate: os 4 JSONs legados estao fora da arvore, do indice, do PRECACHE e de BUILTIN_VERSIONS.'
+Write-Output 'Decommission gate: os 4 JSONs legados estao fora da arvore, do indice, do PRECACHE e de BUILTIN_VERSIONS. (3 SRD embutidos: 5.2 EN, 5.1 EN, 5.2 PT-BR)'

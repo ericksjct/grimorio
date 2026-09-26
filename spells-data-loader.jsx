@@ -26,9 +26,13 @@
 // usado só pelo comparador de edição (useEditionCompare) pra preferir SRD↔SRD
 // e PHB↔PHB antes de aceitar qualquer edição diferente. Packs de terceiro
 // (_packToVersion) recebem 'pack' e nunca competem por esse par preferencial.
+// A entrada `lang: 'ptbr'` (Fase 7, D-06) é o default de primeira visita para
+// navegador em português via `_initialVersionKey()`, sem código novo — ela
+// fica depois das duas EN pra não mexer no índice 0.
 const BUILTIN_VERSIONS = [
   { key: 'srd-2024-en', source: 'fetch', file: 'srd-2024-en.json', lang: 'en', edition: '5e 2024', corpus: 'srd', labelPt: 'SRD 5.2 (EN)', labelEn: 'SRD 5.2 (EN)', short: 'SRD 5.2' },
   { key: 'srd-2014-en', source: 'fetch', file: 'srd-2014-en.json', lang: 'en', edition: '5e 2014', corpus: 'srd', labelPt: 'SRD 5.1 (EN)', labelEn: 'SRD 5.1 (EN)', short: 'SRD 5.1' },
+  { key: 'srd-2024-ptbr', source: 'fetch', file: 'srd-2024-ptbr.json', lang: 'ptbr', edition: '5e 2024', corpus: 'srd', labelPt: 'SRD 5.2 (PT-BR)', labelEn: 'SRD 5.2 (PT-BR)', short: 'SRD 5.2 PT' },
 ];
 
 // SPELL_VERSIONS é o registro VIVO — extensível em runtime (packs de
@@ -71,10 +75,14 @@ function _defaultVersion() {
 // (T-06-01-03, accept).
 // Sem prototipo (mesmo motivo de SCHOOL_INDEX/CLASS_PT abaixo): indexada por
 // uma string vinda de localStorage.
+// Fase 7, D-08 (reverte em parte o D-04 da Fase 6): para as chaves PT-BR o
+// idioma vence a edição — o usuário de 2014 em português vai para o SRD 5.2
+// em português, e o comparador de edição/seletor seguem disponíveis pra
+// voltar ao 5.1 se quiser. As chaves EN seguem na mesma edição.
 const LEGACY_VERSION_FALLBACK = Object.assign(Object.create(null), {
-  'spells-5E-2024-PTBR': 'srd-2024-en',
+  'spells-5E-2024-PTBR': 'srd-2024-ptbr',
   'spells-5E-2024-EN': 'srd-2024-en',
-  'spells-5E-2014-PTBR': 'srd-2014-en',
+  'spells-5E-2014-PTBR': 'srd-2024-ptbr',
   'spells-5E-2014-EN': 'srd-2014-en',
 });
 
@@ -483,9 +491,11 @@ function _initialVersionKey() {
     if (prefs.versionKey && _versionByKey(prefs.versionKey)) {
       return prefs.versionKey;
     }
-    // D-04: chave legada que não resolve mais cai no SRD da mesma edição —
-    // zera _wantedVersionKey (nenhum pack jamais resolve uma chave legada) e
-    // grava __legacyVersionFallback, o sinal que o banner de transição lê.
+    // D-04: chave legada que não resolve mais cai no mapa de fallback (Fase
+    // 7, D-08: as chaves PT-BR redirecionam pro SRD 5.2 PT-BR, as EN pro SRD
+    // da mesma edição) — zera _wantedVersionKey (nenhum pack jamais resolve
+    // uma chave legada) e grava __legacyVersionFallback, o sinal que o
+    // banner de transição lê.
     if (prefs.versionKey && LEGACY_VERSION_FALLBACK[prefs.versionKey]) {
       const fallbackTo = LEGACY_VERSION_FALLBACK[prefs.versionKey];
       window.__legacyVersionFallback = { from: prefs.versionKey, to: fallbackTo };

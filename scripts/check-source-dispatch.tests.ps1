@@ -10,6 +10,7 @@ foreach ($needle in @(
   'const BUILTIN_VERSIONS = [',
   "key: 'srd-2024-en'",
   "key: 'srd-2014-en'",
+  "key: 'srd-2024-ptbr'",
   'function _versionByKey(',
   'function _defaultVersion(',
   'const SPELL_VERSIONS = BUILTIN_VERSIONS.slice();'
@@ -20,13 +21,13 @@ foreach ($needle in @(
 }
 
 $fetchSourceCount = ([regex]::Matches($loader, "source: 'fetch'")).Count
-if ($fetchSourceCount -ne 2) {
-  throw "Expected 2 occurrences of source: 'fetch' (2 SRD, legacy PHB entries decommissioned in Phase 6), found $fetchSourceCount."
+if ($fetchSourceCount -ne 3) {
+  throw "Expected 3 occurrences of source: 'fetch' (3 SRD embutidos: 5.2 EN, 5.1 EN, 5.2 PT-BR), found $fetchSourceCount."
 }
 
 $editionCount = ([regex]::Matches($loader, "edition: '5e 20")).Count
-if ($editionCount -ne 2) {
-  throw "Expected 2 occurrences of edition: '5e 20...', found $editionCount."
+if ($editionCount -ne 3) {
+  throw "Expected 3 occurrences of edition: '5e 20...', found $editionCount."
 }
 
 # Nenhuma reatribuição do registro: a única linha com "SPELL_VERSIONS =" que não

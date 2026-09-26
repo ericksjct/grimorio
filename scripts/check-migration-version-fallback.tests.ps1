@@ -2,9 +2,12 @@ $ErrorActionPreference = 'Stop'
 
 # D-04: uma preferência salva (`spellbook-ui-prefs.versionKey`) apontando pra
 # uma das 4 chaves legadas de versão de magias (removidas em 06-05) precisa
-# cair no SRD da MESMA EDIÇÃO, não no default cego. Este gate trava o mapa de
+# cair numa versão resolvível, não no default cego. Este gate trava o mapa de
 # fallback e o índice de chaves resolvíveis que 06-03 (órfãs) e 06-04 (banner
 # de transição) vão consumir.
+# Fase 7, D-08 (reverte em parte o D-04 acima): para as chaves PT-BR o idioma
+# vence a edição — ambas redirecionam pro SRD 5.2 PT-BR embutido, não pro SRD
+# da mesma edição em inglês. As chaves EN continuam na mesma edição.
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $loaderPath = Join-Path $repoRoot 'spells-data-loader.jsx'
@@ -79,9 +82,9 @@ let LEGACY_VERSION_FALLBACK;
 eval('LEGACY_VERSION_FALLBACK = ' + m[1]);
 
 const cases = {
-  'spells-5E-2024-PTBR': 'srd-2024-en',
+  'spells-5E-2024-PTBR': 'srd-2024-ptbr',
   'spells-5E-2024-EN': 'srd-2024-en',
-  'spells-5E-2014-PTBR': 'srd-2014-en',
+  'spells-5E-2014-PTBR': 'srd-2024-ptbr',
   'spells-5E-2014-EN': 'srd-2014-en',
 };
 for (const [from, to] of Object.entries(cases)) {
@@ -94,11 +97,15 @@ if (LEGACY_VERSION_FALLBACK['srd-2024-en'] !== undefined) {
   console.error('FAIL: srd-2024-en must not have a fallback entry (it is already a valid target).');
   process.exit(1);
 }
+if (LEGACY_VERSION_FALLBACK['srd-2024-ptbr'] !== undefined) {
+  console.error('FAIL: srd-2024-ptbr must not have a fallback entry (it is a valid target, not an origin).');
+  process.exit(1);
+}
 if (LEGACY_VERSION_FALLBACK['some-unknown-key'] !== undefined) {
   console.error('FAIL: an unrelated key must not resolve through the fallback map.');
   process.exit(1);
 }
-console.log('D-04 ok: all 4 legacy keys map to the SRD of the same edition, unknown keys do not match.');
+console.log('D-04/D-08 ok: as 2 chaves PT-BR legadas caem no SRD 5.2 PT-BR (Fase 7), as 2 EN no SRD da mesma edicao, chaves desconhecidas nao casam.');
 '@
   $tmp = Join-Path ([System.IO.Path]::GetTempPath()) "check-migration-version-fallback-$([guid]::NewGuid()).cjs"
   try {
