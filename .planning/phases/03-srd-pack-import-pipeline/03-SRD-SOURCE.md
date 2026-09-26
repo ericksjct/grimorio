@@ -121,3 +121,45 @@ D-05, como escrito neste documento, é uma regra de **proveniência** — "os pa
 **Garantias de integridade.** O join é por nome normalizado e cobre **319 de 319** magias. `applyClassLists()` **aborta a geração** se qualquer magia ficar sem par, em vez de escrever um pacote com classe faltando — classe ausente é o tipo de erro silencioso que leva o usuário a preparar magia errada. Conferido contra fatos conhecidos: `Fireball` → Feiticeiro/Mago, `Cure Wounds` → Bardo/Clérigo/Druida/Paladino/Patrulheiro, `Bless` → Clérigo/Paladino, `Vicious Mockery` → Bardo, `Hunter's Mark` → Patrulheiro. As 8 classes conjuradoras do SRD aparecem; nenhuma magia ficou sem classe.
 
 **D-05 permanece intacta:** o gerador continua sem ler qualquer `spells-5E-*.json`, e o gate `check-srd-packs.tests.ps1` continua verificando isso por inspeção de código.
+
+## SRD 5.2 (2024, PT-BR) — Fase 7
+
+**Fonte adotada**
+
+| Candidato | URL | Licença declarada | URL da declaração | Veredito | Razão |
+|---|---|---|---|---|---|
+| Heróis Anônimos, "Livro do Jogador (SRD Traduzido e organizado) 2024", versão 07/03/2025 | https://6x.work/heroisanonimos | Creative Commons Attribution 4.0 International (CC-BY-4.0) declarada no próprio documento | https://creativecommons.org/licenses/by/4.0/deed.pt_BR | ACEITA POR MAGIA (D-01) | O documento é o Player's Handbook 2024 inteiro traduzido (392 magias, 4 subclasses por classe, prefácio, créditos do PHB), então o selo CC-BY não se sustenta para o documento inteiro; vale magia a magia, porque o texto EN de cada uma das 339 do SRD 5.2 é CC-BY e a tradução é declarada CC-BY-4.0 pelos tradutores. Formato: Markdown, arquivo local `docs/superpowers/herois_anonimos/D&D 5.5 - Livro do Jogador (2024) 5.3.7.md` (1,4 MB), pasta no `.gitignore` — nunca versionado. Data de captura: 2026-09-26. |
+
+**Fontes rejeitadas ou adiadas**
+
+- SRD 5.1 pt-BR "DRS" dos Aventureiros dos Reinos (https://aventureirosdosreinos.com/documento-de-referencia-de-sistema-drs/) — REJEITADA: OGL 1.0a + autorização WotC nº 180618-000578 + Fan Content Policy, não CC-BY, e provável origem do texto dos JSONs PT-BR removidos na Fase 6.
+- Artifício RPG SRD 5.2 pt-BR (https://artificiorpg.com/blog/srd-52-portugues-artificio-rpg-traducao/) — PREFERÍVEL mas INDISPONÍVEL (PDF 404 em 2026-09-26), parte do próprio SRD e não do PHB; trocar para ela se reaparecer é ideia adiada da Fase 7.
+- WotC não publicou SRD em português (https://www.dndbeyond.com/srd lista fr/it/de/es).
+- Consequência (D-03): só a edição 5.2 tem pack pt-BR.
+
+**O que foi tomado** (D-17)
+
+A seção "Licença" (linhas 3-76, de `## Licença` até antes de `# Prefácio`), verbatim; os blocos das 339 magias do SRD 5.2, pareados ao slug EN de `srd-2024-en.json` — 322 pela ponte de nomes do legado, 17 pela tabela manual `scripts/srd-sources/srd-5.2-ptbr-pairing.json`. Recorte versionado em `scripts/srd-sources/srd-5.2-ptbr-source.json`, produzido por `scripts/extract-ptbr-source.mjs`; o gerador lê só o recorte.
+
+**O que NÃO foi tomado**
+
+As 52 magias fora do SRD 5.2 (391 blocos nomeados no Markdown menos 339 mantidas — número exato do `07-01-SUMMARY.md`), incluindo as "Invocar X" e "Caldeirão Borbulhante de Tasha"; as 33 legendas de ilustração do PHB dentro dos blocos, descartadas por posição (D-18); os nomes próprios do PHB nas 17 magias renomeadas (D-16); classes, subclasses, talentos, equipamento, prefácio e demais capítulos do PHB.
+
+**Relação com o JSON legado** (D-11, D-19, D-09, D-10)
+
+`spells-5E-2024-PTBR.json` (removido na Fase 6) é parse anterior desta mesma fonte — resolve a "origem incerta" do D-05 da Fase 3 para esse arquivo. É regenerado localmente em formato de pack por `scripts/build-legacy-fixtures.mjs` em `.cache/legacy-fixtures/`, protegido só pelo `.gitignore` (decisão do usuário, D-10), e usado só para parear (nome, slug) e como oráculo do extrator (303/322 magias pareadas confirmadas, `07-01-SUMMARY.md`); nenhum byte dele entra no pack.
+
+**Divergências fonte × SRD 5.2 EN** (medidas; como o pack resolve)
+
+- Escola de `resilient-sphere` (tradução: Abjuração; SRD: evocation) — o pack segue o SRD.
+- `call-lightning` sem a seção de círculo superior na tradução — o pack sai sem `upgradeDescription`.
+- Concentração de `forcecage` e `glyph-of-warding` difere do flag EN — o pack segue o texto de duração da tradução, para o selo não contradizer a linha exibida.
+- Círculo e classes: 0 divergências.
+
+**Atribuição e nota de modificação** (D-02, D-04)
+
+`meta.license.attribution` = atribuição verbatim do SRD 5.2 (a mesma da seção "Texto de atribuição por edição" acima) + linha em branco + a seção Licença verbatim do Heróis Anônimos. A nota de modificação pt-BR (`MODIFICATION_NOTE_PTBR` em 07-02) é transcrita exatamente, e a nota única da Fase 3 continua valendo só para os dois packs EN.
+
+**Tensão registrada**
+
+A seção Licença verbatim (exigida por D-02) inclui créditos da equipe da WotC, aviso de marcas e o título "Caldeirão de Todas as Coisas de Tasha"; a regra do SRD citada acima ("Please do not include any other attribution regarding Wizards other than that provided above") pede que não se inclua outra atribuição à Wizards além da oficial. A decisão do usuário (D-02) prevalece; o gate `check-srd-ptbr-pack.tests.ps1` isenta `meta.license.attribution` da varredura de nomes próprios por esse motivo. Revisitar se a fonte for trocada.
