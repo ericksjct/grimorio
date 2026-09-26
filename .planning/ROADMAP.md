@@ -273,7 +273,7 @@ Fase 6 removeu.
   4. O pacote tem exatamente as 339 magias de `srd-2024-en.json`, com círculo/escola batendo, sem nome próprio do PHB e sem legenda de ilustração (D-01, D-14, D-16, D-18)
   5. O documento completo do Heróis Anônimos e os fixtures legados nunca entram no repositório — só o recorte versionado (D-02, D-09, D-10, D-17)
 
-**Plans:** 3/5 plans executed
+**Plans:** 4/5 plans executed
 
 **Nota:** a descrição original desta fase (tradução própria de 658 descrições, 5.1 e
 5.2, decisões em aberto) foi substituída pela discussão de 2026-09-05, revisada em
@@ -292,7 +292,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 07-04-PLAN.md — Wave 3: strip do rótulo pt-BR de 45 caracteres; registro `srd-2024-ptbr`, fallback do D-08, precache e bump `grimorio-v4` num commit com os 3 gates realinhados; texto do banner de transição (SRD-02, SRD-03, SRD-04)
+- [x] 07-04-PLAN.md — Wave 3: strip do rótulo pt-BR de 45 caracteres; registro `srd-2024-ptbr`, fallback do D-08, precache e bump `grimorio-v4` num commit com os 3 gates realinhados; texto do banner de transição (SRD-02, SRD-03, SRD-04)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -326,4 +326,4 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 04.1. Desacoplar o idioma da interface | v2.0 | 5/5 | Complete    | 2026-08-24 |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 5/5 | Complete    | 2026-08-30 |
 | 6. Decommissioning & Migration | v2.0 | 6/7 | In Progress|  |
-| 7. Tradução dos SRDs para pt-BR | v2.0 | 3/5 | In Progress|  |
+| 7. Tradução dos SRDs para pt-BR | v2.0 | 4/5 | In Progress|  |
