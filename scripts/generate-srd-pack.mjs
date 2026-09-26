@@ -405,7 +405,18 @@ function mdTableToHtml(lines) {
       .split('|')
       .map((c) => c.trim());
 
-  const [headerLine, ...bodyLines] = rows;
+  let [headerLine, ...bodyLines] = rows;
+  // Bloco de atributos de criatura: a fonte põe 3 atributos lado a lado
+  // (12 colunas, "| | | Mod | SG |" x3), largo demais para o painel de
+  // detalhe (~350px no celular). Empilha em 4 colunas, um atributo por linha.
+  const head = cellsOf(headerLine);
+  if (head.length === 12 && /^(\|\s*\|\s*\|\s*\*\*Mod\*\*\s*\|\s*\*\*SG\*\*\s*){3}\|$/.test(headerLine.trim())) {
+    headerLine = `|${head.slice(0, 4).join('|')}|`;
+    bodyLines = bodyLines.flatMap((line) => {
+      const c = cellsOf(line);
+      return [0, 4, 8].map((i) => `|${c.slice(i, i + 4).join('|')}|`);
+    });
+  }
   const headerCells = cellsOf(headerLine)
     .map((c) => `<th>${mdInline(c.replace(/\*\*/g, ''))}</th>`)
     .join('');

@@ -228,6 +228,12 @@ spot("giant-insect", (sp) => {
   if ("statBlock" in sp) fail("giant-insect: campo statBlock presente - o bloco de estatisticas deve ficar em description.");
   if (!sp.upgradeDescription) fail("giant-insect: upgradeDescription ausente.");
 });
+// Bloco de atributos empilhado (4 colunas): 12 colunas estouram o painel de detalhe em 390px.
+for (const sp of ptbr.spells) {
+  for (const row of (sp.description || "").match(/<tr>[\s\S]*?<\/tr>/g) || []) {
+    if ((row.match(/<t[hd]>/g) || []).length > 8) fail(`${sp.name}: linha de tabela com mais de 8 colunas.`);
+  }
+}
 spot("magic-circle", (sp) => {
   if (!(sp.upgradeDescription || "").startsWith("<p><strong><em>Usando um Espaço de Magia de Círculo Superior.</em></strong>")) {
     fail("magic-circle: upgradeDescription nao comeca com o rotulo de circulo superior esperado.");
