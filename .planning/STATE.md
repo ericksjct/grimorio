@@ -5,15 +5,15 @@ milestone_name: Plugins BYOD
 current_phase: 07
 current_phase_name: traducao-srd-ptbr
 status: executing
-stopped_at: Completed 07-02-PLAN.md
-last_updated: "2026-09-26T15:38:04.127Z"
+stopped_at: Completed 07-03-PLAN.md
+last_updated: "2026-09-26T15:43:05.528Z"
 last_activity: 2026-09-26
 last_activity_desc: Phase 07 execution started
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 36
-  completed_plans: 32
+  completed_plans: 33
 ---
 
 # Project State
@@ -28,11 +28,11 @@ See: .planning/PROJECT.md (updated 2026-07-17)
 ## Current Position
 
 Phase: 07 (traducao-srd-ptbr) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-09-26 — Phase 07 execution started
 
-Progress: [█████████░] 89%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
@@ -67,6 +67,7 @@ Progress: [█████████░] 89%
 | Phase 02 P02 | 12min | 3 tasks | 3 files |
 | Phase 07 P01 | 45min | 2 tasks | 5 files |
 | Phase 07 P02 | 40min | 2 tasks | 3 files |
+| Phase 07 P03 | 20min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Four decisions locked fo
 - [Phase ?]: [Phase 07-02] toSpell() usa raw.name || slugify(raw.displayName) — D-13: pack pt-BR mantem name=slug EN, displayName=nome pt-BR, sem tocar as rotas EN
 - [Phase ?]: [Phase 07-02] ritual/concentration do pack pt-BR vem do texto pt-BR exibido (regex em castTime/duration), nunca copiado da flag EN — gate codifica 2 excecoes de concentracao (forcecage, glyph-of-warding) e 1 de upgradeDescription (call-lightning)
 - [Phase ?]: [Phase 07-02] circulo/escola/classes do pack pt-BR vem do SRD EN recem-gerado por slug (factsFrom), nunca do texto traduzido — resolve resilient-sphere (traducao diz Abjuracao, SRD diz evocation)
+- [Phase ?]: 07-01's executor had already promoted SRD-04 out of Future Requirements (61b5014) as an unplanned side-effect; 07-03 reconciled instead of duplicating, replacing only the SRD-04 wording/promotion-note spans
 
 ### Pending Todos
 
@@ -120,6 +122,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-26T15:38:04.118Z
-Stopped at: Completed 07-02-PLAN.md
+Last session: 2026-09-26T15:43:05.518Z
+Stopped at: Completed 07-03-PLAN.md
 Resume file: None
