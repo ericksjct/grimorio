@@ -8,10 +8,11 @@
 // `hifi_chars_v1` — o sinal de usuário existente e a contagem de órfãs só LEEM, via
 // `peekBookmarks()` (entregue em 06-02) e `peekCharacters()` (entregue em 06-07 pra
 // fechar o defeito de `loadCharacters()` sintetizando o personagem default como
-// evidência de usuário existente). Não oferece, linka ou nomeia nenhum pack em
-// português (D-02) — a única saída pra conteúdo completo é "importe o seu próprio
-// pacote". Não introduz nenhum aviso recorrente novo (D-03): dispensado uma vez,
-// nunca mais aparece.
+// evidência de usuário existente). Não linka nem gerencia nenhum pack — o SRD 5.2
+// PT-BR embutido (Fase 7) aparece só no texto de `migration.kept`; a única saída
+// pra conteúdo completo continua sendo "importe o seu próprio pacote". Não
+// introduz nenhum aviso recorrente novo (D-03): dispensado uma vez, nunca mais
+// aparece.
 //
 // Uso: incluir este arquivo no HTML depois de `pack-manager.jsx` (consome
 // `window.__openPackManager`) e antes de `v10-hifi.jsx`. Monta `<TransitionBannerRoot

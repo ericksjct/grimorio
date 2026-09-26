@@ -117,10 +117,13 @@ const STRINGS = {
     'toast.buildImportFailed': 'não consegui importar a build dessa URL',
     'toast.versionSwitchedAway': 'o pacote que você estava vendo foi removido — voltamos para {version}',
     // Banner de transição (MIGR-03) — D-08: ordem fixa (o que mudou, o que
-    // continua, órfãs quando houver, a ação). D-02: nunca oferece pack PT-BR.
+    // continua, órfãs quando houver, a ação). O D-02 da Fase 6 (nunca oferece
+    // pack PT-BR) foi superado pela Fase 7: quem vinha de uma chave PT-BR já
+    // cai no SRD 5.2 PT-BR embutido (D-08); o CTA continua sendo importar o
+    // próprio pacote pra ter o conteúdo completo.
     'migration.title': 'O Grimório mudou',
     'migration.removed': 'Os pacotes de magias D&D 5E 2014 e D&D 5.5E 2024 saíram do aplicativo.',
-    'migration.kept': 'O SRD 5.1 e o SRD 5.2 continuam embutidos, e as suas magias preparadas e favoritas continuam salvas.',
+    'migration.kept': 'O SRD 5.1 e o SRD 5.2 continuam embutidos — o SRD 5.2 agora também em português —, e as suas magias preparadas e favoritas continuam salvas.',
     'migration.orphansOne': '1 das suas magias está num pacote que você não tem instalado. Ela aparece marcada na ficha; não foi apagada.',
     'migration.orphansMany': '{n} das suas magias estão em pacotes que você não tem instalados. Elas aparecem marcadas na ficha; não foram apagadas.',
     'migration.importCta': 'Para ter o conteúdo completo de volta, importe o seu próprio pacote.',
@@ -327,10 +330,13 @@ const STRINGS = {
     'toast.buildImportFailed': 'could not import the build from this URL',
     'toast.versionSwitchedAway': 'the pack you were viewing was removed — switched back to {version}',
     // Transition banner (MIGR-03) — D-08: fixed order (what changed, what
-    // stays, orphans when any, the action). D-02: never offers a PT-BR pack.
+    // stays, orphans when any, the action). Phase 6's D-02 (never offers a
+    // PT-BR pack) was superseded by Phase 7: whoever came from a PT-BR key
+    // already lands on the built-in SRD 5.2 PT-BR (D-08); the CTA is still
+    // importing your own pack for the full content.
     'migration.title': 'The Grimoire has changed',
     'migration.removed': 'The D&D 5E 2014 and D&D 5.5E 2024 spell packs have been removed from the app.',
-    'migration.kept': 'SRD 5.1 and SRD 5.2 are still built in, and your prepared and bookmarked spells are still saved.',
+    'migration.kept': 'SRD 5.1 and SRD 5.2 are still built in (SRD 5.2 now also in Portuguese), and your prepared and bookmarked spells are still saved.',
     'migration.orphansOne': '1 of your spells is in a pack you don\'t have installed. It is flagged on your sheet, not deleted.',
     'migration.orphansMany': '{n} of your spells are in packs you don\'t have installed. They are flagged on your sheet, not deleted.',
     'migration.importCta': 'To get the full content back, import your own pack.',
