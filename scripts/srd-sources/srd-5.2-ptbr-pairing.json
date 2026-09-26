@@ -1,0 +1,22 @@
+{
+  "_doc": "Tabela de pareamento à mão (D-12) das 17 magias que o SRD 5.2 renomeou para remover nomes próprios do PHB (D-16). phbName é o cabeçalho '## Nome' exato na fonte Heróis Anônimos; name é o slug EN correspondente em srd-2024-en.json; displayName é a tradução do nome GENÉRICO do SRD, nunca o nome do PHB. Entrada do extrator (scripts/extract-ptbr-source.mjs) — muda só à mão, se o SRD renomear outra magia no futuro.",
+  "renamed": [
+    { "phbName": "Flecha Ácida de Melf", "name": "acid-arrow", "displayName": "Flecha Ácida" },
+    { "phbName": "Mão de Bigby", "name": "arcane-hand", "displayName": "Mão Arcana" },
+    { "phbName": "Espada de Mordenkainen", "name": "arcane-sword", "displayName": "Espada Arcana" },
+    { "phbName": "Aura Mágica de Nystul", "name": "arcanists-magic-aura", "displayName": "Aura Mágica do Arcanista" },
+    { "phbName": "Tentáculos Negros de Evard", "name": "black-tentacles", "displayName": "Tentáculos Negros" },
+    { "phbName": "Cão Fiel de Mordenkainen", "name": "faithful-hound", "displayName": "Cão Fiel" },
+    { "phbName": "Disco Flutuante de Tenser", "name": "floating-disk", "displayName": "Disco Flutuante" },
+    { "phbName": "Esfera Congelante de Otiluke", "name": "freezing-sphere", "displayName": "Esfera Congelante" },
+    { "phbName": "Gargalhada Nefasta de Tasha", "name": "hideous-laughter", "displayName": "Gargalhada Nefasta" },
+    { "phbName": "Invocação Instantânea de Drawmij", "name": "instant-summons", "displayName": "Invocação Instantânea" },
+    { "phbName": "Dança Irresistível de Otto", "name": "irresistible-dance", "displayName": "Dança Irresistível" },
+    { "phbName": "Mansão Magnífica de Mordenkainen", "name": "magnificent-mansion", "displayName": "Mansão Magnífica" },
+    { "phbName": "Santuário Particular de Mordenkainen", "name": "private-sanctum", "displayName": "Santuário Particular" },
+    { "phbName": "Esfera Resiliente de Otiluke", "name": "resilient-sphere", "displayName": "Esfera Resiliente" },
+    { "phbName": "Arca Secreta de Leomund", "name": "secret-chest", "displayName": "Arca Secreta" },
+    { "phbName": "Ligação Telepática de Rary", "name": "telepathic-bond", "displayName": "Ligação Telepática" },
+    { "phbName": "Pequeno Refúgio de Leomund", "name": "tiny-hut", "displayName": "Pequeno Refúgio" }
+  ]
+}
