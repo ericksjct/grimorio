@@ -33,10 +33,10 @@
 - [x] **SRD-01**: Dois pacotes SRD EN embutidos, um por edição (5.1/2014 e 5.2/2024), com conteúdo vindo de fonte com licença verificada e registrada — nunca dos arquivos `spells-5E-*.json` atuais; cada pacote carrega em `meta.license` o texto de atribuição verbatim da sua edição mais a nota de modificação
 - [x] **SRD-02**: Atribuição CC-BY visível no app, com o texto verbatim exato da versão de SRD usada (5.1 e 5.2 têm textos distintos; modificações ao texto-fonte anotadas)
 - [x] **SRD-03**: Pacote SRD vem pré-instalado — primeira abertura nunca é vazia
-- [ ] **SRD-04**: Pacote SRD embutido em pt-BR (`srd-2024-ptbr.json`), recortado às 339 magias do SRD 5.2, fonte Heróis Anônimos (CC-BY-4.0) com atribuição dupla (WotC + tradutores); vira o pacote padrão para navegador em pt-BR e chave legada `*-PTBR` migrada
+- [ ] **SRD-04**: Pacote SRD 5.2 embutido em pt-BR (`srd-2024-ptbr.json`), com as 339 magias do SRD 5.2 na tradução CC-BY-4.0 do Heróis Anônimos — recorte que nunca inclui magia ou conteúdo fora do SRD 5.2 nem byte dos `spells-5E-*.json`; `name` é o slug EN (preparadas/favoritas continuam resolvendo), atribuição dupla verbatim (WotC + Heróis Anônimos) com nota de modificação própria; é o padrão para navegador em português e o destino das chaves legadas `*-PTBR`
 
 *SRD-01 reescrito em 2026-07 pela decisão D-05 da Fase 3 — ver `.planning/phases/03-srd-pack-import-pipeline/03-CONTEXT.md`.*
-*SRD-04 promovido de "Future Requirements (v2.x)" durante a Fase 7 (07-01) — ver `.planning/phases/07-traducao-srd-ptbr/07-CONTEXT.md` D-01 a D-19.*
+*SRD-04 promovido de Future Requirements (v2.x) em 2026-09-26 — a fonte deixou de ser tradução própria e passou a ser a tradução CC-BY do Heróis Anônimos recortada ao SRD 5.2; ver .planning/phases/07-traducao-srd-ptbr/07-CONTEXT.md.*
 
 ### MIGR — Descomissionamento
 
