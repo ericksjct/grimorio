@@ -5,8 +5,17 @@
 // The app has no build step and must never gain one — this file is never
 // loaded by the browser, never referenced from index.html/sw.js.
 //
-// Produces the two embedded SRD packs at the repo root (srd-2014-en.json,
-// srd-2024-en.json), in the format defined by pack.schema.json.
+// Produces the three embedded SRD packs at the repo root (srd-2014-en.json,
+// srd-2024-en.json, srd-2024-ptbr.json), in the format defined by
+// pack.schema.json.
+//
+// The pt-BR pack (srd-2024-ptbr.json) is a translation, not a fresh SRD
+// extraction: it reads a versioned recorte at
+// scripts/srd-sources/srd-5.2-ptbr-source.json (339 SRD 5.2 spell blocks in
+// Markdown, produced one-shot by scripts/extract-ptbr-source.mjs — see the
+// pt-BR section of 03-SRD-SOURCE.md for provenance) and borrows level/school/
+// class from the freshly written srd-2024-en.json by slug, so the two packs
+// can never disagree on those facts.
 //
 // Sources (registered in
 // .planning/phases/03-srd-pack-import-pipeline/03-SRD-SOURCE.md, the
@@ -43,8 +52,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
 const CACHE_DIR = path.join(repoRoot, '.cache', 'srd-sources');
 
-const MODIFICATION_NOTE =
+const MODIFICATION_NOTE_EN =
   'Texto reformatado para JSON e HTML estrutural; conteúdo da magia não foi alterado.';
+
+// D-04: nota de modificação por pacote — o pack pt-BR é uma tradução de
+// terceiro recortada ao SRD 5.2, então a nota do pack EN acima seria falsa
+// para ele.
+const MODIFICATION_NOTE_PTBR =
+  'Tradução para o português do Brasil feita pelo Heróis Anônimos (https://6x.work/heroisanonimos, versão de 07/03/2025), publicada pelos tradutores sob CC-BY-4.0. Recorte às 339 magias do SRD 5.2: nenhum outro conteúdo do documento de origem foi incluído. Texto extraído do Markdown e reformatado para JSON e HTML estrutural; legendas de ilustração removidas. As 17 magias que o SRD 5.2 renomeou aparecem com o nome genérico do SRD traduzido, sem os nomes próprios do Player\'s Handbook. Círculo, escola e classes seguem o SRD 5.2 em inglês.';
 
 // ── shared helpers ──────────────────────────────────────────────────────
 
@@ -80,7 +95,11 @@ function capitalize(s) {
 // extractor) to the final spells[] shape pack.schema.json expects. Optional
 // fields are only written when the source actually had a value for them.
 function toSpell(raw, usedNames) {
-  const base = slugify(raw.displayName);
+  // D-13: no pt-BR, `raw.name` já é o slug EN (identidade estável para
+  // preparadas/favoritas salvas). As rotas EN nunca definem `raw.name`, então
+  // o fallback para `slugify(raw.displayName)` mantém o comportamento atual
+  // para elas.
+  const base = raw.name || slugify(raw.displayName);
   const name = freeIdentifier(base, usedNames);
   usedNames.add(name);
 
@@ -355,7 +374,166 @@ function parseSrd52(records) {
   });
 }
 
+// ── SRD 5.2 pt-BR — extractor over the versioned Heróis Anônimos recorte ──
+//
+// scripts/srd-sources/srd-5.2-ptbr-source.json holds one raw Markdown blob
+// per spell (metadata line included, never converted). This is the only new
+// parsing work this route needs: level/school/class are never derived from
+// the pt-BR text — they come from the freshly written srd-2024-en.json by
+// slug (facts), so the two packs can never disagree on those facts (D-14).
+// Ritual/concentration, by contrast, come from the pt-BR text itself — the
+// badge must never contradict the line the player reads.
+
+// htmlEscape primeiro (nenhuma marcação entra sem passar por ele), depois
+// `**negrito**` (não guloso), depois `*itálico*` (não guloso). Mesma ordem do
+// `mdToHtml` do adaptador do app, mas aqui o pack já entrega HTML pronto — o
+// app nunca vê `**` cru vindo deste pack.
+function mdInline(text) {
+  return htmlEscape(text)
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+}
+
+// Mesma forma de saída do `tableToHtml` do 5.1 (`<table><tbody>...`), só que
+// a partir de linhas de tabela Markdown (`| a | b |`) em vez de nós de PDF.
+function mdTableToHtml(lines) {
+  const rows = lines.filter((line) => !/^[\s|:-]+$/.test(line));
+  const cellsOf = (line) =>
+    line
+      .trim()
+      .replace(/^\||\|$/g, '')
+      .split('|')
+      .map((c) => c.trim());
+
+  const [headerLine, ...bodyLines] = rows;
+  const headerCells = cellsOf(headerLine)
+    .map((c) => `<th>${mdInline(c.replace(/\*\*/g, ''))}</th>`)
+    .join('');
+  const bodyRows = bodyLines
+    .map((line) => `<tr>${cellsOf(line).map((c) => `<td>${mdInline(c)}</td>`).join('')}</tr>`)
+    .join('');
+  return `<table><tbody><tr>${headerCells}</tr>${bodyRows}</tbody></table>`;
+}
+
+const PTBR_METADATA_RE = /^\*(?:\d+[º°]|Truque de)/;
+const PTBR_FIELD_PATTERNS = [
+  [/^\*\*Tempo de Conjuração:\*\*\s*/, 'castTime'],
+  [/^\*\*Alcance:\*\*\s*/, 'range'],
+  [/^\*\*Componentes?:\*\*\s*/, 'components'],
+  [/^\*\*Duração:\*\*\s*/, 'duration'],
+];
+const PTBR_UPGRADE_LABELS = ['Usando um Espaço de Magia de Círculo Superior.', 'Aprimoramento de Truque.'];
+
+function parsePtbr52(source, facts) {
+  const missing = [];
+  const records = [];
+
+  for (const spell of source.spells) {
+    const en = facts.get(spell.name);
+    if (!en) {
+      missing.push(spell.name);
+      continue;
+    }
+
+    const chunks = spell.markdown
+      .split(/\n{2,}/)
+      .map((c) => c.trim())
+      .filter(Boolean);
+
+    let castTime = '';
+    let range = '';
+    let components = '';
+    let duration = '';
+    let upgradeDescription = null;
+    const parts = [];
+
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      if (i === 0 && PTBR_METADATA_RE.test(chunk)) continue; // círculo/escola/classes vêm do EN
+
+      const fieldMatch = PTBR_FIELD_PATTERNS.find(([re]) => re.test(chunk));
+      if (fieldMatch) {
+        const [re, key] = fieldMatch;
+        const value = chunk.replace(re, '').trim();
+        if (key === 'castTime') castTime = value;
+        else if (key === 'range') range = value;
+        else if (key === 'components') components = value;
+        else if (key === 'duration') duration = value;
+        continue;
+      }
+
+      const upgradeLabel = upgradeDescription === null
+        ? PTBR_UPGRADE_LABELS.find((label) => chunk.startsWith(`**${label}**`))
+        : undefined;
+      if (upgradeLabel) {
+        const rest = chunk.slice(`**${upgradeLabel}**`.length).trim();
+        upgradeDescription = `<p><strong><em>${mdInline(upgradeLabel)}</em></strong>${rest ? ` ${mdInline(rest)}` : ''}</p>`;
+        continue; // trechos seguintes voltam para a description (giant-insect, animate-objects)
+      }
+
+      const lines = chunk.split('\n');
+      if (lines.every((l) => l.trim().startsWith('|'))) {
+        parts.push(mdTableToHtml(lines));
+        continue;
+      }
+      if (lines.every((l) => /^-\s/.test(l.trim()))) {
+        const items = lines.map((l) => `<li>${mdInline(l.trim().replace(/^-\s+/, ''))}</li>`).join('');
+        parts.push(`<ul>${items}</ul>`);
+        continue;
+      }
+      const h5Match = chunk.match(/^###\s+(.+)$/);
+      if (h5Match) {
+        parts.push(`<h5>${mdInline(h5Match[1].trim())}</h5>`);
+        continue;
+      }
+      const joined = lines.map((l) => l.trim()).filter(Boolean).join(' ');
+      parts.push(`<p>${mdInline(joined)}</p>`);
+    }
+
+    if (!castTime || !range || !components || !duration) {
+      throw new Error(`parsePtbr52: '${spell.name}' está sem castTime/range/components/duration.`);
+    }
+    const description = parts.join('');
+    if (!description) {
+      throw new Error(`parsePtbr52: '${spell.name}' ficou com description vazia.`);
+    }
+
+    records.push({
+      name: spell.name,
+      displayName: spell.displayName,
+      level: en.level,
+      school: en.school,
+      class: en.class,
+      ritual: /\bRitual\b/.test(castTime),
+      concentration: /^Concentração/.test(duration),
+      castTime,
+      range,
+      components,
+      duration,
+      description,
+      upgradeDescription,
+      source: 'SRD 5.2',
+    });
+  }
+
+  if (missing.length) {
+    throw new Error(
+      `parsePtbr52: ${missing.length} magia(s) do recorte sem correspondente no SRD EN: ${missing.join(', ')}`,
+    );
+  }
+  if (records.length !== facts.size) {
+    throw new Error(`parsePtbr52: gerou ${records.length} registro(s), esperado ${facts.size} (facts.size).`);
+  }
+
+  return records;
+}
+
 // ── editions registry ───────────────────────────────────────────────────
+
+// Extraído da entrada 5.2 EN abaixo para ser reaproveitado (mesmo texto,
+// mesmas aspas tipográficas) pela atribuição dupla do pack pt-BR (D-02).
+const SRD52_ATTRIBUTION =
+  'This work includes material from the System Reference Document 5.2 (“SRD 5.2”) by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. Licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode.';
 
 const EDITIONS = [
   {
@@ -366,6 +544,7 @@ const EDITIONS = [
     sourceUrl: 'https://raw.githubusercontent.com/Tabyltop/CC-SRD/main/SRD5.1-CCBY4.0License-TT.json',
     attribution:
       'This work includes material taken from the System Reference Document 5.1 (“SRD 5.1”) by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode.',
+    modificationNote: MODIFICATION_NOTE_EN,
     extract: parseSrd51,
     // O 5.1 traz a lista por classe num APÊNDICE do PDF ("Spell Lists"), fora da
     // descrição de cada magia — e a extração da Tabyltop corrompe esse apêndice
@@ -391,9 +570,33 @@ const EDITIONS = [
     srdVersion: '5.2',
     sourceUrl: 'https://gist.github.com/dmcb/4b67869f962e3adaa3d0f7e5ca8f4912',
     localSourcePath: 'scripts/srd-sources/srd-5.2-spells.json',
-    attribution:
-      'This work includes material from the System Reference Document 5.2 (“SRD 5.2”) by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. Licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode.',
+    attribution: SRD52_ATTRIBUTION,
+    modificationNote: MODIFICATION_NOTE_EN,
     extract: parseSrd52,
+  },
+  {
+    // Fase 07-traducao-srd-ptbr: tradução de terceiro (Heróis Anônimos,
+    // CC-BY-4.0), recortada às 339 magias do SRD 5.2 pelo extrator one-shot
+    // scripts/extract-ptbr-source.mjs (fase 07-01). D-03: nenhuma entrada
+    // pt-BR para o 5.1 — não existe fonte com licença compatível para ele.
+    file: 'srd-2024-ptbr.json',
+    source: 'srd-2024-ptbr',
+    edition: '2024',
+    srdVersion: '5.2',
+    lang: 'ptbr',
+    packName: 'SRD 5.2 (PT-BR)',
+    author: 'Wizards of the Coast LLC; tradução: Heróis Anônimos',
+    sourceUrl: 'https://6x.work/heroisanonimos',
+    localSourcePath: 'scripts/srd-sources/srd-5.2-ptbr-source.json',
+    // D-14: círculo/escola/classes vêm do SRD EN recém-gerado, por slug —
+    // nunca do texto traduzido. Resolve resilient-sphere (a tradução diz
+    // Abjuração; o SRD diz evocation) por construção.
+    factsFrom: 'srd-2024-en.json',
+    // D-02: atribuição dupla verbatim — o texto WotC do SRD 5.2 seguido da
+    // seção "Licença" do Heróis Anônimos, ambos ipsis litteris.
+    attribution: (source) => `${SRD52_ATTRIBUTION}\n\n${source.license}`,
+    modificationNote: MODIFICATION_NOTE_PTBR,
+    extract: parsePtbr52,
   },
 ];
 
@@ -556,20 +759,24 @@ function validatePackAgainstSchema(pack, schema) {
 
 // ── pack assembly ────────────────────────────────────────────────────────
 
-function buildPack(edition, spells) {
+function buildPack(edition, spells, source) {
+  if (!edition.modificationNote) {
+    throw new Error(`${edition.file}: edition.modificationNote ausente (D-04 exige nota por pacote).`);
+  }
+  const attribution = typeof edition.attribution === 'function' ? edition.attribution(source) : edition.attribution;
   return {
     meta: {
       source: edition.source,
-      name: `SRD ${edition.srdVersion} (EN)`,
+      name: edition.packName || `SRD ${edition.srdVersion} (EN)`,
       version: edition.srdVersion,
-      author: 'Wizards of the Coast LLC',
-      lang: 'en',
+      author: edition.author || 'Wizards of the Coast LLC',
+      lang: edition.lang || 'en',
       edition: edition.edition,
       spellCount: spells.length,
       license: {
         id: 'CC-BY-4.0',
-        attribution: edition.attribution,
-        modifications: MODIFICATION_NOTE,
+        attribution,
+        modifications: edition.modificationNote,
         url: 'https://creativecommons.org/licenses/by/4.0/legalcode',
       },
     },
@@ -584,14 +791,24 @@ async function main() {
 
   for (const edition of EDITIONS) {
     const source = await fetchSource(edition);
-    let rawRecords = edition.extract(source);
+
+    // factsFrom (D-14): lê o pack (EN) já escrito nesta mesma execução, por
+    // slug — nunca busca fonte externa nova. A ordem de EDITIONS garante que
+    // srd-2024-en.json já existe em disco quando a entrada pt-BR chega aqui.
+    let facts = null;
+    if (edition.factsFrom) {
+      const factsPack = JSON.parse(await readFile(path.join(repoRoot, edition.factsFrom), 'utf8'));
+      facts = new Map(factsPack.spells.map((s) => [s.name, s]));
+    }
+
+    let rawRecords = edition.extract(source, facts);
     if (edition.classListUrl) {
       const classSource = await fetchJson(edition.classListUrl, edition.classListSource);
       rawRecords = applyClassLists(rawRecords, classSource, edition.file);
     }
     const usedNames = new Set();
     const spells = rawRecords.map((r) => toSpell(r, usedNames));
-    const pack = buildPack(edition, spells);
+    const pack = buildPack(edition, spells, source);
 
     const errors = validatePackAgainstSchema(pack, schema);
     if (errors.length) {
