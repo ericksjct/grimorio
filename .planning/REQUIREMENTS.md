@@ -33,8 +33,10 @@
 - [x] **SRD-01**: Dois pacotes SRD EN embutidos, um por edição (5.1/2014 e 5.2/2024), com conteúdo vindo de fonte com licença verificada e registrada — nunca dos arquivos `spells-5E-*.json` atuais; cada pacote carrega em `meta.license` o texto de atribuição verbatim da sua edição mais a nota de modificação
 - [x] **SRD-02**: Atribuição CC-BY visível no app, com o texto verbatim exato da versão de SRD usada (5.1 e 5.2 têm textos distintos; modificações ao texto-fonte anotadas)
 - [x] **SRD-03**: Pacote SRD vem pré-instalado — primeira abertura nunca é vazia
+- [ ] **SRD-04**: Pacote SRD embutido em pt-BR (`srd-2024-ptbr.json`), recortado às 339 magias do SRD 5.2, fonte Heróis Anônimos (CC-BY-4.0) com atribuição dupla (WotC + tradutores); vira o pacote padrão para navegador em pt-BR e chave legada `*-PTBR` migrada
 
 *SRD-01 reescrito em 2026-07 pela decisão D-05 da Fase 3 — ver `.planning/phases/03-srd-pack-import-pipeline/03-CONTEXT.md`.*
+*SRD-04 promovido de "Future Requirements (v2.x)" durante a Fase 7 (07-01) — ver `.planning/phases/07-traducao-srd-ptbr/07-CONTEXT.md` D-01 a D-19.*
 
 ### MIGR — Descomissionamento
 
@@ -52,7 +54,6 @@
 
 - [ ] Checagem manual de atualização de pack por URL (re-fetch + comparação de versão, confirmação explícita antes de sobrescrever)
 - [ ] Conversor "formato 5etools → formato do app" no import — destrava o ecossistema de homebrew existente sem adotar o formato complexo do 5etools internamente
-- [ ] Pacote SRD PT-BR — bloqueado em tradução própria do texto CC-BY (a tradução oficial é protegida)
 - [ ] Página de docs listando packs conhecidos da comunidade (documentação, não infraestrutura)
 
 ## Out of Scope
@@ -95,11 +96,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | I18N-01 | Phase 04.1 | Complete |
 | I18N-02 | Phase 04.1 | Complete |
 | I18N-03 | Phase 04.1 | Complete |
+| SRD-04 | Phase 7 | Pending |
 
 **Coverage:**
 
-- v2.0 requirements: 22 total (corrected from a stale "16 total" note in this file's initial draft — the requirement list itself had 5 PKG + 3 STOR + 5 MGMT + 3 SRD + 3 MIGR = 19 items before Phase 04.1 added 3 I18N items)
-- Mapped to phases: 22
+- v2.0 requirements: 23 total (corrected from a stale "16 total" note in this file's initial draft — the requirement list itself had 5 PKG + 3 STOR + 5 MGMT + 3 SRD + 3 MIGR = 19 items before Phase 04.1 added 3 I18N items; Phase 7 promoted SRD-04 from Future Requirements, +1)
+- Mapped to phases: 23
 - Unmapped: 0
 
 ---

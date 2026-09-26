@@ -273,7 +273,7 @@ Fase 6 removeu.
   4. O pacote tem exatamente as 339 magias de `srd-2024-en.json`, com círculo/escola batendo, sem nome próprio do PHB e sem legenda de ilustração (D-01, D-14, D-16, D-18)
   5. O documento completo do Heróis Anônimos e os fixtures legados nunca entram no repositório — só o recorte versionado (D-02, D-09, D-10, D-17)
 
-**Plans:** 5 plans
+**Plans:** 1/5 plans executed
 
 **Nota:** a descrição original desta fase (tradução própria de 658 descrições, 5.1 e
 5.2, decisões em aberto) foi substituída pela discussão de 2026-09-05, revisada em
@@ -283,7 +283,7 @@ edição 5.2 tem pack pt-BR (D-03).
 Plans:
 **Wave 1**
 
-- [ ] 07-01-PLAN.md — Wave 1: fonte versionada — fixtures legados em formato de pack só em `.cache/` (D-09/D-10), tabela das 17 renomeadas e extrator one-shot que grava o recorte com a Licença verbatim e as 339 magias do SRD 5.2, sem legendas nem nomes próprios, validado contra o EN e o oráculo legado (SRD-01, SRD-04)
+- [x] 07-01-PLAN.md — Wave 1: fonte versionada — fixtures legados em formato de pack só em `.cache/` (D-09/D-10), tabela das 17 renomeadas e extrator one-shot que grava o recorte com a Licença verbatim e as 339 magias do SRD 5.2, sem legendas nem nomes próprios, validado contra o EN e o oráculo legado (SRD-01, SRD-04)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -326,4 +326,4 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 04.1. Desacoplar o idioma da interface | v2.0 | 5/5 | Complete    | 2026-08-24 |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 5/5 | Complete    | 2026-08-30 |
 | 6. Decommissioning & Migration | v2.0 | 6/7 | In Progress|  |
-| 7. Tradução dos SRDs para pt-BR | v2.0 | 0/5 | Not Started |  |
+| 7. Tradução dos SRDs para pt-BR | v2.0 | 1/5 | In Progress|  |

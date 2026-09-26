@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Plugins BYOD
-current_phase: 06
-current_phase_name: decommissioning-migration
+current_phase: 07
+current_phase_name: traducao-srd-ptbr
 status: executing
-stopped_at: Phase 7 context gathered
-last_updated: "2026-09-26T14:53:11.394Z"
-last_activity: 2026-09-02
-last_activity_desc: Phase 06 execution started
+stopped_at: Completed 07-01-PLAN.md
+last_updated: "2026-09-26T15:23:17.229Z"
+last_activity: 2026-09-26
+last_activity_desc: Phase 07 execution started
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 31
-  completed_plans: 30
+  total_plans: 36
+  completed_plans: 31
 ---
 
 # Project State
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-17)
 
 **Core value:** Players can quickly find, prepare, and reference the right spells for their character, fully offline, with zero setup.
-**Current focus:** Phase 06 — decommissioning-migration
+**Current focus:** Phase 07 — traducao-srd-ptbr
 
 ## Current Position
 
-Phase: 06 (decommissioning-migration) — EXECUTING
-Plan: 1 of 6
+Phase: 07 (traducao-srd-ptbr) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-09-02 — Phase 06 execution started
+Last activity: 2026-09-26 — Phase 07 execution started
 
-Progress: [██████████] 100%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
@@ -65,6 +65,7 @@ Progress: [██████████] 100%
 |------|----------|-------|-------|
 | Phase 02 P01 | 3min | 3 tasks | 4 files |
 | Phase 02 P02 | 12min | 3 tasks | 3 files |
+| Phase 07 P01 | 45min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,8 @@ Decisions are logged in PROJECT.md Key Decisions table. Four decisions locked fo
 - [Phase ?]: sw.js CACHE_VERSION left unchanged when adding plugin-store.jsx to PRECACHE to avoid re-downloading cached spell JSONs
 - [Phase ?]: A-02: exportPack() serializa o registro armazenado VERBATIM, incluindo a chave de topo id - Fase 3 deve tolerar/remover essa chave no import
 - [Phase ?]: A-03 aplicada: navigator.storage.persist() solicitado no boot (ROADMAP/REQUIREMENTS autoritativos sobre nota de research desatualizada)
+- [Phase ?]: Extrator pt-BR (07-01): noise filtering (letra/*** dividers) aplicado em todo chunk de um bloco, não só antes da metadado — cobre os 16 blocos SRD onde o divisor cai no fim do bloco anterior
+- [Phase ?]: Extrator pt-BR (07-01): oráculo D-19 lê description do fixture legado só dentro da função de comparação, nunca grava no recorte de saída — preserva D-05 da Fase 3
 
 ### Pending Todos
 
@@ -113,6 +116,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-05T22:10:55.825Z
-Stopped at: Phase 7 context gathered
-Resume file: .planning/phases/07-traducao-srd-ptbr/07-CONTEXT.md
+Last session: 2026-09-26T15:23:17.218Z
+Stopped at: Completed 07-01-PLAN.md
+Resume file: None
