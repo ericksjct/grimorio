@@ -1,7 +1,9 @@
 # Phase 7: Tradução dos SRDs para pt-BR - Context
 
 **Gathered:** 2026-09-05
-**Status:** Ready for planning — **com um pré-requisito bloqueante** (ver D-02)
+**Revised:** 2026-09-26 — fonte trocada do Artifício RPG (PDF inacessível) para o
+Heróis Anônimos, recortado às 339 magias do SRD 5.2 (ver D-01, D-02, D-16 a D-19)
+**Status:** Ready for planning — fonte em mãos, bloqueio do D-02 resolvido
 
 <domain>
 ## Phase Boundary
@@ -15,10 +17,10 @@ de tradução e o critério de qualidade" seriam a decisão central. A verifica�
 feita nesta discussão encontrou uma tradução humana de terceiro já publicada sob
 CC-BY-4.0 para a edição 5.2. A fase deixa de ser um projeto de tradução e passa
 a ser um projeto de **ingestão de fonte licenciada**: localizar, verificar a
-licença, extrair do PDF, parear com os slugs EN e embutir o pack.
+licença, extrair da fonte, parear com os slugs EN e embutir o pack.
 
 **Dentro do escopo:** geração do pack `srd-2024-ptbr` a partir da tradução do
-Artifício RPG; entrada no registro de versões e no precache; redirecionamento do
+Heróis Anônimos, recortada às 339 magias do SRD 5.2 (D-01, revisado); entrada no registro de versões e no precache; redirecionamento do
 fallback de migração das chaves `*-PTBR`; regeneração local (não versionada) dos
 packs legados como fixture de teste; gate de aceitação do pack novo.
 
@@ -49,22 +51,46 @@ Verificação feita nesta discussão (2026-09-05), com as fontes registradas em
   da Galápagos e do Baldur's Gate 3, é provavelmente a própria origem do texto
   dos `spells-5E-*-PTBR.json` — a mesma procedência que D-05 rejeitou.
 
-- **D-01:** A fonte do pack pt-BR é a tradução do **Artifício RPG** do SRD 5.2,
-  sob CC-BY-4.0. Nenhum outro texto pt-BR entra no conteúdo publicado.
-- **D-02 (BLOQUEANTE):** O plano **não pode começar sem o PDF em mãos**. Todas
-  as URLs conhecidas do arquivo dão 404 e o site migrou de WordPress para Astro
-  (o portal `srd.artificiorpg.com` não resolve mais). O arquivo deve ser obtido
-  pelo usuário e colocado em `scripts/srd-sources/`, versionado junto do
-  `srd-5.2-spells.json` que já mora lá — a mesma regra do D-06 da Fase 3: o
-  gerador nunca busca a fonte ao vivo. **Duas verificações obrigatórias na
-  primeira leitura do arquivo, antes de qualquer código:**
-  1. O capítulo de magias está **completo**. Os tradutores liberam o PDF por
-     partes conforme finalizam. Se as 339 magias não estiverem lá, a rota
-     inteira cai e a fase volta à mesa.
-  2. A página de licença é transcrita **verbatim**. SRD-02 exige o texto de
-     atribuição exato, e este pack tem **dois** detentores a creditar: a WotC
-     pelo conteúdo e o Artifício RPG pela expressão linguística, terminologia e
-     padronização editorial, que são direito deles.
+**Revisão de 2026-09-26 — troca de fonte.** O PDF do Artifício RPG não foi
+encontrado (todas as URLs dão 404). O usuário forneceu a tradução do **Heróis
+Anônimos** ("Livro do Jogador (SRD Traduzido e organizado) 2024", versão
+07/03/2025, https://6x.work/heroisanonimos), em Markdown. A análise do arquivo
+nesta revisão mediu:
+
+- **Não é o SRD — é o Player's Handbook 2024 inteiro traduzido.** 392 magias
+  (o SRD 5.2 tem 339), 4 subclasses por classe (o SRD tem 1), prefácio,
+  capítulos de exemplo e créditos do PHB. O título "SRD Traduzido" e o selo
+  CC-BY-4.0 **não se sustentam para o documento inteiro**: os tradutores podem
+  licenciar a própria tradução, não o texto da WotC que está fora do SRD.
+- **É a origem do `spells-5E-2024-PTBR.json` que a Fase 6 removeu.** O JSON
+  legado tinha 391 magias e o texto é idêntico ao do Markdown (conferido em
+  "Acalmar Emoções"). A "origem incerta" do D-05 da Fase 3 fica resolvida para
+  esse arquivo.
+- **Cobertura do SRD 5.2: 339/339.** 322 magias pareiam automaticamente pela
+  ponte do D-11, e todas as 322 têm cabeçalho `##` idêntico no Markdown. As 17
+  restantes são exatamente as magias que o SRD renomeou para tirar nomes
+  próprios (ver D-16), e todas estão no Markdown sob o nome do PHB.
+
+O usuário foi avisado de que essa rota é mais fraca que a do Artifício (a
+tradução partiu do PHB, não do SRD; na prática republica um recorte do arquivo
+que a Fase 6 removeu) e escolheu assim mesmo, limitada às 339 magias do SRD.
+
+- **D-01 (revisado):** A fonte do pack pt-BR é a tradução do **Heróis Anônimos**,
+  **recortada às 339 magias do SRD 5.2**. O argumento de licença é por magia:
+  o texto EN de cada uma é CC-BY (SRD 5.2) e a tradução dos tradutores é
+  declarada CC-BY-4.0. **Nenhuma magia fora do conjunto de `srd-2024-en.json`
+  entra no pack**, e nenhum outro conteúdo do documento (classes, talentos,
+  equipamento etc.) é tocado. Nenhum outro texto pt-BR entra no conteúdo
+  publicado. O Artifício RPG continua sendo a fonte preferível se o PDF
+  reaparecer (ver `<deferred>`).
+- **D-02 (revisado, resolvido):** A fonte está em mãos:
+  `docs/superpowers/herois_anonimos/D&D 5.5 - Livro do Jogador (2024) 5.3.7.md`
+  (1,4 MB). Essa pasta está no **`.gitignore`**: o documento completo é o PHB e
+  **nunca entra no repositório**. Continua valendo a regra do D-06 da Fase 3 (o
+  gerador nunca busca fonte ao vivo) — ver D-17 para como a fonte é versionada.
+  A atribuição é transcrita **verbatim** da seção "Licença" do Markdown
+  (linhas 3-76, antes de `# Prefácio`). SRD-02 exige o texto exato, e este pack tem **dois** detentores
+  a creditar: a WotC pelo conteúdo SRD 5.2 e o Heróis Anônimos pela tradução.
 - **D-03:** **Só a edição 5.2.** A pergunta "uma edição ou as duas" do ROADMAP
   está respondida pela disponibilidade de fonte, não por preferência: 5.1 não
   tem tradução com licença compatível. O usuário de 2014 que quiser português
@@ -72,7 +98,43 @@ Verificação feita nesta discussão (2026-09-05), com as fontes registradas em
 - **D-04:** `MODIFICATION_NOTE` em `scripts/generate-srd-pack.mjs` é **por
   pacote**, não mais uma constante única. A nota atual ("conteúdo da magia não
   foi alterado") continua correta para os dois packs EN e seria **falsa** no
-  pack traduzido. O pack pt-BR declara a tradução e a extração do PDF.
+  pack traduzido. O pack pt-BR declara a tradução (Heróis Anônimos), o recorte
+  às magias do SRD 5.2, a extração do Markdown e a troca dos nomes próprios
+  (D-16).
+
+### Recorte da fonte Heróis Anônimos (revisão 2026-09-26)
+
+- **D-16:** As **17 magias que o SRD 5.2 renomeou** entram com o nome genérico,
+  nunca com o nome próprio do PHB. `name` = slug do SRD EN (D-13); `displayName`
+  = tradução do nome genérico do SRD. Sugestão de partida (o texto final vai na
+  tabela de pareamento versionada do D-12): `acid-arrow` Flecha Ácida,
+  `arcane-hand` Mão Arcana, `arcane-sword` Espada Arcana, `arcanists-magic-aura`
+  Aura Mágica do Arcanista, `black-tentacles` Tentáculos Negros, `faithful-hound`
+  Cão Fiel, `floating-disk` Disco Flutuante, `freezing-sphere` Esfera Congelante,
+  `hideous-laughter` Gargalhada Nefasta, `instant-summons` Invocação Instantânea,
+  `irresistible-dance` Dança Irresistível, `magnificent-mansion` Mansão
+  Magnífica, `private-sanctum` Santuário Particular, `resilient-sphere` Esfera
+  Resiliente, `secret-chest` Arca Secreta, `telepathic-bond` Ligação Telepática,
+  `tiny-hut` Pequeno Refúgio. Menções a esses nomes dentro do texto de outras
+  magias também são trocadas. Os nomes próprios a banir são: Bigby, Tasha,
+  Otiluke, Mordenkainen, Melf, Leomund, Rary, Evard, Drawmij, Tenser, Nystul,
+  Otto (as magias de Hadar não estão no SRD 5.2 e saem pelo recorte do D-01).
+- **D-17:** O que se versiona é um **recorte**, não o documento. Um passo
+  one-shot lê o Markdown completo (ignorado) e grava em `scripts/srd-sources/`
+  só a seção "Licença" e os blocos das 339 magias do SRD. O gerador lê o
+  recorte, nunca o documento completo — assim a regra "fonte versionada, nunca
+  ao vivo" do D-06 da Fase 3 continua valendo sem pôr o PHB no repositório.
+  Nome e formato exatos do recorte ficam a critério do planner.
+- **D-18:** O capítulo de magias do Markdown traz **legendas de ilustração do
+  PHB** no meio dos blocos (parágrafos em negrito como "**O Mago Bigby usa sua
+  magia…**"). Não são texto de regra nem SRD: o extrator descarta. O gate do
+  D-14 ganha duas checagens: nenhum dos nomes próprios do D-16 aparece em
+  nenhum campo do pack, e nenhuma magia fora do conjunto de `srd-2024-en.json`.
+- **D-19:** O `spells-5E-2024-PTBR.json` legado é um parse anterior **da mesma
+  fonte**. Além da ponte de nomes (D-11), ele pode servir de **oráculo local**
+  para validar o extrator nas 322 magias pareadas (mesmo texto esperado). Continua
+  sendo fixture ignorada (D-09/D-10): o texto publicado sai do recorte do D-17,
+  nunca dos bytes do JSON legado.
 
 ### Distribuição
 
@@ -126,7 +188,7 @@ Verificação feita nesta discussão (2026-09-05), com as fontes registradas em
 
 ### Pareamento nome PT → slug EN
 
-O problema: o PDF dá "Bola de Fogo", mas `hifiSpellKey` usa o slug EN
+O problema: a fonte dá "Bola de Fogo", mas `hifiSpellKey` usa o slug EN
 (`fireball`). Sem o par correto, toda preparada e favorita já salva deixa de
 resolver.
 
@@ -136,7 +198,7 @@ resolver.
   é lido — **nenhum byte de descrição, e nenhum campo além do nome**. A regra
   de D-05 da Fase 3 continua intacta: ela proíbe texto de descrição, e um nome
   de magia usado como chave de correspondência não é o texto que ela protege.
-- **D-12:** As magias que não casarem por essa ponte (~17, mais o que o PDF
+- **D-12:** As magias que não casarem por essa ponte (as 17 do D-16, mais o que a fonte
   trouxer a mais) são pareadas **à mão** e o resultado fica versionado, para
   que uma regeração futura não repita o trabalho nem mude o resultado em
   silêncio.
@@ -161,9 +223,10 @@ resolver.
 
 ### Claude's Discretion
 
-- Técnica de extração do PDF (biblioteca, parser próprio, rota de texto). O
+- Técnica de extração do Markdown (parser de cabeçalhos `##`, blocos de magia). O
   `generate-srd-pack.mjs` hoje parte de JSON estruturado nas duas edições — esta
-  é rota nova, mais próxima do fallback de OCR previsto em D-06 da Fase 3.
+  é rota nova: texto Markdown com cabeçalho, linha de círculo/escola/classes e
+  campos em negrito (`**Tempo de Conjuração:**` etc.) por magia.
 - Rótulo da entrada no seletor (`labelPt`/`labelEn`/`short`) e como três packs
   embutidos convivem sem ambiguidade.
 - Onde exatamente aplicar a tabela de pareamento e em que formato versioná-la.
@@ -201,6 +264,13 @@ resolver.
   D-02 ("o app não embarca pack PT-BR") era motivado por copyright e é
   **superado** por uma fonte CC-BY; D-04 é **parcialmente revertido** por D-08.
 
+### Fonte adotada (revisão 2026-09-26)
+- `docs/superpowers/herois_anonimos/D&D 5.5 - Livro do Jogador (2024) 5.3.7.md`
+  — tradução do Heróis Anônimos (https://6x.work/heroisanonimos), versão
+  07/03/2025, CC-BY-4.0 declarado. Pasta no `.gitignore`. Seção "Licença" nas
+  linhas 3-76; capítulo "Descrições da Magias" das linhas 11293 a 18929
+  (`## <Nome>` por magia). Só o recorte do D-17 é versionado.
+
 ### Fontes externas verificadas em 2026-09-05
 - https://artificiorpg.com/blog/srd-52-portugues-artificio-rpg-traducao/ —
   anúncio da tradução; declara CC-BY-4.0, PDF como formato inicial, e que o
@@ -217,7 +287,7 @@ resolver.
 - `scripts/generate-srd-pack.mjs` — gerador dos packs embutidos, incluindo a
   constante `MODIFICATION_NOTE` que D-04 torna por pacote.
 - `scripts/srd-sources/` — onde a fonte versionada mora (hoje só
-  `srd-5.2-spells.json`); destino do PDF de D-02.
+  `srd-5.2-spells.json`); destino do recorte do D-17.
 
 </canonical_refs>
 
@@ -251,7 +321,7 @@ resolver.
 - `_initialVersionKey()` (~L491-494) — a detecção de navegador pt-BR já existe
   e já procura `lang === 'ptbr'`.
 - `mdToHtml()` / `stripHtml()` / `stripUpgradeHeading()` — limpeza de texto do
-  adaptador. O extrator do PDF deve produzir HTML no mesmo feitio dos packs EN
+  adaptador. O extrator deve produzir HTML no mesmo feitio dos packs EN
   (`<p>`, `<strong>`, `<em>`), não markdown cru.
 
 ### Established Patterns
@@ -267,7 +337,7 @@ resolver.
   opções do filtro vêm do texto do próprio pack. O pack pt-BR produz opções em
   português automaticamente; nenhum código de filtro muda.
 - **Unidades e terminologia vêm da fonte.** Pés/metros, nomes de escola e nomes
-  de classe já traduzidos são decisão editorial do Artifício RPG, não desta
+  de classe já traduzidos são decisão editorial do Heróis Anônimos, não desta
   fase. `CLASS_PT`/`CLASS_EN` e `SCHOOL_INDEX` já normalizam ambos os idiomas.
 
 ### Integration Points
@@ -305,9 +375,13 @@ resolver.
 - **SRD 5.1 em português.** Sem fonte com licença compatível hoje. Se a WotC
   publicar SRD em português, ou se alguém traduzir a 5.1 sob CC-BY, é fase
   própria — a rota desta fase serve de molde.
-- **Atualização quando o Artifício publicar versão nova do PDF.** Eles mantêm o
-  documento em revisão contínua. Hoje a resposta é rodar o gerador de novo à
-  mão, como nos packs EN. Automatizar é o requisito v2.x de "checagem manual de
+- **Trocar a fonte para o Artifício RPG se o PDF reaparecer.** A tradução deles
+  parte do próprio SRD 5.2, e não do PHB: procedência mais limpa que a do
+  Heróis Anônimos (D-01 revisado). A troca reaproveita todo o pipeline; só muda
+  o extrator e a atribuição.
+- **Atualização quando o Heróis Anônimos publicar versão nova.** Eles mantêm o
+  documento em revisão contínua. Hoje a resposta é refazer o recorte (D-17) e
+  rodar o gerador de novo à mão, como nos packs EN. Automatizar é o requisito v2.x de "checagem manual de
   atualização de pack por URL", não esta fase.
 - **Gate estático contra pack legado versionado.** Recusado em D-10. Se o
   fixture escapar para o repo alguma vez, promover a requisito.

@@ -16,3 +16,8 @@ v10-*.png
 v10-body.txt
 scroll-*.png
 capture-scroll.js
+
+# Fonte bruta do pack pt-BR (Fase 7): PHB 2024 inteiro traduzido pelo Heróis
+# Anônimos. Só o recorte das 339 magias do SRD 5.2 pode ser versionado (em
+# scripts/srd-sources/); o documento completo nunca entra no repositório.
+docs/superpowers/herois_anonimos/
