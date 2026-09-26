@@ -313,7 +313,11 @@ function stripHtml(s) {
 // pelo texto — serve pros dois idiomas e pros packs BYOD. Se sobrar só o
 // cabeçalho (3 magias de 2014 PT-BR), devolve '' e a seção inteira desaparece
 // em vez de mostrar um título solto.
-const UPGRADE_HEADING = /^(\s*<p[^>]*>)?\s*<strong>\s*<em>\s*[^<]{1,40}[.:]\s*<\/em>\s*<\/strong>\s*/i;
+// O rótulo pt-BR "Usando um Espaço de Magia de Círculo Superior." tem 45
+// caracteres — passa dos 40 do limite EN/pt-curto. A âncora `^` + a exigência
+// de `<strong><em>...</em></strong>` continuam sendo o que impede de comer
+// texto legítimo; só o teto do rótulo cresce (Fase 7, D-05).
+const UPGRADE_HEADING = /^(\s*<p[^>]*>)?\s*<strong>\s*<em>\s*[^<]{1,60}[.:]\s*<\/em>\s*<\/strong>\s*/i;
 function stripUpgradeHeading(html) {
   if (!html) return '';
   const out = String(html).replace(UPGRADE_HEADING, (m, openP) => (openP ? openP.trimStart() : ''));

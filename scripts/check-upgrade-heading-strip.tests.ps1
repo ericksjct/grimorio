@@ -78,6 +78,8 @@ check('marcado en', '<p><strong><em>At Higher Levels.</em></strong> The damage i
       'At Higher Levels', 'The damage increases by 1d4.');
 check('marcado pt', '<p><strong><em>Em Niveis Superiores.</em></strong> O dano aumenta 1d4.</p>',
       'Em Niveis Superiores', 'O dano aumenta 1d4.');
+check('marcado pt longo', '<p><strong><em>Usando um Espaço de Magia de Círculo Superior.</em></strong> O dano aumenta em 1d6.</p>',
+      'Usando um Espaço de Magia', 'O dano aumenta em 1d6.');
 
 // A primeira frase de um texto legitimo NAO pode ser comida. A regra casa por
 // estrutura justamente pra nunca precisar adivinhar isso.
@@ -86,19 +88,19 @@ if (strip(legit) !== legit) {
   console.error('FALHA [conteudo legitimo]: texto sem cabecalho foi alterado -> ' + strip(legit).slice(0, 90)); fails++;
 }
 
-// Dados reais: nenhuma magia dos dois SRD pode sobrar com o cabecalho.
-for (const f of ['srd-2024-en.json', 'srd-2014-en.json']) {
+// Dados reais: nenhuma magia dos 3 SRD pode sobrar com o cabecalho.
+for (const f of ['srd-2024-en.json', 'srd-2014-en.json', 'srd-2024-ptbr.json']) {
   const j = JSON.parse(fs.readFileSync(process.argv[3] + '/' + f, 'utf8'));
   const arr = Array.isArray(j) ? j : (j.spells || j.data || []);
   const ruins = arr.filter(s => s.upgradeDescription &&
-    /^(\s*<p[^>]*>)?\s*(at higher levels|cantrip upgrade)/i.test(strip(s.upgradeDescription)));
+    /^(\s*<p[^>]*>)?\s*(at higher levels|cantrip upgrade|usando um espaço de magia|aprimoramento de truque)/i.test(strip(s.upgradeDescription)));
   if (ruins.length) {
     console.error('FALHA [' + f + ']: ' + ruins.length + ' magia(s) ainda imprimem o cabecalho, ex.: ' + ruins[0].name);
     fails++;
   }
 }
 if (fails) process.exit(1);
-console.log('  upgrade heading: os 2 SRD chegam marcados, o strip remove por estrutura, conteudo legitimo intacto.');
+console.log('  upgrade heading: os 3 SRD chegam marcados, o strip remove por estrutura, conteudo legitimo intacto.');
 '@
 
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("upgrade-heading-" + [guid]::NewGuid().ToString('N') + ".cjs")
