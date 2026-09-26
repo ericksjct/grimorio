@@ -681,7 +681,7 @@ posições de linha, nomes de arquivo, conteúdo de gates) vêm de leitura diret
 Markdown-fonte, do código do app e dos `.tests.ps1` nesta sessão, e estão marcados
 implicitamente como `[VERIFIED: leitura direta nesta sessão]` ao longo do texto.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Formato exato do recorte do D-17**
    - What we know: precisa conter a seção "Licença" (linhas 1-76) e os 339 blocos de magia,
@@ -689,12 +689,14 @@ implicitamente como `[VERIFIED: leitura direta nesta sessão]` ao longo do texto
    - What's unclear: JSON vs. Markdown puro vs. um arquivo por magia.
    - Recommendation: JSON com array de blocos crus (ver "Recommended Project Structure") —
      decisão final do planner.
+   - RESOLVED (07-01): JSON `scripts/srd-sources/srd-5.2-ptbr-source.json` com blocos crus.
 
 2. **Tratamento final de `castTime` com "ou Ritual"**
    - What we know: o padrão hoje nos packs EN não separa esse texto do campo.
    - What's unclear: se o planner prefere manter fiel ao padrão EN (recomendado, A2) ou
      limpar o texto já que o booleano `ritual` existe.
    - Recommendation: manter fiel ao padrão EN por consistência entre os 3 packs.
+   - RESOLVED (07-02): `castTime` mantém "ou Ritual", fiel ao padrão EN.
 
 3. **`statBlock` vs. tabela embutida em `description` para "Inseto Gigante"**
    - What we know: `statBlock` não é lido por nenhum componente hoje.
@@ -702,6 +704,7 @@ implicitamente como `[VERIFIED: leitura direta nesta sessão]` ao longo do texto
      melhor já popular `statBlock` mesmo sem exibição imediata.
    - Recommendation: usar `description` (visível já nesta fase) — é a única magia do
      recorte de 339 afetada por esta escolha, então o custo de trocar depois é baixíssimo.
+   - RESOLVED (07-02): tabela de stat de `giant-insect` e `summon-dragon` vai em `description`, nunca em `statBlock`.
 
 ## Environment Availability
 
