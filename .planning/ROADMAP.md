@@ -23,7 +23,7 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
 - [x] **Phase 04.1: Desacoplar o idioma da interface do idioma do pacote** (INSERIDA) - uiLang vira estado proprio; pre-requisito da Fase 6, que remove as unicas entradas em portugues (completed 2026-08-24)
 - [x] **Phase 5: Plugin Manager UI & Version Selector** - Install/list/remove UI, dynamic version selector, duplicate-spell notes, empty state, CC-BY attribution (completed 2026-08-30)
 - [ ] **Phase 6: Decommissioning & Migration** - Remove the 4 protected JSONs from site/repo; migrate existing users without silently dropping references
-- [ ] **Phase 7: Tradução dos SRDs para pt-BR** - Devolver conteúdo em português ao app por tradução do SRD, com procedência CC-BY limpa
+- [ ] **Phase 7: Tradução dos SRDs para pt-BR** - Pacote SRD 5.2 pt-BR embutido, a partir da tradução CC-BY do Heróis Anônimos recortada às 339 magias do SRD
 
 ## Phase Details
 
@@ -258,44 +258,45 @@ Plans:
 
 ### Phase 7: Tradução dos SRDs para pt-BR
 
-**Goal:** O usuário brasileiro volta a ler as magias em português, com conteúdo de
-procedência limpa — sem reintroduzir nenhum dos 4 datasets que a Fase 6 removeu.
+**Goal:** O usuário brasileiro volta a ler as magias em português sem configurar nada,
+com conteúdo de procedência registrada — a tradução CC-BY-4.0 do Heróis Anônimos
+recortada às 339 magias do SRD 5.2 — sem reintroduzir nenhum byte dos 4 datasets que a
+Fase 6 removeu.
 
-**Requirements**: TBD
+**Requirements**: SRD-01, SRD-02, SRD-03, SRD-04
 **Depends on:** Phase 6
-**Plans:** 0 plans
+**Success Criteria** (what must be TRUE):
 
-**Contexto:** a Fase 6 removeu as únicas entradas em português do app por
-procedência incerta (D-05). Os dois SRD embutidos são EN. Traduzir o SRD é o
-caminho limpo de devolver português: é obra derivada de conteúdo que a WotC
-licencia sob CC-BY-4.0, o que a licença permite desde que haja atribuição e
-indicação de que houve mudança.
+  1. Um navegador em português, na primeira visita, abre no pacote embutido "SRD 5.2 (PT-BR)" e lê as 339 magias do SRD 5.2 em português (D-05, D-06)
+  2. Quem tinha salvo uma chave legada `*-PTBR` volta sozinho ao português, e as preparadas/favoritas continuam resolvendo porque `name` é o slug EN (D-07, D-08, D-13)
+  3. O pacote pt-BR carrega a atribuição verbatim da WotC (SRD 5.2) e do Heróis Anônimos, com nota de modificação própria, visível no gerenciador de pacotes (D-02, D-04, SRD-02)
+  4. O pacote tem exatamente as 339 magias de `srd-2024-en.json`, com círculo/escola batendo, sem nome próprio do PHB e sem legenda de ilustração (D-01, D-14, D-16, D-18)
+  5. O documento completo do Heróis Anônimos e os fixtures legados nunca entram no repositório — só o recorte versionado (D-02, D-09, D-10, D-17)
 
-**Restrições que a fase precisa respeitar:**
+**Plans:** 5 plans
 
-- `MODIFICATION_NOTE` em `scripts/generate-srd-pack.mjs` hoje afirma "conteúdo da
-  magia não foi alterado". Num pacote traduzido isso passa a ser FALSO — a nota
-  precisa declarar a tradução, senão a atribuição CC-BY fica incorreta.
-- D-05 continua valendo: nenhum byte dos `spells-5E-*.json` pode entrar. Uma
-  tradução existente de proveniência incerta é exatamente o que a Fase 6 removeu.
-- O app já é bilíngue por pacote: `versionLang` governa conteúdo e `uiLang`
-  governa chrome (D-01 da Fase 04.1). Um SRD pt-BR entra como pacote novo no
-  registro, não como tradução em tempo de execução.
-- Volume: 319 magias (5.1) + 339 (5.2) = 658 descrições. O método de tradução e o
-  critério de qualidade são a decisão central da fase.
-
-**Decisões em aberto para o discuss-phase:**
-
-- Como a tradução é produzida e revisada, e o que conta como "boa o suficiente"
-  para regra de jogo (termo errado muda o efeito da magia na mesa).
-- Traduzir as duas edições ou só a 5.2, que é a padrão.
-- Nomes de magia traduzidos ou mantidos em inglês — afeta `hifiSpellKey`, que usa
-  o slug EN, e portanto a resolubilidade das preparadas/favoritas já salvas.
-- Se o pacote pt-BR é embutido ou distribuído como pacote BYOD instalável.
+**Nota:** a descrição original desta fase (tradução própria de 658 descrições, 5.1 e
+5.2, decisões em aberto) foi substituída pela discussão de 2026-09-05, revisada em
+2026-09-26 — ver `.planning/phases/07-traducao-srd-ptbr/07-CONTEXT.md` (D-01..D-19). Só a
+edição 5.2 tem pack pt-BR (D-03).
 
 Plans:
+**Wave 1**
 
-- [ ] TBD (run /gsd-plan-phase 7 to break down)
+- [ ] 07-01-PLAN.md — Wave 1: fonte versionada — fixtures legados em formato de pack só em `.cache/` (D-09/D-10), tabela das 17 renomeadas e extrator one-shot que grava o recorte com a Licença verbatim e as 339 magias do SRD 5.2, sem legendas nem nomes próprios, validado contra o EN e o oráculo legado (SRD-01, SRD-04)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 07-02-PLAN.md — Wave 2: gate `check-srd-ptbr-pack.tests.ps1` (RED) e rota pt-BR no gerador (`parsePtbr52`, nota de modificação por pacote) que gera `srd-2024-ptbr.json` (GREEN), packs EN intactos (SRD-01, SRD-02, SRD-04)
+- [ ] 07-03-PLAN.md — Wave 2: SRD-04 promovido em `REQUIREMENTS.md` e seção de proveniência pt-BR em `03-SRD-SOURCE.md` (SRD-01, SRD-02, SRD-04)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 07-04-PLAN.md — Wave 3: strip do rótulo pt-BR de 45 caracteres; registro `srd-2024-ptbr`, fallback do D-08, precache e bump `grimorio-v4` num commit com os 3 gates realinhados; texto do banner de transição (SRD-02, SRD-03, SRD-04)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 07-05-PLAN.md — Wave 4: checkpoint humano — ~10 magias na tela (D-15), primeira visita pt-BR, chave legada, identidade pt↔en, atribuição e Cache Storage (SRD-02, SRD-03, SRD-04)
 
 ## Planning Routes (resumo)
 
@@ -325,4 +326,4 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 04.1. Desacoplar o idioma da interface | v2.0 | 5/5 | Complete    | 2026-08-24 |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 5/5 | Complete    | 2026-08-30 |
 | 6. Decommissioning & Migration | v2.0 | 6/7 | In Progress|  |
-| 7. Tradução dos SRDs para pt-BR | v2.0 | 0/0 | Not Started |  |
+| 7. Tradução dos SRDs para pt-BR | v2.0 | 0/5 | Not Started |  |
