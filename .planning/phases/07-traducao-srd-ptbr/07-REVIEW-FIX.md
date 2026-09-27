@@ -134,3 +134,7 @@ Fixed as part of WR-04 (commit 384849b), on the EN generator side, as the user d
 _Fixed: 2026-09-27_
 _Fixer: Claude (gsd-code-fixer)_
 _Iteration: 1_
+
+## Adendo (2026-09-27) — IN-04 slugs
+
+O pulo dos slugs quebrados do SRD 5.1 foi revertido a pedido do usuário: commit `67b5fc6` corrige `arcanist-s-magic-aura`, `hunter-s-mark` e `see-i-nvisibility` (slugify remove `’`; título "See I nvisibility" corrigido na extração). Sem migração de chaves: os packs SRD nunca foram publicados em `main`, então nenhum usuário tem preparadas com o slug quebrado; e o slug novo é o mesmo dos datasets legados e do SRD 5.2. `check-srd-name-and-markdown.tests.ps1` passou a barrar esse formato de slug nos 3 packs.
