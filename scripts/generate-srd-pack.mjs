@@ -605,7 +605,14 @@ const EDITIONS = [
     factsFrom: 'srd-2024-en.json',
     // D-02: atribuição dupla verbatim — o texto WotC do SRD 5.2 seguido da
     // seção "Licença" do Heróis Anônimos, ambos ipsis litteris.
-    attribution: (source) => `${SRD52_ATTRIBUTION}\n\n${source.license}`,
+    // Sem guarda, um recorte sem `license` virava a string "undefined" e
+    // passava no schema (é string) — caminho de conformidade de licença.
+    attribution: (source) => {
+      if (typeof source.license !== 'string' || !source.license.includes('Heróis Anônimos')) {
+        throw new Error('srd-2024-ptbr.json: recorte sem a seção "Licença" do Heróis Anônimos (D-02).');
+      }
+      return `${SRD52_ATTRIBUTION}\n\n${source.license}`;
+    },
     modificationNote: MODIFICATION_NOTE_PTBR,
     extract: parsePtbr52,
   },

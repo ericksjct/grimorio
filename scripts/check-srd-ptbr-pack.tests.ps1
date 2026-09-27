@@ -92,7 +92,11 @@ if (ptbr.meta.edition !== "2024") fail(`meta.edition esperado '2024', achei '${p
 if (ptbr.meta.spellCount !== ptbr.spells.length) fail(`meta.spellCount (${ptbr.meta.spellCount}) != spells.length (${ptbr.spells.length})`);
 if (ptbr.meta.license.id !== "CC-BY-4.0") fail(`meta.license.id esperado 'CC-BY-4.0', achei '${ptbr.meta.license.id}'`);
 
+// Sem isto, `attr.endsWith(undefined)` vira endsWith("undefined") e passa
+// justamente quando a licença sumiu (WR-05 da revisão da fase 07).
+if (typeof recorte.license !== "string" || !recorte.license.includes("Heróis Anônimos")) fail("recorte.license ausente ou sem 'Heróis Anônimos'.");
 const attr = ptbr.meta.license.attribution || "";
+if (attr.includes("undefined")) fail("meta.license.attribution contem 'undefined'.");
 if (!attr.startsWith(en.meta.license.attribution)) fail("meta.license.attribution nao comeca com a atribuicao verbatim da WotC (SRD 5.2 EN).");
 if (!attr.endsWith(recorte.license)) fail("meta.license.attribution nao termina com a secao Licenca verbatim do recorte (Herois Anonimos).");
 
