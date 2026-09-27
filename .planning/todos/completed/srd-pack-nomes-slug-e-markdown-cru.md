@@ -1,8 +1,10 @@
 ---
 id: srd-pack-nomes-slug-e-markdown-cru
-status: pending
+status: done
 created: 2026-08-24
+closed: 2026-09-27
 source: checkpoint 04.1-05 (QA headless da Fase 04.1)
+closed_by: "06-01 Task 2 (commit 8719d21)"
 area: spells-data-loader.jsx (adaptador de pack) / packs SRD EN
 ---
 
@@ -46,3 +48,26 @@ ser o **único** conteúdo que o usuário vê.
   a descrição precisa de conversão de markdown (o app já tem DOMPurify no boot).
 - Comparar com `check-upgrade-heading-strip`, que já faz limpeza de heading no
   adaptador — o mesmo ponto provavelmente é o lugar certo para o resto.
+
+## Fechamento (06-01 Task 2, commit `8719d21`)
+
+Ambos os sintomas foram corrigidos no adaptador SRD, dentro de `adaptSpell()`
+(`spells-data-loader.jsx`):
+
+- **Nome legível**: `name_en` passou a carregar o `displayName` legível do SRD
+  (`"Acid Splash"`) quando a **língua do pack** é `en`, em vez do slug de
+  identidade. O campo `en:` (identidade — `hifiSpellKey`, `byName`, links
+  `?spell=`) foi mantido intocado; `spellName()` em `grimorio-helpers.jsx` passou
+  a preferir `name_en` antes de `en` no ramo não-PT.
+- **Markdown convertido**: `mdToHtml()`, um conversor mínimo e seguro contra tags
+  (`**bold**`, `*italic*`/`_italic_`, só em nós de texto, nunca dentro de
+  markup), aplicado a `desc`/`descHtml`/`upgradeHtml` no adaptador.
+
+Gate de regressão: `scripts/check-srd-name-and-markdown.tests.ps1` (prova de
+execução em Node contra `adaptSpell()`/`mdToHtml()` real, incluindo caso
+adversarial de injeção de atributo e o corpus inteiro de `srd-2024-en.json`).
+
+**O que NÃO entrou** (fechamento honesto): o escopo do fold foi só o caminho
+SRD/adaptador. O pipeline de import de packs BYOD não foi redesenhado — um pack
+de terceiros com o mesmo defeito de nome/markdown não é coberto por este
+fechamento, só o conteúdo SRD embarcado que motivou o achado.
