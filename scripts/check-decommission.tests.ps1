@@ -9,8 +9,8 @@ $ErrorActionPreference = 'Stop'
 # Nota (D-04): o mapa LEGACY_VERSION_FALLBACK em spells-data-loader.jsx
 # deliberadamente RETEM as 4 chaves antigas como string keys - ele existe pra
 # redirecionar uma preferencia salva antiga (spellbook-ui-prefs.versionKey).
-# Fase 7 (D-08): as chaves PT-BR agora redirecionam para o SRD 5.2 PT-BR
-# embutido, as chaves EN continuam indo pro SRD da mesma edicao. Essas 4
+# Fase 7 (D-08 + WR-01 da revisao): a chave 2024 PT-BR redireciona para o SRD
+# 5.2 PT-BR embutido, as outras 3 continuam indo pro SRD EN da mesma edicao. Essas 4
 # ocorrencias sao esperadas e nao violam a regra: o que este gate proibe e a
 # presenca dos ARQUIVOS (.json) e das entradas em BUILTIN_VERSIONS/PRECACHE,
 # nao o texto da chave de fallback.

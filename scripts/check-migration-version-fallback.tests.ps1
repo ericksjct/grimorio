@@ -5,9 +5,11 @@ $ErrorActionPreference = 'Stop'
 # cair numa versão resolvível, não no default cego. Este gate trava o mapa de
 # fallback e o índice de chaves resolvíveis que 06-03 (órfãs) e 06-04 (banner
 # de transição) vão consumir.
-# Fase 7, D-08 (reverte em parte o D-04 acima): para as chaves PT-BR o idioma
-# vence a edição — ambas redirecionam pro SRD 5.2 PT-BR embutido, não pro SRD
-# da mesma edição em inglês. As chaves EN continuam na mesma edição.
+# Fase 7, D-08: a chave 2024 PT-BR redireciona pro SRD 5.2 PT-BR embutido
+# (mesma edição, mesmo idioma). A chave 2014 PT-BR continua no D-04 e cai no
+# SRD 5.1 EN (revisão da fase 07, WR-01: não há 5.1 em português, e trocar a
+# edição em silêncio sumia com magias preparadas). As chaves EN continuam na
+# mesma edição.
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $loaderPath = Join-Path $repoRoot 'spells-data-loader.jsx'
@@ -84,7 +86,7 @@ eval('LEGACY_VERSION_FALLBACK = ' + m[1]);
 const cases = {
   'spells-5E-2024-PTBR': 'srd-2024-ptbr',
   'spells-5E-2024-EN': 'srd-2024-en',
-  'spells-5E-2014-PTBR': 'srd-2024-ptbr',
+  'spells-5E-2014-PTBR': 'srd-2014-en',
   'spells-5E-2014-EN': 'srd-2014-en',
 };
 for (const [from, to] of Object.entries(cases)) {
@@ -105,7 +107,7 @@ if (LEGACY_VERSION_FALLBACK['some-unknown-key'] !== undefined) {
   console.error('FAIL: an unrelated key must not resolve through the fallback map.');
   process.exit(1);
 }
-console.log('D-04/D-08 ok: as 2 chaves PT-BR legadas caem no SRD 5.2 PT-BR (Fase 7), as 2 EN no SRD da mesma edicao, chaves desconhecidas nao casam.');
+console.log('D-04/D-08 ok: a chave 2024 PT-BR cai no SRD 5.2 PT-BR (Fase 7), as outras 3 no SRD EN da mesma edicao, chaves desconhecidas nao casam.');
 '@
   $tmp = Join-Path ([System.IO.Path]::GetTempPath()) "check-migration-version-fallback-$([guid]::NewGuid()).cjs"
   try {

@@ -118,8 +118,9 @@ const STRINGS = {
     'toast.versionSwitchedAway': 'o pacote que você estava vendo foi removido — voltamos para {version}',
     // Banner de transição (MIGR-03) — D-08: ordem fixa (o que mudou, o que
     // continua, órfãs quando houver, a ação). O D-02 da Fase 6 (nunca oferece
-    // pack PT-BR) foi superado pela Fase 7: quem vinha de uma chave PT-BR já
-    // cai no SRD 5.2 PT-BR embutido (D-08); o CTA continua sendo importar o
+    // pack PT-BR) foi superado pela Fase 7: quem vinha da chave 2024 PT-BR já
+    // cai no SRD 5.2 PT-BR embutido (D-08; a 2014 PT-BR cai no SRD 5.1 EN,
+    // WR-01 da revisão da fase 07); o CTA continua sendo importar o
     // próprio pacote pra ter o conteúdo completo.
     'migration.title': 'O Grimório mudou',
     'migration.removed': 'Os pacotes de magias D&D 5E 2014 e D&D 5.5E 2024 saíram do aplicativo.',
@@ -331,8 +332,9 @@ const STRINGS = {
     'toast.versionSwitchedAway': 'the pack you were viewing was removed — switched back to {version}',
     // Transition banner (MIGR-03) — D-08: fixed order (what changed, what
     // stays, orphans when any, the action). Phase 6's D-02 (never offers a
-    // PT-BR pack) was superseded by Phase 7: whoever came from a PT-BR key
-    // already lands on the built-in SRD 5.2 PT-BR (D-08); the CTA is still
+    // PT-BR pack) was superseded by Phase 7: whoever came from the 2024 PT-BR
+    // key already lands on the built-in SRD 5.2 PT-BR (D-08; the 2014 PT-BR key
+    // lands on SRD 5.1 EN, phase 07 review WR-01); the CTA is still
     // importing your own pack for the full content.
     'migration.title': 'The Grimoire has changed',
     'migration.removed': 'The D&D 5E 2014 and D&D 5.5E 2024 spell packs have been removed from the app.',

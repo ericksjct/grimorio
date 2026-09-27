@@ -75,14 +75,17 @@ function _defaultVersion() {
 // (T-06-01-03, accept).
 // Sem prototipo (mesmo motivo de SCHOOL_INDEX/CLASS_PT abaixo): indexada por
 // uma string vinda de localStorage.
-// Fase 7, D-08 (reverte em parte o D-04 da Fase 6): para as chaves PT-BR o
-// idioma vence a edição — o usuário de 2014 em português vai para o SRD 5.2
-// em português, e o comparador de edição/seletor seguem disponíveis pra
-// voltar ao 5.1 se quiser. As chaves EN seguem na mesma edição.
+// Fase 7, D-08: a chave 2024 PT-BR vai pro SRD 5.2 em português (mesma
+// edição, agora também no mesmo idioma). A chave 2014 PT-BR segue o D-04 e cai
+// no SRD 5.1 EN: não existe 5.1 em português, e mandá-la pro 5.2 PT-BR trocava
+// a edição em silêncio — a chave preparada é `${school}-${lvl}-${en}`, então as
+// magias que mudaram de escola/círculo no 2024 (cure-wounds, healing-word...)
+// sumiam da ficha, e o comparador de edição nem aparece (não há 2014 PT-BR pra
+// comparar). Revisão da fase 07, WR-01: supera o D-08 para a chave 2014.
 const LEGACY_VERSION_FALLBACK = Object.assign(Object.create(null), {
   'spells-5E-2024-PTBR': 'srd-2024-ptbr',
   'spells-5E-2024-EN': 'srd-2024-en',
-  'spells-5E-2014-PTBR': 'srd-2024-ptbr',
+  'spells-5E-2014-PTBR': 'srd-2014-en',
   'spells-5E-2014-EN': 'srd-2014-en',
 });
 
@@ -492,8 +495,8 @@ function _initialVersionKey() {
       return prefs.versionKey;
     }
     // D-04: chave legada que não resolve mais cai no mapa de fallback (Fase
-    // 7, D-08: as chaves PT-BR redirecionam pro SRD 5.2 PT-BR, as EN pro SRD
-    // da mesma edição) — zera _wantedVersionKey (nenhum pack jamais resolve
+    // 7, D-08: só a 2024 PT-BR vai pro SRD 5.2 PT-BR; as demais pro SRD da
+    // mesma edição) — zera _wantedVersionKey (nenhum pack jamais resolve
     // uma chave legada) e grava __legacyVersionFallback, o sinal que o
     // banner de transição lê.
     if (prefs.versionKey && LEGACY_VERSION_FALLBACK[prefs.versionKey]) {
