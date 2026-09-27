@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: Plugins BYOD
 current_phase: 07
 current_phase_name: Tradução dos SRDs para pt-BR
-current_plan: Not started
-status: planning
+current_plan: Complete
+status: milestone-complete
 stopped_at: Completed 06-06-PLAN.md — checkpoint humano aprovado, Fase 6 encerrada
 last_updated: "2026-09-27T15:58:35.959Z"
 last_activity: 2026-09-27
-last_activity_desc: Phase 06 complete, transitioned to Phase 07
+last_activity_desc: Phases 06 and 07 complete — all v2.0 phases done, ready for milestone completion
 progress:
   total_phases: 7
   completed_phases: 7
@@ -24,15 +24,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-17)
 
 **Core value:** Players can quickly find, prepare, and reference the right spells for their character, fully offline, with zero setup.
-**Current focus:** Phase 07 — traducao-srd-ptbr
+**Current focus:** Marco v2.0 completo (7/7 fases) — próximo passo: /gsd-complete-milestone
 
 ## Current Position
 
 Phase: 07 — Tradução dos SRDs para pt-BR
-Current Plan: Not started
-Total Plans in Phase: 7
-Status: Ready to plan
-Last activity: 2026-09-27 — Phase 06 complete, transitioned to Phase 07
+Current Plan: 5/5 complete
+Total Plans in Phase: 5
+Status: Complete — todas as fases do marco v2.0 concluídas
+Last activity: 2026-09-27 — Fases 06 e 07 completas (verificação passed nas duas)
 
 Progress: [██████████] 100%
 
