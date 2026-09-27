@@ -148,9 +148,12 @@ async function main() {
   // ── 2. Capítulo "Descrições da Magias" ──────────────────────────────────
   const chapStart = lines.findIndex((l) => l.trim() === '# Descrições da Magias');
   if (chapStart === -1) throw new Error('Não encontrei "# Descrições da Magias" no Markdown-fonte.');
+  // O capítulo termina no próximo `# ` OU na linha "Apêndice X - ..." — no
+  // Markdown-fonte o título do Apêndice A é linha simples, não heading, e sem
+  // este corte o último bloco (Zona da Verdade) engolia a abertura do apêndice.
   let chapEnd = lines.length;
   for (let i = chapStart + 1; i < lines.length; i++) {
-    if (/^# /.test(lines[i])) { chapEnd = i; break; }
+    if (/^# /.test(lines[i]) || /^Ap[êe]ndice [A-Z]\b/.test(lines[i].trim())) { chapEnd = i; break; }
   }
   const chapter = lines.slice(chapStart + 1, chapEnd);
 

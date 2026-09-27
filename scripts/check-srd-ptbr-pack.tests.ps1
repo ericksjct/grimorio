@@ -148,6 +148,12 @@ for (const spell of ptbr.spells) {
     fail(`'${spell.name}': upgradeDescription nao comeca com '<p><strong><em>'.`);
   }
 
+  // escopo: texto do apêndice do PHB ("Apêndice A - O Multiverso") não pode vazar
+  // para a última magia do capítulo (CR-01 da revisão da fase 07).
+  // ("veja o apêndice B" é referência legítima do texto da magia; o vazamento é
+  // o título "Apêndice X - ..." e a abertura "Este apêndice ...".)
+  if (/Ap[êe]ndice [A-Z] -|[Ee]ste ap[êe]ndice/.test(JSON.stringify(spell))) fail(`'${spell.name}': texto de apendice do PHB vazou para a magia.`);
+
   // markdown cru: nada de ** / |--- / linha de lista crua deve sobrar
   for (const field of ["description", "upgradeDescription"]) {
     const v = spell[field];
@@ -181,6 +187,7 @@ for (const sp of recorte.spells) {
   if (m1) fail(`recorte '${sp.name}': displayName carrega nome proprio banido '${m1[1]}'.`);
   const m2 = String(sp.markdown || "").match(bannedRe);
   if (m2) fail(`recorte '${sp.name}': markdown carrega nome proprio banido '${m2[1]}'.`);
+  if (/Ap[êe]ndice [A-Z] -|[Ee]ste ap[êe]ndice/.test(String(sp.markdown || ""))) fail(`recorte '${sp.name}': markdown carrega texto de apendice do PHB.`);
 }
 
 const ptByName = new Map(ptbr.spells.map((s) => [s.name, s]));
