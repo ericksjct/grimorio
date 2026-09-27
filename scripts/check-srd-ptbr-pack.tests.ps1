@@ -98,7 +98,20 @@ if (typeof recorte.license !== "string" || !recorte.license.includes("Heróis An
 const attr = ptbr.meta.license.attribution || "";
 if (attr.includes("undefined")) fail("meta.license.attribution contem 'undefined'.");
 if (!attr.startsWith(en.meta.license.attribution)) fail("meta.license.attribution nao comeca com a atribuicao verbatim da WotC (SRD 5.2 EN).");
-if (!attr.endsWith(recorte.license)) fail("meta.license.attribution nao termina com a secao Licenca verbatim do recorte (Herois Anonimos).");
+// WR-03: o gerador tira a sintaxe Markdown da Licença (o pack manager mostra
+// texto puro); mesma normalização que stripLicenseMarkdown em generate-srd-pack.mjs.
+const stripLicenseMarkdown = (md) => md
+  .split("\n")
+  .filter((line) => line.trim() !== "***")
+  .map((line) => line.replace(/^#+\s+/, ""))
+  .join("\n")
+  .replace(/\[!\[([^\]]*)\]\([^)]*\)\]\(([^)]*)\)/g, "$1 ($2)")
+  .replace(/\[([^\]]*)\]\(([^)]*)\)/g, "$1 ($2)")
+  .replace(/\*\*/g, "")
+  .replace(/\*([^*\n]+)\*/g, "$1")
+  .replace(/\n{3,}/g, "\n\n");
+if (typeof recorte.license === "string" && !attr.endsWith(stripLicenseMarkdown(recorte.license))) fail("meta.license.attribution nao termina com a secao Licenca verbatim do recorte (Herois Anonimos).");
+if (/\*|\]\(|^#|^\*\*\*$/m.test(attr)) fail("meta.license.attribution ainda contem sintaxe Markdown (*, ](, # ou ***).");
 
 const mods = ptbr.meta.license.modifications || "";
 if (!mods) fail("meta.license.modifications vazio.");

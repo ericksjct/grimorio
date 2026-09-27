@@ -546,6 +546,25 @@ function parsePtbr52(source, facts) {
 const SRD52_ATTRIBUTION =
   'This work includes material from the System Reference Document 5.2 (“SRD 5.2”) by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. Licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode.';
 
+// WR-03 (revisão da fase 07): o gerenciador de pacotes mostra a atribuição como
+// texto puro (pre-wrap), então a seção "Licença" do recorte sai sem a sintaxe
+// Markdown — as palavras ficam ipsis litteris, só somem os marcadores:
+// `[![alt](img)](url)` -> `alt (url)`, `[texto](url)` -> `texto (url)`,
+// `**`/`*` de ênfase, `#` de título e linhas `***`. O gate
+// check-srd-ptbr-pack.tests.ps1 aplica a mesma normalização na comparação.
+function stripLicenseMarkdown(md) {
+  return md
+    .split('\n')
+    .filter((line) => line.trim() !== '***')
+    .map((line) => line.replace(/^#+\s+/, ''))
+    .join('\n')
+    .replace(/\[!\[([^\]]*)\]\([^)]*\)\]\(([^)]*)\)/g, '$1 ($2)')
+    .replace(/\[([^\]]*)\]\(([^)]*)\)/g, '$1 ($2)')
+    .replace(/\*\*/g, '')
+    .replace(/\*([^*\n]+)\*/g, '$1')
+    .replace(/\n{3,}/g, '\n\n');
+}
+
 const EDITIONS = [
   {
     file: 'srd-2014-en.json',
@@ -604,14 +623,15 @@ const EDITIONS = [
     // Abjuração; o SRD diz evocation) por construção.
     factsFrom: 'srd-2024-en.json',
     // D-02: atribuição dupla verbatim — o texto WotC do SRD 5.2 seguido da
-    // seção "Licença" do Heróis Anônimos, ambos ipsis litteris.
+    // seção "Licença" do Heróis Anônimos, ambos ipsis litteris (a Licença sem
+    // os marcadores Markdown, ver stripLicenseMarkdown).
     // Sem guarda, um recorte sem `license` virava a string "undefined" e
     // passava no schema (é string) — caminho de conformidade de licença.
     attribution: (source) => {
       if (typeof source.license !== 'string' || !source.license.includes('Heróis Anônimos')) {
         throw new Error('srd-2024-ptbr.json: recorte sem a seção "Licença" do Heróis Anônimos (D-02).');
       }
-      return `${SRD52_ATTRIBUTION}\n\n${source.license}`;
+      return `${SRD52_ATTRIBUTION}\n\n${stripLicenseMarkdown(source.license)}`;
     },
     modificationNote: MODIFICATION_NOTE_PTBR,
     extract: parsePtbr52,
