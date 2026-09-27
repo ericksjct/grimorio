@@ -1,9 +1,9 @@
 ---
-status: partial
+status: complete
 phase: 06-decommissioning-migration
 source: [06-01-SUMMARY.md, 06-02-SUMMARY.md, 06-03-SUMMARY.md, 06-04-SUMMARY.md, 06-05-SUMMARY.md]
 started: 2026-09-05T01:32:03Z
-updated: 2026-09-05T02:10:00Z
+updated: 2026-09-27T00:00:00Z
 ---
 
 ## Current Test
@@ -88,7 +88,7 @@ closed_by: 06-07
 
 ### 6. Clareza do texto do banner (teste de aceitação informal de 06-CONTEXT)
 expected: uma pessoa que não conhece o projeto entende o que mudou, o que continua salvo e o que fazer
-result: issue
+result: pass
 reported: "o botao \"entendi\" ta muito apagado. ele tem que ficar mais evidente"
 severity: minor
 test: 6
@@ -102,7 +102,7 @@ resolution: |
   primario na hierarquia (peso normal contra o serifado negrito do primario, e
   posicionado fora da linha de CTAs). Verificado nos dois temas em 390x844.
   Nenhum gate cravava a classe antiga; suite segue verde.
-pending: veredito humano sobre o TEXTO em si (as tres perguntas de compreensao) ainda nao dado
+verdict: "Sim, deu pra entender." — usuario, 2026-09-27, respondendo as tres perguntas (o que mudou, o que continua salvo, o que fazer) sobre o texto atual do banner
 
 ### 7. Contraprova do desfecho esperado (D-12)
 expected: importar um pack que contenha uma órfã faz ela migrar sozinha para a lista normal, sem ação sobre o dado salvo
