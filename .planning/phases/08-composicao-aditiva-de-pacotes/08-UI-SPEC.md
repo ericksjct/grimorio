@@ -1,7 +1,8 @@
 ---
 phase: 8
 slug: composicao-aditiva-de-pacotes
-status: draft
+status: approved
+reviewed_at: 2026-09-27
 shadcn_initialized: false
 preset: none
 created: 2026-09-27
@@ -24,7 +25,7 @@ created: 2026-09-27
 | Tool | none |
 | Preset | not applicable |
 | Component library | none — hand-rolled `hifi-tokens.css` set. Every new element in this phase reuses existing classes verbatim: `.hifi-btn-primary` / `.hifi-btn-secondary` / `.hifi-btn-ghost`, `.hifi-input`, `.hifi-filter-chip` + `.hifi-filter-chip-count`, `.hifi-icon-btn` (flat variant from `.hifi-panel-header`), `.hifi-section-label`, the `role="dialog"` shell (`pack-import-dialog.jsx` chrome + `useDialogA11y`), and the `.hifi-level-0..9` color ramp (reused for D-19, see Color below). No new component classes are introduced. |
-| Icon library | none — inline SVG / text glyphs / native controls only. This phase needs: a native `input[type=checkbox]` (styled only via the existing global `:focus-visible` ring), the `▾` caret already used by `VersionSelector`, and a flat `.hifi-icon-btn` glyph (✕ or 🗑, text glyph — no new SVG asset) for the per-row remove affordance. |
+| Icon library | none — inline SVG / text glyphs / native controls only. This phase needs: a native `input[type=checkbox]` (styled only via the existing global `:focus-visible` ring), the `▾` caret already used by `VersionSelector`, and a flat `.hifi-icon-btn` glyph (✕ or 🗑, text glyph — no new SVG asset) for the per-row remove affordance — icon-only, so it MUST carry `aria-label` + `title` = the existing `manager.remove` i18n string (bilingual accessible name). |
 | Font | `Marauder Text` (card descriptions, dialog body prose), `Texturina` (menu/dialog headings, small-caps), `JetBrains Mono` (section labels, slugs, counts, lang codes) — all self-hosted, already declared in `hifi-tokens.css`. Menu/dialog chrome (checkboxes, buttons, inputs) uses the `ui-sans-serif` system stack per the existing chrome rule. |
 
 **Theming constraint (carried over):** every new surface renders correctly across all 6 themes × light/dark using CSS custom properties — never a hardcoded hex.
