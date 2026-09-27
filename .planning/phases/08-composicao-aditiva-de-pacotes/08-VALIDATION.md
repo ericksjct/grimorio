@@ -40,7 +40,26 @@ created: 2026-09-27
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| {filled by planner per task} | | | | | | | | | ⬜ pending |
+| 08-01-T1 | 08-01 | 1 | MGMT-06, SRD-05, MGMT-08 | T-08-06 | loader nunca escreve em dado de personagem | node proof (vm) | `pwsh -NoProfile -File scripts/check-pack-composition.tests.ps1` | ❌ criado na task (RED→GREEN) | ⬜ pending |
+| 08-01-T2 | 08-01 | 1 | MIGR-04, MGMT-08 | T-08-01, T-08-02, T-08-05 | prefs adulteradas normalizadas; sem laço de re-render; toast de fallback | node proof (vm, contexto por caso) | `pwsh -NoProfile -File scripts/check-selection-migration.tests.ps1` | ❌ criado na task (RED→GREEN) | ⬜ pending |
+| 08-01-T3 | 08-01 | 1 | MIGR-04 | — | index.html sem estado de versão | static + suite | `npm test` | ✅ | ⬜ pending |
+| 08-02-T1 | 08-02 | 1 | MGMT-07, MGMT-08, MGMT-09 | T-08-07 | textos só via tt; paridade PT/EN | node proof (vm i18n) | `pwsh -NoProfile -File scripts/check-i18n-pack-menu.tests.ps1` | ❌ criado na task | ⬜ pending |
+| 08-02-T2 | 08-02 | 1 | PKG-06 | T-08-09, T-08-10, T-08-11 | `meta.image` só data: raster ≤ 200 KB, rejeitado antes de gravar | node proof (validatePack) | `pwsh -NoProfile -File scripts/check-pack-validator.tests.ps1` | ✅ (estendido) | ⬜ pending |
+| 08-02-T3 | 08-02 | 1 | MGMT-07 | T-08-12 | docs renderizam a lista só por textContent | node proof + static | `pwsh -NoProfile -File scripts/check-srd-packs.tests.ps1` + `check-pack-format` | ✅ (estendidos) | ⬜ pending |
+| 08-03-T1 | 08-03 | 2 | MGMT-06 | T-08-14 | conteúdo no idioma da magia; 5 sinks HTML | static | `pwsh -NoProfile -File scripts/check-content-lang-ownership.tests.ps1` (+ editor-version-lang, filter-lang-vocabulary) | ✅ (realinhados) | ⬜ pending |
+| 08-03-T2 | 08-03 | 2 | SRD-05 | T-08-15 | "Também em"/comparador por `_versionKey` | static + node proof | `pwsh -NoProfile -File scripts/check-edition-compare.tests.ps1` + `check-pack-composition` | ✅ (estendidos) | ⬜ pending |
+| 08-04-T1 | 08-04 | 2 | MGMT-07 | T-08-17, T-08-19, T-08-22 | colisão detectada antes de gravar; cancelar não grava | node proof (funil com stubs) | `pwsh -NoProfile -File scripts/check-slug-rename.tests.ps1` + `check-pack-import` | ❌ criado na task | ⬜ pending |
+| 08-04-T2 | 08-04 | 2 | MGMT-07 | T-08-18, T-08-20 | prompt sem sink HTML; impacto só leitura | node proof (pureza com localStorage instrumentado) | `pwsh -NoProfile -File scripts/check-slug-rename.tests.ps1` | ❌ estendido na task | ⬜ pending |
+| 08-04-T3 | 08-04 | 2 | MGMT-07 | T-08-17 | import integrado ao prompt, cancelar/fechar aborta | static + suite | `pwsh -NoProfile -File scripts/check-pack-import-dialog.tests.ps1` + `npm test` | ✅ (estendido) | ⬜ pending |
+| 08-05-T1 | 08-05 | 2 | PKG-06, MGMT-09 | T-08-23 | imagem revalidada antes de `<img src>` | node proof (funções extraídas) | `pwsh -NoProfile -File scripts/check-pack-menu.tests.ps1` | ❌ criado na task | ⬜ pending |
+| 08-05-T2 | 08-05 | 2 | MGMT-06, MGMT-08, MGMT-09, SRD-05 | T-08-24, T-08-25 | menu sem localStorage/putPack/sink HTML | static | `pwsh -NoProfile -File scripts/check-pack-menu.tests.ps1` | ❌ estendido na task (substitui check-pack-manager) | ⬜ pending |
+| 08-05-T3 | 08-05 | 2 | MGMT-07, MGMT-09 | T-08-26 | colisão na seleção passa pelo prompt | node proof (`_chipLabel`) + static | `pwsh -NoProfile -File scripts/check-pack-menu.tests.ps1` | ❌ estendido na task | ⬜ pending |
+| 08-06-T1 | 08-06 | 3 | MGMT-09, MIGR-04 | T-08-29 | chip montado; `?v=` em lista; sem filtro de pacote | static | `pwsh -NoProfile -File scripts/check-ui-lang-toggle.tests.ps1` + `check-pack-composition` | ✅ (realinhados) | ⬜ pending |
+| 08-06-T2 | 08-06 | 3 | MGMT-06 | — | nenhum leitor de versão única sobra | static | `pwsh -NoProfile -File scripts/check-pack-composition.tests.ps1` + `check-i18n-pack-menu` | ✅ (estendidos) | ⬜ pending |
+| 08-06-T3 | 08-06 | 3 | MGMT-09 | T-08-28 | bump do SW para v5 | static + suite | `npm test` | ✅ (check-decommission/check-pack-wiring realinhados) | ⬜ pending |
+| 08-07-T1 | 08-07 | 4 | todos | T-08-31 | nada de artefato de QA no repo | suite + fumaça playwright (temp) | `npm test` | ✅ | ⬜ pending |
+| 08-07-T2 | 08-07 | 4 | todos | T-08-32 | veredito humano por item | manual (checkpoint) | — | n/a | ⬜ pending |
+| 08-07-T3 | 08-07 | 4 | — | — | todo dobrado fechado | node check | `node -e` (ver plano) | n/a | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -48,14 +67,16 @@ created: 2026-09-27
 
 ## Wave 0 Requirements
 
-Proposed by RESEARCH.md (planner confirms gate names and requirement IDs):
+Confirmed by the planner. Não há plano "Wave 0" separado: cada gate novo nasce RED na
+primeira tarefa que o usa e fica GREEN na mesma tarefa (ou na seguinte do mesmo plano).
 
-- [ ] `scripts/check-pack-composition.tests.ps1` — union of selection, per-spell `lang`/`_versionKey` stamping
-- [ ] `scripts/check-slug-rename.tests.ps1` — slug collision detection + rename write, import and selection entry points, cancel aborts
-- [ ] `scripts/check-pack-menu.tests.ps1` — unified pack menu (absorbs/replaces `check-pack-manager.tests.ps1` assertions)
-- [ ] `scripts/check-selection-migration.tests.ps1` — `versionKey` single→list, `?v=` comma list, legacy fallback before conversion
-- [ ] Extend `scripts/check-pack-validator.tests.ps1` — `meta.image` (`data:` URI, raster MIME allowlist, size cap)
-- [ ] Extend `scripts/check-loader-hardening.tests.ps1` / `scripts/check-edition-compare.tests.ps1` — empty-selection fallback, SRD 5.1/5.2 exclusivity, EN×PT uiLang tiebreak
+- [ ] `scripts/check-pack-composition.tests.ps1` — 08-01-T1 (união, exclusividade SRD, desempate EN×PT, default, `lang`/`_versionKey`); estendido em 08-03-T2 e 08-06-T1/T2
+- [ ] `scripts/check-selection-migration.tests.ps1` — 08-01-T2 (MIGR-04: `versionKey` → lista, `?v=` em lista, pendência por item, `[]` persiste `[]`)
+- [ ] `scripts/check-i18n-pack-menu.tests.ps1` — 08-02-T1 (paridade e plurais); ajustado em 08-05-T1 e 08-06-T2
+- [ ] `scripts/check-slug-rename.tests.ps1` — 08-04-T1/T2/T3 (detecção, sugestão, validação, funil, pureza de leitura)
+- [ ] `scripts/check-pack-menu.tests.ps1` — 08-05-T1/T2/T3 (substitui e apaga `check-pack-manager.tests.ps1`)
+- [ ] Estendidos: `check-pack-validator` (PKG-06), `check-srd-packs` + `check-pack-format` (slugs reservados), `check-edition-compare` (comparador por `_versionKey`)
+- [ ] Realinhados: `check-loader-hardening`, `check-source-dispatch`, `check-migration-version-fallback`, `check-ui-lang-state`, `check-transition-banner` (08-01); `check-content-lang-ownership`, `check-editor-version-lang`, `check-filter-lang-vocabulary` (08-03); `check-pack-import`, `check-pack-import-dialog` (08-04); `check-ui-lang-toggle`, `check-decommission`, `check-pack-wiring` (08-06)
 
 ---
 
@@ -63,9 +84,11 @@ Proposed by RESEARCH.md (planner confirms gate names and requirement IDs):
 
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
-| Pack menu cards (image, title, description, derived color), chip `SRD 5.2 +2` | menu (D-16..D-19) | Visual layout / UI-SPEC 6 dimensions | Headless Chromium 390×844 + desktop; open menu, select 2+ packs, compare with UI-SPEC |
-| Rename prompt live validation, "apply suffix to all", cancel aborts | rename (D-09..D-12) | Interactive dialog flow | Import a pack with a reserved slug; check suggestion, validation errors, cancel writes nothing |
-| Grid shows union with per-spell language (`lang`) and `src` footer | union (D-01, D-06, D-20) | Rendered output across languages | Select SRD 5.2 EN + a PT homebrew; inspect cards and `lang` attributes |
+| Pack menu cards (image, title, description, derived color), chip `SRD 5.2 +2` | MGMT-09, PKG-06 (D-16..D-19) | Visual layout / UI-SPEC 6 dimensions | 08-07 checkpoint item 8 (390×844 + desktop) |
+| Rename prompt live validation, "apply suffix to all", cancel aborts | MGMT-07 (D-09..D-12) | Interactive dialog flow | 08-07 checkpoint items 5-7 |
+| Grid shows union with per-spell language (`lang`) and `src` footer | MGMT-06 (D-01, D-06, D-20) | Rendered output across languages | 08-07 checkpoint items 1-3 |
+| Empty selection keeps grid full + toast in UI language | MGMT-08 (D-04) | Toast + grid state | 08-07 checkpoint item 4 |
+| Saved `versionKey` and `?v=a,b` open the right selection | MIGR-04 (D-23, D-24) | Boot-time behavior on a real profile | 08-07 checkpoint item 9 |
 
 ---
 
