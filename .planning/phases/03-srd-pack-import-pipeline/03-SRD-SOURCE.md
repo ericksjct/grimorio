@@ -152,8 +152,9 @@ As 52 magias fora do SRD 5.2 (391 blocos nomeados no Markdown menos 339 mantidas
 **Divergências fonte × SRD 5.2 EN** (medidas; como o pack resolve)
 
 - Escola de `resilient-sphere` (tradução: Abjuração; SRD: evocation) — o pack segue o SRD.
-- `call-lightning` sem a seção de círculo superior na tradução — o pack sai sem `upgradeDescription`.
-- Concentração de `forcecage` e `glyph-of-warding` difere do flag EN — o pack segue o texto de duração da tradução, para o selo não contradizer a linha exibida.
+- `call-lightning` sem a cláusula de tempestade e sem a seção de círculo superior na tradução — corrigido por errata (`PTBR_ERRATA` em `generate-srd-pack.mjs`, commit `384849b`): os dois trechos foram traduzidos do SRD 5.2 EN; declarado em `MODIFICATION_NOTE_PTBR`.
+- `forcecage`: a tradução marcava concentração, o SRD 5.2 não — corrigido pela mesma errata (duração "1 hora", sem concentração).
+- `glyph-of-warding`: o erro estava no pack EN (flag de concentração vindo do gist) — corrigido no lado EN do gerador; os dois packs concordam.
 - Círculo e classes: 0 divergências.
 
 **Atribuição e nota de modificação** (D-02, D-04)
