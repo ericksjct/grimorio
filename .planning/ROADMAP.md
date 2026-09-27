@@ -24,6 +24,7 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
 - [x] **Phase 5: Plugin Manager UI & Version Selector** - Install/list/remove UI, dynamic version selector, duplicate-spell notes, empty state, CC-BY attribution (completed 2026-08-30)
 - [x] **Phase 6: Decommissioning & Migration** - Remove the 4 protected JSONs from site/repo; migrate existing users without silently dropping references (completed 2026-09-27)
 - [x] **Phase 7: Tradução dos SRDs para pt-BR** - Pacote SRD 5.2 pt-BR embutido, a partir da tradução CC-BY do Heróis Anônimos recortada às 339 magias do SRD (completed 2026-09-27)
+- [ ] **Phase 8: Composição aditiva de pacotes** - Pacote base + pacotes homebrew empilhados que adicionam magias em vez de substituir a versão ativa
 
 ## Phase Details
 
@@ -298,6 +299,17 @@ Plans:
 
 - [x] 07-05-PLAN.md — Wave 4: checkpoint humano — ~10 magias na tela (D-15), primeira visita pt-BR, chave legada, identidade pt↔en, atribuição e Cache Storage (SRD-02, SRD-03, SRD-04)
 
+### Phase 8: Composição aditiva de pacotes
+
+**Goal:** O usuário mantém um pacote base ativo (ex.: SRD 5.2) e empilha pacotes homebrew por cima: as magias dos pacotes empilhados SOMAM à lista da versão ativa em vez de substituí-la, com a origem de cada magia visível e sem quebrar preparadas/favoritas.
+**Requirements**: TBD (a definir em discuss/plan — provável novo ID PKG-/MGMT-)
+**Depends on:** Phase 7
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 8 to break down)
+
 ## Planning Routes (resumo)
 
 Registrado 2026-07-18. Regra: discuss só quando há decisão de produto/UX que o planner não pode tomar sozinho.
@@ -327,3 +339,4 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 5. Plugin Manager UI & Version Selector | v2.0 | 5/5 | Complete    | 2026-08-30 |
 | 6. Decommissioning & Migration | v2.0 | 7/7 | Complete    | 2026-09-27 |
 | 7. Tradução dos SRDs para pt-BR | v2.0 | 5/5 | Complete    | 2026-09-27 |
+| 8. Composição aditiva de pacotes | v2.0 | 0/0 | Not started |  |

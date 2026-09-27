@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Plugins BYOD
-current_phase: 07
-current_phase_name: Tradução dos SRDs para pt-BR
-current_plan: Complete
-status: milestone-complete
+current_phase: 08
+current_phase_name: Composição aditiva de pacotes
+current_plan: Not started
+status: planning
 stopped_at: Completed 06-06-PLAN.md — checkpoint humano aprovado, Fase 6 encerrada
 last_updated: "2026-09-27T15:58:35.959Z"
 last_activity: 2026-09-27
-last_activity_desc: Phases 06 and 07 complete — all v2.0 phases done, ready for milestone completion
+last_activity_desc: Phases 06 and 07 complete; Phase 08 added before milestone completion
 progress:
-  total_phases: 7
+  total_phases: 8
   completed_phases: 7
   total_plans: 36
   completed_plans: 36
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-17)
 
 **Core value:** Players can quickly find, prepare, and reference the right spells for their character, fully offline, with zero setup.
-**Current focus:** Marco v2.0 completo (7/7 fases) — próximo passo: /gsd-complete-milestone
+**Current focus:** Phase 08 — Composição aditiva de pacotes (não planejada)
 
 ## Current Position
 
-Phase: 07 — Tradução dos SRDs para pt-BR
-Current Plan: 5/5 complete
-Total Plans in Phase: 5
-Status: Complete — todas as fases do marco v2.0 concluídas
+Phase: 08 — Composição aditiva de pacotes
+Current Plan: Not started
+Total Plans in Phase: 0
+Status: Ready to discuss/plan
 Last activity: 2026-09-27 — Fases 06 e 07 completas (verificação passed nas duas)
 
 Progress: [██████████] 100%
@@ -115,6 +115,7 @@ None yet. `.planning/codebase/CONCERNS.md` holds candidate future maintenance it
 
 ### Roadmap Evolution
 
+- Phase 8 added (2026-09-27): Composição aditiva de pacotes — pacote base + homebrew empilhado que adiciona magias em vez de substituir; entra antes de fechar o marco v2.0
 - Phase 04.1 inserted after Phase 4: Desacoplar o idioma da interface do idioma do pacote - pre-requisito da Fase 6, levantado no checkpoint 04-04 (URGENT)
 
 ## Quick Tasks Completed
