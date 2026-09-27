@@ -22,7 +22,7 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
 - [x] **Phase 4: Loader Integration (Source-Dispatch)** - The loader natively reads SRD + any installed packs through one dispatch point, no hardcoded 4-dataset list (completed 2026-08-17)
 - [x] **Phase 04.1: Desacoplar o idioma da interface do idioma do pacote** (INSERIDA) - uiLang vira estado proprio; pre-requisito da Fase 6, que remove as unicas entradas em portugues (completed 2026-08-24)
 - [x] **Phase 5: Plugin Manager UI & Version Selector** - Install/list/remove UI, dynamic version selector, duplicate-spell notes, empty state, CC-BY attribution (completed 2026-08-30)
-- [ ] **Phase 6: Decommissioning & Migration** - Remove the 4 protected JSONs from site/repo; migrate existing users without silently dropping references
+- [x] **Phase 6: Decommissioning & Migration** - Remove the 4 protected JSONs from site/repo; migrate existing users without silently dropping references (completed 2026-09-27)
 - [x] **Phase 7: Tradução dos SRDs para pt-BR** - Pacote SRD 5.2 pt-BR embutido, a partir da tradução CC-BY do Heróis Anônimos recortada às 339 magias do SRD (completed 2026-09-27)
 
 ## Phase Details
@@ -228,7 +228,7 @@ Plans:
   3. The 4 protected JSON files are gone from the deployed site and repo HEAD, and the service worker precache list contains only the SRD file (MIGR-02)
   4. An existing user's first visit after the update shows clear, actionable guidance on how to import their own pack to restore full spell content (MIGR-03)
 
-**Plans**: 6/7 plans executed
+**Plans**: 7/7 plans executed
 
 Plans:
 **Wave 1**
@@ -247,7 +247,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 06-06-PLAN.md — Wave 4: checkpoint humano dos 4 critérios de sucesso (390×844 nos dois temas, dado do usuário comparado byte a byte antes/depois, Cache Storage conferido) e fechamento dos dois todos incorporados ao escopo (MIGR-01, MIGR-02, MIGR-03)
+- [x] 06-06-PLAN.md — Wave 4: checkpoint humano dos 4 critérios de sucesso (390×844 nos dois temas, dado do usuário comparado byte a byte antes/depois, Cache Storage conferido) e fechamento dos dois todos incorporados ao escopo (MIGR-01, MIGR-02, MIGR-03)
 
 **Wave 5** *(gap closure — os 2 defeitos que a UAT reprovou; o checkpoint de 06-06 tem de ser RE-EXECUTADO depois deste plano)*
 
@@ -325,5 +325,5 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 4. Loader Integration (Source-Dispatch) | v2.0 | 4/4 | Complete    | 2026-08-17 |
 | 04.1. Desacoplar o idioma da interface | v2.0 | 5/5 | Complete    | 2026-08-24 |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 5/5 | Complete    | 2026-08-30 |
-| 6. Decommissioning & Migration | v2.0 | 6/7 | In Progress|  |
+| 6. Decommissioning & Migration | v2.0 | 7/7 | In Progress|  |
 | 7. Tradução dos SRDs para pt-BR | v2.0 | 5/5 | Complete    | 2026-09-27 |

@@ -4,16 +4,17 @@ milestone: v2.0
 milestone_name: Plugins BYOD
 current_phase: 6
 current_phase_name: Decommissioning & Migration
+current_plan: 6
 status: planning
-stopped_at: Completed 07-05-PLAN.md — Fase 7 encerrada, SRD-04 fechado
-last_updated: "2026-09-27T05:16:13.714Z"
+stopped_at: Completed 06-06-PLAN.md — checkpoint humano aprovado, Fase 6 encerrada
+last_updated: "2026-09-27T15:54:40.302Z"
 last_activity: 2026-09-27
-last_activity_desc: Phase 07 complete, transitioned to Phase 6
+last_activity_desc: Completed 06-06-PLAN.md — checkpoint humano aprovado, Fase 6 encerrada (7/7 plans)
 progress:
   total_phases: 7
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 36
-  completed_plans: 35
+  completed_plans: 36
 ---
 
 # Project State
@@ -28,11 +29,12 @@ See: .planning/PROJECT.md (updated 2026-07-17)
 ## Current Position
 
 Phase: 6 — Decommissioning & Migration
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-09-27 — Phase 07 complete, transitioned to Phase 6
+Current Plan: 6
+Total Plans in Phase: 7
+Status: Complete
+Last activity: 2026-09-27 — Completed 06-06-PLAN.md — checkpoint humano aprovado, Fase 6 encerrada (7/7 plans)
 
-Progress: [██████████] 97%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -71,6 +73,7 @@ Progress: [██████████] 97%
 | Phase 07 P03 | 20min | 2 tasks | 2 files |
 | Phase 07 P04 | 15min | 3 tasks | 8 files |
 | Phase 07 P05 | 25min | 2 tasks | 0 files |
+| Phase 06 P06 | ~15min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -95,6 +98,8 @@ Decisions are logged in PROJECT.md Key Decisions table. Four decisions locked fo
 - [Phase ?]: 07-01's executor had already promoted SRD-04 out of Future Requirements (61b5014) as an unplanned side-effect; 07-03 reconciled instead of duplicating, replacing only the SRD-04 wording/promotion-note spans
 - [Phase ?]: [Phase 07-04] D-08 (Fase 7) reverte em parte o D-04 (Fase 6): chaves legadas PT-BR redirecionam por idioma (para srd-2024-ptbr), nao por edicao
 - [Phase ?]: [Rule 1 - Phase 07-05] mdTableToHtml empilha tabela de atributo de criatura (>8 celulas/linha) em 4 colunas - achado de overflow (450px em painel de 350px) no checkpoint humano D-15, corrigido no mesmo commit com gate reforcado
+- [Phase ?]: [Phase 06-06] Checkpoint humano aprovado: os 4 criterios de sucesso do ROADMAP (MIGR-01/02/03) confirmados via 06-UAT.md 7/7; banner reaprovado pelo usuario apos ajuste visual do botao Entendi (45c6570)
+- [Phase ?]: [Phase 06-06] Fase 6 encerrada (7/7 plans); todo srd-pack-nomes-slug-e-markdown-cru fechado (todos/completed/), review-05-warnings WR-01 marcada resolvida (todo continua pending por WR-02 e demais)
 
 ### Pending Todos
 
@@ -127,6 +132,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-27T04:22:33.243Z
-Stopped at: Completed 07-05-PLAN.md — Fase 7 encerrada, SRD-04 fechado
+Last session: 2026-09-27T15:54:40.292Z
+Stopped at: Completed 06-06-PLAN.md — checkpoint humano aprovado, Fase 6 encerrada
 Resume file: None
