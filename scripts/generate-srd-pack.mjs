@@ -500,6 +500,9 @@ function parsePtbr52(source, facts) {
       if (fieldMatch) {
         const [re, key] = fieldMatch;
         const value = chunk.replace(re, '').trim();
+        if ({ castTime, range, components, duration }[key]) {
+          throw new Error(`parsePtbr52: '${spell.name}' tem mais de um trecho de '${key}' — não sobrescrevo em silêncio.`);
+        }
         if (key === 'castTime') castTime = value;
         else if (key === 'range') range = value;
         else if (key === 'components') components = value;
@@ -568,8 +571,14 @@ function parsePtbr52(source, facts) {
       `parsePtbr52: ${missing.length} magia(s) do recorte sem correspondente no SRD EN: ${missing.join(', ')}`,
     );
   }
-  if (records.length !== facts.size) {
-    throw new Error(`parsePtbr52: gerou ${records.length} registro(s), esperado ${facts.size} (facts.size).`);
+  // Igualdade de CONJUNTO, não só de contagem: um slug duplicado + um faltando
+  // empatariam no tamanho (e freeIdentifier renomearia o duplicado para x-2).
+  const recordNames = new Set(records.map((r) => r.name));
+  const absent = [...facts.keys()].filter((k) => !recordNames.has(k));
+  if (records.length !== facts.size || recordNames.size !== records.length || absent.length) {
+    throw new Error(
+      `parsePtbr52: gerou ${records.length} registro(s) (${recordNames.size} distintos), esperado exatamente o conjunto de ${facts.size} slugs do SRD EN; faltando: ${absent.join(', ') || '(nenhum)'}.`,
+    );
   }
 
   return records;
