@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Plugins BYOD
-current_phase: 07
-current_phase_name: traducao-srd-ptbr
-status: verifying
+current_phase: 6
+current_phase_name: Decommissioning & Migration
+status: planning
 stopped_at: Completed 07-05-PLAN.md — Fase 7 encerrada, SRD-04 fechado
-last_updated: "2026-09-27T04:22:33.255Z"
-last_activity: 2026-09-26
-last_activity_desc: Phase 07 execution started
+last_updated: "2026-09-27T05:16:13.714Z"
+last_activity: 2026-09-27
+last_activity_desc: Phase 07 complete, transitioned to Phase 6
 progress:
   total_phases: 7
   completed_phases: 6
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-07-17)
 
 ## Current Position
 
-Phase: 07 (traducao-srd-ptbr) — EXECUTING
-Plan: 5 of 5
-Status: Phase complete — ready for verification
-Last activity: 2026-09-26 — Phase 07 execution started
+Phase: 6 — Decommissioning & Migration
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-09-27 — Phase 07 complete, transitioned to Phase 6
 
 Progress: [██████████] 97%
 
@@ -38,7 +38,7 @@ Progress: [██████████] 97%
 
 **Velocity:**
 
-- Total plans completed: 24
+- Total plans completed: 29
 - Average duration: -
 - Total execution time: -
 
@@ -52,6 +52,7 @@ Progress: [██████████] 97%
 | 04 | 4 | - | - |
 | 04.1 | 5 | - | - |
 | 05 | 5 | - | - |
+| 07 | 5 | - | - |
 
 **Recent Trend:**
 

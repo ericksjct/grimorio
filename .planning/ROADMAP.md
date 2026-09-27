@@ -23,7 +23,7 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
 - [x] **Phase 04.1: Desacoplar o idioma da interface do idioma do pacote** (INSERIDA) - uiLang vira estado proprio; pre-requisito da Fase 6, que remove as unicas entradas em portugues (completed 2026-08-24)
 - [x] **Phase 5: Plugin Manager UI & Version Selector** - Install/list/remove UI, dynamic version selector, duplicate-spell notes, empty state, CC-BY attribution (completed 2026-08-30)
 - [ ] **Phase 6: Decommissioning & Migration** - Remove the 4 protected JSONs from site/repo; migrate existing users without silently dropping references
-- [ ] **Phase 7: Tradução dos SRDs para pt-BR** - Pacote SRD 5.2 pt-BR embutido, a partir da tradução CC-BY do Heróis Anônimos recortada às 339 magias do SRD
+- [x] **Phase 7: Tradução dos SRDs para pt-BR** - Pacote SRD 5.2 pt-BR embutido, a partir da tradução CC-BY do Heróis Anônimos recortada às 339 magias do SRD (completed 2026-09-27)
 
 ## Phase Details
 
@@ -273,7 +273,7 @@ Fase 6 removeu.
   4. O pacote tem exatamente as 339 magias de `srd-2024-en.json`, com círculo/escola batendo, sem nome próprio do PHB e sem legenda de ilustração (D-01, D-14, D-16, D-18)
   5. O documento completo do Heróis Anônimos e os fixtures legados nunca entram no repositório — só o recorte versionado (D-02, D-09, D-10, D-17)
 
-**Plans:** 5/5 plans executed
+**Plans:** 5/5 plans complete
 
 **Nota:** a descrição original desta fase (tradução própria de 658 descrições, 5.1 e
 5.2, decisões em aberto) foi substituída pela discussão de 2026-09-05, revisada em
@@ -326,4 +326,4 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 04.1. Desacoplar o idioma da interface | v2.0 | 5/5 | Complete    | 2026-08-24 |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 5/5 | Complete    | 2026-08-30 |
 | 6. Decommissioning & Migration | v2.0 | 6/7 | In Progress|  |
-| 7. Tradução dos SRDs para pt-BR | v2.0 | 5/5 | In Progress|  |
+| 7. Tradução dos SRDs para pt-BR | v2.0 | 5/5 | Complete    | 2026-09-27 |
