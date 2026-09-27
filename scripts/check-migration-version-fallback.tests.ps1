@@ -66,7 +66,7 @@ if ($fallbackBranchMatch.Value -notmatch '_wantedVersionKey\s*=\s*null') {
 # 6. Pós-06-05: as 4 chaves legadas saíram de BUILTIN_VERSIONS (D-15/D-17) -
 #    LEGACY_VERSION_FALLBACK continua vivo (é o que resolve uma preferência
 #    salva apontando pra uma delas), mas o registro embutido agora só declara
-#    as 2 entradas SRD.
+#    as 3 entradas SRD (5.2 EN, 5.1 EN e, desde a Fase 7, 5.2 PT-BR).
 if ($loader -match "key:\s*'spells-5E-2024-PTBR'") {
   throw 'BUILTIN_VERSIONS ainda declara uma chave legada - a decomissao (06-05) deveria te-la removido.'
 }

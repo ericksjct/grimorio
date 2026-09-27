@@ -45,7 +45,7 @@ foreach ($f in $removedFiles) {
   }
 }
 
-# ── 3. sw.js: PRECACHE so com os 2 SRD, CACHE_VERSION bumpado ──
+# ── 3. sw.js: PRECACHE so com os 3 SRD (5.2 EN, 5.1 EN, 5.2 PT-BR), CACHE_VERSION bumpado ──
 $swPath = Join-Path $repoRoot 'sw.js'
 $sw = Get-Content -Raw -LiteralPath $swPath
 

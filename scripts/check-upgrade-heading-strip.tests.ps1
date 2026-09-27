@@ -36,13 +36,19 @@ if ($loader -match 'upgrade(Html)?:\s*\{[^}]*(pt|en):\s*(stripHtml\()?s\.upgrade
 # lista de rótulos por idioma dentro do loader — assim o strip do app continua
 # casando por ESTRUTURA e segue valendo para packs BYOD em qualquer idioma.
 
-foreach ($pack in @('srd-2024-en.json', 'srd-2014-en.json')) {
+# O rótulo pt-BR ("Usando um Espaço de Magia de Círculo Superior.", 46
+# caracteres) não cabe em {1,40}; por isso o limite é por pack.
+foreach ($entry in @(@('srd-2024-en.json', 40), @('srd-2014-en.json', 40), @('srd-2024-ptbr.json', 60))) {
+  $pack, $max = $entry
   $raw = Get-Content -Raw -LiteralPath (Join-Path $repoRoot $pack)
-  if ($raw -notmatch '<strong><em>[^<]{1,40}[.:]</em></strong>') {
+  if ($raw -notmatch "<strong><em>[^<]{1,$max}[.:]</em></strong>") {
     throw "$pack no longer carries the MARKED upgrade heading — regenerate with scripts/generate-srd-pack.mjs."
   }
   if ($raw -match '<p>At Higher Levels\.') {
     throw "$pack carries an UNMARKED 'At Higher Levels.' heading — the app would print the title twice. Regenerate the pack; do not add a per-language label list to the loader."
+  }
+  if ($raw -match '<p>(Usando um Espaço de Magia de Círculo Superior|Aprimoramento de Truque).') {
+    throw "$pack carries an UNMARKED pt-BR upgrade heading — the app would print the title twice. Regenerate the pack."
   }
 }
 
@@ -110,4 +116,4 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'Upgrade heading strip failed its execution proof.' }
 } finally { Remove-Item -LiteralPath $tmp -ErrorAction SilentlyContinue }
 
-Write-Output 'Upgrade heading: both SRD packs ship it marked up, and the adapter strips it structurally.'
+Write-Output 'Upgrade heading: all 3 SRD packs ship it marked up, and the adapter strips it structurally.'
