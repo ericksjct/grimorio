@@ -131,8 +131,6 @@ for (const n of ptNames) if (!enNames.has(n)) fail(`magia '${n}' no pack pt-BR n
 
 // ── por magia (D-14) ───────────────────────────────────────────────────
 const enByName = new Map(en.spells.map((s) => [s.name, s]));
-const CONCENTRATION_EXCEPTIONS = new Set(["forcecage", "glyph-of-warding"]);
-const UPGRADE_EXCEPTIONS = new Set(["call-lightning"]);
 
 for (const spell of ptbr.spells) {
   const enSpell = enByName.get(spell.name);
@@ -154,11 +152,11 @@ for (const spell of ptbr.spells) {
 
   const concFromText = /^Concentração/.test(spell.duration || "");
   if (!!spell.concentration !== concFromText) fail(`'${spell.name}': concentration (${!!spell.concentration}) nao bate com o texto de duration.`);
-  if (!CONCENTRATION_EXCEPTIONS.has(spell.name) && !!spell.concentration !== !!enSpell.concentration) {
+  if (!!spell.concentration !== !!enSpell.concentration) {
     fail(`'${spell.name}': concentration (${!!spell.concentration}) != EN (${!!enSpell.concentration})`);
   }
 
-  if (!UPGRADE_EXCEPTIONS.has(spell.name) && !!spell.upgradeDescription !== !!enSpell.upgradeDescription) {
+  if (!!spell.upgradeDescription !== !!enSpell.upgradeDescription) {
     fail(`'${spell.name}': presenca de upgradeDescription (${!!spell.upgradeDescription}) != EN (${!!enSpell.upgradeDescription})`);
   }
   if (spell.upgradeDescription && !spell.upgradeDescription.startsWith("<p><strong><em>")) {
@@ -276,8 +274,15 @@ spot("resilient-sphere", (sp) => {
   if (sp.school !== "evocation") fail(`resilient-sphere: school '${sp.school}' != 'evocation'`);
   if (sp.displayName !== "Esfera Resiliente") fail(`resilient-sphere: displayName '${sp.displayName}' != 'Esfera Resiliente'`);
 });
+// Errata WR-04 (revisão da fase 07): a tradução não trazia estes trechos do SRD 5.2.
 spot("call-lightning", (sp) => {
-  if (sp.upgradeDescription) fail("call-lightning: upgradeDescription presente, esperado ausente.");
+  if (!sp.description.includes("ao ar livre durante uma tempestade")) fail("call-lightning: description sem a clausula da tempestade (errata).");
+  if (!(sp.upgradeDescription || "").startsWith("<p><strong><em>Usando um Espaço de Magia de Círculo Superior.</em></strong> O dano aumenta em 1d10")) {
+    fail("call-lightning: upgradeDescription da errata ausente.");
+  }
+});
+spot("forcecage", (sp) => {
+  if (sp.concentration || sp.duration !== "1 hora") fail(`forcecage: esperado sem Concentracao e duracao '1 hora' (errata), achei '${sp.duration}'.`);
 });
 
 if (fails.length) {

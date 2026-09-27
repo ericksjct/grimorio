@@ -59,7 +59,7 @@ const MODIFICATION_NOTE_EN =
 // terceiro recortada ao SRD 5.2, então a nota do pack EN acima seria falsa
 // para ele.
 const MODIFICATION_NOTE_PTBR =
-  'Tradução para o português do Brasil feita pelo Heróis Anônimos (https://6x.work/heroisanonimos, versão de 07/03/2025), publicada pelos tradutores sob CC-BY-4.0. Recorte às 339 magias do SRD 5.2: nenhum outro conteúdo do documento de origem foi incluído. Texto extraído do Markdown e reformatado para JSON e HTML estrutural; legendas de ilustração removidas. As 17 magias que o SRD 5.2 renomeou aparecem com o nome genérico do SRD traduzido, sem os nomes próprios do Player\'s Handbook. Círculo, escola e classes seguem o SRD 5.2 em inglês.';
+  'Tradução para o português do Brasil feita pelo Heróis Anônimos (https://6x.work/heroisanonimos, versão de 07/03/2025), publicada pelos tradutores sob CC-BY-4.0. Recorte às 339 magias do SRD 5.2: nenhum outro conteúdo do documento de origem foi incluído. Texto extraído do Markdown e reformatado para JSON e HTML estrutural; legendas de ilustração removidas. As 17 magias que o SRD 5.2 renomeou aparecem com o nome genérico do SRD traduzido, sem os nomes próprios do Player\'s Handbook. Círculo, escola e classes seguem o SRD 5.2 em inglês. Errata aplicada contra o SRD 5.2 em inglês: Cárcere de Energia sem Concentração (duração de 1 hora), e Convocar Relâmpagos com a cláusula da tempestade e o aprimoramento por círculo superior, que faltavam na tradução (texto traduzido do SRD 5.2).';
 
 // ── shared helpers ──────────────────────────────────────────────────────
 
@@ -348,8 +348,16 @@ function durationOf(s) {
   return s.duration;
 }
 
+// Correção documentada da fonte (gist dmcb), não do SRD: o SRD 5.2 dá a Glyph
+// of Warding "Duration: Until dispelled or triggered", sem Concentração, mas o
+// gist marca `concentration: true` e durationOf produzia "Concentration, Until
+// dispelled or triggered" (revisão da fase 07, IN-04/WR-04). Com isto os packs
+// EN e pt-BR concordam no selo de Concentração.
+const SRD52_SOURCE_FIXES = { 'Glyph of Warding': { concentration: false } };
+
 function parseSrd52(records) {
-  return records.map((s) => {
+  return records.map((raw) => {
+    const s = Object.hasOwn(SRD52_SOURCE_FIXES, raw.name) ? { ...raw, ...SRD52_SOURCE_FIXES[raw.name] } : raw;
     let upgradeDescription = null;
     if (s.higherLevelSlot) {
       upgradeDescription = `<p><strong><em>At Higher Levels.</em></strong> ${htmlEscape(s.higherLevelSlot)}</p>`;
@@ -435,6 +443,32 @@ const PTBR_FIELD_PATTERNS = [
 ];
 const PTBR_UPGRADE_LABELS = ['Usando um Espaço de Magia de Círculo Superior.', 'Aprimoramento de Truque.'];
 
+// Errata da tradução contra o SRD 5.2 em inglês (revisão da fase 07, WR-04).
+// Cada patch troca um trecho EXATO do Markdown do recorte; se o trecho sumir
+// (o Heróis Anônimos revisou o texto), o gerador para em vez de aplicar o
+// patch às cegas — reavalie a entrada. Citada em MODIFICATION_NOTE_PTBR.
+// - forcecage: o SRD 5.2 diz "Duration: 1 hour", sem Concentração.
+// - call-lightning: faltavam a cláusula da tempestade e o aprimoramento por
+//   círculo superior; traduzidos da entrada do SRD 5.2 EN.
+const PTBR_ERRATA = {
+  forcecage: [['**Duração:** Concentração, até 1 hora', '**Duração:** 1 hora']],
+  'call-lightning': [[
+    'escolhendo o mesmo ponto ou um diferente.',
+    'escolhendo o mesmo ponto ou um diferente. Se você estiver ao ar livre durante uma tempestade quando conjurar esta magia, a magia lhe dá controle sobre essa tempestade em vez de criar uma nova. Nessas condições, o dano da magia aumenta em 1d10.'
+      + '\n\n**Usando um Espaço de Magia de Círculo Superior.** O dano aumenta em 1d10 para cada círculo de espaço de magia acima de 3.',
+  ]],
+};
+
+function applyPtbrErrata(name, markdown) {
+  const patches = Object.hasOwn(PTBR_ERRATA, name) ? PTBR_ERRATA[name] : [];
+  return patches.reduce((md, [from, to]) => {
+    if (md.split(from).length !== 2) {
+      throw new Error(`parsePtbr52: errata de '${name}' não achou o trecho exato "${from}" — o recorte mudou, reavalie a errata.`);
+    }
+    return md.replace(from, () => to);
+  }, markdown);
+}
+
 function parsePtbr52(source, facts) {
   const missing = [];
   const records = [];
@@ -446,7 +480,7 @@ function parsePtbr52(source, facts) {
       continue;
     }
 
-    const chunks = spell.markdown
+    const chunks = applyPtbrErrata(spell.name, spell.markdown)
       .split(/\n{2,}/)
       .map((c) => c.trim())
       .filter(Boolean);
@@ -527,6 +561,8 @@ function parsePtbr52(source, facts) {
     });
   }
 
+  const unusedErrata = Object.keys(PTBR_ERRATA).filter((k) => !source.spells.some((s) => s.name === k));
+  if (unusedErrata.length) throw new Error(`parsePtbr52: errata sem magia no recorte: ${unusedErrata.join(', ')}`);
   if (missing.length) {
     throw new Error(
       `parsePtbr52: ${missing.length} magia(s) do recorte sem correspondente no SRD EN: ${missing.join(', ')}`,
