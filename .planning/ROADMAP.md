@@ -325,5 +325,5 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 4. Loader Integration (Source-Dispatch) | v2.0 | 4/4 | Complete    | 2026-08-17 |
 | 04.1. Desacoplar o idioma da interface | v2.0 | 5/5 | Complete    | 2026-08-24 |
 | 5. Plugin Manager UI & Version Selector | v2.0 | 5/5 | Complete    | 2026-08-30 |
-| 6. Decommissioning & Migration | v2.0 | 7/7 | In Progress|  |
+| 6. Decommissioning & Migration | v2.0 | 7/7 | Complete    | 2026-09-27 |
 | 7. Tradução dos SRDs para pt-BR | v2.0 | 5/5 | Complete    | 2026-09-27 |
