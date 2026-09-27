@@ -319,15 +319,18 @@ Plans:
 
 - [ ] 08-03-PLAN.md — Wave 2: conteúdo no idioma de cada magia em v10/v11; "Também em" e comparador ancorados em `_versionKey` (MGMT-06, SRD-05)
 - [ ] 08-04-PLAN.md — Wave 2: colisão de slug e prompt de renomear — detecção/sugestão/validação no funil de import, `pack-rename-dialog.jsx`, import integrado (MGMT-07)
-- [ ] 08-05-PLAN.md — Wave 2: menu de pacotes único — cartões com imagem/título/descrição, checkbox, remoção, licença, slugs reservados, chip e renomeação na seleção (MGMT-06..09, PKG-06, SRD-05)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 08-06-PLAN.md — Wave 3: chip na barra e no drawer, `?v=` em lista no compartilhar, remoção do seletor antigo e das compatibilidades, chaves mortas, `sw.js` v5 (MGMT-06, MGMT-09, MIGR-04)
+- [ ] 08-05-PLAN.md — Wave 3: menu de pacotes único — cartões com imagem/título/descrição, checkbox, remoção, licença, slugs reservados, chip e renomeação na seleção (MGMT-06..09, PKG-06, SRD-05)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 08-07-PLAN.md — Wave 4: QA automatizado + checkpoint humano em 390×844 e desktop; fecha o todo `i18n-toast-versao-e-pluralizacao`
+- [ ] 08-06-PLAN.md — Wave 4: chip na barra e no drawer, `?v=` em lista no compartilhar, remoção do seletor antigo e das compatibilidades, chaves mortas, `sw.js` v5 (MGMT-06, MGMT-09, MIGR-04)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 08-07-PLAN.md — Wave 5: QA automatizado + checkpoint humano em 390×844 e desktop; fecha o todo `i18n-toast-versao-e-pluralizacao`
 
 ## Planning Routes (resumo)
 

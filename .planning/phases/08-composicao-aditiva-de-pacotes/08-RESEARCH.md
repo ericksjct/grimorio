@@ -402,7 +402,7 @@ function _removalImpact(versionKey, index) {
 | A3 | The exact mechanism for D-03's "most recently checked" tiebreak (enforcing exclusivity inside the checkbox handler vs. a downstream filter) is `[ASSUMED]` best-practice, informed by UI-SPEC's own "partial" state row but not spelled out by CONTEXT.md as a specific implementation. | Pattern 1, Pitfall 3 | Low — UI-SPEC's stated behavior ("checking SRD 5.1 unchecks SRD 5.2 in the same state update") already implies this exact mechanism; low risk of being wrong |
 | A4 | `_countsAsDuplicate()`'s existing SRD-5.1↔5.2 exemption in `pack-manager.jsx` (`!(corpusA === 'srd' && corpusB === 'srd')`) is `[VERIFIED]` (read directly) to already special-case SRD↔SRD, but whether the NEW "Também em:" behavior for the D-03 EN×PT case should reuse this exact function or a new one is `[ASSUMED]` — CONTEXT.md's D-22 says the note "continues", not which function computes it. | Pitfall 5 | Low — functionally equivalent either way; a wrong reuse choice is a refactor, not a behavior bug |
 
-## Open Questions
+## Open Questions (RESOLVED — see 08-01-PLAN.md A-01/A-02)
 
 1. **Does the D-03 tiebreak need a persisted "which was checked last" timestamp, or does enforcing mutual exclusion at the checkbox handler make the question moot?**
    - What we know: UI-SPEC states the checkbox handler enforces exclusivity synchronously ("not even mid-click").
