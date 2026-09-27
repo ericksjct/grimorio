@@ -68,7 +68,7 @@ function slugify(name) {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
-    .replace(/'/g, '')
+    .replace(/['’]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 }
@@ -236,7 +236,8 @@ function parseSrd51(doc) {
       if (levelMatch || cantripMatch) {
         if (current) records.push(current);
         current = {
-          displayName: heading,
+          // Fonte SRD 5.1 traz o título quebrado "See I nvisibility".
+          displayName: heading.replace(/^See I nvisibility$/, 'See Invisibility'),
           level: levelMatch ? Number(levelMatch[1]) : 0,
           school: (levelMatch ? levelMatch[2] : cantripMatch[1]).toLowerCase(),
           ritual: Boolean((levelMatch && levelMatch[3]) || (cantripMatch && cantripMatch[2])),

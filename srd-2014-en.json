@@ -303,7 +303,7 @@
       ]
     },
     {
-      "name": "arcanist-s-magic-aura",
+      "name": "arcanists-magic-aura",
       "displayName": "Arcanist’s Magic Aura",
       "level": 2,
       "school": "illusion",
@@ -2816,7 +2816,7 @@
       ]
     },
     {
-      "name": "hunter-s-mark",
+      "name": "hunters-mark",
       "displayName": "Hunter’s Mark",
       "level": 1,
       "school": "divination",
@@ -4400,8 +4400,8 @@
       ]
     },
     {
-      "name": "see-i-nvisibility",
-      "displayName": "See I nvisibility",
+      "name": "see-invisibility",
+      "displayName": "See Invisibility",
       "level": 2,
       "school": "divination",
       "description": "<p>For the duration, you see invisible creatures and objects as if they were visible, and you can see into the Ethereal Plane. Ethereal creatures and objects appear ghostly and translucent.</p>",

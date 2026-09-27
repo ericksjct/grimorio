@@ -134,6 +134,14 @@ if (survivors.length > 0) {
   process.exit(1);
 }
 
+// Slug de identidade: apostrofo tipografico ou titulo quebrado da fonte nao
+// podem gerar "hunter-s-mark"/"see-i-nvisibility" (a chave das preparadas
+// e school-lvl-slug; tem de casar com a das outras edicoes).
+for (const f of ['srd-2014-en.json', 'srd-2024-en.json', 'srd-2024-ptbr.json']) {
+  const bad = JSON.parse(fs.readFileSync(f, 'utf8')).spells.filter((sp) => /(^|-)[a-z]-/.test(sp.name) && !/^(a|i)-/.test(sp.name));
+  if (bad.length) { console.error('FAIL: ' + f + ' tem slug quebrado: ' + bad.map((sp) => sp.name).join(', ')); process.exit(1); }
+}
+
 console.log('mdToHtml ok: converts real markdown, leaves tag-internal ** untouched (T-06-01-01/02), and clears ** from all ' + withMd.length + ' affected srd-2024-en.json descriptions.');
 '@
   $tmp = Join-Path ([System.IO.Path]::GetTempPath()) "check-srd-name-and-markdown-$([guid]::NewGuid()).cjs"
