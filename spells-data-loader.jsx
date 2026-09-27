@@ -505,8 +505,14 @@ function _initialVersionKey() {
       _wantedVersionKey = null;
       return fallbackTo;
     }
-    const nav = (navigator.languages && navigator.languages[0]) || navigator.language || '';
-    const lang = String(nav).toLowerCase().startsWith('pt') ? 'ptbr' : 'en';
+    // Mesma regra do detectLang() de index.html (roda antes dele): qualquer pt* vence.
+    const candidates = [
+      ...Array.from(navigator.languages || []),
+      navigator.language,
+      navigator.userLanguage,
+      navigator.browserLanguage,
+    ].filter(Boolean).map(l => String(l).toLowerCase());
+    const lang = candidates.some(l => l.startsWith('pt')) ? 'ptbr' : 'en';
     const v = SPELL_VERSIONS.find(x => x.lang === lang);
     if (v) return v.key;
   } catch (e) {}
