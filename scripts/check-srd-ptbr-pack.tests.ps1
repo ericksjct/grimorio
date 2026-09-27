@@ -70,7 +70,6 @@ $node = Get-Command node -ErrorAction SilentlyContinue
 if (-not $node) {
   Write-Warning 'node nao encontrado - prova de conteudo do gate pt-BR pulada.'
   Write-Output 'SRD pt-BR pack: structural checks passed (proveniencia + secoes 1-3), execution proof skipped (no node).'
-  Write-Output 'SRD pt-BR pack: conjunto do SRD 5.2, atribuicao dupla verbatim, sem nomes proprios do PHB.'
   return
 }
 
