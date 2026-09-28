@@ -322,4 +322,154 @@ try {
   if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force }
 }
 
+# ── Prova de execução real (Node) — renameImpact()/renameInstalledPackSlugs()
+# extraídas por regex de pack-rename-dialog.jsx (que TEM JSX e não roda inteiro
+# num vm puro) e avaliadas contra as funções de leitura REAIS de
+# v11-character-editor.jsx, com localStorage instrumentado — mesmo molde de
+# scripts/check-bookmarks-read-purity.tests.ps1. ──
+
+if (Test-Path -LiteralPath $dialogModulePath) {
+  $nodeScript2 = @'
+const fs = require('fs');
+
+const dialogSrc = fs.readFileSync('pack-rename-dialog.jsx', 'utf8');
+const editorSrc = fs.readFileSync('v11-character-editor.jsx', 'utf8');
+const packImportSrc = fs.readFileSync('pack-import.jsx', 'utf8');
+
+let failures = 0;
+function check(label, cond, detail) {
+  if (!cond) { console.error('FAIL: ' + label + (detail ? ' - ' + detail : '')); failures++; }
+}
+
+const renameImpactMatch = dialogSrc.match(/function renameImpact\(oldKeys, stillResolves\)[\s\S]*?\r?\n\}/);
+const renameInstalledMatch = dialogSrc.match(/async function renameInstalledPackSlugs\(packId, renames\)[\s\S]*?\r?\n\}/);
+if (!renameImpactMatch) { console.error('nao achei function renameImpact(oldKeys, stillResolves) em pack-rename-dialog.jsx'); process.exit(1); }
+if (!renameInstalledMatch) { console.error('nao achei async function renameInstalledPackSlugs(packId, renames) em pack-rename-dialog.jsx'); process.exit(1); }
+
+const peekCharsMatch = editorSrc.match(/function peekCharacters\(\)[\s\S]*?\n\}/);
+const peekBookmarksMatch = editorSrc.match(/function peekBookmarks\(\)[\s\S]*?\n\}/);
+const charsKeyMatch = editorSrc.match(/const HIFI_CHARS_KEY = ('[^']+');/);
+const bookmarksKeyMatch = editorSrc.match(/const HIFI_BOOKMARKS_KEY = ('[^']+');/);
+if (!peekCharsMatch || !peekBookmarksMatch || !charsKeyMatch || !bookmarksKeyMatch) {
+  console.error('nao achei peekCharacters()/peekBookmarks()/HIFI_CHARS_KEY/HIFI_BOOKMARKS_KEY em v11-character-editor.jsx');
+  process.exit(1);
+}
+const HIFI_CHARS_KEY = eval(charsKeyMatch[1]);
+const HIFI_BOOKMARKS_KEY = eval(bookmarksKeyMatch[1]);
+
+const applySlugRenamesMatch = packImportSrc.match(/function applySlugRenames\(spells, renames\)[\s\S]*?\n\}/);
+if (!applySlugRenamesMatch) { console.error('nao achei function applySlugRenames(spells, renames) em pack-import.jsx'); process.exit(1); }
+
+function makeFakeStorage(initial) {
+  const store = Object.assign({}, initial);
+  const calls = { getItem: 0, setItem: 0, removeItem: 0 };
+  return {
+    getItem(k) { calls.getItem++; return Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null; },
+    setItem(k, v) { calls.setItem++; store[k] = String(v); },
+    removeItem(k) { calls.removeItem++; delete store[k]; },
+    _calls: calls,
+  };
+}
+
+// ── renameImpact: 2 personagens preparando a chave antiga + 1 favorita igual -> 3 ──
+{
+  const chars = [
+    { id: 1, prepared: ['4-3-fireball', 'other-key'] },
+    { id: 2, prepared: ['4-3-fireball'] },
+    { id: 3, prepared: ['unrelated'] },
+  ];
+  global.localStorage = makeFakeStorage({
+    [HIFI_CHARS_KEY]: JSON.stringify(chars),
+    [HIFI_BOOKMARKS_KEY]: JSON.stringify(['4-3-fireball']),
+  });
+  global.window = {};
+  eval(peekCharsMatch[0]);
+  eval(peekBookmarksMatch[0]);
+  window.peekCharacters = peekCharacters;
+  window.peekBookmarks = peekBookmarks;
+  eval(renameImpactMatch[0]);
+
+  const oldKeys = new Set(['4-3-fireball']);
+  const impact = renameImpact(oldKeys, () => false);
+  check('renameImpact conta 2 preparadas + 1 favorita = 3', impact === 3, 'got ' + impact);
+  check('renameImpact (stillResolves sempre true) = 0', renameImpact(oldKeys, () => true) === 0);
+  check('renameImpact nunca escreve (setItem/removeItem)', global.localStorage._calls.setItem === 0 && global.localStorage._calls.removeItem === 0);
+
+  let dispatchCalls = 0;
+  global.window.dispatchEvent = () => { dispatchCalls++; };
+  renameImpact(oldKeys, () => false);
+  check('renameImpact nunca despacha evento', dispatchCalls === 0);
+}
+
+// ── renameInstalledPackSlugs: getPack -> putPack 1x com spell renomeado, displayName preservado -> invalidateSpellVersion -> refreshPluginVersions ──
+async function runRenameInstalled() {
+  eval(applySlugRenamesMatch[0]);
+  global.window = { packImport: { applySlugRenames } };
+  eval(renameInstalledMatch[0]);
+
+  {
+    const putCalls = [];
+    const invalidateCalls = [];
+    let refreshCalled = false;
+    window.pluginStore = {
+      getPack: async (id) => (id === 'x' ? { id: 'x', meta: { source: 'x' }, spells: [{ name: 'fireball' }] } : null),
+      putPack: async (record) => { putCalls.push(record); },
+    };
+    window.invalidateSpellVersion = (key) => { invalidateCalls.push(key); };
+    window.refreshPluginVersions = async () => { refreshCalled = true; };
+
+    await renameInstalledPackSlugs('x', new Map([['fireball', 'fireball-x']]));
+    check('renameInstalledPackSlugs grava exatamente 1 vez', putCalls.length === 1, 'got ' + putCalls.length);
+    check('renameInstalledPackSlugs renomeia o spell', putCalls.length === 1 && putCalls[0].spells[0].name === 'fireball-x');
+    check('renameInstalledPackSlugs preserva displayName (A-11: vira o nome antigo)', putCalls.length === 1 && putCalls[0].spells[0].displayName === 'fireball');
+    check('renameInstalledPackSlugs invalida plugin-x', invalidateCalls.length === 1 && invalidateCalls[0] === 'plugin-x');
+    check('renameInstalledPackSlugs chama refreshPluginVersions', refreshCalled === true);
+  }
+
+  {
+    let putCalled = false;
+    window.pluginStore = {
+      getPack: async () => null,
+      putPack: async () => { putCalled = true; },
+    };
+    let threw = false;
+    try {
+      await renameInstalledPackSlugs('nao-existe', new Map());
+    } catch (e) { threw = true; }
+    check('renameInstalledPackSlugs rejeita quando getPack devolve null', threw === true);
+    check('renameInstalledPackSlugs nao grava quando o pack nao existe', putCalled === false);
+  }
+}
+
+runRenameInstalled().then(() => {
+  if (failures > 0) {
+    console.error(failures + ' verificacao(oes) de renameImpact/renameInstalledPackSlugs falharam.');
+    process.exit(1);
+  }
+  console.log('renameImpact()/renameInstalledPackSlugs(): impacto contado por leitura pura (0 escritas/eventos), regravacao do pack instalado com 1 putPack + invalidacao + refresh, rejeita sem gravar quando o pack nao existe.');
+}).catch((err) => {
+  console.error('runRenameInstalled threw: ' + (err && err.stack || err));
+  process.exit(1);
+});
+'@
+
+  $tmp2 = Join-Path ([System.IO.Path]::GetTempPath()) "check-slug-rename-dialog-$([guid]::NewGuid()).cjs"
+  try {
+    Set-Content -LiteralPath $tmp2 -Value $nodeScript2 -Encoding utf8NoBOM
+    Push-Location $repoRoot
+    try {
+      $nodeOut2 = & node $tmp2 2>&1
+      $nodeExit2 = $LASTEXITCODE
+    } finally {
+      Pop-Location
+    }
+    if ($nodeExit2 -ne 0) {
+      throw "Rename-dialog runtime proof failed: $nodeOut2"
+    }
+    Write-Output $nodeOut2
+  } finally {
+    if (Test-Path -LiteralPath $tmp2) { Remove-Item -LiteralPath $tmp2 -Force }
+  }
+}
+
 Write-Output 'Slug identity (D-08..D-14) gate passed.'
