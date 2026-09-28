@@ -50,8 +50,8 @@ const fs = require('fs');
 const vm = require('vm');
 const src = fs.readFileSync('spells-data-loader.jsx', 'utf8');
 
-// Recorta antes de buildSpellsFromRealData: dali pra frente ha hooks React e
-// JSX (VersionSelector), que o vm puro nao parseia. As funcoes de composicao
+// Recorta antes de buildSpellsFromRealData: dali pra frente ha hooks React
+// (useSpellVersions), que o vm puro nao parseia. As funcoes de composicao
 // -- o que este teste exercita -- vem todas antes.
 const cut = src.indexOf('function buildSpellsFromRealData');
 if (cut < 0) { console.error('nao achei buildSpellsFromRealData para cortar'); process.exit(1); }
@@ -291,3 +291,27 @@ if (($filterKeys -join ',') -ne ($expectedFilterKeys -join ',')) {
 }
 
 Write-Output 'Pack menu chip mounted twice (bar + drawer); share link emits ?v= as a list; no pack filter added; old single-version selector fully gone.'
+
+# ── Fase 8 plano 06 (D-01/D-16): nenhum leitor de "versão ativa única" sobra
+# no app inteiro - VersionSelector/getCurrentSpellVersion/switchVersion não
+# podem aparecer em nenhum .jsx nem em index.html, e o retorno de
+# useSpellVersions() não pode mais expor `current`. ──────────────────────
+$appFiles = @(Get-ChildItem -LiteralPath $repoRoot -Filter '*.jsx' -File) + (Get-Item -LiteralPath (Join-Path $repoRoot 'index.html'))
+foreach ($file in $appFiles) {
+  $content = Get-Content -Raw -LiteralPath $file.FullName
+  foreach ($forbidden in @('VersionSelector', 'getCurrentSpellVersion', 'switchVersion')) {
+    if ($content -match [regex]::Escape($forbidden)) {
+      throw "$($file.Name) still references $forbidden - no reader of a single 'active version' may remain anywhere in the app (D-01, 08-06)."
+    }
+  }
+}
+
+$useSpellVersionsMatch = [regex]::Match($loader, 'function useSpellVersions\(uiLang\)[\s\S]{0,3000}?\n\}')
+if (-not $useSpellVersionsMatch.Success) {
+  throw 'Could not locate useSpellVersions(uiLang) in spells-data-loader.jsx.'
+}
+if ($useSpellVersionsMatch.Value -match '\bcurrent\b') {
+  throw "useSpellVersions()'s return must not expose current anymore (D-01, 08-06) - selectedKeys/resolvedKeys are the sole selection contract."
+}
+
+Write-Output 'No reader of a single active version remains anywhere in the app; useSpellVersions() no longer exposes current/switchVersion.'

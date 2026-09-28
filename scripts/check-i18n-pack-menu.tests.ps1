@@ -3,8 +3,11 @@ $ErrorActionPreference = 'Stop'
 # Fase 8 (08-02): as 25 chaves novas do menu de pacotes e do prompt de renomear
 # existem em ptbr/en com paridade total, os placeholders certos, plural correto
 # em n = 1 (rename.impactWarning.one/.other, D-04/A-05) e nenhum "(ns)"/"(s)"/"(es)"
-# de contorno (todo dobrado i18n-toast-versao-e-pluralizacao, item 2). As chaves
-# antigas continuam presentes — esta wave não reescreve PackManager/VersionSelector.
+# de contorno (todo dobrado i18n-toast-versao-e-pluralizacao, item 2).
+# Fase 8 (08-06): as 6 chaves do antigo seletor de versão única (version.label/
+# .labelMobile/.switch/.manage, toast.versionShort/.versionSwitchedAway)
+# perderam o último uso com a remoção do VersionSelector e saem do dicionário -
+# sem a mesma mensagem sob duas chaves.
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $i18nPath = Join-Path $repoRoot 'i18n.jsx'
@@ -47,7 +50,14 @@ const NEW_KEYS = [
 
 const OLD_KEYS = [
   'manager.duplicates',
-  'toast.versionSwitchedAway', 'version.manage',
+];
+
+// Fase 8 plano 06 (D-01/D-16): o seletor de versão única saiu do app, e essas
+// 6 chaves perderam o último uso com ele - devem ter saído do dicionário
+// (todo dobrado: nenhuma mensagem sob duas chaves).
+const DEAD_KEYS = [
+  'version.label', 'version.labelMobile', 'version.switch', 'version.manage',
+  'toast.versionShort', 'toast.versionSwitchedAway',
 ];
 
 const PLACEHOLDERS = {
@@ -77,6 +87,20 @@ if (NEW_KEYS.length !== 25) {
   });
   OLD_KEYS.forEach((key) => {
     check(`chave antiga STRINGS.${lang}['${key}'] continua presente`, typeof STRINGS[lang][key] === 'string' && STRINGS[lang][key].length > 0);
+  });
+  DEAD_KEYS.forEach((key) => {
+    check(`chave morta STRINGS.${lang}['${key}'] nao existe mais (seletor de versao unica removido, 08-06)`, !Object.prototype.hasOwnProperty.call(STRINGS[lang], key));
+  });
+});
+
+// As chaves mortas tambem nao podem sobreviver em nenhum outro arquivo do app
+// (nenhum leitor esquecido) - i18n.jsx e este proprio gate ficam de fora.
+const appFiles = fs.readdirSync('.').filter((f) => f.endsWith('.jsx') || f === 'index.html');
+DEAD_KEYS.forEach((key) => {
+  appFiles.forEach((f) => {
+    if (f === 'i18n.jsx') return;
+    const body = fs.readFileSync(f, 'utf8');
+    check(`'${key}' nao aparece em ${f}`, !body.includes(`'${key}'`));
   });
 });
 

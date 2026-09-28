@@ -2,7 +2,7 @@
 // Substitui os mocks (WF_SPELLS) por dados reais do simpleskans / wikidot.
 //
 // Uso: incluir este arquivo no HTML antes dos componentes que usam v7BuildSpells().
-// Ele redefine window.v7BuildSpells pra retornar os dados da versão ativa.
+// Ele redefine window.v7BuildSpells pra retornar os dados da seleção de pacotes.
 
 // ──────────────────────────────────────────────────────────────────
 // CONFIGURAÇÃO DAS VERSÕES
@@ -930,13 +930,6 @@ function useSpellVersions(uiLang) {
   }, [uiLang]);
 
   const resolvedKeys = resolveSelection(selectedKeys);
-  // Compatibilidade pros consumidores ainda não migrados (v10-hifi.jsx,
-  // VersionSelector) — os três (current/switchVersion aqui e
-  // window.getCurrentSpellVersion mais abaixo) são removidos no plano 08-06.
-  const current = resolvedKeys[0];
-  const switchVersion = React.useCallback((key) => {
-    setSelectedKeys([key]);
-  }, [setSelectedKeys]);
 
   return {
     versions,
@@ -945,154 +938,7 @@ function useSpellVersions(uiLang) {
     spells,
     loaded,
     setSelectedKeys,
-    current,
-    switchVersion,
   };
-}
-
-// ──────────────────────────────────────────────────────────────────
-// COMPONENTE: Seletor de Versões
-// ──────────────────────────────────────────────────────────────────
-function VersionSelector({ current, versions, onChange, lang = 'ptbr', dark = false, style, compact = false }) {
-  const [open, setOpen] = React.useState(false);
-  const currentVer = versions.find(v => v.key === current) || versions[0];
-  // D-19: versions[0] é undefined com lista vazia; currentVer.lang é
-  // desreferenciado logo abaixo nos dois ramos — guarda de raiz, não patch local.
-  if (!currentVer) return null;
-
-  const langDot = (v) => ({
-    width: 6, height: 6, borderRadius: '50%',
-    background: v.lang === 'ptbr' ? 'var(--green)' : 'var(--blue)',
-    flexShrink: 0,
-  });
-
-  if (compact) {
-    // Mobile: icon-button sized chip that opens a bottom sheet
-    return (
-      <div style={{ position: 'relative', ...style }}>
-        <button
-          onClick={() => setOpen(o => !o)}
-          className="hifi-filter-chip"
-          style={{ padding: '0 8px', gap: 5, fontSize: 11 }}
-          title={window.tt(lang, 'version.switch')}
-        >
-          <span style={langDot(currentVer)}/>
-          <span style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", fontSize: 10, letterSpacing: '0.04em' }}>
-            {currentVer.lang === 'ptbr' ? 'PT' : 'EN'}
-          </span>
-          <span style={{ color: 'var(--subtext0)', fontSize: 9 }}>▾</span>
-        </button>
-        {open && (
-          <>
-            <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 15, background: 'rgba(0,0,0,0.35)' }}/>
-            <div style={{
-              position: 'fixed', left: 12, right: 12, bottom: 12,
-              background: 'var(--mantle)', border: '1px solid var(--surface1)', borderRadius: 8,
-              padding: '6px 0', zIndex: 16,
-              boxShadow: '0 -8px 32px rgba(0,0,0,0.35)',
-              animation: 'hifi-toast-in 180ms ease-out',
-            }}>
-              <div style={{ padding: '8px 14px 6px', borderBottom: '1px solid var(--surface1)' }}>
-                <span className="hifi-section-label">{window.tt(lang, 'version.labelMobile')}</span>
-              </div>
-              {versions.map(v => (
-                <button
-                  key={v.key}
-                  onClick={() => { onChange(v.key); setOpen(false); }}
-                  className="hifi-btn-ghost"
-                  style={{
-                    display: 'flex', width: '100%', alignItems: 'center', gap: 10,
-                    padding: '10px 14px', textAlign: 'left',
-                    color: v.key === current ? 'var(--accent)' : 'var(--text)',
-                    fontSize: 14,
-                  }}
-                >
-                  <span style={langDot(v)}/>
-                  <span style={{ flex: 1 }}>{lang === 'ptbr' ? v.labelPt : v.labelEn}</span>
-                  {v.key === current && (
-                    <span style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", fontSize: 11, color: 'var(--accent)' }}>✓</span>
-                  )}
-                </button>
-              ))}
-              <div style={{ borderTop: '1px solid var(--surface1)', margin: '4px 0' }}/>
-              <button
-                type="button"
-                onClick={() => { window.__openPackManager?.(); setOpen(false); }}
-                className="hifi-btn-ghost"
-                style={{
-                  display: 'flex', width: '100%', alignItems: 'center', gap: 10,
-                  padding: '10px 14px', textAlign: 'left', fontSize: 14,
-                }}
-              >
-                {window.tt(lang, 'version.manage')}
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    );
-  }
-
-  // Desktop: filter-chip style dropdown
-  return (
-    <div style={{ position: 'relative', ...style }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="hifi-filter-chip"
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
-        title={window.tt(lang, 'version.switch')}
-      >
-        <span style={langDot(currentVer)}/>
-        <span>{lang === 'ptbr' ? currentVer.labelPt : currentVer.labelEn}</span>
-        <span style={{ color: 'var(--subtext0)', fontSize: 10 }}>▾</span>
-      </button>
-      {open && (
-        <>
-          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 15 }}/>
-          <div style={{
-            position: 'absolute', right: 0, top: '100%', marginTop: 6,
-            background: 'var(--mantle)', border: '1px solid var(--surface1)', borderRadius: 6,
-            minWidth: 200, padding: '4px 0', zIndex: 16,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-          }}>
-            <div style={{ padding: '6px 12px 4px' }}>
-              <span className="hifi-section-label">{window.tt(lang, 'version.label')}</span>
-            </div>
-            {versions.map(v => (
-              <button
-                key={v.key}
-                onClick={() => { onChange(v.key); setOpen(false); }}
-                className="hifi-btn-ghost"
-                style={{
-                  display: 'flex', width: '100%', alignItems: 'center', gap: 10,
-                  padding: '8px 12px', textAlign: 'left',
-                  color: v.key === current ? 'var(--accent)' : 'var(--text)',
-                }}
-              >
-                <span style={langDot(v)}/>
-                <span style={{ flex: 1 }}>{lang === 'ptbr' ? v.labelPt : v.labelEn}</span>
-                {v.key === current && (
-                  <span style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", fontSize: 11, color: 'var(--accent)' }}>✓</span>
-                )}
-              </button>
-            ))}
-            <div style={{ borderTop: '1px solid var(--surface1)', margin: '4px 0' }}/>
-            <button
-              type="button"
-              onClick={() => { window.__openPackManager?.(); setOpen(false); }}
-              className="hifi-btn-ghost"
-              style={{
-                display: 'flex', width: '100%', alignItems: 'center', gap: 10,
-                padding: '8px 12px', textAlign: 'left',
-              }}
-            >
-              {window.tt(lang, 'version.manage')}
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  );
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -1103,15 +949,9 @@ window.SPELL_VERSIONS = SPELL_VERSIONS;
 // Mapas de classe en↔pt — usados pra remapear o filtro de classe ao trocar de idioma.
 window.CLASS_PT = CLASS_PT; // en → pt  (bard → bardo)
 window.CLASS_EN = CLASS_EN; // pt → en  (bardo → bard)
-// Compatibilidade pros consumidores ainda não migrados (index.html,
-// v10-hifi.jsx) — devolve a versão da PRIMEIRA chave resolvida da seleção.
-// Removida no plano 08-06 desta fase, junto com os outros dois pontos de
-// compatibilidade equivalentes em useSpellVersions() acima.
-window.getCurrentSpellVersion = () => _versionByKey(resolveSelection(_selectedKeys)[0]) || _defaultVersion();
 window.loadSpellVersion = loadVersion;
 window.getVersionMeta = getVersionMeta;
 window.useSpellVersions = useSpellVersions;
-window.VersionSelector = VersionSelector;
 window.adaptSpell = adaptSpell;
 window.adaptSpells = adaptSpells;
 window.refreshPluginVersions = refreshPluginVersions;

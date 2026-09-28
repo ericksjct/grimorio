@@ -100,8 +100,8 @@ $nodeScript = @'
 const fs = require('fs');
 const src = fs.readFileSync('spells-data-loader.jsx', 'utf8');
 
-// Recorta antes de buildSpellsFromRealData: dali pra frente ha hooks React e
-// JSX (VersionSelector), que o vm puro nao parseia. As tabelas de lookup e
+// Recorta antes de buildSpellsFromRealData: dali pra frente ha hooks React
+// (useSpellVersions), que o vm puro nao parseia. As tabelas de lookup e
 // adaptSpell/adaptSpells -- o que este teste exercita -- vem todos antes.
 const cut = src.indexOf('function buildSpellsFromRealData');
 if (cut < 0) { console.error('nao achei buildSpellsFromRealData para cortar'); process.exit(1); }
