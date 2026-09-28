@@ -168,8 +168,9 @@ if ($dialogCount -ne 1) {
 # ── 17. Paridade i18n das 10 chaves novas de remoção/duplicata ──
 
 $removalKeys = @(
-  'manager.remove', 'manager.removeConfirm', 'manager.yes', 'manager.no', 'manager.impactPrepared',
-  'manager.impactBookmarked', 'manager.impactNone', 'manager.removed', 'manager.removeFailed', 'manager.duplicates'
+  'manager.remove', 'manager.removeConfirm', 'manager.yes', 'manager.no', 'manager.impactPrepared.one',
+  'manager.impactPrepared.other', 'manager.impactBookmarked.one', 'manager.impactBookmarked.other',
+  'manager.impactNone', 'manager.removed', 'manager.removeFailed', 'manager.duplicates'
 )
 foreach ($key in $removalKeys) {
   $count = ([regex]::Matches($i18n, [regex]::Escape("'$key'"))).Count

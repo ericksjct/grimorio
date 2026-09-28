@@ -14,6 +14,44 @@
 // `PackImportDialog`) e antes de `v10-hifi.jsx` (que vai consumir `window.__openPackManager`).
 
 // ──────────────────────────────────────────────────────────────────
+// MODELO DO CARTÃO (Fase 8, D-16..D-19) — funções puras, sem componente
+// ──────────────────────────────────────────────────────────────────
+
+// Hash estável do identificador do pacote sobre as 10 cores --level-0..9
+// (D-19) — cor do marcador quando não há imagem, SÓ no menu; nunca tinge a
+// grade. Determinística (mesma entrada → mesma saída) e nunca negativa.
+function _packColorIndex(source) {
+  return Math.abs(Array.from(String(source || '')).reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0)) % 10;
+}
+
+// Defesa em profundidade (T-08-23): revalida `meta.image` com a MESMA regex e
+// o MESMO teto que o import já checou antes de deixar chegar a um `<img
+// src>` — qualquer coisa que não seja um data: URI raster dentro do teto
+// devolve null, e o chamador cai pro marcador de cor (D-17).
+function _safeImage(image) {
+  if (typeof image !== 'string') return null;
+  if (image.length > window.packImport.MAX_IMAGE_CHARS) return null;
+  if (!window.packImport.IMAGE_DATA_URI.test(image)) return null;
+  return image;
+}
+
+// Descrição derivada do cartão (D-17): autor · versão · idioma · edição · N
+// magias — sem nenhum campo novo no schema. `count` não numérico vira '?' e a
+// pluralização de nounSpell trata isso como plural (uma contagem desconhecida
+// não é "1 magia").
+function _cardMetaVars(row, lang) {
+  const n = typeof row.count === 'number' && Number.isFinite(row.count) ? row.count : '?';
+  return {
+    author: row.author || tt(lang, 'menu.authorUnknown'),
+    version: row.version || '?',
+    lang: row.lang === 'ptbr' ? 'PT' : 'EN',
+    edition: row.edition ? ' · ' + row.edition : '',
+    n,
+    nounSpell: tt(lang, 'noun.spell.' + window.i18nPlural(n === '?' ? 2 : n)),
+  };
+}
+
+// ──────────────────────────────────────────────────────────────────
 // MODELO DE LINHA — funções puras, sem componente
 // ──────────────────────────────────────────────────────────────────
 
@@ -22,12 +60,19 @@
 // window.SPELL_VERSIONS ('plugin-' + source, ver _packToVersion em
 // spells-data-loader.jsx) — os dois divergem, por isso ficam em campos
 // separados em vez de reusar um só pro índice de duplicatas (D-10) e pra remoção (MGMT-02).
+// `author`/`lang`/`edition`/`image`/`source` vêm direto do meta (D-16/D-17) — o
+// pluginStore.listPacks() já devolve o objeto meta do pack.schema.json inteiro.
 function _installedRows(metas) {
   return (metas || []).map((meta) => ({
     id: meta.source,
     versionKey: 'plugin-' + meta.source,
+    source: meta.source,
     name: meta.name,
     version: meta.version,
+    author: meta.author,
+    lang: meta.lang,
+    edition: meta.edition,
+    image: meta.image,
     count: meta.spellCount,
     origin: 'installed',
     license: meta.license || null,
@@ -37,6 +82,8 @@ function _installedRows(metas) {
 // entradas SRD de window.SPELL_VERSIONS (source:'fetch', corpus:'srd') → linha de exibição.
 // A-01 (flagged assumption do plano): só as duas entradas com corpus 'srd' viram linha
 // builtin — as legadas PHB/PT-BR não têm manifesto de licença e saem na Fase 6.
+// `author`/`version`/`edition`/`count` vêm de getVersionMeta(v.key) quando o
+// JSON builtin já carregou (mesmo efeito que hoje carrega a licença).
 function _builtinRows(versions, licenses) {
   return (versions || [])
     .filter((v) => v.source === 'fetch' && v.corpus === 'srd')
@@ -46,8 +93,12 @@ function _builtinRows(versions, licenses) {
       return {
         id: v.key,
         versionKey: v.key,
+        source: v.key,
         name: v.labelEn,
-        version: v.short,
+        version: meta ? meta.version : v.short,
+        author: meta ? meta.author : null,
+        lang: v.lang,
+        edition: meta ? meta.edition : null,
         count: meta && typeof meta.spellCount === 'number' ? meta.spellCount : null,
         origin: 'builtin',
         license,
@@ -244,7 +295,7 @@ function PackManagerRow({ lang, row, dupCount, confirming, impact, onRequestRemo
       </div>
       {typeof dupCount === 'number' && dupCount > 0 && (
         <div style={{ marginTop: 2, fontSize: 12, color: 'var(--subtext0)' }}>
-          {tt(lang, 'manager.duplicates', { n: dupCount })}
+          {tt(lang, 'manager.duplicates', { n: dupCount, nounSpell: tt(lang, 'noun.spell.' + window.i18nPlural(dupCount)) })}
         </div>
       )}
       {row.origin === 'installed' && (
@@ -252,10 +303,13 @@ function PackManagerRow({ lang, row, dupCount, confirming, impact, onRequestRemo
           <div style={{ marginTop: 8 }}>
             <div style={{ fontSize: 12, color: 'var(--subtext0)', marginBottom: 6 }}>
               {impact && impact.prepared > 0 && (
-                <div>{tt(lang, 'manager.impactPrepared', { n: impact.prepared, c: impact.characters })}</div>
+                <div>{tt(lang, 'manager.impactPrepared.' + window.i18nPlural(impact.prepared), {
+                  n: impact.prepared, c: impact.characters,
+                  nounChar: tt(lang, 'noun.character.' + window.i18nPlural(impact.characters)),
+                })}</div>
               )}
               {impact && impact.bookmarked > 0 && (
-                <div>{tt(lang, 'manager.impactBookmarked', { n: impact.bookmarked })}</div>
+                <div>{tt(lang, 'manager.impactBookmarked.' + window.i18nPlural(impact.bookmarked), { n: impact.bookmarked })}</div>
               )}
               {impact && impact.prepared === 0 && impact.bookmarked === 0 && (
                 <div>{tt(lang, 'manager.impactNone')}</div>
