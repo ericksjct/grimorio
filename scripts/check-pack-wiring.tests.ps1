@@ -64,8 +64,8 @@ if ($index -like '*PackImportRoot*') {
   throw 'index.html references PackImportRoot - o gatilho fixo provisorio foi aposentado na Fase 5 (D-03) e nao pode voltar.'
 }
 
-# 4. Paridade PRECACHE: os cinco arquivos novos precisam estar no sw.js.
-foreach ($needle in @('./pack-import.jsx', './pack-import-dialog.jsx', './pack-manager.jsx', './pack-docs.html', './pack.schema.json')) {
+# 4. Paridade PRECACHE: os arquivos do funil de packs precisam estar no sw.js.
+foreach ($needle in @('./pack-import.jsx', './pack-import-dialog.jsx', './pack-rename-dialog.jsx', './pack-manager.jsx', './pack-docs.html', './pack.schema.json', './srd-reserved-slugs.json')) {
   if ($sw -notlike "*'$needle'*") {
     throw "sw.js is missing $needle from PRECACHE - a ausencia quebra o modo offline."
   }
@@ -81,13 +81,14 @@ if ($sw -notlike "*$purifyUrl*") {
   throw "sw.js does not contain the exact DOMPurify URL from index.html. index.html: $purifyUrl"
 }
 
-# 6. CACHE_VERSION: pós-06-05 o valor esperado é grimorio-v2 (o bump é
-#    obrigatorio ali, D-14 - decomissao de arquivo exige apagar cache antigo).
+# 6. CACHE_VERSION: pós-08-06 o piso esperado é grimorio-v5 (o bump é
+#    obrigatorio ali, RESEARCH Pitfall 2 - mudar conteudo de arquivo ja
+#    pre-cacheado exige apagar o cache antigo).
 if ($sw -notmatch "const CACHE_VERSION = 'grimorio-v(\d+)';") {
   throw "sw.js nao declara um CACHE_VERSION no formato 'grimorio-vN'."
 }
-if ([int]$Matches[1] -lt 2) {
-  throw "sw.js CACHE_VERSION e 'grimorio-v$($Matches[1])' - o bump de decomissao (D-14, 06-05) deveria ja ter acontecido."
+if ([int]$Matches[1] -lt 5) {
+  throw "sw.js CACHE_VERSION e 'grimorio-v$($Matches[1])' - o bump da fase 08-06 deveria ja ter acontecido."
 }
 
 # 7. Pacotes SRD agora obrigatorios no PRECACHE (Fase 4, SRD-03).

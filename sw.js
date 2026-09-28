@@ -18,7 +18,9 @@
 // reinstala o SW quando o próprio sw.js muda. Sem bump, quem já tinha o cache
 // anterior continua servindo o arquivo antigo indefinidamente — foi o que
 // aconteceu ao regenerar srd-2014-en.json com as listas de classe (v2 → v3).
-const CACHE_VERSION = 'grimorio-v4';
+// A lista de slugs reservados (srd-reserved-slugs.json) também é pré-cacheada —
+// o import a exige pra validar slugs offline.
+const CACHE_VERSION = 'grimorio-v5';
 
 // Extensões do app shell (código que muda a cada deploy) → network-first.
 const SHELL_RE = /\.(html|css|jsx)$/;
@@ -35,6 +37,7 @@ const PRECACHE = [
   './pack-import.jsx',
   './v11-character-editor.jsx',
   './pack-import-dialog.jsx',
+  './pack-rename-dialog.jsx',
   './pack-manager.jsx',
   './transition-banner.jsx',
   './v10-hifi.jsx',
@@ -48,6 +51,7 @@ const PRECACHE = [
   './srd-2024-en.json',
   './srd-2014-en.json',
   './srd-2024-ptbr.json',
+  './srd-reserved-slugs.json',
   'https://unpkg.com/react@18.3.1/umd/react.production.min.js',
   'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js',
   'https://unpkg.com/@babel/standalone@7.29.0/babel.min.js',
