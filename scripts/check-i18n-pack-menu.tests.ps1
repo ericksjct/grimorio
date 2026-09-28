@@ -46,7 +46,7 @@ const NEW_KEYS = [
 ];
 
 const OLD_KEYS = [
-  'manager.impactPrepared', 'manager.impactBookmarked', 'manager.duplicates',
+  'manager.duplicates',
   'toast.versionSwitchedAway', 'version.manage',
 ];
 
