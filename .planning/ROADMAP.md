@@ -304,7 +304,7 @@ Plans:
 **Goal:** O usuário mantém um pacote base ativo (ex.: SRD 5.2) e empilha pacotes homebrew por cima: as magias dos pacotes empilhados SOMAM à lista da versão ativa em vez de substituí-la, com a origem de cada magia visível e sem quebrar preparadas/favoritas.
 **Requirements**: MGMT-06, MGMT-07, MGMT-08, MGMT-09, PKG-06, SRD-05, MIGR-04
 **Depends on:** Phase 7
-**Plans:** 7 plans
+**Plans:** 2/7 plans executed
 
 **Nota:** o objetivo acima foi escrito antes do discuss; o `08-CONTEXT.md` (D-01) tirou a
 ideia de "pacote base" — todo pacote marcado soma, e seleção vazia cai no pacote padrão (D-04).
@@ -312,8 +312,8 @@ ideia de "pacote base" — todo pacote marcado soma, e seleção vazia cai no pa
 Plans:
 **Wave 1**
 
-- [ ] 08-01-PLAN.md — Wave 1: seleção de pacotes em lista no loader — `normalizeSelection`/`resolveSelection`/`unionSpells`, `lang`/`_versionKey` por magia, migração do `versionKey` e `?v=` em lista com pendência por item, persistência em `selectedVersionKeys`, `index.html` sem estado de versão (MGMT-06, MGMT-08, SRD-05, MIGR-04)
-- [ ] 08-02-PLAN.md — Wave 1: chaves i18n novas (menu, renomear, plural de personagem), `meta.image` no schema/validador e `srd-reserved-slugs.json` gerado + `pack-docs.html` (PKG-06, MGMT-07, MGMT-08, MGMT-09)
+- [x] 08-01-PLAN.md — Wave 1: seleção de pacotes em lista no loader — `normalizeSelection`/`resolveSelection`/`unionSpells`, `lang`/`_versionKey` por magia, migração do `versionKey` e `?v=` em lista com pendência por item, persistência em `selectedVersionKeys`, `index.html` sem estado de versão (MGMT-06, MGMT-08, SRD-05, MIGR-04)
+- [x] 08-02-PLAN.md — Wave 1: chaves i18n novas (menu, renomear, plural de personagem), `meta.image` no schema/validador e `srd-reserved-slugs.json` gerado + `pack-docs.html` (PKG-06, MGMT-07, MGMT-08, MGMT-09)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -361,4 +361,4 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 5. Plugin Manager UI & Version Selector | v2.0 | 5/5 | Complete    | 2026-08-30 |
 | 6. Decommissioning & Migration | v2.0 | 7/7 | Complete    | 2026-09-27 |
 | 7. Tradução dos SRDs para pt-BR | v2.0 | 5/5 | Complete    | 2026-09-27 |
-| 8. Composição aditiva de pacotes | v2.0 | 0/7 | Planned |  |
+| 8. Composição aditiva de pacotes | v2.0 | 2/7 | In Progress|  |

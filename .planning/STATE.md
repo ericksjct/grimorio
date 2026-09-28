@@ -3,17 +3,17 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Plugins BYOD
 current_phase: 08
-current_phase_name: Composição aditiva de pacotes
-current_plan: Not started
-status: planning
+current_phase_name: composicao-aditiva-de-pacotes
+current_plan: 1
+status: executing
 stopped_at: Phase 8 UI-SPEC approved
-last_updated: "2026-09-27T23:48:17.776Z"
+last_updated: "2026-09-28T00:14:48.178Z"
 last_activity: 2026-09-27
-last_activity_desc: Fases 06 e 07 completas (verificação passed nas duas)
+last_activity_desc: Phase 08 execution started
 progress:
   total_phases: 8
   completed_phases: 7
-  total_plans: 36
+  total_plans: 43
   completed_plans: 36
 ---
 
@@ -24,15 +24,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-17)
 
 **Core value:** Players can quickly find, prepare, and reference the right spells for their character, fully offline, with zero setup.
-**Current focus:** Phase 08 — Composição aditiva de pacotes (não planejada)
+**Current focus:** Phase 08 — composicao-aditiva-de-pacotes
 
 ## Current Position
 
-Phase: 08 — Composição aditiva de pacotes
-Current Plan: Not started
+Phase: 08 (composicao-aditiva-de-pacotes) — EXECUTING
+Current Plan: 1
 Total Plans in Phase: 7
-Status: Ready to discuss/plan
-Last activity: 2026-09-27 — Fases 06 e 07 completas (verificação passed nas duas)
+Status: Executing Phase 08
+Last activity: 2026-09-27 — Phase 08 execution started
 
 Progress: [██████████] 100%
 
