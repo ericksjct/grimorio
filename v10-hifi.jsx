@@ -1020,28 +1020,51 @@ function HifiDetailContent({ s, lang, versionLang }) {
   const descHtml = window.v8DescriptionHtml ? window.v8DescriptionHtml(s, versionLang) : '';
   const upgradeHtml = window.v8UpgradeHtml ? window.v8UpgradeHtml(s, versionLang) : '';
 
-  // MGMT-04/D-09: nota "Também em: ..." — le o mesmo indice que alimenta a
-  // contagem agregada do gerenciador (uma derivacao, dois consumidores).
+  // MGMT-04/D-09/D-03/D-22: nota "Também em: ..." — ancorada no pacote de
+  // ORIGEM da própria magia (s._versionKey), não numa "versão ativa" global
+  // (essa deixou de existir na composição aditiva, 08-01).
   const [alsoIn, setAlsoIn] = React.useState([]);
-  const activeVersion = window.getCurrentSpellVersion ? window.getCurrentSpellVersion() : null;
-  const versionKey = activeVersion ? activeVersion.key : null;
+  const ownKey = s._versionKey;
   React.useEffect(() => {
     let cancelled = false;
-    if (typeof window.packSpellIndex !== 'function') {
-      setAlsoIn([]);
-      return undefined;
+    const nameKey = String(s.en || '').toLowerCase();
+    async function build() {
+      const labels = [];
+      // (1) outros pacotes com a mesma magia (índice do gerenciador), exceto
+      // pares SRD<->SRD (A-05: 5.1 e 5.2 nunca contam como duplicata uma da
+      // outra).
+      if (typeof window.packSpellIndex === 'function') {
+        const index = await window.packSpellIndex();
+        if (index && index.byName && index.corpusOf) {
+          const activeCorpus = index.corpusOf.get(ownKey);
+          const keys = [...new Set(index.byName.get(nameKey) || [])].filter((k) => k !== ownKey);
+          const others = keys.filter((k) => !(index.corpusOf.get(k) === 'srd' && activeCorpus === 'srd'));
+          others.forEach((k) => {
+            const label = index.labelOf.get(k) || k;
+            if (!labels.includes(label)) labels.push(label);
+          });
+        }
+      }
+      // (2) D-03/D-22: SRD na MESMA edição, outro idioma, dentro da seleção
+      // resolvida (o caso EN x PT marcados juntos). SRD 5.1<->5.2 continua fora
+      // (servido pelo comparador de edição, A-05 da Fase 5).
+      const ownVersion = (window.SPELL_VERSIONS || []).find((v) => v.key === ownKey);
+      if (ownVersion && ownVersion.corpus === 'srd') {
+        const resolvedKeys = window.getResolvedVersionKeys ? window.getResolvedVersionKeys() : [];
+        for (const k of resolvedKeys) {
+          if (k === ownKey) continue;
+          const v = (window.SPELL_VERSIONS || []).find((vv) => vv.key === k);
+          if (!v || v.corpus !== 'srd' || v.edition !== ownVersion.edition || v.lang === ownVersion.lang) continue;
+          const spells = await window.loadSpellVersion(k);
+          const match = (spells || []).some((x) => String(x.en || '').toLowerCase() === nameKey);
+          if (match && v.labelEn && !labels.includes(v.labelEn)) labels.push(v.labelEn);
+        }
+      }
+      if (!cancelled) setAlsoIn(labels);
     }
-    window.packSpellIndex().then((index) => {
-      if (cancelled || !index || !index.byName || !index.corpusOf) return;
-      const nameKey = String(s.en || '').toLowerCase();
-      const keys = [...new Set(index.byName.get(nameKey) || [])].filter((k) => k !== versionKey);
-      const activeCorpus = index.corpusOf.get(versionKey);
-      // A-05: SRD 5.1 e SRD 5.2 nunca contam como duplicata uma da outra.
-      const others = keys.filter((k) => !(index.corpusOf.get(k) === 'srd' && activeCorpus === 'srd'));
-      setAlsoIn(others.map((k) => index.labelOf.get(k) || k));
-    }).catch(() => { if (!cancelled) setAlsoIn([]); });
+    build().catch(() => { if (!cancelled) setAlsoIn([]); });
     return () => { cancelled = true; };
-  }, [s, versionKey]);
+  }, [s]);
 
   return (
     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -1108,12 +1131,16 @@ function HifiDetailContent({ s, lang, versionLang }) {
 // no mesmo idioma. Carrega a outra versão sob demanda (cache do loader) e
 // casa a magia pelo nome em inglês (estável entre edições).
 // ──────────────────────────────────────────────────────────────────
-function useEditionCompare(sel, versionKey, versions, lang, showToast) {
+function useEditionCompare(sel, versions, lang, showToast) {
   const [alt, setAlt] = React.useState(null); // { spell, version } quando ativo
   const [loading, setLoading] = React.useState(false);
-  // Trocar de magia ou de versão desliga a comparação.
-  React.useEffect(() => { setAlt(null); }, [sel, versionKey]);
-  const cur = versions.find(v => v.key === versionKey) || null;
+  // Trocar de magia desliga a comparação.
+  React.useEffect(() => { setAlt(null); }, [sel]);
+  // D-22/Claude's Discretion: parte do pacote de ORIGEM da própria magia
+  // selecionada (`sel._versionKey`), não de uma "versão ativa" global (essa
+  // deixou de existir na composição aditiva, 08-01). Homebrew (`corpus:
+  // 'pack'`) nunca ganha comparador — só faz sentido entre edições do SRD.
+  const cur = sel ? (versions.find(v => v.key === sel._versionKey) || null) : null;
   // Casa pela edição declarada, não pela "primeira outra entrada do mesmo idioma" —
   // com o registro crescendo (SRD + legado + packs instalados), essa heurística
   // antiga passaria a oferecer um pack de terceiro como se fosse a outra edição.
@@ -1122,8 +1149,8 @@ function useEditionCompare(sel, versionKey, versions, lang, showToast) {
   // WR-07: SRD fica nos índices 0-1 do registro, então `find` sozinho oferecia
   // SRD 5.1 pra quem comparava PHB 2024. hifiSiblingVersion prefere o mesmo
   // `corpus` primeiro — mesmo helper usado por HifiLangToggle (CR-02).
-  const other = cur && cur.edition
-    ? hifiSiblingVersion(versions, cur, v => v.lang === cur.lang && v.edition && v.edition !== cur.edition)
+  const other = cur && cur.edition && cur.corpus === 'srd'
+    ? hifiSiblingVersion(versions, cur, v => v.corpus === 'srd' && v.lang === cur.lang && v.edition && v.edition !== cur.edition)
     : null;
   const toggle = React.useCallback(async () => {
     if (alt) { setAlt(null); return; }
@@ -1221,7 +1248,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
   const sel = selectedIdx !== null ? filtered[selectedIdx] : null;
   const open = !!sel;
   const detailTransition = window.useHifiTransition(open, 240);
-  const compare = useEditionCompare(sel, versionKey, versions, lang, showToast);
+  const compare = useEditionCompare(sel, versions, lang, showToast);
   // O que o painel exibe: a magia selecionada ou a versão dela na outra edição.
   // Retém a última magia durante a animação de saída (sel=null com o painel
   // ainda montado), senão spellName(null) crasheia — mesmo fix do mobile.
@@ -2374,7 +2401,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
   const lastSelRef = React.useRef(null);
   if (sel) lastSelRef.current = sel;
   const detailSpell = sel || lastSelRef.current;
-  const compare = useEditionCompare(sel, versionKey, versions, lang, showToast);
+  const compare = useEditionCompare(sel, versions, lang, showToast);
   const shownSpell = compare.alt?.spell || detailSpell;
 
   return (

@@ -7,6 +7,12 @@ $ErrorActionPreference = 'Stop'
 # offer a third-party pack as if it were "the other edition". The fix matches by
 # the declared `edition` field instead, and hides the button when the current
 # version has no `edition` to compare against.
+#
+# Fase 8 plano 03 (D-22/Claude's Discretion): o comparador agora parte do
+# pacote de ORIGEM da magia SELECIONADA (`sel._versionKey`), não de uma
+# "versão ativa" global (essa deixou de existir na composição aditiva, 08-01).
+# Homebrew (`corpus: 'pack'`) nunca ganha comparador — só faz sentido comparar
+# edições dentro do SRD.
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $uiPath = Join-Path $repoRoot 'v10-hifi.jsx'
@@ -15,7 +21,7 @@ $ui = Get-Content -Raw -LiteralPath $uiPath
 $loader = Get-Content -Raw -LiteralPath $loaderPath
 
 # 1. Locate the body of useEditionCompare.
-$fnMatch = [regex]::Match($ui, 'function useEditionCompare\([\s\S]{0,2000}?\n\}')
+$fnMatch = [regex]::Match($ui, 'function useEditionCompare\([\s\S]{0,3000}?\n\}')
 if (-not $fnMatch.Success) {
   throw 'Could not locate the useEditionCompare function body in v10-hifi.jsx.'
 }
@@ -38,6 +44,25 @@ if ($otherExpr -match 'v\.key !== cur\.key' -and $otherExpr -notmatch 'edition !
 }
 if ($otherExpr -notmatch 'edition !== cur\.edition') {
   throw '`other` selection must exclude entries whose `edition` matches the current one (that is not "the other edition").'
+}
+
+# 2b. 08-03 (D-22): a assinatura perdeu o parametro `versionKey` - `cur` vem
+#     do pacote de ORIGEM da magia selecionada (`sel._versionKey`), e o
+#     comparador so ativa pra `corpus: 'srd'` (homebrew nunca ganha
+#     comparador, Claude's Discretion).
+if ($fnMatch.Value -notmatch 'function useEditionCompare\(\s*sel\s*,\s*versions\s*,\s*lang\s*,\s*showToast\s*\)') {
+  throw '08-03: useEditionCompare signature must be function useEditionCompare(sel, versions, lang, showToast) - versionKey was removed.'
+}
+if ($fnBody -notmatch 'sel\._versionKey') {
+  throw "08-03: useEditionCompare must derive `cur` from the selected spell's own package (sel._versionKey), not a global active version."
+}
+if ($fnBody -notmatch "cur\.corpus === 'srd'") {
+  throw "08-03/D-22: useEditionCompare must gate `other` on cur.corpus === 'srd' - homebrew (corpus 'pack') never gets a comparator."
+}
+
+# 2c. 08-03: nao ha mais uma "versao ativa" global no arquivo inteiro.
+if ($ui -match 'getCurrentSpellVersion') {
+  throw '08-03: v10-hifi.jsx must not call window.getCurrentSpellVersion anymore - there is no single "active version" in the composition model (08-01).'
 }
 
 # 3. Cross-check: every builtin entry in the loader must declare `edition`, or
@@ -142,6 +167,31 @@ if (!en || en.key !== 'srd-2024-en') {
   process.exit(1);
 }
 console.log('WR-07/CR-02 ok: hifiSiblingVersion() prefers same-corpus pairs for both useEditionCompare and HifiLangToggle.');
+
+// D-22/Claude's Discretion (08-03): extrai a expressao REAL de `const other =
+// ...` de dentro de useEditionCompare via regex (nao uma reescrita) e avalia
+// contra um `cur` de pacote homebrew (corpus 'pack') - deve dar null, mesmo
+// tendo `edition` declarado.
+const compareMatch = ui.match(/function useEditionCompare\([\s\S]*?\n\}/);
+if (!compareMatch) { console.error('nao achei useEditionCompare() em v10-hifi.jsx'); process.exit(1); }
+const otherExprMatch = compareMatch[0].match(/const other = ([\s\S]*?);\r?\n/);
+if (!otherExprMatch) { console.error('nao achei "const other = ..." dentro de useEditionCompare()'); process.exit(1); }
+const otherExprSrc = otherExprMatch[1];
+
+const versionsWithHomebrew = BUILTIN_VERSIONS.concat([
+  { key: 'plugin-homebrew', source: 'idb', lang: 'en', edition: '2024', corpus: 'pack', labelPt: 'Homebrew', labelEn: 'Homebrew', short: 'hb' },
+]);
+{
+  // Escopo local: `cur`/`versions` sao lidos pela expressao extraida via eval.
+  const versions = versionsWithHomebrew;
+  const cur = versions.find(v => v.key === 'plugin-homebrew');
+  const other = eval(otherExprSrc);
+  if (other !== null) {
+    console.error('D-22 FAIL: homebrew (corpus pack, com edition) ganhou comparador - other=' + JSON.stringify(other));
+    process.exit(1);
+  }
+}
+console.log('D-22 ok: homebrew (corpus pack) nunca ganha comparador de edicao, mesmo com `edition` declarado.');
 '@
   $tmp = Join-Path ([System.IO.Path]::GetTempPath()) "check-edition-compare-$([guid]::NewGuid()).cjs"
   try {
