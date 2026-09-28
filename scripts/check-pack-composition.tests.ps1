@@ -227,3 +227,33 @@ if (-not $node) {
 }
 
 Write-Output 'Pack composition core contract present (normalizeSelection, resolveSelection, unionSpells, adaptSpell lang/_versionKey stamping).'
+
+# ── Fase 8 plano 03 (D-03/D-22): "Também em" e o comparador de edição ancoram
+# no pacote de ORIGEM da própria magia (s._versionKey), não numa "versão
+# ativa" global (essa deixou de existir na composição aditiva, Task 1/08-01).
+# Nenhum selo novo no card (D-20): HifiSpellCard continua sem consultar
+# alsoIn/packSpellIndex - o rodapé `src` continua sendo a única indicação de
+# origem no card. ────────────────────────────────────────────────────────
+$uiPath = Join-Path $repoRoot 'v10-hifi.jsx'
+$ui = Get-Content -Raw -LiteralPath $uiPath
+
+$detailMatch = [regex]::Match($ui, 'function HifiDetailContent\([\s\S]{0,7000}?\n\}')
+if (-not $detailMatch.Success) {
+  throw 'Could not locate HifiDetailContent in v10-hifi.jsx.'
+}
+if ($detailMatch.Value -notmatch 's\._versionKey') {
+  throw "HifiDetailContent must anchor the also-in note on the spell's own package (s._versionKey), not a global active version (08-03)."
+}
+if ($detailMatch.Value -notmatch 'getResolvedVersionKeys') {
+  throw 'HifiDetailContent must consult window.getResolvedVersionKeys() for the SRD EN x PT sibling case within the resolved selection (D-03/D-22).'
+}
+
+$cardMatch = [regex]::Match($ui, 'const HifiSpellCard = React\.memo\(function HifiSpellCard\([\s\S]{0,7200}?\}\, \(prev, next\) =>[\s\S]{0,900}?\);')
+if (-not $cardMatch.Success) {
+  throw 'Could not locate HifiSpellCard (including its React.memo comparator) in v10-hifi.jsx.'
+}
+if ($cardMatch.Value -match 'alsoIn' -or $cardMatch.Value -match 'packSpellIndex') {
+  throw 'HifiSpellCard must never consult alsoIn/packSpellIndex - no new badge on the card or grid row (D-20).'
+}
+
+Write-Output "Also-in note and edition comparator anchor on each spell's own package (_versionKey); no new badge on the card."

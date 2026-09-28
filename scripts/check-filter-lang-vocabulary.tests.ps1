@@ -47,10 +47,13 @@ if ($ui -notmatch 'function hifiFilterConfig\([^)]*\)\s*\{[\s\S]*?return\s+Objec
   throw 'hifiFilterConfig must still return Object.assign(Object.create(null), {...}) (CR-01).'
 }
 
-# 6. hifiFilterValues('class', ...) continua intacto - o Set de classe guarda
-#    sempre o valor do PACK (D-04), so o rotulo e traduzido.
-if ($ui -notmatch "hifiFilterValues\('class',\s*allSpells,\s*versionLang\)") {
-  throw "hifiFilterValues('class', allSpells, versionLang) must remain untouched - the class filter Set holds the pack's own value (D-03/D-04)."
+# 6. 08-03: hifiFilterValues('class', ...) passa a ordenar/rotular pelo
+#    idioma da INTERFACE (uiLang) - o Set de classe em si continua guardando
+#    sempre o valor CANONICO do pack (classesEn, D-03/D-04); so o collator de
+#    ordenacao e o idioma-alvo do rotulo mudam de "idioma de uma versao ativa"
+#    (que deixou de existir, 08-01) pro idioma da interface.
+if ($ui -notmatch "hifiFilterValues\('class',\s*allSpells,\s*uiLang\)") {
+  throw "hifiFilterValues('class', allSpells, uiLang) must be called - sorting/labeling follows the interface language now (08-03)."
 }
 
 # 7. formatValue e passado na montagem dos filtros extras (desktop) e aplicado
@@ -86,12 +89,12 @@ if ($filterConfigBody.Value -match 'get:\s*s\s*=>\s*\[bool\(') {
   throw 'No get: inside hifiFilterConfig may call bool( - conc/rit must produce canonical yes/no literals, not translated strings (T-04.1-16).'
 }
 
-# 11. hifiFilterConfig so e chamada com o idioma do PACK uma unica vez (o
-#     motor de filtro, em useHifiAppState) - as duas montagens de UI e a
-#     checagem de existencia de chave usam outra coisa.
+# 11. 08-03: hifiFilterConfig NAO e mais chamada com um idioma de "versao
+#     ativa" - nem o motor de filtro (useHifiAppState) nem as montagens de UI
+#     tem esse conceito; todas usam uiLang (assercao 2 acima).
 $packLangCalls = ([regex]::Matches($ui, 'hifiFilterConfig\(versionLang\)')).Count
-if ($packLangCalls -ne 1) {
-  throw "Expected exactly 1 call to hifiFilterConfig(versionLang) (the filter engine) - found $packLangCalls."
+if ($packLangCalls -ne 0) {
+  throw "Expected zero calls to hifiFilterConfig(versionLang) - versionLang (a global active-version language) no longer exists (08-03); found $packLangCalls."
 }
 
 Write-Output 'Filter vocabulary (labels, school name, class label, yes/no) follows the interface language; filter values follow the pack or are canonical.'
