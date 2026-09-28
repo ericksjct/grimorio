@@ -118,3 +118,110 @@ foreach ($nome in $esperado.Keys) {
   }
 }
 Write-Output '  Classes conferidas contra fatos conhecidos do SRD 5.1.'
+
+# ── srd-reserved-slugs.json (D-09, D-15, 08-02) ───────────────────────────
+# O gerador ganha --reserved-only e buildReservedSlugs(); o JSON gerado é a
+# fonte única lida tanto pelo app (rename-conflict, 08-04/08-05) quanto pelas
+# docs (pack-docs.html).
+
+if ($genSrc -notlike '*--reserved-only*') {
+  throw "generate-srd-pack.mjs is missing the --reserved-only CLI flag (D-15, 08-02)."
+}
+if ($genSrc -notlike '*srd-reserved-slugs.json*') {
+  throw "generate-srd-pack.mjs does not reference srd-reserved-slugs.json (D-15, 08-02)."
+}
+if ($genSrc -notmatch 'function\s+buildReservedSlugs') {
+  throw "generate-srd-pack.mjs is missing export function buildReservedSlugs(packs) (D-15, 08-02)."
+}
+
+$node = Get-Command node -ErrorAction SilentlyContinue
+if (-not $node) {
+  Write-Warning 'node nao encontrado - prova de execucao de srd-reserved-slugs.json pulada.'
+} else {
+  $nodeScript = @'
+const fs = require('fs');
+
+const FILES = ['srd-2014-en.json', 'srd-2024-en.json', 'srd-2024-ptbr.json'];
+const packs = FILES.map((f) => JSON.parse(fs.readFileSync(f, 'utf8')));
+
+let reserved;
+try {
+  reserved = JSON.parse(fs.readFileSync('srd-reserved-slugs.json', 'utf8'));
+} catch (err) {
+  console.error('nao consegui ler srd-reserved-slugs.json: ' + err.message);
+  process.exit(1);
+}
+
+let failures = 0;
+function check(label, cond, detail) {
+  if (!cond) { console.error('FAIL: ' + label + (detail ? ' - ' + detail : '')); failures++; }
+}
+
+// packs: as 3 fontes na ordem de EDITIONS, com name = meta.name de cada pack.
+check('packs tem 3 entradas', Array.isArray(reserved.packs) && reserved.packs.length === 3);
+FILES.forEach((f, i) => {
+  const p = packs[i];
+  const entry = reserved.packs && reserved.packs[i];
+  check(`packs[${i}].source == ${p.meta.source}`, entry && entry.source === p.meta.source);
+  check(`packs[${i}].name == ${p.meta.name}`, entry && entry.name === p.meta.name);
+});
+
+// Cada spells[].name dos 3 packs aparece exatamente 1 vez em slugs[].slug;
+// nenhum slug sobra; slugs ordenado por slug (comparacao de string simples).
+const expectedSlugs = new Set();
+packs.forEach((p) => p.spells.forEach((s) => expectedSlugs.add(s.name)));
+
+const gotSlugs = (reserved.slugs || []).map((s) => s.slug);
+check('slugs nao tem duplicata', new Set(gotSlugs).size === gotSlugs.length);
+check('slugs cobre todos os spells[].name dos 3 packs (sem sobra, sem falta)',
+  gotSlugs.length === expectedSlugs.size && gotSlugs.every((s) => expectedSlugs.has(s)));
+
+const sorted = [...gotSlugs].sort();
+check('slugs esta ordenado por slug (string simples)', JSON.stringify(gotSlugs) === JSON.stringify(sorted));
+
+// Para cada slug, in tem 1 entrada por pack que contem a magia, com
+// name = displayName || name daquele pack.
+let inShapeOk = true;
+(reserved.slugs || []).forEach((entry) => {
+  const expectedIn = [];
+  packs.forEach((p, i) => {
+    const spell = p.spells.find((s) => s.name === entry.slug);
+    if (spell) expectedIn.push({ source: p.meta.source, name: spell.displayName || spell.name });
+  });
+  if (JSON.stringify(entry.in) !== JSON.stringify(expectedIn)) inShapeOk = false;
+});
+check('slugs[].in tem 1 entrada por pack que contem a magia, na ordem dos packs, com name = displayName || name', inShapeOk);
+
+// Caso de referencia: fireball existe nos 3 packs, com displayName traduzido no pt-BR.
+const fireball = (reserved.slugs || []).find((s) => s.slug === 'fireball');
+check('slugs contem a entrada fireball', !!fireball);
+if (fireball) {
+  const ptbrEntry = fireball.in.find((e) => e.source === 'srd-2024-ptbr');
+  check('fireball.in tem a entrada srd-2024-ptbr com name "Bola de Fogo"', ptbrEntry && ptbrEntry.name === 'Bola de Fogo');
+}
+
+if (failures > 0) {
+  console.error(failures + ' verificacao(oes) de srd-reserved-slugs.json falharam.');
+  process.exit(1);
+}
+console.log('srd-reserved-slugs.json: 3 packs na ordem de EDITIONS, cobertura total de slugs sem duplicata, ordenado, "in" correto por pack, fireball com Bola de Fogo em pt-BR.');
+'@
+
+  $tmp = Join-Path ([System.IO.Path]::GetTempPath()) "check-srd-reserved-slugs-$([guid]::NewGuid()).cjs"
+  try {
+    Set-Content -LiteralPath $tmp -Value $nodeScript -Encoding utf8NoBOM
+    Push-Location $repoRoot
+    try {
+      $nodeOut = & node $tmp 2>&1
+      $nodeExit = $LASTEXITCODE
+    } finally {
+      Pop-Location
+    }
+    if ($nodeExit -ne 0) {
+      throw "srd-reserved-slugs.json proof failed: $nodeOut"
+    }
+    Write-Output $nodeOut
+  } finally {
+    if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force }
+  }
+}

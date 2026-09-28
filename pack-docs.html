@@ -161,6 +161,12 @@
             <td class="pd-desc">Derivado no import a partir do número de magias — o autor não precisa declarar, e qualquer valor declarado aqui é substituído. / Derived on import from the spell count — declaring it is unnecessary, and any declared value is overwritten.</td>
           </tr>
           <tr>
+            <td><code>image</code></td>
+            <td>string</td>
+            <td>não / no</td>
+            <td class="pd-desc">Imagem do cartão do pacote no menu. SÓ aceita <code>data:</code> URI de imagem PNG/JPEG/WebP/GIF em base64, até 204800 caracteres (200 KB, medido no comprimento da string, não em bytes decodificados). URL externa (<code>http(s)://</code>, <code>//</code>) é rejeitada — o app funciona offline e não consulta host de terceiro. Sem imagem, o menu desenha um marcador com cor derivada do pacote. / Pack card image shown in the menu. Only accepts an image <code>data:</code> URI (PNG/JPEG/WebP/GIF) in base64, up to 204800 characters (200 KB, measured in string length, not decoded bytes). An external URL (<code>http(s)://</code>, <code>//</code>) is rejected — the app works offline and never contacts a third-party host. Without an image, the menu draws a placeholder colored from the pack.</td>
+          </tr>
+          <tr>
             <td><code>license.id</code></td>
             <td>string</td>
             <td>sim / yes</td>
@@ -206,7 +212,7 @@
             <td><code>name</code></td>
             <td>string</td>
             <td>sim / yes</td>
-            <td class="pd-desc">ID estável da magia DENTRO deste pacote — qualquer string única no pacote, não precisa ser inglês. / Stable id for the spell WITHIN this pack — any unique string in the pack, does not need to be English.</td>
+            <td class="pd-desc">ID estável da magia DENTRO deste pacote — qualquer string única no pacote, não precisa ser inglês. <code>name</code> também é a identidade da magia ENTRE pacotes marcados juntos — um <code>name</code> igual a um <a href="srd-reserved-slugs.json">slug reservado do SRD</a> ou a um de outro pacote instalado abre, no import, um prompt para renomear antes de gravar. / Stable id for the spell WITHIN this pack — any unique string in the pack, does not need to be English. <code>name</code> is also the spell's identity ACROSS packs marked together — a <code>name</code> matching a <a href="srd-reserved-slugs.json">reserved SRD slug</a> or another installed pack's opens a rename prompt on import, before anything is written.</td>
           </tr>
           <tr>
             <td><code>displayName</code></td>
@@ -373,6 +379,8 @@
       <li>JSON malformado. / Malformed JSON.</li>
       <li>Pacote que não bate com <a href="pack.schema.json">pack.schema.json</a>. / Pack that does not match <a href="pack.schema.json">pack.schema.json</a>.</li>
       <li>Chaves <code>__proto__</code>, <code>constructor</code> e <code>prototype</code> em qualquer nível. / <code>__proto__</code>, <code>constructor</code> and <code>prototype</code> keys at any level.</li>
+      <li><code>meta.image</code> que não é um <code>data:</code> URI de PNG/JPEG/WebP/GIF em base64 (URL externa e SVG incluídos). / <code>meta.image</code> that is not an image <code>data:</code> URI in PNG/JPEG/WebP/GIF base64 (external URL and SVG included).</li>
+      <li><code>meta.image</code> maior que 204800 caracteres (200 KB). / <code>meta.image</code> larger than 204800 characters (200 KB).</li>
     </ul>
     <p class="hifi-rich">Todas essas rejeições acontecem antes de qualquer gravação em storage. / All of these are rejected before any write to storage.</p>
   </div>
@@ -390,6 +398,24 @@
       jsDelivr (<code>cdn.jsdelivr.net</code>). On any other host, download the file and import
       it via upload instead.
     </p>
+  </div>
+
+  <div class="pd-section hifi-rich">
+    <h2 class="pd-heading">Slugs reservados / Reserved slugs</h2>
+    <p>
+      Os pacotes SRD embutidos (5.1 e 5.2, EN e PT-BR) já usam os <code>name</code> abaixo como
+      identidade das próprias magias. Um pacote homebrew que declarar um destes slugs recebe,
+      no import, um prompt para renomear antes de gravar — nada é sobrescrito em silêncio.
+      Lista completa: <a href="srd-reserved-slugs.json">srd-reserved-slugs.json</a>.
+      <br/>
+      The built-in SRD packs (5.1 and 5.2, EN and PT-BR) already use the <code>name</code>
+      values below as their spells' identity. A homebrew pack that declares one of these slugs
+      gets a rename prompt on import, before anything is overwritten silently. Full list:
+      <a href="srd-reserved-slugs.json">srd-reserved-slugs.json</a>.
+    </p>
+    <ul class="pd-list" id="pd-reserved">
+      <li>Carregando… / Loading…</li>
+    </ul>
   </div>
 
   <div class="pd-section pd-final hifi-rich">
@@ -413,6 +439,40 @@
   try { prefs = JSON.parse(localStorage.getItem('spellbook-ui-prefs')) || {}; } catch (e) { prefs = {}; }
   document.body.className = 'hifi ' + (prefs.dark ? 'hifi-dark' : 'hifi-light') +
     (prefs.theme && prefs.theme !== 'catppuccin' ? ' hifi-theme-' + prefs.theme : '');
+})();
+</script>
+
+<!-- D-15/T-08-12: a lista de slugs reservados vem do MESMO JSON que o app usa
+     (srd-reserved-slugs.json) — nunca uma cópia mantida à mão nesta página.
+     Preenchimento só por createElement + textContent (dado do repo, mas
+     ainda assim renderizado no DOM — sem parser de marcação nenhum). Em
+     file:// o fetch falha por CORS — o <li> de fallback aponta pro link
+     direto. -->
+<script>
+(function () {
+  var list = document.getElementById('pd-reserved');
+  if (!list) return;
+  fetch('srd-reserved-slugs.json')
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      list.textContent = '';
+      (data.slugs || []).forEach(function (entry) {
+        var li = document.createElement('li');
+        var code = document.createElement('code');
+        code.textContent = entry.slug;
+        li.appendChild(code);
+        li.appendChild(document.createTextNode(
+          ': ' + (entry.in || []).map(function (o) { return o.name + ' (' + o.source + ')'; }).join('; ')
+        ));
+        list.appendChild(li);
+      });
+    })
+    .catch(function () {
+      list.textContent = '';
+      var li = document.createElement('li');
+      li.textContent = 'Não foi possível carregar a lista aqui (abra srd-reserved-slugs.json diretamente) / Could not load the list here (open srd-reserved-slugs.json directly)';
+      list.appendChild(li);
+    });
 })();
 </script>
 </body>

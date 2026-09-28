@@ -868,9 +868,53 @@ function buildPack(edition, spells, source) {
   };
 }
 
+// ── slugs reservados (D-09, D-15, 08-02) ────────────────────────────────
+//
+// Fonte única lida tanto pelo app (rename-conflict, 08-04/08-05: um homebrew
+// que reusar um destes slugs recebe o prompt de renomear no import) quanto
+// por pack-docs.html — evita as duas listas divergirem. Gerada a partir dos
+// mesmos 3 pacotes SRD que já estão em disco (não busca rede nem lê os
+// spells-5E-*.json, D-05).
+function buildReservedSlugs(packs) {
+  const packsOut = packs.map((p) => ({ source: p.meta.source, name: p.meta.name }));
+
+  const bySlug = new Map();
+  for (const p of packs) {
+    for (const spell of p.spells) {
+      if (!bySlug.has(spell.name)) bySlug.set(spell.name, []);
+      bySlug.get(spell.name).push({ source: p.meta.source, name: spell.displayName || spell.name });
+    }
+  }
+
+  const slugs = [...bySlug.keys()].sort().map((slug) => ({ slug, in: bySlug.get(slug) }));
+
+  return {
+    description:
+      'Nomes (name) das magias dos pacotes SRD embutidos no Grimório do Jogador. Um pacote ' +
+      'homebrew que declarar um destes slugs recebe, no import, o prompt para renomear antes de ' +
+      'gravar. Arquivo GERADO por scripts/generate-srd-pack.mjs — não editar à mão.',
+    packs: packsOut,
+    slugs,
+  };
+}
+
+async function writeReservedSlugs() {
+  const packs = await Promise.all(
+    EDITIONS.map((e) => readFile(path.join(repoRoot, e.file), 'utf8').then(JSON.parse)),
+  );
+  const reserved = buildReservedSlugs(packs);
+  await writeFile(path.join(repoRoot, 'srd-reserved-slugs.json'), `${JSON.stringify(reserved, null, 2)}\n`, 'utf8');
+  console.log(`srd-reserved-slugs.json: wrote ${reserved.slugs.length} reserved slug(s) across ${reserved.packs.length} pack(s).`);
+}
+
 // ── entry point ──────────────────────────────────────────────────────────
 
 async function main() {
+  if (process.argv.includes('--reserved-only')) {
+    await writeReservedSlugs();
+    return;
+  }
+
   const schema = JSON.parse(await readFile(path.join(repoRoot, 'pack.schema.json'), 'utf8'));
 
   for (const edition of EDITIONS) {
@@ -906,6 +950,8 @@ async function main() {
     await writeFile(outPath, `${JSON.stringify(pack, null, 2)}\n`, 'utf8');
     console.log(`${edition.file}: wrote ${spells.length} spells (SRD ${edition.srdVersion}).`);
   }
+
+  await writeReservedSlugs();
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
@@ -915,4 +961,4 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   });
 }
 
-export { EDITIONS, validatePackAgainstSchema };
+export { EDITIONS, validatePackAgainstSchema, buildReservedSlugs };
