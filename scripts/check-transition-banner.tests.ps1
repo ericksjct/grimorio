@@ -34,7 +34,7 @@ if ($mountMatch.Value -notmatch 'lang=\{uiLang\}') {
 
 # ── 3. O efeito de persistência do App não grava migrationNoticeDismissed ──
 # (senão uma troca de tema sobrescreve a dispensa - T-06-04-03).
-$persistMatch = [regex]::Match($index, 'React\.useEffect\(\(\) => \{\s*const prev = loadPrefs\(\);[\s\S]{0,400}?\}, \[dark, theme, character, uiLang, versionKey\]\);')
+$persistMatch = [regex]::Match($index, 'React\.useEffect\(\(\) => \{\s*const prev = loadPrefs\(\);[\s\S]{0,400}?\}, \[dark, theme, character, uiLang\]\);')
 if (-not $persistMatch.Success) {
   throw 'Could not locate the App prefs-persistence effect (const prev = loadPrefs(); savePrefs({...})) in index.html.'
 }

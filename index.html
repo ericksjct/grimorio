@@ -169,13 +169,6 @@ function detectLang() {
   const candidates = browserLanguageCandidates();
   return candidates.some(l => l.startsWith('pt')) ? 'ptbr' : 'en';
 }
-// Primeira versão de magias que casa com o idioma (2024 vem primeiro por idioma
-// em SPELL_VERSIONS), usada como default na primeira visita.
-function defaultVersionKeyForLang(lang) {
-  const vs = window.SPELL_VERSIONS || [];
-  const v = vs.find(x => x.lang === lang) || vs[0];
-  return v ? v.key : '';
-}
 function decodeSharedBuildPayload(payload) {
   // searchParams converte '+' em espaço; base64 nunca tem espaço, então
   // restaurar é seguro — cobre links antigos gerados sem encodeURIComponent.
@@ -397,23 +390,13 @@ function App() {
   );
   const [theme, setTheme] = React.useState('daylight');
   const [charName, setCharName] = React.useState(initial.characterName || null);
-  // Versão de magias ativa (PT/EN × 2014/2024). Resolução por: ?v= na URL
-  // (link compartilhado) → salva → idioma do navegador (D-12, no-op desta
-  // fase: escolhe a VERSÃO inicial, não o idioma da interface). O loader é
-  // o DONO ÚNICO dessa resolução (spells-data-loader.jsx,
-  // _initialVersionKey) — lemos aqui a chave que ele já resolveu em vez de
-  // re-derivar (evita duas resoluções discordando quando a lista de versões
-  // cresce de forma assíncrona). Cadeia antiga mantida só como degrau de
-  // segurança, para o caso de o loader não ter carregado.
-  const initialVersionKey =
-    (typeof window.getCurrentSpellVersion === 'function' && window.getCurrentSpellVersion()?.key)
-    || initial.versionKey
-    || defaultVersionKeyForLang(initial.lang || detectLang());
-  const [versionKey, setVersionKey] = React.useState(initialVersionKey);
-  // Idioma da interface — estado próprio do App, independente da versão de
-  // magias ativa (D-18): a preferência salva em `spellbook-ui-prefs.lang`
-  // manda; sem ela, cai pro idioma do navegador. A versão ativa nunca
-  // escreve aqui (ver o handler de hifi-spells-source-changed abaixo).
+  // A seleção de pacotes de magias (Fase 8) não vive mais aqui: o loader
+  // (spells-data-loader.jsx) é dono único da seleção E da persistência dela
+  // em `spellbook-ui-prefs.selectedVersionKeys` (D-07). index.html não lê nem
+  // grava mais nenhum estado de versão.
+  // Idioma da interface — estado próprio do App, independente da seleção de
+  // pacotes ativa (D-18): a preferência salva em `spellbook-ui-prefs.lang`
+  // manda; sem ela, cai pro idioma do navegador.
   const [uiLang, setUiLang] = React.useState(
     initial.lang || detectLang()
   );
@@ -454,36 +437,17 @@ function App() {
     history.replaceState(null, '', url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : ''));
   }, []);
 
-  // Desacoplado (D-11/D-18): este handler espelha SÓ a versão de magias
-  // ativa. O idioma da interface é estado próprio do App (uiLang acima) e
-  // não é escrito a partir daqui — trocar de versão nunca troca o chrome.
-  React.useEffect(() => {
-    const onSourceChanged = (e) => {
-      setVersionKey(e.detail);
-    };
-    window.addEventListener('hifi-spells-source-changed', onSourceChanged);
-    return () => window.removeEventListener('hifi-spells-source-changed', onSourceChanged);
-  }, []);
-
-  // Persist prefs whenever they change (tema, modo, personagem, idioma, versão).
-  // WR-01: enquanto o loader ainda deve uma tentativa de resolver uma
-  // preferência plugin-* (pack ainda não enumerado), não grava versionKey por
-  // cima dela — senão vira o builtin de boot antes do retry, e se
-  // refreshPluginVersions() falhar (onblocked, quota, etc.) a preferência
-  // some de vez do localStorage.
-  // CR-01: esse guard é só sobre `versionKey`. A rodada anterior gateava o
-  // efeito INTEIRO nele — um link compartilhado com `?v=plugin-x` que nunca
-  // resolve (pack ausente no destinatário) ou um IndexedDB indisponível
-  // deixava _wantedVersionKey armado pra sempre, e dark/theme/character/lang
-  // paravam de persistir pro resto da sessão. Persistir sempre; só o
-  // versionKey espera o retry.
+  // Persist prefs whenever they change (tema, modo, personagem, idioma). A
+  // seleção de pacotes (Fase 8) é persistida pelo próprio loader em
+  // `spellbook-ui-prefs.selectedVersionKeys` — o spread de `prev` (relido a
+  // cada execução deste efeito) preserva esse campo intacto, nunca
+  // sobrescrito por este write.
   React.useEffect(() => {
     const prev = loadPrefs();
     savePrefs({
       ...prev, dark, theme, characterName: character ? character.name : null, lang: uiLang,
-      versionKey: window.hasPendingSpellVersion?.() ? (prev.versionKey ?? versionKey) : versionKey,
     });
-  }, [dark, theme, character, uiLang, versionKey]);
+  }, [dark, theme, character, uiLang]);
 
   // Paint the page background with the active theme so there's no flash of
   // the wrong color around the app (matters on overscroll / safe areas).

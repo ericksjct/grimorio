@@ -34,6 +34,15 @@ foreach ($forbidden in @('_currentVersion', '_wantedVersionKey', 'function setCu
   }
 }
 
+# ── index.html: sem estado de versão (Task 3, D-07) ─────────────────
+$indexPath = Join-Path $repoRoot 'index.html'
+$index = Get-Content -Raw -LiteralPath $indexPath
+foreach ($forbidden in @('versionKey', 'hasPendingSpellVersion', 'getCurrentSpellVersion', 'hifi-spells-source-changed')) {
+  if ($index.Contains($forbidden)) {
+    throw "index.html must no longer contain: $forbidden - the loader owns the package selection AND its persistence end to end (D-07); index.html only persists theme/mode/character/language."
+  }
+}
+
 # ── Prova de execução real (Node), um vm novo por cenário ──────────
 $nodeScript = @'
 const fs = require('fs');

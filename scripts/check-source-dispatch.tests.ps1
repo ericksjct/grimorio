@@ -191,15 +191,14 @@ if ($loader -notmatch 'if \(_versionByKey\(key\)\)[\s\S]{0,120}?_cache\[key\] = 
   throw 'WR-03: loadVersion() must re-check _versionByKey(key) before writing _cache[key] - otherwise an in-flight load for a version removed mid-fetch resurrects it in the cache.'
 }
 
-# ── index.html: leitura única da versão inicial (04-02 Task 2) ─────
+# ── index.html: sem estado de versão (Fase 8, D-07) ─────────────────
 $indexPath = Join-Path $repoRoot 'index.html'
 $index = Get-Content -Raw -LiteralPath $indexPath
 
-if (-not $index.Contains('getCurrentSpellVersion')) {
-  throw 'index.html no longer reads window.getCurrentSpellVersion() to seed the initial version.'
-}
-if ($index.Contains('window.setCurrentSpellVersion(versionKey)')) {
-  throw 'index.html still contains the removed mount effect pushing versionKey back to the loader - this races with the 04-02 retry.'
+foreach ($forbidden in @('getCurrentSpellVersion', 'versionKey', 'hasPendingSpellVersion', 'hifi-spells-source-changed')) {
+  if ($index.Contains($forbidden)) {
+    throw "index.html must no longer contain $forbidden - the loader (spells-data-loader.jsx) owns the package selection AND its persistence now (D-07); index.html only persists theme/mode/character/language."
+  }
 }
 
 # Fase 04.1 desacopla o idioma da interface da versão ativa (D-18): o estado
@@ -213,28 +212,22 @@ if (-not $uiLangStateMatch.Success) {
   throw 'index.html uiLang state must initialize from initial.lang || detectLang(), independent of the active version.'
 }
 
-# ── CR-01: hasPendingSpellVersion() só pode gatear o campo versionKey do
-# efeito de persistência de prefs, não o efeito inteiro. Round 2 (WR-01)
-# gateava o `return` logo no topo do efeito, o que também suspendia
-# dark/theme/characterName/lang pelo resto da sessão sempre que a
-# preferência de versão não resolvesse (link compartilhado pra um pack
-# ausente, IndexedDB indisponível).
-$prefsEffectMatch = [regex]::Match($index, 'React\.useEffect\(\(\) => \{[\s\S]{0,700}?\}, \[dark, theme, character, uiLang, versionKey\]\);')
+# ── Fase 8: o efeito de persistência de prefs não carrega mais versionKey -
+# só tema/modo/personagem/idioma. O spread de `prev` (relido a cada execução)
+# preserva o `selectedVersionKeys` que o loader grava por conta própria.
+$prefsEffectMatch = [regex]::Match($index, 'React\.useEffect\(\(\) => \{[\s\S]{0,700}?\}, \[dark, theme, character, uiLang\]\);')
 if (-not $prefsEffectMatch.Success) {
-  throw 'CR-01: could not locate the prefs-persistence React.useEffect in index.html.'
+  throw 'Could not locate the prefs-persistence React.useEffect in index.html with deps [dark, theme, character, uiLang].'
 }
 $prefsEffectBody = $prefsEffectMatch.Value
-if ($prefsEffectBody -match '^\s*React\.useEffect\(\(\) => \{\s*\r?\n\s*if \(window\.hasPendingSpellVersion') {
-  throw 'CR-01: the prefs-persistence effect must not early-return the whole body on hasPendingSpellVersion() - that suspends dark/theme/characterName/lang persistence too, not just versionKey.'
-}
 if ($prefsEffectBody -notmatch 'characterName:\s*character') {
-  throw 'CR-01: prefs-persistence effect must still write characterName unconditionally (not gated by hasPendingSpellVersion()).'
+  throw 'prefs-persistence effect must still write characterName unconditionally.'
 }
-if ($prefsEffectBody -notmatch 'hasPendingSpellVersion') {
-  throw 'CR-01: prefs-persistence effect lost the hasPendingSpellVersion() guard entirely - a pending plugin-* version preference must not be clobbered by an early savePrefs() write.'
+if ($prefsEffectBody -notmatch 'lang:\s*uiLang') {
+  throw 'prefs-persistence effect must still write lang: uiLang.'
 }
-if ($prefsEffectBody -notmatch 'versionKey:\s*window\.hasPendingSpellVersion') {
-  throw 'CR-01: the hasPendingSpellVersion() guard must be scoped to the versionKey field of the saved prefs object, not the whole effect.'
+if ($prefsEffectBody -match 'versionKey|hasPendingSpellVersion') {
+  throw 'prefs-persistence effect must not reference versionKey or hasPendingSpellVersion anymore - the loader persists the package selection on its own (D-07).'
 }
 
 # ── Ordem de carga: plugin-store antes do loader (04-05, regressao do passo 12) ─
