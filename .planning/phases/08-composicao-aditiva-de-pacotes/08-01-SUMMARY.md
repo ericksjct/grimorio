@@ -179,6 +179,18 @@ None - no external service configuration required.
 - `window.getCurrentSpellVersion`, `useSpellVersions().current`, and `useSpellVersions().switchVersion` are explicitly flagged as compatibility shims to be removed in plan 08-06 — any new code added by a later plan should prefer `getSelectedVersionKeys()`/`getResolvedVersionKeys()`/`setSelectedVersionKeys()`/`window.normalizeSelection` instead of reintroducing a "the current version" assumption.
 - **Blocker for full sign-off:** `npm test` (or the individual `.tests.ps1` gates) must be run by a human or CI in an environment where `pwsh` is available, to confirm the gate files themselves execute cleanly — see D5/Issues Encountered above. All underlying logic has been proven correct via direct Node execution, but the PowerShell wrapper scripts were never invoked by PowerShell in this session.
 
+## Self-Check: PASSED
+
+- FOUND: spells-data-loader.jsx
+- FOUND: index.html
+- FOUND: scripts/check-pack-composition.tests.ps1
+- FOUND: scripts/check-selection-migration.tests.ps1
+- FOUND: .planning/phases/08-composicao-aditiva-de-pacotes/08-01-SUMMARY.md
+- FOUND commit: 869714a (Task 1)
+- FOUND commit: 9a14989 (Task 2)
+- FOUND commit: d4df975 (Task 3)
+- FOUND commit: 65ac675 (this SUMMARY)
+
 ---
 *Phase: 08-composicao-aditiva-de-pacotes*
 *Completed: 2026-09-28*
