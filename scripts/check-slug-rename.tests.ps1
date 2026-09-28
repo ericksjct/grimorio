@@ -114,10 +114,10 @@ if ($importDialog -match 'onConflicts') {
       throw "Missing pack-import-dialog.jsx rename-conflict wiring detail: $needle"
     }
   }
-  if ($importDialog -notmatch 'installFromFile\([^)]*,\s*\{\s*onConflicts') {
+  if ($importDialog -notmatch 'installFromFile\([\s\S]*?\{\s*onConflicts') {
     throw 'pack-import-dialog.jsx must pass { onConflicts } to window.packImport.installFromFile.'
   }
-  if ($importDialog -notmatch 'installFromUrl\([^)]*,\s*\{\s*onConflicts') {
+  if ($importDialog -notmatch 'installFromUrl\([\s\S]*?\{\s*onConflicts') {
     throw 'pack-import-dialog.jsx must pass { onConflicts } to window.packImport.installFromUrl.'
   }
 }
