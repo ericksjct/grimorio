@@ -27,8 +27,8 @@
 // e PHB↔PHB antes de aceitar qualquer edição diferente. Packs de terceiro
 // (_packToVersion) recebem 'pack' e nunca competem por esse par preferencial.
 // A entrada `lang: 'ptbr'` (Fase 7, D-06) é o default de primeira visita para
-// navegador em português via `_initialVersionKey()`, sem código novo — ela
-// fica depois das duas EN pra não mexer no índice 0.
+// navegador em português via `_browserDefaultKey()`/`_initialSelection()`, sem
+// código novo — ela fica depois das duas EN pra não mexer no índice 0.
 const BUILTIN_VERSIONS = [
   { key: 'srd-2024-en', source: 'fetch', file: 'srd-2024-en.json', lang: 'en', edition: '5e 2024', corpus: 'srd', labelPt: 'SRD 5.2 (EN)', labelEn: 'SRD 5.2 (EN)', short: 'SRD 5.2' },
   { key: 'srd-2014-en', source: 'fetch', file: 'srd-2014-en.json', lang: 'en', edition: '5e 2014', corpus: 'srd', labelPt: 'SRD 5.1 (EN)', labelEn: 'SRD 5.1 (EN)', short: 'SRD 5.1' },
@@ -147,12 +147,11 @@ function refreshPluginVersions() {
 
 async function _refreshPluginVersionsInner() {
   if (!window.pluginStore || typeof window.pluginStore.listPacks !== 'function') {
-    // CR-01: sem isto, uma preferência plugin-* pendente (ou um `?v=`
-    // compartilhado que nunca existiu neste dispositivo) fica armada pra
-    // sempre — o consumo de _wantedVersionKey só acontece mais abaixo, que
-    // este early return nunca alcança.
+    // Sem isto, a preferência pendente antiga (uma chave plugin-* ou um `?v=`
+    // compartilhado que nunca existiu neste dispositivo) ficaria armada pra
+    // sempre por falta de sinal de que a enumeração pelo menos tentou rodar.
     console.warn('[spells-data-loader] window.pluginStore ausente — packs não enumerados.');
-    _wantedVersionKey = null;
+    _enumerated = true;
     return [];
   }
 
@@ -161,18 +160,25 @@ async function _refreshPluginVersionsInner() {
     metas = await window.pluginStore.listPacks();
   } catch (e) {
     console.warn('[spells-data-loader] Falha ao enumerar packs do IndexedDB:', e);
-    // CR-01: mesmo raciocínio — uma enumeração que falha (onblocked, quota,
-    // storage bloqueado) não pode deixar a preferência pendente pra sempre.
-    _wantedVersionKey = null;
+    // Mesmo raciocínio do early return acima — uma enumeração que falha
+    // (onblocked, quota, storage bloqueado) também conta como tentativa.
+    _enumerated = true;
     return [];
   }
 
   // Registros corrompidos (sem source string não-vazia) são descartados em vez
-  // de virarem entrada quebrada no seletor.
+  // de virarem entrada quebrada no menu.
   const entries = (metas || [])
     .filter(m => m && typeof m.source === 'string' && m.source !== '')
     .map(_packToVersion);
   const newKeys = new Set(entries.map(e => e.key));
+
+  // Assinaturas ANTES da mutação do registro — comparadas depois pra saber se
+  // a composição resolvida mudou ou se a seleção acabou de virar fallback,
+  // generalizando o antigo reparo de "chave pendurada" (que só existia pra
+  // uma versão ativa única) pra qualquer tamanho de seleção.
+  const before = resolveSelection(_selectedKeys).join('|');
+  const wasFallback = _isFallback(_selectedKeys);
 
   // Mutação IN PLACE do registro vivo (regra dura, ver comentário de
   // SPELL_VERSIONS acima): remove de trás pra frente todas as entradas idb
@@ -198,46 +204,27 @@ async function _refreshPluginVersionsInner() {
   // Evento novo da fase, espelhando a convenção já usada por
   // hifi-spells-source-changed e hifi-chars-changed.
   window.dispatchEvent(new CustomEvent('hifi-plugins-changed', { detail: entries.length }));
+  _enumerated = true;
 
-  // Preferência pendente: se a chave desejada crua agora resolve e é diferente
-  // da versão corrente, honra sem esperar recarga. Se não resolver, nada de
-  // troca silenciosa (proibição P-01) — o seletor tem de continuar mostrando
-  // a versão realmente em uso.
-  // Consome de uma vez: assim que a chave desejada RESOLVE, a preferencia
-  // pendente cumpriu seu papel -- seja porque ja e a versao corrente (boot
-  // normal), seja porque acabamos de aplica-la. Mante-la viva depois disso era
-  // o CR-02. Se ela nunca resolver, continua pendente, que e o comportamento
-  // desejado para um pack ainda nao enumerado.
-  if (_wantedVersionKey && _versionByKey(_wantedVersionKey)) {
-    const wanted = _wantedVersionKey;
-    _wantedVersionKey = null;
-    if (wanted !== _currentVersion) setCurrentVersion(wanted);
+  // Pendência por item (D-24): uma chave crua que ainda não resolvia (pack
+  // não enumerado) pode passar a resolver agora, e uma que resolvia pode ter
+  // sumido do registro (pack removido em outra aba). A composição inteira é
+  // recalculada; um sinal avisa a UI só se o conjunto resolvido realmente
+  // mudou — nunca uma troca silenciosa sem mudança real (proibição P-01).
+  const after = resolveSelection(_selectedKeys).join('|');
+  if (after !== before) {
+    _unionMemo = null;
+    window.dispatchEvent(new CustomEvent('hifi-spells-source-changed', { detail: _selectedKeys.slice() }));
   }
-
-  // CR-01 (raiz): o splice acima pode ter removido a entrada idb que estava
-  // selecionada. Um _currentVersion que nao resolve mais faz loadVersion()
-  // cair no redirect de chave desconhecida, que cacheia sob a chave DEFAULT --
-  // _cache[_currentVersion] nunca preenche e todo render tenta de novo.
-  if (!_versionByKey(_currentVersion)) {
-    console.warn('[spells-data-loader] Versao ativa sumiu do registro:', _currentVersion, '- voltando para a padrao.');
-    setCurrentVersion(_defaultVersion().key);
-    // WR-02: setCurrentVersion aqui dispara hifi-spells-source-changed, que
-    // troca o dataset E o idioma inteiro da UI sob o usuário sem aviso — a
-    // troca silenciosa que P-01 proíbe. O console.warn não é visível pra
-    // quem não abriu o devtools; um toast avisa de verdade.
+  // D-04: a mesma seleção crua pode ter passado de "algo resolvível" pra
+  // "nada resolvível" só por causa da enumeração (ex.: o único pack marcado
+  // acabou de ser removido em outra aba) — o toast segue sempre o idioma da
+  // interface, nunca o do pacote que sumiu.
+  if (!wasFallback && _isFallback(_selectedKeys)) {
     try {
-      const fallback = _defaultVersion();
-      const ui = _uiLang();
-      // O RÓTULO da versão é conteúdo do pacote, então segue o idioma do pacote;
-      // a FRASE em volta é chrome e segue a interface. Antes o `tt()` recebia
-      // `fallback.lang`, e uma interface em pt-br caindo no SRD EN levava o aviso
-      // inteiro pra inglês — o acoplamento que a Fase 04.1 removeu, sobrevivendo aqui.
-      const fallbackLabel = (fallback.lang === 'ptbr' ? fallback.labelPt : fallback.labelEn) || fallback.short || fallback.key;
       window.dispatchEvent(new CustomEvent('hifi-toast', {
         detail: {
-          msg: window.tt
-            ? window.tt(ui, 'toast.versionSwitchedAway', { version: fallbackLabel })
-            : 'o pacote que você estava vendo foi removido — voltamos para ' + fallbackLabel,
+          msg: window.tt ? window.tt(_uiLang(), 'menu.toastFallbackToDefault') : 'nenhum pacote selecionado — mostrando o padrão',
           kind: 'err',
         },
       }));
@@ -369,7 +356,7 @@ function mdToHtml(html) {
 // ──────────────────────────────────────────────────────────────────
 // ADAPTADOR: JSON raw → formato do app
 // ──────────────────────────────────────────────────────────────────
-function adaptSpell(s, versionLang, edition) {
+function adaptSpell(s, versionLang, edition, versionKey) {
   const schoolKey = (s.school || '').toLowerCase();
   const schoolIdx = SCHOOL_INDEX[schoolKey];
 
@@ -449,6 +436,14 @@ function adaptSpell(s, versionLang, edition) {
     // `edition` declarada nao e "5e 2014" por padrao, e useEditionCompare ja
     // sabe se esconder quando `!cur.edition`.
     edition: edition || '',
+    // Fase 8 (D-06, Pattern 2): cada magia carrega o próprio idioma de
+    // conteúdo e a chave do pacote de origem — a composição aditiva permite
+    // pacotes de idiomas diferentes selecionados ao mesmo tempo, então um
+    // `versionLang` único no nível do hook deixou de fazer sentido pra
+    // renderização por magia (só concerns agregados, como locale de
+    // ordenação, continuam usando o idioma da interface).
+    lang: versionLang === 'ptbr' ? 'ptbr' : 'en',
+    _versionKey: versionKey || '',
     url: s.url || '',
     ritual: !!s.ritual,
     concentration: !!s.concentration,
@@ -456,9 +451,9 @@ function adaptSpell(s, versionLang, edition) {
   };
 }
 
-function adaptSpells(json, versionLang, edition) {
+function adaptSpells(json, versionLang, edition, versionKey) {
   const list = Array.isArray(json) ? json : (json?.spells || []);
-  return list.map(s => adaptSpell(s, versionLang, edition));
+  return list.map(s => adaptSpell(s, versionLang, edition, versionKey));
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -471,75 +466,129 @@ const _cache = {};     // key → adapted spells[]
 // packs de IndexedDB já expõem meta via pluginStore.listPacks().
 const _metaCache = {};
 
-// Versão inicial = preferência salva (idioma escolhido na última visita) ou,
-// na primeira visita, a versão que casa com o idioma do navegador. Assim o app
-// já PRÉ-CARREGA a língua certa — sem flash de PT-BR pra quem é EN, sem fetch
-// desperdiçado. O index.html (App) deriva o mesmo, então não há troca dupla.
-// Chave desejada crua (?v= ou preferência salva), registrada mesmo quando não
-// resolve ainda — é o que refreshPluginVersions() usa pra honrar, via retry,
-// uma preferência que aponta pra um pack de IndexedDB ainda não enumerado.
-let _wantedVersionKey = null;
-
-function _initialVersionKey() {
+// Preferência CRUA (seleção de pacotes) — persistida pelo próprio loader em
+// spellbook-ui-prefs.selectedVersionKeys (D-07). `_enumerated` marca se a
+// primeira volta de refreshPluginVersions() já rodou: antes dela, uma chave
+// plugin-* ainda não vista nunca é podada (D-24 — só uma mudança explícita
+// poda depois da primeira enumeração). `_unionMemo` guarda a última união
+// calculada por buildSpellsFromRealData(), pra devolver a MESMA identidade de
+// array enquanto nada muda (chaves resolvidas, idioma, cache de cada chave) —
+// a antiga preferência pendente de um item deixa de existir: a pendência
+// agora é por item dentro da própria lista.
+function _readPrefs() {
   try {
-    // ?v= de link compartilhado vence a preferência salva (o App faz o mesmo).
+    const parsed = JSON.parse(localStorage.getItem('spellbook-ui-prefs') || '{}');
+    return (parsed && typeof parsed === 'object') ? parsed : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+// Seleção inicial (D-23/D-24): (1) ?v= de link compartilhado, lista separada
+// por vírgula (um valor só continua válido, retrocompatível); (2) senão a
+// lista já persistida pelo loader (`selectedVersionKeys`, inclusive vazia —
+// Pitfall 1); (3) senão a preferência legada de um item (`versionKey`) —
+// resolve direto, cai no mapa de fallback (D-23: aplicado ANTES da conversão
+// pra lista, grava window.__legacyVersionFallback) ou fica pendente por item
+// (D-24); (4) senão o pacote padrão do navegador.
+function _initialSelection() {
+  try {
+    // IN-01: um blob de prefs corrompido não pode descartar um `?v=` válido —
+    // _readPrefs() isola o próprio parse no seu try/catch, então um `?v=` de
+    // link compartilhado sempre chega aqui intacto.
     const urlV = new URL(window.location.href).searchParams.get('v');
-    // IN-01: parse defensivo isolado — um blob de prefs corrompido não pode
-    // derrubar todo o try e descartar um `?v=` válido em favor do default.
-    // index.html's loadPrefs() já tolera isto da mesma forma.
-    let prefs = {};
-    try { prefs = JSON.parse(localStorage.getItem('spellbook-ui-prefs') || '{}') || {}; } catch (e) {}
-    _wantedVersionKey = urlV || prefs.versionKey || null;
-    if (urlV && _versionByKey(urlV)) return urlV;
-    if (prefs.versionKey && _versionByKey(prefs.versionKey)) {
-      return prefs.versionKey;
+    if (urlV) {
+      const fromUrl = urlV.split(',').map(s => s.trim()).filter(Boolean);
+      if (fromUrl.length) return normalizeSelection(fromUrl);
     }
-    // D-04: chave legada que não resolve mais cai no mapa de fallback (Fase
-    // 7, D-08: só a 2024 PT-BR vai pro SRD 5.2 PT-BR; as demais pro SRD da
-    // mesma edição) — zera _wantedVersionKey (nenhum pack jamais resolve
-    // uma chave legada) e grava __legacyVersionFallback, o sinal que o
-    // banner de transição lê.
-    if (prefs.versionKey && LEGACY_VERSION_FALLBACK[prefs.versionKey]) {
-      const fallbackTo = LEGACY_VERSION_FALLBACK[prefs.versionKey];
-      window.__legacyVersionFallback = { from: prefs.versionKey, to: fallbackTo };
-      _wantedVersionKey = null;
-      return fallbackTo;
+    const prefs = _readPrefs();
+    if (Array.isArray(prefs.selectedVersionKeys)) {
+      return normalizeSelection(prefs.selectedVersionKeys);
     }
-    // Mesma regra do detectLang() de index.html (roda antes dele): qualquer pt* vence.
-    const candidates = [
-      ...Array.from(navigator.languages || []),
-      navigator.language,
-      navigator.userLanguage,
-      navigator.browserLanguage,
-    ].filter(Boolean).map(l => String(l).toLowerCase());
-    const lang = candidates.some(l => l.startsWith('pt')) ? 'ptbr' : 'en';
-    const v = SPELL_VERSIONS.find(x => x.lang === lang);
-    if (v) return v.key;
+    if (typeof prefs.versionKey === 'string' && prefs.versionKey !== '') {
+      if (_versionByKey(prefs.versionKey)) {
+        return normalizeSelection([prefs.versionKey]);
+      }
+      // D-04/D-23: chave legada que não resolve mais cai no mapa de fallback
+      // (Fase 7, D-08: só a 2024 PT-BR vai pro SRD 5.2 PT-BR; as demais pro
+      // SRD da mesma edição), aplicado ANTES da conversão pra lista.
+      if (LEGACY_VERSION_FALLBACK[prefs.versionKey]) {
+        const fallbackTo = LEGACY_VERSION_FALLBACK[prefs.versionKey];
+        window.__legacyVersionFallback = { from: prefs.versionKey, to: fallbackTo };
+        return normalizeSelection([fallbackTo]);
+      }
+      // D-24: chave de pack ainda não instalado/enumerado fica pendente por
+      // item — refreshPluginVersions() honra assim que resolver.
+      return normalizeSelection([prefs.versionKey]);
+    }
   } catch (e) {}
-  return _defaultVersion().key;
-}
-let _currentVersion = _initialVersionKey();
-
-function getCurrentVersion() {
-  return _versionByKey(_currentVersion) || _defaultVersion();
+  return normalizeSelection([_browserDefaultKey()]);
 }
 
-function setCurrentVersion(key) {
-  // WR-05: o clear é INCONDICIONAL, antes do early-return de no-op. Uma
-  // escolha explícita (inclusive selecionar a versão em que você já está)
-  // sempre cancela a preferência pendente — era a última via de escape
-  // manual pra destravar `_wantedVersionKey` (ver CR-01), e o early-return
-  // acima dela a deixava presa mesmo quando o usuário tentava resolver
-  // ativamente.
-  _wantedVersionKey = null;
-  if (_currentVersion === key) return;
-  // CR-02: qualquer troca EFETIVA cancela a preferencia pendente. Sem isto,
-  // _wantedVersionKey sobrevive a sessao inteira e refreshPluginVersions()
-  // volta a aplica-lo a cada importacao de pack, arrastando o usuario de volta
-  // para a versao do boot -- a troca silenciosa que P-01 proibe.
-  _currentVersion = key;
-  // Notifica todos os listeners que a fonte mudou
-  window.dispatchEvent(new CustomEvent('hifi-spells-source-changed', { detail: key }));
+// Read-modify-write do blob inteiro (mesmo contrato que transition-banner.jsx
+// já respeita): grava a lista CRUA, nunca a resolvida (Pitfall 1 — uma
+// seleção vazia persiste vazia), e remove o campo legado de um item no mesmo
+// write (D-23).
+function _persistSelection(keys) {
+  try {
+    const prev = _readPrefs();
+    const next = Object.assign({}, prev, { selectedVersionKeys: keys.slice() });
+    delete next.versionKey;
+    localStorage.setItem('spellbook-ui-prefs', JSON.stringify(next));
+  } catch (e) {}
+}
+
+let _selectedKeys = _initialSelection();
+_persistSelection(_selectedKeys);
+let _enumerated = false;
+let _unionMemo = null;
+
+function getSelectedVersionKeys() {
+  return _selectedKeys.slice();
+}
+
+function getResolvedVersionKeys() {
+  return resolveSelection(_selectedKeys);
+}
+
+// Muda a seleção crua (menu de pacotes, `?v=` já resolvido, ou qualquer
+// chamador programático). Depois da primeira enumeração de packs, poda
+// fantasmas (chaves que nunca vão resolver); antes dela, uma chave plugin-*
+// ainda não vista sobrevive (D-24). Avisa a troca sempre; o toast de D-04 só
+// dispara quando a seleção VIRA fallback nesta chamada (nunca se já estava).
+function setSelectedVersionKeys(keys) {
+  let next = normalizeSelection(keys);
+  if (_enumerated) {
+    next = next.filter(k => _versionByKey(k));
+  }
+  const wasFallback = _isFallback(_selectedKeys);
+  _selectedKeys = next;
+  _persistSelection(_selectedKeys);
+  window.dispatchEvent(new CustomEvent('hifi-spells-source-changed', { detail: _selectedKeys.slice() }));
+  if (!wasFallback && _isFallback(_selectedKeys)) {
+    try {
+      window.dispatchEvent(new CustomEvent('hifi-toast', {
+        // chrome: segue a interface, nunca o idioma de um pacote da seleção.
+        detail: {
+          msg: window.tt ? window.tt(_uiLang(), 'menu.toastFallbackToDefault') : 'nenhum pacote selecionado — mostrando o padrão',
+          kind: 'err',
+        },
+      }));
+    } catch (e2) {}
+  }
+}
+
+// Limpa o cache de uma chave (usado pelo rename de pack de um plano futuro
+// desta fase) e avisa a UI só se a chave invalidada está de fato na
+// composição atual — nunca escreve no IndexedDB.
+function invalidateSpellVersion(key) {
+  delete _cache[key];
+  delete _metaCache[key];
+  _resolvableKeysPromise = null;
+  _unionMemo = null;
+  if (resolveSelection(_selectedKeys).includes(key)) {
+    window.dispatchEvent(new CustomEvent('hifi-spells-source-changed', { detail: _selectedKeys.slice() }));
+  }
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -592,7 +641,7 @@ async function loadVersion(key) {
       if (json && !Array.isArray(json) && typeof json.meta === 'object' && json.meta) {
         _metaCache[key] = json.meta;
       }
-      const adapted = adaptSpells(json, ver.lang, ver.edition);
+      const adapted = adaptSpells(json, ver.lang, ver.edition, ver.key);
       // WR-03: refreshPluginVersions() pode ter removido `key` do registro
       // enquanto este load estava em voo (pack apagado no meio do fetch). Sem
       // este guard, a escrita abaixo resuscitaria no _cache uma entrada que a
@@ -670,52 +719,199 @@ window.addEventListener('hifi-plugins-changed', () => { _resolvableKeysPromise =
 window.resolvableSpellKeys = resolvableSpellKeys;
 
 // ──────────────────────────────────────────────────────────────────
+// SELEÇÃO DE PACOTES — composição aditiva (Fase 8, D-01..D-06)
+// ──────────────────────────────────────────────────────────────────
+// A partir daqui a grade deixa de ser "uma versão ativa" e passa a ser a
+// UNIÃO de qualquer número de pacotes marcados. As funções abaixo são puras
+// (sem estado próprio, sem I/O) — o estado que as consome (`_selectedKeys`,
+// na seção CACHE + ESTADO acima) e as funções que o mutam ficam antes deste
+// bloco por hoisting; a ordem textual não importa em tempo de execução.
+
+// Origem `fetch` + `corpus` igual a `srd` identifica um dos 3 SRD embutidos
+// (BUILTIN_VERSIONS). Um pack de terceiro nunca casa aqui, mesmo declarando
+// `meta.edition` (D-05: edition de homebrew é só informativa).
+function _isSrdBuiltin(v) {
+  return !!(v && v.source === 'fetch' && v.corpus === 'srd');
+}
+
+// Resolução "pacote padrão" (D-04): mesma detecção de idioma do navegador que
+// _initialVersionKey() já usa, devolvendo a primeira entrada de SPELL_VERSIONS
+// nesse idioma, senão a raiz da cadeia de fallback (_defaultVersion()).
+function _browserDefaultKey() {
+  try {
+    const candidates = [
+      ...Array.from(navigator.languages || []),
+      navigator.language,
+      navigator.userLanguage,
+      navigator.browserLanguage,
+    ].filter(Boolean).map(l => String(l).toLowerCase());
+    const lang = candidates.some(l => l.startsWith('pt')) ? 'ptbr' : 'en';
+    const v = SPELL_VERSIONS.find(x => x.lang === lang);
+    if (v) return v.key;
+  } catch (e) {}
+  return _defaultVersion().key;
+}
+
+// Normaliza a lista CRUA de chaves selecionadas: só strings não vazias
+// (trim), teto de 64 itens, dedupe mantendo a primeira ocorrência. D-03: os
+// SRD embutidos são mutuamente exclusivos POR EDIÇÃO — vence a edição da
+// última chave SRD da lista (A-01: a mesma regra que o clique no menu e o
+// `?v=` aplicam); SRD da mesma edição em idiomas diferentes (ex.: srd-2024-en
+// e srd-2024-ptbr) sobrevivem juntas porque compartilham a edição vencedora.
+// Uma chave não registrada (plugin-x) ou com qualquer outro `corpus` nunca é
+// removida por esta regra (D-05).
+function normalizeSelection(keys) {
+  const arr = Array.isArray(keys) ? keys : [];
+  const seen = new Set();
+  let out = [];
+  for (const k of arr) {
+    if (typeof k !== 'string') continue;
+    const trimmed = k.trim();
+    if (!trimmed || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    out.push(trimmed);
+    if (out.length >= 64) break;
+  }
+  let lastSrdEdition = null;
+  for (let i = out.length - 1; i >= 0; i--) {
+    const v = _versionByKey(out[i]);
+    if (v && _isSrdBuiltin(v)) { lastSrdEdition = v.edition; break; }
+  }
+  if (lastSrdEdition !== null) {
+    out = out.filter((k) => {
+      const v = _versionByKey(k);
+      return !v || !_isSrdBuiltin(v) || v.edition === lastSrdEdition;
+    });
+  }
+  return out;
+}
+
+// Lista normalizada, restrita às chaves que resolvem no registro atual.
+// Vazia (seleção com nada resolvível, inclusive `[]`) cai no pacote padrão —
+// a grade nunca fica vazia por falta de seleção (D-04, F5 D-17).
+function resolveSelection(keys) {
+  const resolved = normalizeSelection(keys).filter(k => _versionByKey(k));
+  return resolved.length ? resolved : [_browserDefaultKey()];
+}
+
+// Verdadeiro quando NENHUMA chave da seleção crua resolve mais — é o sinal
+// que dispara o toast de D-04 (consumido por setSelectedVersionKeys() e por
+// _refreshPluginVersionsInner() ao redor de uma mudança explícita ou de uma
+// enumeração de packs).
+function _isFallback(keys) {
+  return normalizeSelection(keys).filter(k => _versionByKey(k)).length === 0;
+}
+
+// União das magias de todos os pacotes resolvidos, na ordem da seleção.
+// `entries` = [{ version, spells }]. Sem `keyOf`, é concatenação pura (uso
+// interno/teste). Com `keyOf` (produção: window.hifiSpellKey), colisão de
+// chave é resolvida assim: SUBSTITUI a existente só quando as duas entradas
+// são SRD da MESMA edição e a que está entrando casa com `uiLang` enquanto a
+// existente não (D-03 — desempate por idioma da interface, não da ordem da
+// lista); qualquer outra colisão MANTÉM a existente, sem duplicar (A-04: rede
+// de segurança determinística contra chave React duplicada entre homebrews).
+// Nunca muta os arrays de `entries`.
+function unionSpells(entries, uiLang, keyOf) {
+  const list = Array.isArray(entries) ? entries : [];
+  if (typeof keyOf !== 'function') {
+    const out = [];
+    list.forEach((entry) => {
+      (entry && Array.isArray(entry.spells) ? entry.spells : []).forEach(s => out.push(s));
+    });
+    return out;
+  }
+  const out = [];
+  const indexByKey = new Map();
+  list.forEach((entry) => {
+    const ver = entry && entry.version;
+    const spells = entry && Array.isArray(entry.spells) ? entry.spells : [];
+    spells.forEach((s) => {
+      const k = keyOf(s);
+      if (!indexByKey.has(k)) {
+        indexByKey.set(k, out.length);
+        out.push(s);
+        return;
+      }
+      const idx = indexByKey.get(k);
+      const existing = out[idx];
+      const existingVer = existing && existing._versionKey ? _versionByKey(existing._versionKey) : null;
+      const sameEditionSrd = !!(ver && existingVer && ver.corpus === 'srd' && existingVer.corpus === 'srd' && ver.edition === existingVer.edition);
+      if (sameEditionSrd && s.lang === uiLang && existing.lang !== uiLang) {
+        out[idx] = s;
+      }
+    });
+  });
+  return out;
+}
+
+// ──────────────────────────────────────────────────────────────────
 // API PÚBLICA — substitui v7BuildSpells
 // ──────────────────────────────────────────────────────────────────
-function buildSpellsFromRealData() {
-  const key = _currentVersion;
-  const cached = _cache[key];
-  if (cached) return cached;
-  // Se ainda não carregou, inicia o fetch em background e retorna vazio temporariamente
-  loadVersion(key).then(() => {
-    // CR-01: so avisa se o cache REALMENTE preencheu para esta chave. O
-    // listener de useSpellVersions responde chamando esta funcao de novo; com
-    // o cache ainda vazio (falha de carga, que nao e cacheada de proposito, ou
-    // chave desconhecida, cujo redirect cacheia sob a chave default) o par
-    // dispatch/listener vira um ciclo que nao termina e trava a aba.
-    if (_cache[key]) {
-      window.dispatchEvent(new CustomEvent('hifi-spells-source-changed', { detail: key }));
-    }
-  });
-  return [];
+function buildSpellsFromRealData(uiLang) {
+  const lang = uiLang || _uiLang();
+  const keys = resolveSelection(_selectedKeys);
+  const missing = keys.filter(k => !_cache[k]);
+  if (missing.length) {
+    // Se ainda não carregou tudo, inicia o fetch em background; a grade
+    // devolve, por enquanto, só a união do que já está em cache — marcar mais
+    // um pacote nunca zera o que já está na tela.
+    Promise.all(missing.map(loadVersion)).then(() => {
+      // CR-01 generalizado: só avisa se TODAS as chaves resolvidas
+      // preencheram o cache. Com o cache ainda incompleto (falha de carga,
+      // que não é cacheada de propósito, ou chave desconhecida, cujo redirect
+      // cacheia sob a chave default) o par dispatch/listener viraria um ciclo
+      // que não termina e trava a aba.
+      if (keys.every(k => _cache[k])) {
+        window.dispatchEvent(new CustomEvent('hifi-spells-source-changed', { detail: _selectedKeys.slice() }));
+      }
+    });
+  }
+  const ready = keys.filter(k => _cache[k]);
+  const keysSig = ready.join('|');
+  const memoHit = _unionMemo
+    && _unionMemo.keysSig === keysSig
+    && _unionMemo.lang === lang
+    && _unionMemo.refs.length === ready.length
+    && _unionMemo.refs.every((ref, i) => ref === _cache[ready[i]]);
+  if (memoHit) return _unionMemo.result;
+  const keyOf = typeof window.hifiSpellKey === 'function' ? window.hifiSpellKey : null;
+  const result = unionSpells(ready.map(k => ({ version: _versionByKey(k), spells: _cache[k] })), lang, keyOf);
+  _unionMemo = { keysSig, lang, refs: ready.map(k => _cache[k]), result };
+  return result;
 }
 
 // Hook React para carregamento assíncrono com loading state
-function useSpellVersions() {
+function useSpellVersions(uiLang) {
   const [loaded, setLoaded] = React.useState(false);
-  const [current, setCurrent] = React.useState(_currentVersion);
-  const [spells, setSpells] = React.useState(() => buildSpellsFromRealData());
+  const [selectedKeys, setSelectedKeysState] = React.useState(() => getSelectedVersionKeys());
+  const [spells, setSpells] = React.useState(() => buildSpellsFromRealData(uiLang));
 
   React.useEffect(() => {
     let mounted = true;
-    // Só a versão ATIVA é baixada no boot (~600 KB em vez de ~2,6 MB das 4).
-    // As outras são carregadas sob demanda ao trocar de versão / comparar edição.
-    loadVersion(_currentVersion).then(() => {
+    // Só as versões RESOLVIDAS são baixadas no boot. As outras (comparador de
+    // edição, packs ainda não marcados) são carregadas sob demanda.
+    Promise.all(resolveSelection(_selectedKeys).map(loadVersion)).then(() => {
       if (!mounted) return;
       setLoaded(true);
-      setSpells(buildSpellsFromRealData());
+      setSpells(buildSpellsFromRealData(uiLang));
     });
     return () => { mounted = false; };
   }, []);
 
   React.useEffect(() => {
     const onChange = (e) => {
-      setCurrent(e.detail);
-      setSpells(buildSpellsFromRealData());
+      setSelectedKeysState(Array.isArray(e.detail) ? e.detail.slice() : getSelectedVersionKeys());
+      setSpells(buildSpellsFromRealData(uiLang));
     };
     window.addEventListener('hifi-spells-source-changed', onChange);
     return () => window.removeEventListener('hifi-spells-source-changed', onChange);
-  }, []);
+  }, [uiLang]);
+
+  // O idioma da interface participa do desempate de colisão SRD EN×PT-BR
+  // (D-03) — trocar uiLang sem trocar a seleção precisa recalcular a união.
+  React.useEffect(() => {
+    setSpells(buildSpellsFromRealData(uiLang));
+  }, [uiLang]);
 
   // SPELL_VERSIONS é mutado in place (push/splice) por refreshPluginVersions()
   // — mutar não provoca re-render por si só, então mantemos uma cópia rasa em
@@ -727,17 +923,29 @@ function useSpellVersions() {
     return () => window.removeEventListener('hifi-plugins-changed', onPluginsChanged);
   }, []);
 
+  const setSelectedKeys = React.useCallback((keys) => {
+    setSelectedVersionKeys(keys);
+    setSelectedKeysState(getSelectedVersionKeys());
+    setSpells(buildSpellsFromRealData(uiLang));
+  }, [uiLang]);
+
+  const resolvedKeys = resolveSelection(selectedKeys);
+  // Compatibilidade pros consumidores ainda não migrados (v10-hifi.jsx,
+  // VersionSelector) — os três (current/switchVersion aqui e
+  // window.getCurrentSpellVersion mais abaixo) são removidos no plano 08-06.
+  const current = resolvedKeys[0];
   const switchVersion = React.useCallback((key) => {
-    setCurrentVersion(key);
-    // Atualiza imediatamente se já está em cache
-    setSpells(buildSpellsFromRealData());
-  }, []);
+    setSelectedKeys([key]);
+  }, [setSelectedKeys]);
 
   return {
     versions,
-    current,
+    selectedKeys,
+    resolvedKeys,
     spells,
     loaded,
+    setSelectedKeys,
+    current,
     switchVersion,
   };
 }
@@ -895,7 +1103,11 @@ window.SPELL_VERSIONS = SPELL_VERSIONS;
 // Mapas de classe en↔pt — usados pra remapear o filtro de classe ao trocar de idioma.
 window.CLASS_PT = CLASS_PT; // en → pt  (bard → bardo)
 window.CLASS_EN = CLASS_EN; // pt → en  (bardo → bard)
-window.getCurrentSpellVersion = getCurrentVersion;
+// Compatibilidade pros consumidores ainda não migrados (index.html,
+// v10-hifi.jsx) — devolve a versão da PRIMEIRA chave resolvida da seleção.
+// Removida no plano 08-06 desta fase, junto com os outros dois pontos de
+// compatibilidade equivalentes em useSpellVersions() acima.
+window.getCurrentSpellVersion = () => _versionByKey(resolveSelection(_selectedKeys)[0]) || _defaultVersion();
 window.loadSpellVersion = loadVersion;
 window.getVersionMeta = getVersionMeta;
 window.useSpellVersions = useSpellVersions;
@@ -903,9 +1115,11 @@ window.VersionSelector = VersionSelector;
 window.adaptSpell = adaptSpell;
 window.adaptSpells = adaptSpells;
 window.refreshPluginVersions = refreshPluginVersions;
-// WR-01: index.html usa isto pra não sobrescrever prefs.versionKey com o
-// builtin de boot enquanto uma preferência plugin-* ainda não resolveu.
-window.hasPendingSpellVersion = () => !!_wantedVersionKey;
+window.getSelectedVersionKeys = getSelectedVersionKeys;
+window.getResolvedVersionKeys = getResolvedVersionKeys;
+window.setSelectedVersionKeys = setSelectedVersionKeys;
+window.invalidateSpellVersion = invalidateSpellVersion;
+window.normalizeSelection = normalizeSelection;
 
 // Pre-carrega a versão default assim que o DOM estiver pronto. A enumeração de
 // packs do IndexedDB roda em paralelo, fire-and-forget: sem await e sem
@@ -915,11 +1129,11 @@ window.hasPendingSpellVersion = () => !!_wantedVersionKey;
 if (typeof document !== 'undefined') {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      loadVersion(_currentVersion);
+      resolveSelection(_selectedKeys).forEach(k => loadVersion(k));
       refreshPluginVersions().catch(e => console.warn('[spells-data-loader] refreshPluginVersions falhou no boot:', e));
     });
   } else {
-    loadVersion(_currentVersion);
+    resolveSelection(_selectedKeys).forEach(k => loadVersion(k));
     refreshPluginVersions().catch(e => console.warn('[spells-data-loader] refreshPluginVersions falhou no boot:', e));
   }
 }

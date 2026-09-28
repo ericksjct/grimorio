@@ -43,24 +43,28 @@ if (([regex]::Matches($loader, 'hifi-plugins-changed')).Count -lt 2) {
   throw 'Expected an additional hifi-plugins-changed listener invalidating the resolvable-keys cache.'
 }
 
-# 5. _initialVersionKey() deve consultar LEGACY_VERSION_FALLBACK e zerar
-#    _wantedVersionKey dentro do próprio ramo de fallback — senão
-#    hasPendingSpellVersion() fica armado pra sempre e o efeito de
-#    persistência de index.html nunca reescreve prefs.versionKey.
-$fnMatch = [regex]::Match($loader, 'function _initialVersionKey\(\)[\s\S]{0,2500}?\n\}')
+# 5. _initialSelection() (Fase 8: substitui _initialVersionKey()) deve
+#    consultar LEGACY_VERSION_FALLBACK e, dentro do próprio ramo de fallback,
+#    gravar window.__legacyVersionFallback = { from, ... } e devolver a LISTA
+#    já normalizada com o destino — D-23: o fallback legado é aplicado ANTES
+#    da conversão de chave única pra lista.
+$fnMatch = [regex]::Match($loader, 'function _initialSelection\(\)[\s\S]{0,2500}?\n\}')
 if (-not $fnMatch.Success) {
-  throw 'Could not locate _initialVersionKey() in spells-data-loader.jsx.'
+  throw 'Could not locate _initialSelection() in spells-data-loader.jsx.'
 }
 $fnBody = $fnMatch.Value
 if ($fnBody -notmatch 'LEGACY_VERSION_FALLBACK') {
-  throw '_initialVersionKey() must consult LEGACY_VERSION_FALLBACK for a prefs.versionKey that no longer resolves.'
+  throw '_initialSelection() must consult LEGACY_VERSION_FALLBACK for a prefs.versionKey that no longer resolves.'
 }
 $fallbackBranchMatch = [regex]::Match($fnBody, 'LEGACY_VERSION_FALLBACK\[[\s\S]{0,600}?\n\s*\}')
 if (-not $fallbackBranchMatch.Success) {
-  throw 'Could not locate the LEGACY_VERSION_FALLBACK branch inside _initialVersionKey().'
+  throw 'Could not locate the LEGACY_VERSION_FALLBACK branch inside _initialSelection().'
 }
-if ($fallbackBranchMatch.Value -notmatch '_wantedVersionKey\s*=\s*null') {
-  throw '_wantedVersionKey must be zeroed inside the LEGACY_VERSION_FALLBACK branch of _initialVersionKey() (D-04): a legacy key will never resolve from any pack, so leaving it pending arms hasPendingSpellVersion() forever.'
+if ($fallbackBranchMatch.Value -notmatch 'window\.__legacyVersionFallback\s*=\s*\{\s*from:') {
+  throw '_initialSelection() must write window.__legacyVersionFallback = { from, ... } inside the LEGACY_VERSION_FALLBACK branch (D-23: the transition banner reads this signal).'
+}
+if ($fallbackBranchMatch.Value -notmatch 'return\s+normalizeSelection\(\[fallbackTo\]\)') {
+  throw '_initialSelection() must return the NORMALIZED LIST containing the fallback destination (D-23: legacy fallback applied BEFORE the single-key-to-list conversion), not the bare key.'
 }
 
 # 6. Pós-06-05: as 4 chaves legadas saíram de BUILTIN_VERSIONS (D-15/D-17) -

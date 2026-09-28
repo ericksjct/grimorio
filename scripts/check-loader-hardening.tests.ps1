@@ -1,8 +1,10 @@
 $ErrorActionPreference = 'Stop'
 
 # Endurecimento do loader apos a revisao de codigo da Fase 4 (04-REVIEW.md).
-# Cobre os tres blockers CR-01, CR-02 e CR-03, cada um com uma assercao
-# estrutural e -- onde da -- uma prova de execucao em Node.
+# Cobre os blockers CR-01 e CR-03, cada um com uma assercao estrutural e --
+# onde da -- uma prova de execucao em Node. CR-02 (preferencia pendente de UM
+# item, `_wantedVersionKey`) foi superado pela Fase 8: a pendencia agora e por
+# item dentro da propria lista de selecao (ver check-selection-migration.tests.ps1).
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $loaderPath = Join-Path $repoRoot 'spells-data-loader.jsx'
@@ -48,34 +50,37 @@ if ($urlViewMatch.Value -notmatch "\['class', 'level', 'school'\]\.includes\(k\)
   throw "IN-06: the ?f.*= URL parser must narrow accepted keys to ['class', 'level', 'school'] (what hifiShareViewUrl actually emits) - accepting all 10 hifiFilterConfig keys lets a hand-crafted URL apply a real filter with no visible chip to undo it."
 }
 
-# ── CR-02: preferencia pendente nao pode ser reaplicada para sempre ─
-# _wantedVersionKey era atribuido uma vez na carga do modulo e nunca limpo, e
-# refreshPluginVersions() o reaplicava a cada chamada -- importar um pack fazia
-# o app voltar sozinho para a versao do boot (proibicao P-01).
-if ($loader -notmatch '_wantedVersionKey\s*=\s*null;[^\n]*\n?[^\n]*' ) {
-  throw 'CR-02: _wantedVersionKey is never cleared - a pending preference must be consumed once, not re-applied on every refreshPluginVersions() call.'
-}
-$clearCount = ([regex]::Matches($loader, '_wantedVersionKey\s*=\s*null')).Count
-if ($clearCount -lt 2) {
-  throw "CR-02: expected at least 2 assignments of _wantedVersionKey = null (the initial declaration plus at least one clear-after-consume), found $clearCount."
-}
-if ($loader -notmatch 'function setCurrentVersion\([^)]*\)\s*\{[^}]*_wantedVersionKey\s*=\s*null') {
-  throw 'CR-02: setCurrentVersion() must clear _wantedVersionKey - any effective version change cancels a pending preference (P-01).'
-}
-
-# ── CR-01: nenhum ciclo de re-render ──────────────────────────────
+# ── CR-01: nenhum ciclo de re-render (generalizado pra N chaves, Fase 8) ──
 # buildSpellsFromRealData() disparava hifi-spells-source-changed sempre que o
 # cache estava vazio; o listener de useSpellVersions chama a funcao de novo.
 # Falhas nao sao cacheadas de proposito, e o redirect de chave desconhecida
 # cacheia sob a chave DEFAULT -- nos dois casos o cache continua vazio e o
-# ciclo nao termina.
-if ($loader -notmatch 'loadVersion\(key\)\.then\(\s*\(\)\s*=>\s*\{[^}]*if\s*\(_cache\[key\]\)') {
-  throw 'CR-01: buildSpellsFromRealData() must only dispatch hifi-spells-source-changed when _cache[key] was actually populated - dispatching unconditionally re-enters through the useSpellVersions listener and loops forever.'
+# ciclo nao termina. Generalizado pra composicao aditiva: so avisa quando
+# TODAS as chaves resolvidas preencheram o cache (`.every(`), nao so uma.
+$buildSpellsMatch = [regex]::Match($loader, 'function buildSpellsFromRealData\(uiLang\)[\s\S]{0,2000}?\r?\n\}')
+if (-not $buildSpellsMatch.Success) {
+  throw 'CR-01: could not locate buildSpellsFromRealData(uiLang) body in spells-data-loader.jsx.'
 }
-# Raiz do caso da chave pendurada: refreshPluginVersions() pode remover a
-# entrada idb que estava selecionada, deixando _currentVersion sem resolver.
-if ($loader -notmatch '!_versionByKey\(_currentVersion\)[\s\S]{0,400}?setCurrentVersion\(_defaultVersion\(\)\.key\)') {
-  throw 'CR-01: refreshPluginVersions() must repair a dangling _currentVersion after splicing idb entries out - otherwise the selected key resolves to nothing and every render retries forever.'
+if ($buildSpellsMatch.Value -notmatch 'keys\.every\(k => _cache\[k\]\)\)\s*\{[\s\S]{0,200}?dispatchEvent') {
+  throw 'CR-01: buildSpellsFromRealData() must only dispatch hifi-spells-source-changed when EVERY resolved key (keys.every(k => _cache[k])) is populated - dispatching on a partial cache re-enters through the useSpellVersions listener and loops forever.'
+}
+# Fase 8: o reparo de "chave pendurada" (uma unica _currentVersion que sumiu
+# do registro) generaliza para a composicao inteira - _refreshPluginVersionsInner
+# recalcula a selecao resolvida ANTES e DEPOIS do splice/push e so avisa a UI
+# se o conjunto resolvido realmente mudou (nunca uma troca silenciosa, P-01).
+$innerBodyMatch = [regex]::Match($loader, 'async function _refreshPluginVersionsInner\(\)[\s\S]{0,6000}?\r?\n\}')
+if (-not $innerBodyMatch.Success) {
+  throw 'CR-01: could not locate _refreshPluginVersionsInner() body in spells-data-loader.jsx.'
+}
+$innerBody = $innerBodyMatch.Value
+$beforeIdx = $innerBody.IndexOf('resolveSelection(_selectedKeys)')
+$spliceIdx = $innerBody.IndexOf('SPELL_VERSIONS.splice(')
+$afterIdx = $innerBody.IndexOf('resolveSelection(_selectedKeys)', $spliceIdx + 1)
+if ($beforeIdx -lt 0 -or $spliceIdx -lt 0 -or $afterIdx -lt 0 -or -not ($beforeIdx -lt $spliceIdx -and $spliceIdx -lt $afterIdx)) {
+  throw 'CR-01: _refreshPluginVersionsInner() must call resolveSelection(_selectedKeys) both BEFORE and AFTER the SPELL_VERSIONS splice/push, to detect whether the resolved composition actually changed.'
+}
+if ($innerBody -notmatch "dispatchEvent\(new CustomEvent\('hifi-spells-source-changed'") {
+  throw 'CR-01: _refreshPluginVersionsInner() must dispatch hifi-spells-source-changed when the resolved selection changes after enumeration.'
 }
 
 # ── WR-05: nao inventar escola/edicao pra um pack de terceiro ─────
@@ -193,4 +198,4 @@ if (-not $node) {
   }
 }
 
-Write-Output 'Loader hardening contract present (CR-01 loop guard + hifiFilterConfig prototype-less, CR-02 pending-preference consume, CR-03 prototype-less lookup tables).'
+Write-Output 'Loader hardening contract present (CR-01 loop guard generalized to N resolved keys + hifiFilterConfig prototype-less, CR-03 prototype-less lookup tables).'

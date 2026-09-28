@@ -136,67 +136,51 @@ if (-not $loader.Contains('SPELL_VERSIONS.push(')) {
   throw 'refreshPluginVersions() must append new idb entries via push().'
 }
 
-# ── Dono único da resolução de versão inicial (04-02 Task 2) ───────
-# Asserção por INTENÇÃO, não pelo texto exato da chamada. A versão anterior
-# exigia o literal 'setCurrentVersion(_wantedVersionKey)' e por isso quebrou
-# quando 04-05 passou a capturar a chave numa local antes de limpar
-# _wantedVersionKey (CR-02). Uma asserção que trava a forma do código, e não o
-# comportamento, transforma qualquer correção em falha de teste.
-if (-not $loader.Contains('_wantedVersionKey')) {
-  throw 'Missing spells-data-loader.jsx single-owner resolution detail: _wantedVersionKey'
-}
-if ($loader -notmatch 'refreshPluginVersions\(\)[\s\S]*?_wantedVersionKey[\s\S]{0,600}?setCurrentVersion\(') {
-  throw 'refreshPluginVersions() must honor a pending _wantedVersionKey by calling setCurrentVersion once the key resolves.'
+# ── Fase 8: pendência por item substitui a preferência única pendente ──
+# _wantedVersionKey (um único item pendente, consumido por setCurrentVersion())
+# não existe mais - a pendência agora vive DENTRO da própria lista de seleção
+# crua (_selectedKeys), resolvida item a item por resolveSelection(). Ver
+# check-selection-migration.tests.ps1 para a prova de execução completa
+# (pendência antes da enumeração, resolução após, poda só depois dela).
+foreach ($forbidden in @('_wantedVersionKey', 'function setCurrentVersion')) {
+  if ($loader.Contains($forbidden)) {
+    throw "spells-data-loader.jsx must no longer contain $forbidden - single-item pending preference was replaced by per-item resolution inside the selection list (D-24)."
+  }
 }
 
 # ── CR-01: pluginStore ausente / listPacks() falha não pode deixar a
-# preferência de versão pendente armada pra sempre — os dois early returns
-# de _refreshPluginVersionsInner() precisam limpar _wantedVersionKey antes
-# de devolver [], senão ela nunca mais é reconsiderada (nem quando resolveria
-# de cara numa visita seguinte).
-$innerMatch = [regex]::Match($loader, 'async function _refreshPluginVersionsInner\(\)[\s\S]{0,5000}?\r?\n\}')
+# enumeração parada pra sempre — os dois early returns de
+# _refreshPluginVersionsInner() precisam marcar _enumerated = true antes de
+# devolver [], senão a poda de chaves fantasma (D-24) nunca teria permissão
+# de rodar, mesmo que o IndexedDB volte a responder numa chamada seguinte.
+$innerMatch = [regex]::Match($loader, 'async function _refreshPluginVersionsInner\(\)[\s\S]{0,6000}?\r?\n\}')
 if (-not $innerMatch.Success) {
   throw 'CR-01: could not locate _refreshPluginVersionsInner() body in spells-data-loader.jsx.'
 }
-$earlyReturnClears = ([regex]::Matches($innerMatch.Value, '_wantedVersionKey\s*=\s*null;\s*\r?\n\s*return \[\];')).Count
+$earlyReturnClears = ([regex]::Matches($innerMatch.Value, '_enumerated\s*=\s*true;\s*\r?\n\s*return \[\];')).Count
 if ($earlyReturnClears -lt 2) {
-  throw "CR-01: both early-return paths of _refreshPluginVersionsInner() (missing pluginStore, rejected listPacks()) must clear _wantedVersionKey before returning [] - found $earlyReturnClears. Otherwise a pending plugin-* preference is stranded for the rest of the session (and, via the index.html guard, so is all other prefs persistence)."
+  throw "CR-01: both early-return paths of _refreshPluginVersionsInner() (missing pluginStore, rejected listPacks()) must set _enumerated = true before returning [] - found $earlyReturnClears. Otherwise a pending plugin-* selection can never be pruned by a later explicit change (D-24), even once the IndexedDB responds again."
 }
 
 # ── IN-01: um blob de prefs corrompido não pode descartar um `?v=` válido ──
-# _initialVersionKey() lia urlV E fazia JSON.parse(prefs) dentro do MESMO
-# try - um blob corrompido lançava, o try inteiro desenrolava, e um `?v=`
-# perfeitamente válido de um link compartilhado era silenciosamente
-# descartado em favor do default. O parse de prefs precisa do seu próprio
-# try/catch, isolado do resto da função.
-# 06-01: a janela de captura cresceu de 1300 para 2000 quando D-04 (fallback
-# de versão legada) acrescentou um ramo à função - mesmo ajuste já feito em
-# check-edition-compare.tests.ps1 (WR-02) quando um bloco irmão cresceu.
-$initialKeyMatch = [regex]::Match($loader, 'function _initialVersionKey\(\)[\s\S]{0,2000}?\r?\n\}')
-if (-not $initialKeyMatch.Success) {
-  throw 'IN-01: could not locate _initialVersionKey() body in spells-data-loader.jsx.'
+# _initialSelection() (antes _initialVersionKey()) lia urlV E fazia
+# JSON.parse(prefs) dentro do MESMO try - um blob corrompido lançava, o try
+# inteiro desenrolava, e um `?v=` perfeitamente válido de um link
+# compartilhado era silenciosamente descartado em favor do default. O parse
+# de prefs agora mora isolado em _readPrefs(), com o próprio try/catch.
+$readPrefsMatch = [regex]::Match($loader, 'function _readPrefs\(\)[\s\S]{0,600}?\r?\n\}')
+if (-not $readPrefsMatch.Success) {
+  throw 'IN-01: could not locate _readPrefs() body in spells-data-loader.jsx.'
 }
-if ($initialKeyMatch.Value -notmatch 'try\s*\{\s*prefs\s*=\s*JSON\.parse') {
-  throw "IN-01: _initialVersionKey() must parse the saved prefs blob in its OWN try/catch (not the outer one shared with urlV) - a corrupt localStorage blob must not discard a valid ?v= from a shared link."
+if ($readPrefsMatch.Value -notmatch 'try\s*\{[\s\S]{0,200}?JSON\.parse') {
+  throw "IN-01: _readPrefs() must parse the saved prefs blob inside its OWN try/catch - a corrupt localStorage blob must not discard a valid ?v= from a shared link."
 }
-
-# ── WR-05: setCurrentVersion() must clear _wantedVersionKey UNCONDITIONALLY,
-# before the `_currentVersion === key` no-op early-return. Selecting the
-# version you are already on is the user's manual escape hatch for a stuck
-# pending preference (CR-01) - if the clear sits after the early-return, that
-# escape hatch is a no-op too.
-$setCurMatch = [regex]::Match($loader, 'function setCurrentVersion\(key\)[\s\S]{0,1200}?\r?\n\}')
-if (-not $setCurMatch.Success) {
-  throw 'WR-05: could not locate setCurrentVersion(key) body in spells-data-loader.jsx.'
+$initialSelectionMatch = [regex]::Match($loader, 'function _initialSelection\(\)[\s\S]{0,2000}?\r?\n\}')
+if (-not $initialSelectionMatch.Success) {
+  throw 'IN-01: could not locate _initialSelection() body in spells-data-loader.jsx.'
 }
-$setCurBody = $setCurMatch.Value
-$clearIdx = $setCurBody.IndexOf('_wantedVersionKey = null;')
-$noopIdx = $setCurBody.IndexOf('if (_currentVersion === key) return;')
-if ($clearIdx -lt 0 -or $noopIdx -lt 0) {
-  throw 'WR-05: setCurrentVersion() must contain both the _wantedVersionKey clear and the `_currentVersion === key` no-op check.'
-}
-if (-not ($clearIdx -lt $noopIdx)) {
-  throw 'WR-05: setCurrentVersion() must clear _wantedVersionKey BEFORE the `_currentVersion === key` early-return, not after - otherwise re-selecting the version you are already on (the obvious manual fix) fails to cancel a stuck pending preference.'
+if ($initialSelectionMatch.Value -notmatch '_readPrefs\(\)') {
+  throw 'IN-01: _initialSelection() must read prefs via _readPrefs() (the isolated try/catch), not inline JSON.parse.'
 }
 
 # ── WR-03: loadVersion() must re-check _versionByKey(key) before caching an
@@ -207,15 +191,14 @@ if ($loader -notmatch 'if \(_versionByKey\(key\)\)[\s\S]{0,120}?_cache\[key\] = 
   throw 'WR-03: loadVersion() must re-check _versionByKey(key) before writing _cache[key] - otherwise an in-flight load for a version removed mid-fetch resurrects it in the cache.'
 }
 
-# ── index.html: leitura única da versão inicial (04-02 Task 2) ─────
+# ── index.html: sem estado de versão (Fase 8, D-07) ─────────────────
 $indexPath = Join-Path $repoRoot 'index.html'
 $index = Get-Content -Raw -LiteralPath $indexPath
 
-if (-not $index.Contains('getCurrentSpellVersion')) {
-  throw 'index.html no longer reads window.getCurrentSpellVersion() to seed the initial version.'
-}
-if ($index.Contains('window.setCurrentSpellVersion(versionKey)')) {
-  throw 'index.html still contains the removed mount effect pushing versionKey back to the loader - this races with the 04-02 retry.'
+foreach ($forbidden in @('getCurrentSpellVersion', 'versionKey', 'hasPendingSpellVersion', 'hifi-spells-source-changed')) {
+  if ($index.Contains($forbidden)) {
+    throw "index.html must no longer contain $forbidden - the loader (spells-data-loader.jsx) owns the package selection AND its persistence now (D-07); index.html only persists theme/mode/character/language."
+  }
 }
 
 # Fase 04.1 desacopla o idioma da interface da versão ativa (D-18): o estado
@@ -229,28 +212,22 @@ if (-not $uiLangStateMatch.Success) {
   throw 'index.html uiLang state must initialize from initial.lang || detectLang(), independent of the active version.'
 }
 
-# ── CR-01: hasPendingSpellVersion() só pode gatear o campo versionKey do
-# efeito de persistência de prefs, não o efeito inteiro. Round 2 (WR-01)
-# gateava o `return` logo no topo do efeito, o que também suspendia
-# dark/theme/characterName/lang pelo resto da sessão sempre que a
-# preferência de versão não resolvesse (link compartilhado pra um pack
-# ausente, IndexedDB indisponível).
-$prefsEffectMatch = [regex]::Match($index, 'React\.useEffect\(\(\) => \{[\s\S]{0,700}?\}, \[dark, theme, character, uiLang, versionKey\]\);')
+# ── Fase 8: o efeito de persistência de prefs não carrega mais versionKey -
+# só tema/modo/personagem/idioma. O spread de `prev` (relido a cada execução)
+# preserva o `selectedVersionKeys` que o loader grava por conta própria.
+$prefsEffectMatch = [regex]::Match($index, 'React\.useEffect\(\(\) => \{[\s\S]{0,700}?\}, \[dark, theme, character, uiLang\]\);')
 if (-not $prefsEffectMatch.Success) {
-  throw 'CR-01: could not locate the prefs-persistence React.useEffect in index.html.'
+  throw 'Could not locate the prefs-persistence React.useEffect in index.html with deps [dark, theme, character, uiLang].'
 }
 $prefsEffectBody = $prefsEffectMatch.Value
-if ($prefsEffectBody -match '^\s*React\.useEffect\(\(\) => \{\s*\r?\n\s*if \(window\.hasPendingSpellVersion') {
-  throw 'CR-01: the prefs-persistence effect must not early-return the whole body on hasPendingSpellVersion() - that suspends dark/theme/characterName/lang persistence too, not just versionKey.'
-}
 if ($prefsEffectBody -notmatch 'characterName:\s*character') {
-  throw 'CR-01: prefs-persistence effect must still write characterName unconditionally (not gated by hasPendingSpellVersion()).'
+  throw 'prefs-persistence effect must still write characterName unconditionally.'
 }
-if ($prefsEffectBody -notmatch 'hasPendingSpellVersion') {
-  throw 'CR-01: prefs-persistence effect lost the hasPendingSpellVersion() guard entirely - a pending plugin-* version preference must not be clobbered by an early savePrefs() write.'
+if ($prefsEffectBody -notmatch 'lang:\s*uiLang') {
+  throw 'prefs-persistence effect must still write lang: uiLang.'
 }
-if ($prefsEffectBody -notmatch 'versionKey:\s*window\.hasPendingSpellVersion') {
-  throw 'CR-01: the hasPendingSpellVersion() guard must be scoped to the versionKey field of the saved prefs object, not the whole effect.'
+if ($prefsEffectBody -match 'versionKey|hasPendingSpellVersion') {
+  throw 'prefs-persistence effect must not reference versionKey or hasPendingSpellVersion anymore - the loader persists the package selection on its own (D-07).'
 }
 
 # ── Ordem de carga: plugin-store antes do loader (04-05, regressao do passo 12) ─
