@@ -1,17 +1,22 @@
-// Pack Manager — superfície de leitura do gerenciador de pacotes (MGMT-01, MGMT-04, MGMT-05, SRD-02).
+// Pack Manager — menu único de pacotes (Fase 8, D-16: MGMT-06/07/08/09, PKG-06, SRD-05).
 //
-// Este módulo possui: `PackManager` (lista de packs instalados, linhas builtin do SRD com
-// atribuição CC-BY verbatim recolhível, estado vazio, contagem agregada de duplicatas por linha)
-// e `PackManagerRoot` (estado de qual diálogo está visível + o global window.__openPackManager).
-// Também possui `packSpellIndex()` — índice de magias por nome e por chave de preparação,
-// memoizado e invalidado em `hifi-plugins-changed` (MGMT-04) — e o fluxo de remoção com
-// confirmação inline e impacto concreto (MGMT-02).
+// Este módulo possui: `PackMenu` (SRD → instalados → slugs reservados, D-16; cartões
+// marcáveis por checkbox que ligam direto na seleção do loader, D-02/D-03/D-04; remoção
+// inline com impacto concreto, MGMT-02; atribuição CC-BY verbatim recolhível), `PackMenuChip`
+// (primeiro pacote resolvido + contagem, abre o menu ancorado no clique, D-18),
+// `PackManagerRoot` (estado de qual diálogo está visível — menu/import/rename — e o global
+// window.__openPackManager). Também possui `packSpellIndex()` — índice de magias por nome e
+// por chave de preparação, memoizado e invalidado em `hifi-plugins-changed` (MGMT-04) — e
+// `_selectionConflicts()`, que checa colisão de slug ANTES de marcar um pacote e delega pro
+// prompt de renomear (`window.PackRenameDialog`, 08-04) quando há conflito (D-10/A-14).
 //
 // Este módulo NÃO possui: import/validação/gravação de pacote (delega a `PackImportDialog` e a
-// `window.pluginStore`).
+// `window.pluginStore`); detecção/aplicação de renomeação de slug (delega a
+// `window.packImport`/`pack-rename-dialog.jsx`, 08-04).
 //
-// Uso: incluir este arquivo no HTML depois de `pack-import-dialog.jsx` (precisa de
-// `PackImportDialog`) e antes de `v10-hifi.jsx` (que vai consumir `window.__openPackManager`).
+// Uso: incluir este arquivo no HTML depois de `pack-import-dialog.jsx` e `pack-rename-dialog.jsx`
+// (precisa de `PackImportDialog`/`window.PackRenameDialog`) e antes de `v10-hifi.jsx` (que vai
+// consumir `window.__openPackManager`).
 
 // ──────────────────────────────────────────────────────────────────
 // MODELO DO CARTÃO (Fase 8, D-16..D-19) — funções puras, sem componente
