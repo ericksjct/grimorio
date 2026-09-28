@@ -75,7 +75,7 @@ if (-not $precacheMatch.Success) {
   throw 'Nao foi possivel localizar o array PRECACHE em sw.js.'
 }
 $spellJsonEntries = [regex]::Matches($precacheMatch.Value, "'\./[^']*\.json'") | Where-Object {
-  $_.Value -notmatch 'manifest\.json' -and $_.Value -notmatch 'pack\.schema\.json'
+  $_.Value -notmatch 'manifest\.json' -and $_.Value -notmatch 'pack\.schema\.json' -and $_.Value -notmatch 'srd-reserved-slugs\.json'
 }
 if ($spellJsonEntries.Count -ne 3) {
   throw "PRECACHE deve listar exatamente 3 JSONs de magia (SRD); encontrados $($spellJsonEntries.Count): $($spellJsonEntries.Value -join ', ')"

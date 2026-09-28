@@ -62,11 +62,6 @@ const STRINGS = {
     'toast.linkCopiedShort': 'link copiado',
     'toast.copyFailed': 'falha ao copiar',
     'toast.shared': 'compartilhado',
-    'toast.versionShort': 'versão: {short}',
-    'version.label': 'versão',
-    'version.labelMobile': 'versão das magias',
-    'version.switch': 'trocar versão das magias',
-    'version.manage': 'Gerenciar pacotes…',
     'filter.clearAll': 'limpar filtros',
     'filter.clear': 'limpar',
     'filter.removeFilter': '✕ remover filtro',
@@ -115,7 +110,6 @@ const STRINGS = {
     'compare.notFound': 'essa magia não existe na {edition}',
     'toast.buildImported': 'personagem “{name}” importado',
     'toast.buildImportFailed': 'não consegui importar a build dessa URL',
-    'toast.versionSwitchedAway': 'o pacote que você estava vendo foi removido — voltamos para {version}',
     // Banner de transição (MIGR-03) — D-08: ordem fixa (o que mudou, o que
     // continua, órfãs quando houver, a ação). O D-02 da Fase 6 (nunca oferece
     // pack PT-BR) foi superado pela Fase 7: quem vinha da chave 2024 PT-BR já
@@ -304,11 +298,6 @@ const STRINGS = {
     'toast.linkCopiedShort': 'link copied',
     'toast.copyFailed': 'copy failed',
     'toast.shared': 'shared',
-    'toast.versionShort': 'version: {short}',
-    'version.label': 'version',
-    'version.labelMobile': 'spell version',
-    'version.switch': 'switch spell version',
-    'version.manage': 'Manage packs…',
     'filter.clearAll': 'clear filters',
     'filter.clear': 'clear',
     'filter.removeFilter': '✕ remove filter',
@@ -357,7 +346,6 @@ const STRINGS = {
     'compare.notFound': 'this spell does not exist in {edition}',
     'toast.buildImported': 'character “{name}” imported',
     'toast.buildImportFailed': 'could not import the build from this URL',
-    'toast.versionSwitchedAway': 'the pack you were viewing was removed — switched back to {version}',
     // Transition banner (MIGR-03) — D-08: fixed order (what changed, what
     // stays, orphans when any, the action). Phase 6's D-02 (never offers a
     // PT-BR pack) was superseded by Phase 7: whoever came from the 2024 PT-BR

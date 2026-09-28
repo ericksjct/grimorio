@@ -50,8 +50,8 @@ const fs = require('fs');
 const vm = require('vm');
 const src = fs.readFileSync('spells-data-loader.jsx', 'utf8');
 
-// Recorta antes de buildSpellsFromRealData: dali pra frente ha hooks React e
-// JSX (VersionSelector), que o vm puro nao parseia. As funcoes de composicao
+// Recorta antes de buildSpellsFromRealData: dali pra frente ha hooks React
+// (useSpellVersions), que o vm puro nao parseia. As funcoes de composicao
 // -- o que este teste exercita -- vem todas antes.
 const cut = src.indexOf('function buildSpellsFromRealData');
 if (cut < 0) { console.error('nao achei buildSpellsFromRealData para cortar'); process.exit(1); }
@@ -257,3 +257,61 @@ if ($cardMatch.Value -match 'alsoIn' -or $cardMatch.Value -match 'packSpellIndex
 }
 
 Write-Output "Also-in note and edition comparator anchor on each spell's own package (_versionKey); no new badge on the card."
+
+# ── Fase 8 plano 06 (D-16/D-18/D-21/D-24): o chip do menu de pacotes fica na
+# barra e no drawer; o link de compartilhar leva a seleção inteira em lista;
+# nenhum filtro por pacote aparece na barra de filtros. ──────────────────
+$chipMounts = [regex]::Matches($ui, '<window\.PackMenuChip\b[^>]*lang=\{uiLang\}')
+if ($chipMounts.Count -ne 2) {
+  throw "v10-hifi.jsx must mount <window.PackMenuChip lang={uiLang} exactly twice (desktop bar + mobile drawer, D-16/D-18) - found $($chipMounts.Count)."
+}
+
+$shareFnMatch = [regex]::Match($ui, 'function hifiShareViewUrl\([\s\S]{0,600}?\n\}')
+if (-not $shareFnMatch.Success) {
+  throw 'Could not locate hifiShareViewUrl in v10-hifi.jsx.'
+}
+if ($shareFnMatch.Value -notmatch "versionKeys\.join\(','\)") {
+  throw "hifiShareViewUrl must emit ?v= from versionKeys.join(',') - the shared link must carry the whole list selection (D-24, MIGR-04)."
+}
+
+foreach ($forbidden in @('switchVersion', 'VersionSelector', 'toast.versionShort')) {
+  if ($ui.Contains($forbidden)) {
+    throw "v10-hifi.jsx must not reference $forbidden anymore - the old single-active-version selector and its compatibility shims are removed in 08-06."
+  }
+}
+
+$filterCfgMatch = [regex]::Match($ui, 'function hifiFilterConfig\(lang\)[\s\S]{0,2000}?return Object\.assign\(Object\.create\(null\), \{([\s\S]{0,2200}?)\}\);')
+if (-not $filterCfgMatch.Success) {
+  throw 'Could not locate hifiFilterConfig(lang) body in v10-hifi.jsx.'
+}
+$filterKeys = [regex]::Matches($filterCfgMatch.Groups[1].Value, '(?m)^\s*([a-zA-Z]+):\s*\{') | ForEach-Object { $_.Groups[1].Value }
+$expectedFilterKeys = @('level', 'school', 'class', 'comp', 'conc', 'rit', 'time', 'dur', 'range', 'src')
+if (($filterKeys -join ',') -ne ($expectedFilterKeys -join ',')) {
+  throw "hifiFilterConfig must keep exactly the 10 keys level,school,class,comp,conc,rit,time,dur,range,src (D-21, no pack filter) - found: $($filterKeys -join ',')."
+}
+
+Write-Output 'Pack menu chip mounted twice (bar + drawer); share link emits ?v= as a list; no pack filter added; old single-version selector fully gone.'
+
+# ── Fase 8 plano 06 (D-01/D-16): nenhum leitor de "versão ativa única" sobra
+# no app inteiro - VersionSelector/getCurrentSpellVersion/switchVersion não
+# podem aparecer em nenhum .jsx nem em index.html, e o retorno de
+# useSpellVersions() não pode mais expor `current`. ──────────────────────
+$appFiles = @(Get-ChildItem -LiteralPath $repoRoot -Filter '*.jsx' -File) + (Get-Item -LiteralPath (Join-Path $repoRoot 'index.html'))
+foreach ($file in $appFiles) {
+  $content = Get-Content -Raw -LiteralPath $file.FullName
+  foreach ($forbidden in @('VersionSelector', 'getCurrentSpellVersion', 'switchVersion')) {
+    if ($content -match [regex]::Escape($forbidden)) {
+      throw "$($file.Name) still references $forbidden - no reader of a single 'active version' may remain anywhere in the app (D-01, 08-06)."
+    }
+  }
+}
+
+$useSpellVersionsMatch = [regex]::Match($loader, 'function useSpellVersions\(uiLang\)[\s\S]{0,3000}?\n\}')
+if (-not $useSpellVersionsMatch.Success) {
+  throw 'Could not locate useSpellVersions(uiLang) in spells-data-loader.jsx.'
+}
+if ($useSpellVersionsMatch.Value -match '\bcurrent\b') {
+  throw "useSpellVersions()'s return must not expose current anymore (D-01, 08-06) - selectedKeys/resolvedKeys are the sole selection contract."
+}
+
+Write-Output 'No reader of a single active version remains anywhere in the app; useSpellVersions() no longer exposes current/switchVersion.'

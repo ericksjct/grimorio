@@ -90,7 +90,7 @@ function buildSpellLink(s) {
 // URL que reproduz a visão atual (busca + filtros base + só-preparadas +
 // versão). É o que o botão "compartilhar" do drawer copia — a location crua
 // não carrega estado nenhum.
-function hifiShareViewUrl({ query, filters, onlyPrepared, versionKey }) {
+function hifiShareViewUrl({ query, filters, onlyPrepared, versionKeys }) {
   const p = new URLSearchParams();
   if (query && query.trim()) p.set('q', query.trim());
   ['class', 'level', 'school'].forEach(key => {
@@ -98,7 +98,7 @@ function hifiShareViewUrl({ query, filters, onlyPrepared, versionKey }) {
     if (set && set.size) p.set('f.' + key, [...set].join('|'));
   });
   if (onlyPrepared) p.set('prep', '1');
-  if (versionKey) p.set('v', versionKey);
+  if (versionKeys && versionKeys.length) p.set('v', versionKeys.join(','));
   const qs = p.toString();
   return `${window.location.origin}${window.location.pathname}${qs ? '?' + qs : ''}`;
 }
@@ -471,7 +471,7 @@ function hifiSiblingVersion(versions, cur, predicate) {
 // Seletor de idioma da INTERFACE — dois textos clicáveis (PT / EN), sempre
 // habilitados (D-09). Controla só `uiLang`, via `window.__setUiLang`; não lê
 // o registro de versões, então funciona mesmo sem nenhuma entrada `ptbr`
-// (pós-Fase 6). Trocar CONTEÚDO é papel exclusivo do VersionSelector.
+// (pós-Fase 6). Trocar CONTEÚDO é papel exclusivo do menu de pacotes.
 function HifiLangToggle({ uiLang = 'ptbr', style }) {
   const itemStyle = (active) => ({
     ...hifiFooterLink,
@@ -819,10 +819,10 @@ function hifiClassFilterLabel(value, uiLang) {
 }
 
 function useHifiAppState(preparedKeys, initialFilters, character, uiLang) {
-  const spellVersions = window.useSpellVersions ? window.useSpellVersions() : null;
+  const spellVersions = window.useSpellVersions ? window.useSpellVersions(uiLang) : null;
   const allSpells = spellVersions?.spells || [];
-  const versionKey = spellVersions?.current || '';
-  const switchVersion = spellVersions?.switchVersion || (() => {});
+  const selectedKeys = spellVersions?.selectedKeys || [];
+  const resolvedKeys = spellVersions?.resolvedKeys || [];
   const versions = spellVersions?.versions || [];
   const loaded = spellVersions?.loaded || false;
 
@@ -878,15 +878,16 @@ function useHifiAppState(preparedKeys, initialFilters, character, uiLang) {
   // Persist filters when version changes. Nível, escola e classe guardam
   // sempre o valor do PACK (D-04) — nada precisa ser remapeado na troca de
   // versão, nem entre idiomas nem entre edições.
-  const prevVersionKeyRef = React.useRef(versionKey);
+  const resolvedKeysSig = resolvedKeys.join('|');
+  const prevResolvedKeysSigRef = React.useRef(resolvedKeysSig);
   React.useEffect(() => {
-    const prevKey = prevVersionKeyRef.current;
-    if (prevKey !== versionKey) {
-      prevVersionKeyRef.current = versionKey;
+    const prevSig = prevResolvedKeysSigRef.current;
+    if (prevSig !== resolvedKeysSig) {
+      prevResolvedKeysSigRef.current = resolvedKeysSig;
       // A seleção é por índice numa lista que mudou — fecha o detalhe pra não apontar pra magia errada.
       setSelectedIdx(null);
     }
-  }, [versionKey]);
+  }, [resolvedKeysSig]);
 
   // Auto-filtro pelo personagem: com classes definidas, pré-aplica os chips de
   // classe e de nível (truque + círculos que ele alcança). São filtros normais
@@ -979,7 +980,7 @@ function useHifiAppState(preparedKeys, initialFilters, character, uiLang) {
   return {
     allSpells, filtered, filters, setFilters, query, setQuery,
     selectedIdx, setSelectedIdx, onlyPrepared, setOnlyPrepared,
-    versionKey, switchVersion, versions, loaded,
+    selectedKeys, resolvedKeys, versions, loaded,
   };
 }
 
@@ -1226,7 +1227,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
   const state = useHifiAppState(prepared, undefined, liveChar, uiLang);
   const { allSpells, filtered, filters, setFilters, query, setQuery,
     selectedIdx, setSelectedIdx, onlyPrepared, setOnlyPrepared,
-    versionKey, switchVersion, versions } = state;
+    versions } = state;
   const { toast, show: showToast } = useHifiToast();
 
   const [charMenuOpen, setCharMenuOpen] = React.useState(false);
@@ -1519,14 +1520,8 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
           <HifiAddFilter available={availableExtras} cfg={filterCfg} onAdd={addExtraFilter} lang={lang}/>
         )}
         <span style={{ width: 1, height: 22, background: 'var(--surface1)' }}/>
-        {window.VersionSelector && (
-          <window.VersionSelector
-            current={versionKey}
-            versions={versions}
-            onChange={switchVersion}
-            lang={uiLang}
-            dark={dark}
-          />
+        {window.PackMenuChip && (
+          <window.PackMenuChip lang={uiLang} />
         )}
         <span style={{ width: 1, height: 22, background: 'var(--surface1)' }}/>
         <button
@@ -2277,7 +2272,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
   const state = useHifiAppState(prepared, undefined, liveChar, uiLang);
   const { allSpells, filtered, filters, setFilters, query, setQuery,
     selectedIdx, setSelectedIdx, onlyPrepared, setOnlyPrepared,
-    versionKey, switchVersion, versions } = state;
+    selectedKeys, versions } = state;
   const mobileFilterValues = React.useMemo(() => ({
     level: hifiFilterValues('level', allSpells, uiLang),
     school: hifiFilterValues('school', allSpells, uiLang),
@@ -2625,41 +2620,14 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
             )}
 
             <div>
-              <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'version.label')}</HifiSectionLabel>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {versions.map(v => (
-                  <HifiPill
-                    key={v.key}
-                    active={versionKey === v.key}
-                    onClick={() => {
-                      switchVersion(v.key);
-                      setDrawerOpen(false);
-                      showToast(tt(lang, 'toast.versionShort', { short: v.short }));
-                    }}
-                  >
-                    <span style={{
-                      display: 'inline-block',
-                      width: 7, height: 7, borderRadius: '50%',
-                      background: v.lang === 'ptbr' ? 'var(--green)' : 'var(--blue)',
-                      marginRight: 5,
-                      verticalAlign: 'middle',
-                    }}/>
-                    {v.short}
-                  </HifiPill>
-                ))}
-              </div>
-              <button
-                className="hifi-btn-secondary"
-                style={{ width: '100%', marginTop: 8 }}
-                onClick={() => {
-                  // D-02: gatilho mobile pro gerenciador — sem toast, pois nao
-                  // troca versao (toast marca mudanca de estado, nao navegacao).
-                  setDrawerOpen(false);
-                  window.__openPackManager && window.__openPackManager();
-                }}
-              >
-                {tt(lang, 'version.manage')}
-              </button>
+              <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'manager.title')}</HifiSectionLabel>
+              {window.PackMenuChip && (
+                <window.PackMenuChip
+                  lang={uiLang}
+                  onOpen={() => setDrawerOpen(false)}
+                  style={{ width: '100%', justifyContent: 'center' }}
+                />
+              )}
             </div>
 
             <div>
@@ -2694,7 +2662,8 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
                   a visão em quem abrir. */}
               <button className="hifi-btn-secondary" style={{ width: '100%' }}
                 onClick={() => {
-                  const url = hifiShareViewUrl({ query, filters, onlyPrepared, versionKey });
+                  const versionKeys = selectedKeys.filter(k => versions.some(v => v.key === k));
+                  const url = hifiShareViewUrl({ query, filters, onlyPrepared, versionKeys });
                   const title = tt(lang, 'title.myGrimoire');
                   if (navigator.share) {
                     navigator.share({ title, url }).catch(() => {});
