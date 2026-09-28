@@ -27,6 +27,14 @@
 // 10 MB é folga larga.
 const MAX_PACK_BYTES = 10 * 1024 * 1024;
 
+// Teto de D-17/PKG-06 (200 KB) medido no COMPRIMENTO da string do data: URI,
+// não em bytes decodificados (A-08) — é um thumbnail, não conteúdo do pacote.
+const MAX_IMAGE_CHARS = 200 * 1024;
+
+// Só raster em base64, ancorada com ^...$. SVG fica de fora de propósito (pode
+// carregar script) — mesmo raciocínio de allowlist estrita de ALLOWED_TAGS.
+const IMAGE_DATA_URI = /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/]+={0,2}$/;
+
 // As três chaves proibidas de D-11 (poluição de protótipo, T-03-08).
 const BLOCKED_KEYS = Object.freeze(['__proto__', 'constructor', 'prototype']);
 
@@ -38,6 +46,8 @@ const PACK_ERROR_CODES = Object.freeze({
   TOO_LARGE: 'too-large',
   SCHEMA_INVALID: 'schema-invalid',
   FETCH_FAILED: 'fetch-failed',
+  IMAGE_INVALID: 'image-invalid',
+  IMAGE_TOO_LARGE: 'image-too-large',
 });
 
 // ──────────────────────────────────────────────────────────────────
@@ -55,6 +65,7 @@ const META_FIELDS = [
   { key: 'lang', type: 'string', required: true, enum: ['ptbr', 'en'] },
   { key: 'edition', type: 'string', required: false },
   { key: 'spellCount', type: 'integer', required: false },
+  { key: 'image', type: 'string', required: false },
   { key: 'license', type: 'object', required: true },
 ];
 
@@ -191,6 +202,20 @@ function _checkObject(path, fields, obj) {
   }
 }
 
+// Valida meta.image (D-17, PKG-06): undefined passa (compatível com todo pack
+// já publicado); comprimento checado ANTES da regex (T-08-11, teto barato);
+// só data: URI raster em base64 passa a allowlist ancorada (T-08-09/T-08-10 —
+// URL externa e SVG são rejeitados aqui, nunca chegam a <img src>).
+function _checkImage(image) {
+  if (image === undefined) return;
+  if (image.length > MAX_IMAGE_CHARS) {
+    _fail(PACK_ERROR_CODES.IMAGE_TOO_LARGE, `packImport.validate: meta.image excede o teto de ${MAX_IMAGE_CHARS} caracteres.`);
+  }
+  if (!IMAGE_DATA_URI.test(image)) {
+    _fail(PACK_ERROR_CODES.IMAGE_INVALID, 'packImport.validate: meta.image precisa ser um data: URI de imagem PNG/JPEG/WebP/GIF em base64.');
+  }
+}
+
 // Ordem exata: pacote é objeto -> chaves de topo conhecidas -> meta -> license
 // -> spells (mínimo 1 item, cada um contra SPELL_FIELDS). Falha na primeira
 // violação encontrada; não retorna valor e não modifica pack.
@@ -210,6 +235,7 @@ function validatePack(pack) {
   }
 
   _checkObject('meta', META_FIELDS, pack.meta);
+  _checkImage(pack.meta.image);
   _checkObject('meta.license', LICENSE_FIELDS, pack.meta && pack.meta.license);
 
   // minItems: 1 do schema — um pacote vazio criaria entrada fantasma no
@@ -425,6 +451,8 @@ async function installFromUrl(url) {
 // ──────────────────────────────────────────────────────────────────
 window.packImport = {
   MAX_PACK_BYTES,
+  MAX_IMAGE_CHARS,
+  IMAGE_DATA_URI,
   PACK_ERROR_CODES,
   parsePackText,
   validatePack,
