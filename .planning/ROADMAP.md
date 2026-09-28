@@ -304,7 +304,7 @@ Plans:
 **Goal:** O usuário mantém um pacote base ativo (ex.: SRD 5.2) e empilha pacotes homebrew por cima: as magias dos pacotes empilhados SOMAM à lista da versão ativa em vez de substituí-la, com a origem de cada magia visível e sem quebrar preparadas/favoritas.
 **Requirements**: MGMT-06, MGMT-07, MGMT-08, MGMT-09, PKG-06, SRD-05, MIGR-04
 **Depends on:** Phase 7
-**Plans:** 5/7 plans executed
+**Plans:** 6/7 plans executed
 
 **Nota:** o objetivo acima foi escrito antes do discuss; o `08-CONTEXT.md` (D-01) tirou a
 ideia de "pacote base" — todo pacote marcado soma, e seleção vazia cai no pacote padrão (D-04).
@@ -326,7 +326,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 08-06-PLAN.md — Wave 4: chip na barra e no drawer, `?v=` em lista no compartilhar, remoção do seletor antigo e das compatibilidades, chaves mortas, `sw.js` v5 (MGMT-06, MGMT-09, MIGR-04)
+- [x] 08-06-PLAN.md — Wave 4: chip na barra e no drawer, `?v=` em lista no compartilhar, remoção do seletor antigo e das compatibilidades, chaves mortas, `sw.js` v5 (MGMT-06, MGMT-09, MIGR-04)
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
@@ -361,4 +361,4 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 5. Plugin Manager UI & Version Selector | v2.0 | 5/5 | Complete    | 2026-08-30 |
 | 6. Decommissioning & Migration | v2.0 | 7/7 | Complete    | 2026-09-27 |
 | 7. Tradução dos SRDs para pt-BR | v2.0 | 5/5 | Complete    | 2026-09-27 |
-| 8. Composição aditiva de pacotes | v2.0 | 5/7 | In Progress|  |
+| 8. Composição aditiva de pacotes | v2.0 | 6/7 | In Progress|  |
