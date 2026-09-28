@@ -46,6 +46,20 @@ foreach ($needle in @('packImport.installFromFile', 'packImport.installFromUrl')
   }
 }
 
+# ── Fase 8 (D-09..D-14): conflito de slug abre o prompt dentro do próprio diálogo ──
+
+foreach ($needle in @('onConflicts', 'window.PackRenameForm', "'cancelled'", 'window.renameImpact', 'setConflictCtx(null)')) {
+  if ($dialog -notlike "*$needle*") {
+    throw "Missing rename-conflict wiring detail in pack-import-dialog.jsx: $needle"
+  }
+}
+if ($dialog -notmatch 'installFromFile\([\s\S]*?\{\s*onConflicts') {
+  throw 'pack-import-dialog.jsx must pass { onConflicts } to window.packImport.installFromFile.'
+}
+if ($dialog -notmatch 'installFromUrl\([\s\S]*?\{\s*onConflicts') {
+  throw 'pack-import-dialog.jsx must pass { onConflicts } to window.packImport.installFromUrl.'
+}
+
 # ── Cobertura dos seis motivos de rejeicao (5 codigos de PACK_ERROR_CODES + unknown) ──
 
 $packErrKeys = @(

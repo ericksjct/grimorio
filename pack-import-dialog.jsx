@@ -49,10 +49,28 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState('');
   const [result, setResult] = React.useState(null);
+  // Fase 8 (D-09..D-14): null quando não há conflito de slug em voo; enquanto
+  // um `_install` está pausado esperando o usuário resolver o prompt, guarda
+  // { rows, reservedKeys, takenKeys, impact, busy, resolve } — `resolve` é a
+  // função da Promise que window.packImport.installFromFile/Url está
+  // aguardando dentro de opts.onConflicts.
+  const [conflictCtx, setConflictCtx] = React.useState(null);
 
   const dialogRef = React.useRef(null);
   const fileInputRef = React.useRef(null);
-  window.useDialogA11y?.(dialogRef, open, onClose);
+
+  // D-12: fechar o diálogo (X, backdrop, Esc) com um prompt de renomear
+  // pendente precisa resolver a Promise ANTES de fechar — senão o
+  // `opts.onConflicts` de `_install` fica pendurado pra sempre e nada é
+  // gravado nem cancelado de fato.
+  function closeDialog() {
+    if (conflictCtx) {
+      conflictCtx.resolve(null);
+      setConflictCtx(null);
+    }
+    onClose();
+  }
+  window.useDialogA11y?.(dialogRef, open, closeDialog);
 
   // WR-08: quem monta este diálogo nunca o desmonta (`open` só faz esta
   // função devolver null), então result/file/url/error sobreviviam a um
@@ -61,12 +79,29 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
   // clicar em enviar de novo reinstalava o mesmo arquivo como pack duplicado.
   React.useEffect(() => {
     if (!open) return;
-    setResult(null); setError(''); setFile(null); setUrl(''); setMode('file');
+    setResult(null); setError(''); setFile(null); setUrl(''); setMode('file'); setConflictCtx(null);
   }, [open]);
 
   if (!open) return null;
 
   const themeClass = `hifi ${dark ? 'hifi-dark' : 'hifi-light'}${theme && theme !== 'catppuccin' ? ' hifi-theme-' + theme : ''}`;
+
+  // D-09/D-10: passado como opts.onConflicts pro funil de _install. Calcula o
+  // impacto (quantas preparadas/favoritas apontam pros slugs antigos) uma vez
+  // com window.resolvableSpellKeys() — null é indeterminado (nunca "zero") — e
+  // devolve uma Promise que só resolve quando o usuário confirmar (Map
+  // slug-antigo→novo) ou cancelar (null) no PackRenameForm abaixo.
+  function onConflicts(ctx) {
+    return new Promise((resolve) => {
+      (async () => {
+        const resolvable = await window.resolvableSpellKeys();
+        const impact = resolvable
+          ? window.renameImpact(new Set(ctx.rows.map((r) => r.oldKey).filter(Boolean)), (k) => resolvable.has(k))
+          : null;
+        setConflictCtx({ ...ctx, impact, busy: false, resolve });
+      })();
+    });
+  }
 
   function switchMode(next) {
     if (busy) return;
@@ -92,8 +127,8 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
     setBusy(true);
     try {
       const res = mode === 'file'
-        ? await window.packImport.installFromFile(file)
-        : await window.packImport.installFromUrl(url.trim());
+        ? await window.packImport.installFromFile(file, { onConflicts })
+        : await window.packImport.installFromUrl(url.trim(), { onConflicts });
       setResult(res);
       window.dispatchEvent(new CustomEvent('hifi-toast', { detail: { msg: tt(lang, 'import.success', { identifier: res.identifier }) } }));
       // Reconstrói o registro de versões do loader e dispara hifi-plugins-changed
@@ -111,6 +146,12 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
       }
     } catch (err) {
       const code = err && err.code;
+      // D-12: cancelar o prompt de renomear aborta em silêncio — nada foi
+      // gravado, o arquivo/URL escolhido continua no formulário, e isto NÃO é
+      // um erro de verdade pro usuário ver.
+      if (code === 'cancelled') {
+        return;
+      }
       // {kb} só é consumido por packErr.imageTooLarge — as outras chaves ignoram
       // vars extras (interpolate() só substitui {chave} presentes no texto).
       const msg = tt(lang, packErrKeyFor(err), { kb: Math.round((window.packImport && window.packImport.MAX_IMAGE_CHARS || 204800) / 1024) });
@@ -120,6 +161,7 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
       }
     } finally {
       setBusy(false);
+      setConflictCtx(null);
     }
   }
 
@@ -140,7 +182,7 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: 18,
       }}
-      onClick={onClose}
+      onClick={closeDialog}
     >
       <section
         ref={dialogRef}
@@ -168,9 +210,25 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
           borderBottom: '1px solid var(--surface1)',
         }}>
           <h2 style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.2, margin: 0 }}>{tt(lang, 'import.title')}</h2>
-          <button type="button" className="hifi-btn-ghost" onClick={onClose}>{tt(lang, 'import.close')}</button>
+          <button type="button" className="hifi-btn-ghost" onClick={closeDialog}>{tt(lang, 'import.close')}</button>
         </header>
 
+        {conflictCtx ? (
+          <window.PackRenameForm
+            lang={lang}
+            rows={conflictCtx.rows}
+            reservedKeys={conflictCtx.reservedKeys}
+            takenKeys={conflictCtx.takenKeys}
+            impact={conflictCtx.impact}
+            busy={conflictCtx.busy}
+            onCancel={() => { conflictCtx.resolve(null); setConflictCtx(null); }}
+            onSubmit={(list) => {
+              setConflictCtx((c) => (c ? { ...c, busy: true } : c));
+              conflictCtx.resolve(new Map(list.map((r) => [r.slug, r.newSlug])));
+            }}
+          />
+        ) : (
+        <>
         <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
           {result ? (
             <div>
@@ -272,6 +330,8 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
             style={{ width: '100%', justifyContent: 'center' }}
           >{busy ? tt(lang, 'import.installing') : tt(lang, 'import.installPack')}</button>
         </footer>
+        </>
+        )}
       </section>
     </div>
   );
