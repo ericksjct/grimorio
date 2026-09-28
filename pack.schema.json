@@ -44,6 +44,12 @@
           "type": "string",
           "description": "Ex.: \"2014\", \"2024\". Opcional."
         },
+        "image": {
+          "type": "string",
+          "maxLength": 204800,
+          "pattern": "^data:image/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/]+={0,2}$",
+          "description": "Opcional. Imagem do cartão do pacote no menu, SÓ como data: URI de PNG/JPEG/WebP/GIF em base64, até 204800 caracteres (200 KB). URL externa é rejeitada: o app funciona offline e não consulta host de terceiro. Sem imagem, o menu desenha um marcador com cor derivada do pacote."
+        },
         "spellCount": {
           "type": "integer",
           "minimum": 0,

@@ -135,4 +135,130 @@ foreach ($fn in @('parsePackText', 'validatePack', 'freeIdentifier', 'MAX_PACK_B
   }
 }
 
+# ── meta.image (D-17, PKG-06): schema pattern + validatePack() por execução real ──
+
+$dialogPath = Join-Path $repoRoot 'pack-import-dialog.jsx'
+$dialog = Get-Content -Raw -LiteralPath $dialogPath
+
+foreach ($needle in @(
+  "'image-invalid': 'packErr.imageInvalid'",
+  "'image-too-large': 'packErr.imageTooLarge'"
+)) {
+  if ($dialog -notlike "*$needle*") {
+    throw "pack-import-dialog.jsx is missing PACK_ERR_KEY_BY_CODE entry: $needle"
+  }
+}
+
+if ($packImport -notlike '*function _checkImage(*') {
+  throw 'pack-import.jsx is missing function _checkImage( - meta.image validation (D-17, PKG-06).'
+}
+
+$node = Get-Command node -ErrorAction SilentlyContinue
+if (-not $node) {
+  Write-Warning 'node nao encontrado - prova de execucao de validatePack/meta.image pulada (assercoes estruturais ja rodaram).'
+} else {
+  $nodeScript = @'
+const fs = require('fs');
+const vm = require('vm');
+const src = fs.readFileSync('pack-import.jsx', 'utf8');
+
+// pack-import.jsx nao tem JSX; roda o arquivo de PRODUCAO inteiro num vm com
+// window = {} (mesmo padrao de check-loader-hardening.tests.ps1). window.DOMPurify
+// ausente nao importa - validatePack nao sanitiza.
+const sandbox = { console };
+sandbox.window = {};
+sandbox.globalThis = sandbox;
+vm.createContext(sandbox);
+vm.runInContext(src, sandbox);
+const validatePack = sandbox.window.packImport && sandbox.window.packImport.validatePack;
+if (typeof validatePack !== 'function') {
+  console.error('nao consegui capturar window.packImport.validatePack de pack-import.jsx');
+  process.exit(1);
+}
+
+function basePack(image) {
+  const pack = {
+    meta: {
+      source: 'meu-homebrew',
+      name: 'Meu Pacote',
+      version: '1.0.0',
+      author: 'Autor',
+      lang: 'ptbr',
+      license: { id: 'CC-BY-4.0', attribution: 'Atribuicao verbatim.' },
+    },
+    spells: [
+      { name: 'faisca', level: 1, school: 'evocation', description: '<p>ok</p>' },
+    ],
+  };
+  if (image !== undefined) pack.meta.image = image;
+  return pack;
+}
+
+let failures = 0;
+function check(label, cond, detail) {
+  if (!cond) { console.error('FAIL: ' + label + (detail ? ' - ' + detail : '')); failures++; }
+}
+
+function expectPass(label, image) {
+  try {
+    validatePack(basePack(image));
+    check(label, true);
+  } catch (err) {
+    check(label, false, 'threw ' + (err && err.code) + ': ' + (err && err.message));
+  }
+}
+
+function expectFail(label, image, expectedCode) {
+  try {
+    validatePack(basePack(image));
+    check(label, false, 'did not throw');
+  } catch (err) {
+    check(label, err && err.code === expectedCode, 'got code ' + (err && err.code) + ', expected ' + expectedCode);
+  }
+}
+
+expectPass('sem meta.image passa (compatibilidade retroativa)', undefined);
+expectPass('data:image/png;base64,... passa', 'data:image/png;base64,iVBORw0KGgo=');
+expectPass('data:image/jpeg;base64,... passa', 'data:image/jpeg;base64,iVBORw0KGgo=');
+expectPass('data:image/webp;base64,... passa', 'data:image/webp;base64,iVBORw0KGgo=');
+expectPass('data:image/gif;base64,... passa', 'data:image/gif;base64,iVBORw0KGgo=');
+
+expectFail('URL externa https rejeita com image-invalid', 'https://example.com/a.png', 'image-invalid');
+expectFail('URL protocol-relative rejeita com image-invalid', '//cdn/x.png', 'image-invalid');
+expectFail('data:image/svg+xml rejeita com image-invalid (SVG carrega script)', 'data:image/svg+xml;base64,PHN2Zz4=', 'image-invalid');
+expectFail('data:text/html rejeita com image-invalid', 'data:text/html;base64,PGI+', 'image-invalid');
+expectFail('data:image/png sem base64 rejeita com image-invalid', 'data:image/png,raw', 'image-invalid');
+expectFail('base64 invalido rejeita com image-invalid', 'data:image/png;base64,@@@', 'image-invalid');
+
+const huge = 'data:image/png;base64,' + 'A'.repeat(204800);
+expectFail('204800+ caracteres rejeita com image-too-large', huge, 'image-too-large');
+
+expectFail('meta.image = 42 (tipo errado) rejeita com schema-invalid', 42, 'schema-invalid');
+
+if (failures > 0) {
+  console.error(failures + ' verificacao(oes) de meta.image falharam.');
+  process.exit(1);
+}
+console.log('meta.image: compativel sem o campo, aceita data: URI raster valido (png/jpeg/webp/gif), rejeita URL externa/SVG/base64 invalido (image-invalid), rejeita >200KB (image-too-large), rejeita tipo errado (schema-invalid).');
+'@
+
+  $tmp = Join-Path ([System.IO.Path]::GetTempPath()) "check-pack-validator-image-$([guid]::NewGuid()).cjs"
+  try {
+    Set-Content -LiteralPath $tmp -Value $nodeScript -Encoding utf8NoBOM
+    Push-Location $repoRoot
+    try {
+      $nodeOut = & node $tmp 2>&1
+      $nodeExit = $LASTEXITCODE
+    } finally {
+      Pop-Location
+    }
+    if ($nodeExit -ne 0) {
+      throw "meta.image validatePack() proof failed: $nodeOut"
+    }
+    Write-Output $nodeOut
+  } finally {
+    if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force }
+  }
+}
+
 Write-Output 'Pack validator matches the published schema.'

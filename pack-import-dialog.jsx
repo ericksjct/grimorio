@@ -26,6 +26,8 @@ const PACK_ERR_KEY_BY_CODE = Object.assign(Object.create(null), {
   'too-large': 'packErr.tooLarge',
   'schema-invalid': 'packErr.schemaInvalid',
   'fetch-failed': 'packErr.fetchFailed',
+  'image-invalid': 'packErr.imageInvalid',
+  'image-too-large': 'packErr.imageTooLarge',
 });
 
 function packErrKeyFor(err) {
@@ -109,7 +111,9 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
       }
     } catch (err) {
       const code = err && err.code;
-      const msg = tt(lang, packErrKeyFor(err));
+      // {kb} só é consumido por packErr.imageTooLarge — as outras chaves ignoram
+      // vars extras (interpolate() só substitui {chave} presentes no texto).
+      const msg = tt(lang, packErrKeyFor(err), { kb: Math.round((window.packImport && window.packImport.MAX_IMAGE_CHARS || 204800) / 1024) });
       setError(msg);
       if (code === 'fetch-failed') {
         window.dispatchEvent(new CustomEvent('hifi-toast', { detail: { msg, kind: 'err' } }));

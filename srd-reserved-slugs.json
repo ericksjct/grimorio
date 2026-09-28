@@ -1,0 +1,5712 @@
+{
+  "description": "Nomes (name) das magias dos pacotes SRD embutidos no Grimório do Jogador. Um pacote homebrew que declarar um destes slugs recebe, no import, o prompt para renomear antes de gravar. Arquivo GERADO por scripts/generate-srd-pack.mjs — não editar à mão.",
+  "packs": [
+    {
+      "source": "srd-2014-en",
+      "name": "SRD 5.1 (EN)"
+    },
+    {
+      "source": "srd-2024-en",
+      "name": "SRD 5.2 (EN)"
+    },
+    {
+      "source": "srd-2024-ptbr",
+      "name": "SRD 5.2 (PT-BR)"
+    }
+  ],
+  "slugs": [
+    {
+      "slug": "acid-arrow",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Acid Arrow"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Acid Arrow"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Flecha Ácida"
+        }
+      ]
+    },
+    {
+      "slug": "acid-splash",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Acid Splash"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Acid Splash"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Bolha Ácida"
+        }
+      ]
+    },
+    {
+      "slug": "aid",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Aid"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Aid"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Auxílio"
+        }
+      ]
+    },
+    {
+      "slug": "alarm",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Alarm"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Alarm"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Alarme"
+        }
+      ]
+    },
+    {
+      "slug": "alter-self",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Alter Self"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Alter Self"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Alterar-se"
+        }
+      ]
+    },
+    {
+      "slug": "animal-friendship",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Animal Friendship"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Animal Friendship"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Amizade Animal"
+        }
+      ]
+    },
+    {
+      "slug": "animal-messenger",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Animal Messenger"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Animal Messenger"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Mensageiro Animal"
+        }
+      ]
+    },
+    {
+      "slug": "animal-shapes",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Animal Shapes"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Animal Shapes"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Formas Animais"
+        }
+      ]
+    },
+    {
+      "slug": "animate-dead",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Animate Dead"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Animate Dead"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Animar Mortos"
+        }
+      ]
+    },
+    {
+      "slug": "animate-objects",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Animate Objects"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Animate Objects"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Animar Objetos"
+        }
+      ]
+    },
+    {
+      "slug": "antilife-shell",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Antilife Shell"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Antilife Shell"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Cúpula Antivida"
+        }
+      ]
+    },
+    {
+      "slug": "antimagic-field",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Antimagic Field"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Antimagic Field"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Campo Antimagia"
+        }
+      ]
+    },
+    {
+      "slug": "antipathy-sympathy",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Antipathy/Sympathy"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Antipathy/Sympathy"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Antipatia/Simpatia"
+        }
+      ]
+    },
+    {
+      "slug": "arcane-eye",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Arcane Eye"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Arcane Eye"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Olho Arcano"
+        }
+      ]
+    },
+    {
+      "slug": "arcane-hand",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Arcane Hand"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Arcane Hand"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Mão Arcana"
+        }
+      ]
+    },
+    {
+      "slug": "arcane-lock",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Arcane Lock"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Arcane Lock"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Tranca Arcana"
+        }
+      ]
+    },
+    {
+      "slug": "arcane-sword",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Arcane Sword"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Arcane Sword"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Espada Arcana"
+        }
+      ]
+    },
+    {
+      "slug": "arcanists-magic-aura",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Arcanist’s Magic Aura"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Arcanist's Magic Aura"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Aura Mágica do Arcanista"
+        }
+      ]
+    },
+    {
+      "slug": "astral-projection",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Astral Projection"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Astral Projection"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Projeção Astral"
+        }
+      ]
+    },
+    {
+      "slug": "augury",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Augury"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Augury"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Augúrio"
+        }
+      ]
+    },
+    {
+      "slug": "aura-of-life",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Aura of Life"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Aura de Vida"
+        }
+      ]
+    },
+    {
+      "slug": "awaken",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Awaken"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Awaken"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Despertar"
+        }
+      ]
+    },
+    {
+      "slug": "bane",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Bane"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Bane"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Perdição"
+        }
+      ]
+    },
+    {
+      "slug": "banishment",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Banishment"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Banishment"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Banimento"
+        }
+      ]
+    },
+    {
+      "slug": "barkskin",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Barkskin"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Barkskin"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Pele-Casca"
+        }
+      ]
+    },
+    {
+      "slug": "beacon-of-hope",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Beacon of Hope"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Beacon of Hope"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Sinal de Esperança"
+        }
+      ]
+    },
+    {
+      "slug": "befuddlement",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Befuddlement"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Suplício"
+        }
+      ]
+    },
+    {
+      "slug": "bestow-curse",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Bestow Curse"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Bestow Curse"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Rogar Maldição"
+        }
+      ]
+    },
+    {
+      "slug": "black-tentacles",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Black Tentacles"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Black Tentacles"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Tentáculos Negros"
+        }
+      ]
+    },
+    {
+      "slug": "blade-barrier",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Blade Barrier"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Blade Barrier"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Barreira de Lâminas"
+        }
+      ]
+    },
+    {
+      "slug": "bless",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Bless"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Bless"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Bênção"
+        }
+      ]
+    },
+    {
+      "slug": "blight",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Blight"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Blight"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Malogro"
+        }
+      ]
+    },
+    {
+      "slug": "blindness-deafness",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Blindness/Deafness"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Blindness/Deafness"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Cegueira/Surdez"
+        }
+      ]
+    },
+    {
+      "slug": "blink",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Blink"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Blink"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Piscar"
+        }
+      ]
+    },
+    {
+      "slug": "blur",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Blur"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Blur"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Turvar"
+        }
+      ]
+    },
+    {
+      "slug": "branding-smite",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Branding Smite"
+        }
+      ]
+    },
+    {
+      "slug": "burning-hands",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Burning Hands"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Burning Hands"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Mãos Flamejantes"
+        }
+      ]
+    },
+    {
+      "slug": "call-lightning",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Call Lightning"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Call Lightning"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Convocar Relâmpagos"
+        }
+      ]
+    },
+    {
+      "slug": "calm-emotions",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Calm Emotions"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Calm Emotions"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Acalmar Emoções"
+        }
+      ]
+    },
+    {
+      "slug": "chain-lightning",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Chain Lightning"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Chain Lightning"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Corrente de Relâmpagos"
+        }
+      ]
+    },
+    {
+      "slug": "charm-monster",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Charm Monster"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Enfeitiçar Monstro"
+        }
+      ]
+    },
+    {
+      "slug": "charm-person",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Charm Person"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Charm Person"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Enfeitiçar Pessoa"
+        }
+      ]
+    },
+    {
+      "slug": "chill-touch",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Chill Touch"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Chill Touch"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Toque Necrótico"
+        }
+      ]
+    },
+    {
+      "slug": "chromatic-orb",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Chromatic Orb"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Orbe Cromático"
+        }
+      ]
+    },
+    {
+      "slug": "circle-of-death",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Circle of Death"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Circle of Death"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Círculo da Morte"
+        }
+      ]
+    },
+    {
+      "slug": "clairvoyance",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Clairvoyance"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Clairvoyance"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Clarividência"
+        }
+      ]
+    },
+    {
+      "slug": "clone",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Clone"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Clone"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Clone"
+        }
+      ]
+    },
+    {
+      "slug": "cloudkill",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Cloudkill"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Cloudkill"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Névoa Mortal"
+        }
+      ]
+    },
+    {
+      "slug": "color-spray",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Color Spray"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Color Spray"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Leque Cromático"
+        }
+      ]
+    },
+    {
+      "slug": "command",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Command"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Command"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Comando"
+        }
+      ]
+    },
+    {
+      "slug": "commune",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Commune"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Commune"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Comunhão"
+        }
+      ]
+    },
+    {
+      "slug": "commune-with-nature",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Commune with Nature"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Commune with Nature"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Comunhão com a Natureza"
+        }
+      ]
+    },
+    {
+      "slug": "comprehend-languages",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Comprehend Languages"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Comprehend Languages"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Compreender Idiomas"
+        }
+      ]
+    },
+    {
+      "slug": "compulsion",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Compulsion"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Compulsion"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Compulsão"
+        }
+      ]
+    },
+    {
+      "slug": "cone-of-cold",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Cone of Cold"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Cone of Cold"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Cone de Frio"
+        }
+      ]
+    },
+    {
+      "slug": "confusion",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Confusion"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Confusion"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Confusão"
+        }
+      ]
+    },
+    {
+      "slug": "conjure-animals",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Conjure Animals"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Conjure Animals"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Invocar Animais"
+        }
+      ]
+    },
+    {
+      "slug": "conjure-celestial",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Conjure Celestial"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Conjure Celestial"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Invocar Celestial"
+        }
+      ]
+    },
+    {
+      "slug": "conjure-elemental",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Conjure Elemental"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Conjure Elemental"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Invocar Elemental"
+        }
+      ]
+    },
+    {
+      "slug": "conjure-fey",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Conjure Fey"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Conjure Fey"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Invocar Feérico"
+        }
+      ]
+    },
+    {
+      "slug": "conjure-minor-elementals",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Conjure Minor Elementals"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Conjure Minor Elementals"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Invocar Elementais Menores"
+        }
+      ]
+    },
+    {
+      "slug": "conjure-woodland-beings",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Conjure Woodland Beings"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Conjure Woodland Beings"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Invocar Seres da Floresta"
+        }
+      ]
+    },
+    {
+      "slug": "contact-other-plane",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Contact Other Plane"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Contact Other Plane"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Contato Extraplanar"
+        }
+      ]
+    },
+    {
+      "slug": "contagion",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Contagion"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Contagion"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Contágio"
+        }
+      ]
+    },
+    {
+      "slug": "contingency",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Contingency"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Contingency"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Contingência"
+        }
+      ]
+    },
+    {
+      "slug": "continual-flame",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Continual Flame"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Continual Flame"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Chama Contínua"
+        }
+      ]
+    },
+    {
+      "slug": "control-water",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Control Water"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Control Water"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Controlar Água"
+        }
+      ]
+    },
+    {
+      "slug": "control-weather",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Control Weather"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Control Weather"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Controlar o Clima"
+        }
+      ]
+    },
+    {
+      "slug": "counterspell",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Counterspell"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Counterspell"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Contramagia"
+        }
+      ]
+    },
+    {
+      "slug": "create-food-and-water",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Create Food and Water"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Create Food and Water"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Criar Comida e Água"
+        }
+      ]
+    },
+    {
+      "slug": "create-or-destroy-water",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Create or Destroy Water"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Create or Destroy Water"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Criar ou Destruir Água"
+        }
+      ]
+    },
+    {
+      "slug": "create-undead",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Create Undead"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Create Undead"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Criar Mortos-Vivos"
+        }
+      ]
+    },
+    {
+      "slug": "creation",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Creation"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Creation"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Criação"
+        }
+      ]
+    },
+    {
+      "slug": "cure-wounds",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Cure Wounds"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Cure Wounds"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Curar Ferimentos"
+        }
+      ]
+    },
+    {
+      "slug": "dancing-lights",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Dancing Lights"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Dancing Lights"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Luzes Dançantes"
+        }
+      ]
+    },
+    {
+      "slug": "darkness",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Darkness"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Darkness"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Escuridão"
+        }
+      ]
+    },
+    {
+      "slug": "darkvision",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Darkvision"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Darkvision"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Visão no Escuro"
+        }
+      ]
+    },
+    {
+      "slug": "daylight",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Daylight"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Daylight"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Luz do Dia"
+        }
+      ]
+    },
+    {
+      "slug": "death-ward",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Death Ward"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Death Ward"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Proteção Contra a Morte"
+        }
+      ]
+    },
+    {
+      "slug": "delayed-blast-fireball",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Delayed Blast Fireball"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Delayed Blast Fireball"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Bola de Fogo Adiável"
+        }
+      ]
+    },
+    {
+      "slug": "demiplane",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Demiplane"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Demiplane"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Semiplano"
+        }
+      ]
+    },
+    {
+      "slug": "detect-evil-and-good",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Detect Evil and Good"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Detect Evil and Good"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Detectar o Bem e o Mal"
+        }
+      ]
+    },
+    {
+      "slug": "detect-magic",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Detect Magic"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Detect Magic"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Detectar Magia"
+        }
+      ]
+    },
+    {
+      "slug": "detect-poison-and-disease",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Detect Poison and Disease"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Detect Poison and Disease"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Detectar Veneno e Doença"
+        }
+      ]
+    },
+    {
+      "slug": "detect-thoughts",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Detect Thoughts"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Detect Thoughts"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Detectar Pensamentos"
+        }
+      ]
+    },
+    {
+      "slug": "dimension-door",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Dimension Door"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Dimension Door"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Porta Dimensional"
+        }
+      ]
+    },
+    {
+      "slug": "disguise-self",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Disguise Self"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Disguise Self"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Disfarçar-se"
+        }
+      ]
+    },
+    {
+      "slug": "disintegrate",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Disintegrate"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Disintegrate"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Desintegrar"
+        }
+      ]
+    },
+    {
+      "slug": "dispel-evil-and-good",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Dispel Evil and Good"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Dispel Evil and Good"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Dissipar o Bem e o Mal"
+        }
+      ]
+    },
+    {
+      "slug": "dispel-magic",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Dispel Magic"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Dispel Magic"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Dissipar Magia"
+        }
+      ]
+    },
+    {
+      "slug": "dissonant-whispers",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Dissonant Whispers"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Sussurros Dissonantes"
+        }
+      ]
+    },
+    {
+      "slug": "divination",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Divination"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Divination"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Presságio"
+        }
+      ]
+    },
+    {
+      "slug": "divine-favor",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Divine Favor"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Divine Favor"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Favor Divino"
+        }
+      ]
+    },
+    {
+      "slug": "divine-smite",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Divine Smite"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Destruição Divina"
+        }
+      ]
+    },
+    {
+      "slug": "divine-word",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Divine Word"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Divine Word"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Palavra Sagrada"
+        }
+      ]
+    },
+    {
+      "slug": "dominate-beast",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Dominate Beast"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Dominate Beast"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Dominar Fera"
+        }
+      ]
+    },
+    {
+      "slug": "dominate-monster",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Dominate Monster"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Dominate Monster"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Dominar Monstro"
+        }
+      ]
+    },
+    {
+      "slug": "dominate-person",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Dominate Person"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Dominate Person"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Dominar Pessoa"
+        }
+      ]
+    },
+    {
+      "slug": "dragons-breath",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Dragon's Breath"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Sopro de Dragão"
+        }
+      ]
+    },
+    {
+      "slug": "dream",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Dream"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Dream"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Sonho"
+        }
+      ]
+    },
+    {
+      "slug": "druidcraft",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Druidcraft"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Druidcraft"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Arte Druídica"
+        }
+      ]
+    },
+    {
+      "slug": "earthquake",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Earthquake"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Earthquake"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Terremoto"
+        }
+      ]
+    },
+    {
+      "slug": "eldritch-blast",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Eldritch Blast"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Eldritch Blast"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Raio Místico"
+        }
+      ]
+    },
+    {
+      "slug": "elementalism",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Elementalism"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Elementalismo"
+        }
+      ]
+    },
+    {
+      "slug": "enhance-ability",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Enhance Ability"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Enhance Ability"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Aprimorar Atributo"
+        }
+      ]
+    },
+    {
+      "slug": "enlarge-reduce",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Enlarge/Reduce"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Enlarge/Reduce"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Aumentar/Reduzir"
+        }
+      ]
+    },
+    {
+      "slug": "ensnaring-strike",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Ensnaring Strike"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Golpe Constritor"
+        }
+      ]
+    },
+    {
+      "slug": "entangle",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Entangle"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Entangle"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Emaranhar"
+        }
+      ]
+    },
+    {
+      "slug": "enthrall",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Enthrall"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Enthrall"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Cativar"
+        }
+      ]
+    },
+    {
+      "slug": "etherealness",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Etherealness"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Etherealness"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Forma Etérea"
+        }
+      ]
+    },
+    {
+      "slug": "expeditious-retreat",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Expeditious Retreat"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Expeditious Retreat"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Retirada Acelerada"
+        }
+      ]
+    },
+    {
+      "slug": "eyebite",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Eyebite"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Eyebite"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Mau Olhado"
+        }
+      ]
+    },
+    {
+      "slug": "fabricate",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Fabricate"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Fabricate"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Fabricar"
+        }
+      ]
+    },
+    {
+      "slug": "faerie-fire",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Faerie Fire"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Faerie Fire"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Fogo das Fadas"
+        }
+      ]
+    },
+    {
+      "slug": "faithful-hound",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Faithful Hound"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Faithful Hound"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Cão Fiel"
+        }
+      ]
+    },
+    {
+      "slug": "false-life",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "False Life"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "False Life"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Vitalidade Vazia"
+        }
+      ]
+    },
+    {
+      "slug": "fear",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Fear"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Fear"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Medo"
+        }
+      ]
+    },
+    {
+      "slug": "feather-fall",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Feather Fall"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Feather Fall"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Queda Suave"
+        }
+      ]
+    },
+    {
+      "slug": "feeblemind",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Feeblemind"
+        }
+      ]
+    },
+    {
+      "slug": "find-familiar",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Find Familiar"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Find Familiar"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Convocar Familiar"
+        }
+      ]
+    },
+    {
+      "slug": "find-steed",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Find Steed"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Find Steed"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Convocar Montaria"
+        }
+      ]
+    },
+    {
+      "slug": "find-the-path",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Find the Path"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Find the Path"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Encontrar o Caminho"
+        }
+      ]
+    },
+    {
+      "slug": "find-traps",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Find Traps"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Find Traps"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Encontrar Armadilhas"
+        }
+      ]
+    },
+    {
+      "slug": "finger-of-death",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Finger of Death"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Finger of Death"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Dedo da Morte"
+        }
+      ]
+    },
+    {
+      "slug": "fire-bolt",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Fire Bolt"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Fire Bolt"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Raio de Fogo"
+        }
+      ]
+    },
+    {
+      "slug": "fire-shield",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Fire Shield"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Fire Shield"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Escudo Ardente"
+        }
+      ]
+    },
+    {
+      "slug": "fire-storm",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Fire Storm"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Fire Storm"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Tempestade de Fogo"
+        }
+      ]
+    },
+    {
+      "slug": "fireball",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Fireball"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Fireball"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Bola de Fogo"
+        }
+      ]
+    },
+    {
+      "slug": "flame-blade",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Flame Blade"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Flame Blade"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Lâmina Flamejante"
+        }
+      ]
+    },
+    {
+      "slug": "flame-strike",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Flame Strike"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Flame Strike"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Coluna de Chamas"
+        }
+      ]
+    },
+    {
+      "slug": "flaming-sphere",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Flaming Sphere"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Flaming Sphere"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Esfera Flamejante"
+        }
+      ]
+    },
+    {
+      "slug": "flesh-to-stone",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Flesh to Stone"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Flesh to Stone"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "De Carne para Pedra"
+        }
+      ]
+    },
+    {
+      "slug": "floating-disk",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Floating Disk"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Floating Disk"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Disco Flutuante"
+        }
+      ]
+    },
+    {
+      "slug": "fly",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Fly"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Fly"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Voo"
+        }
+      ]
+    },
+    {
+      "slug": "fog-cloud",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Fog Cloud"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Fog Cloud"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Névoa Obscurecente"
+        }
+      ]
+    },
+    {
+      "slug": "forbiddance",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Forbiddance"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Forbiddance"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Proibição"
+        }
+      ]
+    },
+    {
+      "slug": "forcecage",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Forcecage"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Forcecage"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Cárcere de Energia"
+        }
+      ]
+    },
+    {
+      "slug": "foresight",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Foresight"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Foresight"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Sexto Sentido"
+        }
+      ]
+    },
+    {
+      "slug": "freedom-of-movement",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Freedom of Movement"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Freedom of Movement"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Movimentação Livre"
+        }
+      ]
+    },
+    {
+      "slug": "freezing-sphere",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Freezing Sphere"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Freezing Sphere"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Esfera Congelante"
+        }
+      ]
+    },
+    {
+      "slug": "gaseous-form",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Gaseous Form"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Gaseous Form"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Forma Gasosa"
+        }
+      ]
+    },
+    {
+      "slug": "gate",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Gate"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Gate"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Portal"
+        }
+      ]
+    },
+    {
+      "slug": "geas",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Geas"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Geas"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Missão"
+        }
+      ]
+    },
+    {
+      "slug": "gentle-repose",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Gentle Repose"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Gentle Repose"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Repouso Tranquilo"
+        }
+      ]
+    },
+    {
+      "slug": "giant-insect",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Giant Insect"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Giant Insect"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Inseto Gigante"
+        }
+      ]
+    },
+    {
+      "slug": "glibness",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Glibness"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Glibness"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Loquacidade"
+        }
+      ]
+    },
+    {
+      "slug": "globe-of-invulnerability",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Globe of Invulnerability"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Globe of Invulnerability"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Globo de Invulnerabilidade"
+        }
+      ]
+    },
+    {
+      "slug": "glyph-of-warding",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Glyph of Warding"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Glyph of Warding"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Glifo de Proteção"
+        }
+      ]
+    },
+    {
+      "slug": "goodberry",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Goodberry"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Goodberry"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Bom Fruto"
+        }
+      ]
+    },
+    {
+      "slug": "grease",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Grease"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Grease"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Graxa"
+        }
+      ]
+    },
+    {
+      "slug": "greater-invisibility",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Greater Invisibility"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Greater Invisibility"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Invisibilidade Maior"
+        }
+      ]
+    },
+    {
+      "slug": "greater-restoration",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Greater Restoration"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Greater Restoration"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Restauração Maior"
+        }
+      ]
+    },
+    {
+      "slug": "guardian-of-faith",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Guardian of Faith"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Guardian of Faith"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Defensor da Fé"
+        }
+      ]
+    },
+    {
+      "slug": "guards-and-wards",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Guards and Wards"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Guards and Wards"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Proteger Fortaleza"
+        }
+      ]
+    },
+    {
+      "slug": "guidance",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Guidance"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Guidance"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Orientação"
+        }
+      ]
+    },
+    {
+      "slug": "guiding-bolt",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Guiding Bolt"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Guiding Bolt"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Raio Guia"
+        }
+      ]
+    },
+    {
+      "slug": "gust-of-wind",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Gust of Wind"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Gust of Wind"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Lufada de Vento"
+        }
+      ]
+    },
+    {
+      "slug": "hallow",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Hallow"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Hallow"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Consagrar"
+        }
+      ]
+    },
+    {
+      "slug": "hallucinatory-terrain",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Hallucinatory Terrain"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Hallucinatory Terrain"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Terreno Alucinatório"
+        }
+      ]
+    },
+    {
+      "slug": "harm",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Harm"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Harm"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Moléstia"
+        }
+      ]
+    },
+    {
+      "slug": "haste",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Haste"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Haste"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Celeridade"
+        }
+      ]
+    },
+    {
+      "slug": "heal",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Heal"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Heal"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Cura Completa"
+        }
+      ]
+    },
+    {
+      "slug": "healing-word",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Healing Word"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Healing Word"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Palavra Curativa"
+        }
+      ]
+    },
+    {
+      "slug": "heat-metal",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Heat Metal"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Heat Metal"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Esquentar Metal"
+        }
+      ]
+    },
+    {
+      "slug": "hellish-rebuke",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Hellish Rebuke"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Hellish Rebuke"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Repreensão Diabólica"
+        }
+      ]
+    },
+    {
+      "slug": "heroes-feast",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Heroes’ Feast"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Heroes' Feast"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Banquete de Heróis"
+        }
+      ]
+    },
+    {
+      "slug": "heroism",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Heroism"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Heroism"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Heroísmo"
+        }
+      ]
+    },
+    {
+      "slug": "hex",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Hex"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Danação"
+        }
+      ]
+    },
+    {
+      "slug": "hideous-laughter",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Hideous Laughter"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Hideous Laughter"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Gargalhada Nefasta"
+        }
+      ]
+    },
+    {
+      "slug": "hold-monster",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Hold Monster"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Hold Monster"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Paralisar Monstro"
+        }
+      ]
+    },
+    {
+      "slug": "hold-person",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Hold Person"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Hold Person"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Paralisar Pessoa"
+        }
+      ]
+    },
+    {
+      "slug": "holy-aura",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Holy Aura"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Holy Aura"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Aura Sagrada"
+        }
+      ]
+    },
+    {
+      "slug": "hunters-mark",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Hunter’s Mark"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Hunter's Mark"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Marca do Predador"
+        }
+      ]
+    },
+    {
+      "slug": "hypnotic-pattern",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Hypnotic Pattern"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Hypnotic Pattern"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Padrão Hipnótico"
+        }
+      ]
+    },
+    {
+      "slug": "ice-knife",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Ice Knife"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Faca de Gelo"
+        }
+      ]
+    },
+    {
+      "slug": "ice-storm",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Ice Storm"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Ice Storm"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Tempestade Glacial"
+        }
+      ]
+    },
+    {
+      "slug": "identify",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Identify"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Identify"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Identificar"
+        }
+      ]
+    },
+    {
+      "slug": "illusory-script",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Illusory Script"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Illusory Script"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Escrita Ilusória"
+        }
+      ]
+    },
+    {
+      "slug": "imprisonment",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Imprisonment"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Imprisonment"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Aprisionamento"
+        }
+      ]
+    },
+    {
+      "slug": "incendiary-cloud",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Incendiary Cloud"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Incendiary Cloud"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Nuvem Incendiária"
+        }
+      ]
+    },
+    {
+      "slug": "inflict-wounds",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Inflict Wounds"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Inflict Wounds"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Infligir Ferimentos"
+        }
+      ]
+    },
+    {
+      "slug": "insect-plague",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Insect Plague"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Insect Plague"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Praga de Insetos"
+        }
+      ]
+    },
+    {
+      "slug": "instant-summons",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Instant Summons"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Instant Summons"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Invocação Instantânea"
+        }
+      ]
+    },
+    {
+      "slug": "invisibility",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Invisibility"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Invisibility"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Invisibilidade"
+        }
+      ]
+    },
+    {
+      "slug": "irresistible-dance",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Irresistible Dance"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Irresistible Dance"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Dança Irresistível"
+        }
+      ]
+    },
+    {
+      "slug": "jump",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Jump"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Jump"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Salto"
+        }
+      ]
+    },
+    {
+      "slug": "knock",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Knock"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Knock"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Arrombar"
+        }
+      ]
+    },
+    {
+      "slug": "legend-lore",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Legend Lore"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Legend Lore"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Lendas e Histórias"
+        }
+      ]
+    },
+    {
+      "slug": "lesser-restoration",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Lesser Restoration"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Lesser Restoration"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Restauração Menor"
+        }
+      ]
+    },
+    {
+      "slug": "levitate",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Levitate"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Levitate"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Levitação"
+        }
+      ]
+    },
+    {
+      "slug": "light",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Light"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Light"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Luz"
+        }
+      ]
+    },
+    {
+      "slug": "lightning-bolt",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Lightning Bolt"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Lightning Bolt"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Relâmpago"
+        }
+      ]
+    },
+    {
+      "slug": "locate-animals-or-plants",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Locate Animals or Plants"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Locate Animals or Plants"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Localizar Animais ou Plantas"
+        }
+      ]
+    },
+    {
+      "slug": "locate-creature",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Locate Creature"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Locate Creature"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Localizar Criatura"
+        }
+      ]
+    },
+    {
+      "slug": "locate-object",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Locate Object"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Locate Object"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Localizar Objeto"
+        }
+      ]
+    },
+    {
+      "slug": "longstrider",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Longstrider"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Longstrider"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Passos Largos"
+        }
+      ]
+    },
+    {
+      "slug": "mage-armor",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Mage Armor"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Mage Armor"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Armadura Arcana"
+        }
+      ]
+    },
+    {
+      "slug": "mage-hand",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Mage Hand"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Mage Hand"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Mãos Mágicas"
+        }
+      ]
+    },
+    {
+      "slug": "magic-circle",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Magic Circle"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Magic Circle"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Círculo Mágico"
+        }
+      ]
+    },
+    {
+      "slug": "magic-jar",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Magic Jar"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Magic Jar"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Receptáculo Arcano"
+        }
+      ]
+    },
+    {
+      "slug": "magic-missile",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Magic Missile"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Magic Missile"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Mísseis Mágicos"
+        }
+      ]
+    },
+    {
+      "slug": "magic-mouth",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Magic Mouth"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Magic Mouth"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Boca Encantada"
+        }
+      ]
+    },
+    {
+      "slug": "magic-weapon",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Magic Weapon"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Magic Weapon"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Arma Mágica"
+        }
+      ]
+    },
+    {
+      "slug": "magnificent-mansion",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Magnificent Mansion"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Magnificent Mansion"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Mansão Magnífica"
+        }
+      ]
+    },
+    {
+      "slug": "major-image",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Major Image"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Major Image"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Imagem Maior"
+        }
+      ]
+    },
+    {
+      "slug": "mass-cure-wounds",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Mass Cure Wounds"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Mass Cure Wounds"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Curar Ferimentos em Massa"
+        }
+      ]
+    },
+    {
+      "slug": "mass-heal",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Mass Heal"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Mass Heal"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Cura Completa em Massa"
+        }
+      ]
+    },
+    {
+      "slug": "mass-healing-word",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Mass Healing Word"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Mass Healing Word"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Palavra Curativa em Massa"
+        }
+      ]
+    },
+    {
+      "slug": "mass-suggestion",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Mass Suggestion"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Mass Suggestion"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Sugestão em Massa"
+        }
+      ]
+    },
+    {
+      "slug": "maze",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Maze"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Maze"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Labirinto"
+        }
+      ]
+    },
+    {
+      "slug": "meld-into-stone",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Meld into Stone"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Meld into Stone"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Mesclar-se às Rochas"
+        }
+      ]
+    },
+    {
+      "slug": "mending",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Mending"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Mending"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Reparar"
+        }
+      ]
+    },
+    {
+      "slug": "message",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Message"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Message"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Mensagem"
+        }
+      ]
+    },
+    {
+      "slug": "meteor-swarm",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Meteor Swarm"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Meteor Swarm"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Chuva de Meteoros"
+        }
+      ]
+    },
+    {
+      "slug": "mind-blank",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Mind Blank"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Mind Blank"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Limpar a Mente"
+        }
+      ]
+    },
+    {
+      "slug": "mind-spike",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Mind Spike"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Espinho Mental"
+        }
+      ]
+    },
+    {
+      "slug": "minor-illusion",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Minor Illusion"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Minor Illusion"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Ilusão Menor"
+        }
+      ]
+    },
+    {
+      "slug": "mirage-arcane",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Mirage Arcane"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Mirage Arcane"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Miragem Arcana"
+        }
+      ]
+    },
+    {
+      "slug": "mirror-image",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Mirror Image"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Mirror Image"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Reflexos"
+        }
+      ]
+    },
+    {
+      "slug": "mislead",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Mislead"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Mislead"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Despistar"
+        }
+      ]
+    },
+    {
+      "slug": "misty-step",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Misty Step"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Misty Step"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Passo Nebuloso"
+        }
+      ]
+    },
+    {
+      "slug": "modify-memory",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Modify Memory"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Modify Memory"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Modificar Memória"
+        }
+      ]
+    },
+    {
+      "slug": "moonbeam",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Moonbeam"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Moonbeam"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Raio Lunar"
+        }
+      ]
+    },
+    {
+      "slug": "move-earth",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Move Earth"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Move Earth"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Mover Terra"
+        }
+      ]
+    },
+    {
+      "slug": "nondetection",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Nondetection"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Nondetection"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Indetectável"
+        }
+      ]
+    },
+    {
+      "slug": "pass-without-trace",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Pass without Trace"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Pass without Trace"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Passo Sem Rastro"
+        }
+      ]
+    },
+    {
+      "slug": "passwall",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Passwall"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Passwall"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Criar Passagem"
+        }
+      ]
+    },
+    {
+      "slug": "phantasmal-force",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Phantasmal Force"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Força Espectral"
+        }
+      ]
+    },
+    {
+      "slug": "phantasmal-killer",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Phantasmal Killer"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Phantasmal Killer"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Assassino Fantasmagórico"
+        }
+      ]
+    },
+    {
+      "slug": "phantom-steed",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Phantom Steed"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Phantom Steed"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Montaria Fantasmagórica"
+        }
+      ]
+    },
+    {
+      "slug": "planar-ally",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Planar Ally"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Planar Ally"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Aliado Extraplanar"
+        }
+      ]
+    },
+    {
+      "slug": "planar-binding",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Planar Binding"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Planar Binding"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Âncora Planar"
+        }
+      ]
+    },
+    {
+      "slug": "plane-shift",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Plane Shift"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Plane Shift"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Transição Planar"
+        }
+      ]
+    },
+    {
+      "slug": "plant-growth",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Plant Growth"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Plant Growth"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Crescimento de Plantas"
+        }
+      ]
+    },
+    {
+      "slug": "poison-spray",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Poison Spray"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Poison Spray"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Rajada de Veneno"
+        }
+      ]
+    },
+    {
+      "slug": "polymorph",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Polymorph"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Polymorph"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Polimorfia"
+        }
+      ]
+    },
+    {
+      "slug": "power-word-heal",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Power Word Heal"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Palavra de Poder: Salvar"
+        }
+      ]
+    },
+    {
+      "slug": "power-word-kill",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Power Word Kill"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Power Word Kill"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Palavra de Poder: Matar"
+        }
+      ]
+    },
+    {
+      "slug": "power-word-stun",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Power Word Stun"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Power Word Stun"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Palavra de Poder: Atordoar"
+        }
+      ]
+    },
+    {
+      "slug": "prayer-of-healing",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Prayer of Healing"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Prayer of Healing"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Oração de Cura"
+        }
+      ]
+    },
+    {
+      "slug": "prestidigitation",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Prestidigitation"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Prestidigitation"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Prestidigitação Arcana"
+        }
+      ]
+    },
+    {
+      "slug": "prismatic-spray",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Prismatic Spray"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Prismatic Spray"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Rajada Prismática"
+        }
+      ]
+    },
+    {
+      "slug": "prismatic-wall",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Prismatic Wall"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Prismatic Wall"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Muralha Prismática"
+        }
+      ]
+    },
+    {
+      "slug": "private-sanctum",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Private Sanctum"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Private Sanctum"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Santuário Particular"
+        }
+      ]
+    },
+    {
+      "slug": "produce-flame",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Produce Flame"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Produce Flame"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Criar Chamas"
+        }
+      ]
+    },
+    {
+      "slug": "programmed-illusion",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Programmed Illusion"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Programmed Illusion"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Ilusão Programada"
+        }
+      ]
+    },
+    {
+      "slug": "project-image",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Project Image"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Project Image"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Projetar Imagem"
+        }
+      ]
+    },
+    {
+      "slug": "protection-from-energy",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Protection from Energy"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Protection from Energy"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Proteção Contra Energia"
+        }
+      ]
+    },
+    {
+      "slug": "protection-from-evil-and-good",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Protection from Evil and Good"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Protection from Evil and Good"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Proteção Contra o Bem e o Mal"
+        }
+      ]
+    },
+    {
+      "slug": "protection-from-poison",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Protection from Poison"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Protection from Poison"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Proteção Contra Veneno"
+        }
+      ]
+    },
+    {
+      "slug": "purify-food-and-drink",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Purify Food and Drink"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Purify Food and Drink"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Purificar Alimentos e Bebidas"
+        }
+      ]
+    },
+    {
+      "slug": "raise-dead",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Raise Dead"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Raise Dead"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Reviver os Mortos"
+        }
+      ]
+    },
+    {
+      "slug": "ray-of-enfeeblement",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Ray of Enfeeblement"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Ray of Enfeeblement"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Raio do Enfraquecimento"
+        }
+      ]
+    },
+    {
+      "slug": "ray-of-frost",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Ray of Frost"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Ray of Frost"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Raio de Gelo"
+        }
+      ]
+    },
+    {
+      "slug": "ray-of-sickness",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Ray of Sickness"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Raio Nauseante"
+        }
+      ]
+    },
+    {
+      "slug": "regenerate",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Regenerate"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Regenerate"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Regeneração"
+        }
+      ]
+    },
+    {
+      "slug": "reincarnate",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Reincarnate"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Reincarnate"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Reencarnar"
+        }
+      ]
+    },
+    {
+      "slug": "remove-curse",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Remove Curse"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Remove Curse"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Remover Maldição"
+        }
+      ]
+    },
+    {
+      "slug": "resilient-sphere",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Resilient Sphere"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Resilient Sphere"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Esfera Resiliente"
+        }
+      ]
+    },
+    {
+      "slug": "resistance",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Resistance"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Resistance"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Resistência"
+        }
+      ]
+    },
+    {
+      "slug": "resurrection",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Resurrection"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Resurrection"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Ressurreição"
+        }
+      ]
+    },
+    {
+      "slug": "reverse-gravity",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Reverse Gravity"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Reverse Gravity"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Inverter a Gravidade"
+        }
+      ]
+    },
+    {
+      "slug": "revivify",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Revivify"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Revivify"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Revivificar"
+        }
+      ]
+    },
+    {
+      "slug": "rope-trick",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Rope Trick"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Rope Trick"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Corda Extradimensional"
+        }
+      ]
+    },
+    {
+      "slug": "sacred-flame",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Sacred Flame"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Sacred Flame"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Chama Sagrada"
+        }
+      ]
+    },
+    {
+      "slug": "sanctuary",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Sanctuary"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Sanctuary"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Santuário"
+        }
+      ]
+    },
+    {
+      "slug": "scorching-ray",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Scorching Ray"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Scorching Ray"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Raio Ardente"
+        }
+      ]
+    },
+    {
+      "slug": "scrying",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Scrying"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Scrying"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Vidência"
+        }
+      ]
+    },
+    {
+      "slug": "searing-smite",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Searing Smite"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Destruição Cauterizante"
+        }
+      ]
+    },
+    {
+      "slug": "secret-chest",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Secret Chest"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Secret Chest"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Arca Secreta"
+        }
+      ]
+    },
+    {
+      "slug": "see-invisibility",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "See Invisibility"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "See Invisibility"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Ver o Invisível"
+        }
+      ]
+    },
+    {
+      "slug": "seeming",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Seeming"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Seeming"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Similaridade"
+        }
+      ]
+    },
+    {
+      "slug": "sending",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Sending"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Sending"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Remeter"
+        }
+      ]
+    },
+    {
+      "slug": "sequester",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Sequester"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Sequester"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Refugiar"
+        }
+      ]
+    },
+    {
+      "slug": "shapechange",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Shapechange"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Shapechange"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Metamorfose"
+        }
+      ]
+    },
+    {
+      "slug": "shatter",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Shatter"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Shatter"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Despedaçar"
+        }
+      ]
+    },
+    {
+      "slug": "shield",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Shield"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Shield"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Escudo Arcano"
+        }
+      ]
+    },
+    {
+      "slug": "shield-of-faith",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Shield of Faith"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Shield of Faith"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Escudo da Fé"
+        }
+      ]
+    },
+    {
+      "slug": "shillelagh",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Shillelagh"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Shillelagh"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Bordão Místico"
+        }
+      ]
+    },
+    {
+      "slug": "shining-smite",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Shining Smite"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Destruição Radiante"
+        }
+      ]
+    },
+    {
+      "slug": "shocking-grasp",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Shocking Grasp"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Shocking Grasp"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Toque Chocante"
+        }
+      ]
+    },
+    {
+      "slug": "silence",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Silence"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Silence"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Silêncio"
+        }
+      ]
+    },
+    {
+      "slug": "silent-image",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Silent Image"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Silent Image"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Imagem Silenciosa"
+        }
+      ]
+    },
+    {
+      "slug": "simulacrum",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Simulacrum"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Simulacrum"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Simulacro"
+        }
+      ]
+    },
+    {
+      "slug": "sleep",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Sleep"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Sleep"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Sono"
+        }
+      ]
+    },
+    {
+      "slug": "sleet-storm",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Sleet Storm"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Sleet Storm"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Nevasca"
+        }
+      ]
+    },
+    {
+      "slug": "slow",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Slow"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Slow"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Lentidão"
+        }
+      ]
+    },
+    {
+      "slug": "sorcerous-burst",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Sorcerous Burst"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Explosão Elemental"
+        }
+      ]
+    },
+    {
+      "slug": "spare-the-dying",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Spare the Dying"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Spare the Dying"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Acudir os Moribundos"
+        }
+      ]
+    },
+    {
+      "slug": "speak-with-animals",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Speak with Animals"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Speak with Animals"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Falar com Animais"
+        }
+      ]
+    },
+    {
+      "slug": "speak-with-dead",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Speak with Dead"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Speak with Dead"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Falar com Mortos"
+        }
+      ]
+    },
+    {
+      "slug": "speak-with-plants",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Speak with Plants"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Speak with Plants"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Falar com Plantas"
+        }
+      ]
+    },
+    {
+      "slug": "spider-climb",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Spider Climb"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Spider Climb"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Escalada de Aranha"
+        }
+      ]
+    },
+    {
+      "slug": "spike-growth",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Spike Growth"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Spike Growth"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Crescer Espinhos"
+        }
+      ]
+    },
+    {
+      "slug": "spirit-guardians",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Spirit Guardians"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Spirit Guardians"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Guardiões Espirituais"
+        }
+      ]
+    },
+    {
+      "slug": "spiritual-weapon",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Spiritual Weapon"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Spiritual Weapon"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Arma Espiritual"
+        }
+      ]
+    },
+    {
+      "slug": "starry-wisp",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Starry Wisp"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Fagulha Estelar"
+        }
+      ]
+    },
+    {
+      "slug": "stinking-cloud",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Stinking Cloud"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Stinking Cloud"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Nuvem Fétida"
+        }
+      ]
+    },
+    {
+      "slug": "stone-shape",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Stone Shape"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Stone Shape"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Moldar Rochas"
+        }
+      ]
+    },
+    {
+      "slug": "stoneskin",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Stoneskin"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Stoneskin"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Pele-Rocha"
+        }
+      ]
+    },
+    {
+      "slug": "storm-of-vengeance",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Storm of Vengeance"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Storm of Vengeance"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Tempestade da Vingança"
+        }
+      ]
+    },
+    {
+      "slug": "suggestion",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Suggestion"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Suggestion"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Sugestão"
+        }
+      ]
+    },
+    {
+      "slug": "summon-dragon",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Summon Dragon"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Invocar Dragão"
+        }
+      ]
+    },
+    {
+      "slug": "sunbeam",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Sunbeam"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Sunbeam"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Raio Solar"
+        }
+      ]
+    },
+    {
+      "slug": "sunburst",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Sunburst"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Sunburst"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Explosão Solar"
+        }
+      ]
+    },
+    {
+      "slug": "symbol",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Symbol"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Symbol"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Símbolo"
+        }
+      ]
+    },
+    {
+      "slug": "telekinesis",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Telekinesis"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Telekinesis"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Telecinese"
+        }
+      ]
+    },
+    {
+      "slug": "telepathic-bond",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Telepathic Bond"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Telepathic Bond"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Ligação Telepática"
+        }
+      ]
+    },
+    {
+      "slug": "teleport",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Teleport"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Teleport"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Teleporte"
+        }
+      ]
+    },
+    {
+      "slug": "teleportation-circle",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Teleportation Circle"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Teleportation Circle"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Círculo de Teleporte"
+        }
+      ]
+    },
+    {
+      "slug": "thaumaturgy",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Thaumaturgy"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Thaumaturgy"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Taumaturgia"
+        }
+      ]
+    },
+    {
+      "slug": "thunderwave",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Thunderwave"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Thunderwave"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Onda Trovejante"
+        }
+      ]
+    },
+    {
+      "slug": "time-stop",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Time Stop"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Time Stop"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Parar o Tempo"
+        }
+      ]
+    },
+    {
+      "slug": "tiny-hut",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Tiny Hut"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Tiny Hut"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Pequeno Refúgio"
+        }
+      ]
+    },
+    {
+      "slug": "tongues",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Tongues"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Tongues"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Línguas"
+        }
+      ]
+    },
+    {
+      "slug": "transport-via-plants",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Transport via Plants"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Transport via Plants"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Transporte via Plantas"
+        }
+      ]
+    },
+    {
+      "slug": "tree-stride",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Tree Stride"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Tree Stride"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Passo Arbóreo"
+        }
+      ]
+    },
+    {
+      "slug": "true-polymorph",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "True Polymorph"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "True Polymorph"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Polimorfia Total"
+        }
+      ]
+    },
+    {
+      "slug": "true-resurrection",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "True Resurrection"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "True Resurrection"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Ressurreição Verdadeira"
+        }
+      ]
+    },
+    {
+      "slug": "true-seeing",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "True Seeing"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "True Seeing"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Visão da Verdade"
+        }
+      ]
+    },
+    {
+      "slug": "true-strike",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "True Strike"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "True Strike"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Golpe Certeiro"
+        }
+      ]
+    },
+    {
+      "slug": "tsunami",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Tsunami"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Tsunami"
+        }
+      ]
+    },
+    {
+      "slug": "unseen-servant",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Unseen Servant"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Unseen Servant"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Servo Invisível"
+        }
+      ]
+    },
+    {
+      "slug": "vampiric-touch",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Vampiric Touch"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Vampiric Touch"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Toque Vampírico"
+        }
+      ]
+    },
+    {
+      "slug": "vicious-mockery",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Vicious Mockery"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Vicious Mockery"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Zombaria Perversa"
+        }
+      ]
+    },
+    {
+      "slug": "vitriolic-sphere",
+      "in": [
+        {
+          "source": "srd-2024-en",
+          "name": "Vitriolic Sphere"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Esfera Vitriólica"
+        }
+      ]
+    },
+    {
+      "slug": "wall-of-fire",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Wall of Fire"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Wall of Fire"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Muralha de Fogo"
+        }
+      ]
+    },
+    {
+      "slug": "wall-of-force",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Wall of Force"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Wall of Force"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Muralha de Energia"
+        }
+      ]
+    },
+    {
+      "slug": "wall-of-ice",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Wall of Ice"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Wall of Ice"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Muralha de Gelo"
+        }
+      ]
+    },
+    {
+      "slug": "wall-of-stone",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Wall of Stone"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Wall of Stone"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Muralha de Pedra"
+        }
+      ]
+    },
+    {
+      "slug": "wall-of-thorns",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Wall of Thorns"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Wall of Thorns"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Muralha de Espinhos"
+        }
+      ]
+    },
+    {
+      "slug": "warding-bond",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Warding Bond"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Warding Bond"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Vínculo de Proteção"
+        }
+      ]
+    },
+    {
+      "slug": "water-breathing",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Water Breathing"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Water Breathing"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Respirar na Água"
+        }
+      ]
+    },
+    {
+      "slug": "water-walk",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Water Walk"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Water Walk"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Caminhar Sobre as Águas"
+        }
+      ]
+    },
+    {
+      "slug": "web",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Web"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Web"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Teia"
+        }
+      ]
+    },
+    {
+      "slug": "weird",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Weird"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Weird"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Encarnação Fantasmagórica"
+        }
+      ]
+    },
+    {
+      "slug": "wind-walk",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Wind Walk"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Wind Walk"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Caminhar no Vento"
+        }
+      ]
+    },
+    {
+      "slug": "wind-wall",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Wind Wall"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Wind Wall"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Muralha de Vento"
+        }
+      ]
+    },
+    {
+      "slug": "wish",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Wish"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Wish"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Desejo"
+        }
+      ]
+    },
+    {
+      "slug": "word-of-recall",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Word of Recall"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Word of Recall"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Palavra de Regresso"
+        }
+      ]
+    },
+    {
+      "slug": "zone-of-truth",
+      "in": [
+        {
+          "source": "srd-2014-en",
+          "name": "Zone of Truth"
+        },
+        {
+          "source": "srd-2024-en",
+          "name": "Zone of Truth"
+        },
+        {
+          "source": "srd-2024-ptbr",
+          "name": "Zona da Verdade"
+        }
+      ]
+    }
+  ]
+}

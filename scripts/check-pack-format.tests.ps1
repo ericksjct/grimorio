@@ -67,11 +67,19 @@ foreach ($needle in @(
   'pack.schema.json',
   'hifi-tokens.css',
   'spellbook-ui-prefs',
-  'overflow-x: auto'
+  'overflow-x: auto',
+  'srd-reserved-slugs.json',
+  'id="pd-reserved"'
 )) {
   if ($docs -notlike "*$needle*") {
     throw "pack-docs.html is missing required content: $needle"
   }
+}
+
+# ── D-15 (08-02): a pagina nunca usa innerHTML - o preenchimento do <ul id="pd-reserved">
+# via fetch() so pode usar createElement + textContent (T-08-12).
+if ($docs -match 'innerHTML') {
+  throw 'pack-docs.html uses innerHTML - the reserved-slugs list must be built with createElement + textContent only (T-08-12).'
 }
 
 # ── Sem cor hardcoded (a página usa só custom properties do tema) ──

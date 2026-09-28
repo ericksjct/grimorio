@@ -13,7 +13,7 @@
 - [x] **PKG-03**: Usuário pode instalar um pacote a partir de uma URL, com a limitação de CORS explicada na própria UI (hosts compatíveis: raw.githubusercontent, Gist, jsDelivr)
 - [x] **PKG-04**: Import valida o pacote antes de gravar: conformidade com o schema, JSON malformado, tamanho máximo, bloqueio de chaves `__proto__`/`constructor`/`prototype`, unicidade do `source` contra os packs já instalados
 - [x] **PKG-05**: Import sanitiza o HTML das descrições (DOMPurify via CDN+SRI, whitelist explícita de tags) — nenhum conteúdo não-sanitizado chega aos 4 render sinks (`dangerouslySetInnerHTML`) existentes
-- [ ] **PKG-06**: `meta.image` é campo opcional do schema de pack, aceito só como `data:` URI de imagem raster (PNG/JPEG/WebP/GIF) de até 200 KB — nunca URL externa; o import valida formato e tamanho e rejeita com mensagem própria antes de qualquer gravação
+- [x] **PKG-06**: `meta.image` é campo opcional do schema de pack, aceito só como `data:` URI de imagem raster (PNG/JPEG/WebP/GIF) de até 200 KB — nunca URL externa; o import valida formato e tamanho e rejeita com mensagem própria antes de qualquer gravação
 
 ### STOR — Armazenamento
 
@@ -109,7 +109,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MGMT-07 | Phase 8 | Pending |
 | MGMT-08 | Phase 8 | Pending |
 | MGMT-09 | Phase 8 | Pending |
-| PKG-06 | Phase 8 | Pending |
+| PKG-06 | Phase 8 | Complete |
 | SRD-05 | Phase 8 | Pending |
 | MIGR-04 | Phase 8 | Pending |
 
