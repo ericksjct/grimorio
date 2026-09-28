@@ -274,32 +274,83 @@ function _removalImpact(versionKey, index) {
 }
 
 // ──────────────────────────────────────────────────────────────────
-// LINHA
+// CARTÃO
 // ──────────────────────────────────────────────────────────────────
 
-function PackManagerRow({ lang, row, dupCount, confirming, impact, onRequestRemove, onCancelRemove, onConfirmRemove }) {
-  const hasCount = typeof row.count === 'number' && Number.isFinite(row.count);
-  // Nome/versão vêm de arquivo de terceiro (T-05-01): sempre filho de texto React, recortado.
-  const name = String(row.name || '').slice(0, 64);
-  const version = String(row.version || '').slice(0, 24);
+// Miniatura do pacote (D-17/D-19): imagem revalidada por _safeImage, senão um
+// marcador com a inicial do título sobre a cor de hash do pacote. Nunca tinge
+// nada fora do menu — a grade principal não consome _packColorIndex.
+function PackThumb({ row, size }) {
+  const safe = _safeImage(row.image);
+  const boxStyle = {
+    width: size, height: size, flexShrink: 0,
+    borderRadius: 8, border: '1px solid var(--surface1)',
+  };
+  if (safe) {
+    return <img src={safe} alt="" width={size} height={size} style={{ ...boxStyle, objectFit: 'cover' }} />;
+  }
+  const initial = String(row.name || '?').trim().charAt(0).toUpperCase() || '?';
   return (
-    <div style={{ padding: '12px 0', borderBottom: '1px solid var(--surface1)' }}>
-      <div style={{ fontWeight: 700, fontSize: 15, overflowWrap: 'anywhere' }}>{name}</div>
-      <div style={{ marginTop: 2, fontSize: 12, color: 'var(--subtext0)', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-        <span>{tt(lang, 'manager.versionLabel', { v: version })}</span>
-        <span>·</span>
-        <span>{hasCount ? tt(lang, 'manager.spellCount', { n: row.count }) : tt(lang, 'manager.spellCountUnknown')}</span>
-        <span className="hifi-section-label" style={{ marginLeft: 'auto' }}>
-          {row.origin === 'installed' ? tt(lang, 'manager.originInstalled') : tt(lang, 'manager.originBuiltin')}
-        </span>
-      </div>
-      {typeof dupCount === 'number' && dupCount > 0 && (
-        <div style={{ marginTop: 2, fontSize: 12, color: 'var(--subtext0)' }}>
-          {tt(lang, 'manager.duplicates', { n: dupCount, nounSpell: tt(lang, 'noun.spell.' + window.i18nPlural(dupCount)) })}
+    <div
+      aria-hidden="true"
+      style={{
+        ...boxStyle,
+        background: `var(--level-${_packColorIndex(row.source || row.id)})`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}
+    >
+      <span className="hifi-mono" style={{ color: 'var(--base)', fontSize: Math.round(size * 0.45), lineHeight: 1 }}>{initial}</span>
+    </div>
+  );
+}
+
+// Um cartão marcável: checkbox + miniatura + título/descrição derivada, com
+// remoção inline (só instalados) e licença (só quem tem manifesto).
+function PackCard({ lang, row, size, checked, disabled, onToggle, dupCount, confirming, impact, onRequestRemove, onCancelRemove, onConfirmRemove }) {
+  const inputId = 'hifi-pack-card-' + row.versionKey;
+  // Nome vem de arquivo de terceiro (T-08-24): sempre filho de texto React, recortado.
+  const title = String(row.name || '').slice(0, 64);
+  const desc = tt(lang, 'menu.cardMeta', _cardMetaVars(row, lang));
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid var(--surface1)' }}>
+      <input
+        id={inputId}
+        type="checkbox"
+        checked={checked}
+        disabled={disabled}
+        onChange={(e) => onToggle(row, e.target.checked)}
+        style={{ accentColor: 'var(--accent)', marginTop: 3, flexShrink: 0 }}
+      />
+      <PackThumb row={row} size={size} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <label htmlFor={inputId} style={{ display: 'block', fontWeight: 700, fontSize: 14, overflowWrap: 'anywhere', cursor: 'pointer' }}>
+              {title}
+            </label>
+            <div
+              title={desc}
+              style={{ marginTop: 2, fontSize: 12, color: 'var(--subtext0)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+            >{desc}</div>
+          </div>
+          {row.origin === 'installed' && !confirming && (
+            <button
+              type="button"
+              className="hifi-icon-btn"
+              onClick={onRequestRemove}
+              aria-label={tt(lang, 'manager.remove')}
+              title={tt(lang, 'manager.remove')}
+            >✕</button>
+          )}
         </div>
-      )}
-      {row.origin === 'installed' && (
-        confirming ? (
+
+        {typeof dupCount === 'number' && dupCount > 0 && (
+          <div style={{ marginTop: 4, fontSize: 12, color: 'var(--subtext0)' }}>
+            {tt(lang, 'manager.duplicates', { n: dupCount, nounSpell: tt(lang, 'noun.spell.' + window.i18nPlural(dupCount)) })}
+          </div>
+        )}
+
+        {row.origin === 'installed' && confirming && (
           <div style={{ marginTop: 8 }}>
             <div style={{ fontSize: 12, color: 'var(--subtext0)', marginBottom: 6 }}>
               {impact && impact.prepared > 0 && (
@@ -321,43 +372,43 @@ function PackManagerRow({ lang, row, dupCount, confirming, impact, onRequestRemo
               <button type="button" className="hifi-btn-ghost" onClick={onCancelRemove}>{tt(lang, 'manager.no')}</button>
             </div>
           </div>
-        ) : (
-          <div style={{ marginTop: 8 }}>
-            <button type="button" className="hifi-btn-secondary" onClick={onRequestRemove}>{tt(lang, 'manager.remove')}</button>
-          </div>
-        )
-      )}
-      {row.license && (
-        <details style={{ marginTop: 8 }}>
-          <summary style={{ cursor: 'pointer', fontSize: 12, color: 'var(--accent)' }}>{tt(lang, 'manager.license')}</summary>
-          <div style={{
-            marginTop: 6, fontSize: 12, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere',
-            maxHeight: 200, overflowY: 'auto', color: 'var(--subtext0)',
-          }}>
-            {row.license.attribution}
-            {row.license.modifications && (
-              <div style={{ marginTop: 6 }}>
-                <strong>{tt(lang, 'manager.modifications')}: </strong>
-                {row.license.modifications}
-              </div>
-            )}
-          </div>
-        </details>
-      )}
+        )}
+
+        {row.license && (
+          <details style={{ marginTop: 8 }}>
+            <summary style={{ cursor: 'pointer', fontSize: 12, color: 'var(--accent)' }}>{tt(lang, 'manager.license')}</summary>
+            <div style={{
+              marginTop: 6, fontSize: 12, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere',
+              maxHeight: 200, overflowY: 'auto', color: 'var(--subtext0)',
+            }}>
+              {row.license.attribution}
+              {row.license.modifications && (
+                <div style={{ marginTop: 6 }}>
+                  <strong>{tt(lang, 'manager.modifications')}: </strong>
+                  {row.license.modifications}
+                </div>
+              )}
+            </div>
+          </details>
+        )}
+      </div>
     </div>
   );
 }
 
 // ──────────────────────────────────────────────────────────────────
-// PACK MANAGER
+// PACK MENU (D-16) — menu único: SRD, instalados, slugs reservados
 // ──────────────────────────────────────────────────────────────────
 
-function PackManager({ lang, dark, theme, open, onClose, onOpenImport }) {
+function PackMenu({ lang, dark, theme, open, isMobile, anchor, onClose, onOpenImport, onRequestRename }) {
   const [packs, setPacks] = React.useState(null); // null = carregando; [] = vazio
   const [licenses, setLicenses] = React.useState({}); // versionKey → license dos builtins
   const [dupCounts, setDupCounts] = React.useState({}); // versionKey → contagem agregada de duplicatas (D-10)
   const [confirmingId, setConfirmingId] = React.useState(null); // id (pluginStore) da linha em confirmação — só uma por vez (D-05)
   const [impact, setImpact] = React.useState(null); // { prepared, characters, bookmarked } da linha em confirmação
+  const [selected, setSelected] = React.useState(() => window.getSelectedVersionKeys());
+  const [busyKey, setBusyKey] = React.useState(null); // versionKey em voo (checagem de colisão/renomeação)
+  const [reserved, setReserved] = React.useState(null); // null = ainda não carregado; array = carregado; 'error' = falhou
 
   const dialogRef = React.useRef(null);
   window.useDialogA11y?.(dialogRef, open, onClose);
@@ -392,6 +443,16 @@ function PackManager({ lang, dark, theme, open, onClose, onOpenImport }) {
     return () => window.removeEventListener('hifi-plugins-changed', reloadDupCounts);
   }, [open, reloadDupCounts]);
 
+  // Seleção renovada a cada mudança do loader (marcar/desmarcar aqui mesmo,
+  // ou de qualquer outro consumidor de window.setSelectedVersionKeys).
+  React.useEffect(() => {
+    if (!open) return;
+    const onSourceChanged = () => setSelected(window.getSelectedVersionKeys());
+    setSelected(window.getSelectedVersionKeys());
+    window.addEventListener('hifi-spells-source-changed', onSourceChanged);
+    return () => window.removeEventListener('hifi-spells-source-changed', onSourceChanged);
+  }, [open]);
+
   // installedRows recomputado a cada render a partir de `packs` — leve o bastante (lista de
   // packs instalados) pra não precisar de memoização, e os handlers de remoção abaixo precisam
   // dele pra resolver versionKey/name a partir do id em confirmação.
@@ -424,6 +485,12 @@ function PackManager({ lang, dark, theme, open, onClose, onOpenImport }) {
   const handleConfirmRemove = React.useCallback(async (row) => {
     try {
       await window.pluginStore.deletePack(row.id);
+      // Remoção também tira o pack da seleção (D-16) ANTES do refresh — se
+      // esvaziar a seleção, o loader emite o toast de fallback sozinho.
+      const stillSelected = window.getSelectedVersionKeys();
+      if (stillSelected.includes(row.versionKey)) {
+        window.setSelectedVersionKeys(stillSelected.filter((k) => k !== row.versionKey));
+      }
       window.dispatchEvent(new CustomEvent('hifi-toast', { detail: { msg: tt(lang, 'manager.removed', { name: row.name }) } }));
       // Sem await — mesmo padrão de pack-import-dialog.jsx. A fila _refreshChain do loader já
       // serializa; nenhuma serialização nova é necessária aqui.
@@ -439,8 +506,8 @@ function PackManager({ lang, dark, theme, open, onClose, onOpenImport }) {
     }
   }, [lang]);
 
-  // ponytail: as duas licenças SRD carregam na abertura do gerenciador (custo: os dois JSONs
-  // SRD, já pré-cacheados pelo service worker) — se isso pesar, o caminho de upgrade é carregar
+  // ponytail: as licenças SRD carregam na abertura do menu (custo: os JSONs SRD, já
+  // pré-cacheados pelo service worker) — se isso pesar, o caminho de upgrade é carregar
   // sob o primeiro toggle do bloco de licença, não no efeito de abertura.
   React.useEffect(() => {
     if (!open) return;
@@ -455,22 +522,66 @@ function PackManager({ lang, dark, theme, open, onClose, onOpenImport }) {
     });
   }, [open]);
 
+  // Toggle de seleção (D-02/D-03/D-04): desmarcar tira a chave; marcar acrescenta
+  // no FIM da lista, então normalizeSelection() aplica a exclusividade de edição
+  // SRD no MESMO update de estado (D-03). A checagem de colisão de slug antes de
+  // marcar entra na Task 3, neste mesmo handler.
+  const handleToggle = React.useCallback((row, checked) => {
+    const current = window.getSelectedVersionKeys();
+    if (!checked) {
+      window.setSelectedVersionKeys(current.filter((k) => k !== row.versionKey));
+      return;
+    }
+    const next = window.normalizeSelection([...current.filter((k) => k !== row.versionKey), row.versionKey]);
+    window.setSelectedVersionKeys(next);
+  }, []);
+
+  // Slugs reservados (D-15): carrega só na primeira abertura do <details>.
+  const handleReservedToggle = React.useCallback((e) => {
+    if (e.target.open && reserved === null) {
+      window.packImport.loadReservedSlugs()
+        .then((data) => setReserved(data))
+        .catch((err) => {
+          console.warn('[pack-manager] falha ao carregar slugs reservados:', err);
+          setReserved('error');
+        });
+    }
+  }, [reserved]);
+
+  const reservedPackName = React.useMemo(() => {
+    if (!reserved || reserved === 'error') return new Map();
+    return new Map((reserved.packs || []).map((p) => [p.source, p.name]));
+  }, [reserved]);
+
   if (!open) return null;
 
   const themeClass = `hifi ${dark ? 'hifi-dark' : 'hifi-light'}${theme && theme !== 'catppuccin' ? ' hifi-theme-' + theme : ''}`;
   const builtinRows = _builtinRows(window.SPELL_VERSIONS, licenses);
-  // D-19: zero pacotes instalados pelo usuário — nunca "zero versões" (as duas linhas builtin
-  // continuam presentes abaixo, sempre).
+  // D-19: zero pacotes instalados pelo usuário — nunca "zero versões" (a seção
+  // SRD continua presente abaixo, sempre).
   const isEmpty = packs !== null && installedRows.length === 0;
+  const thumbSize = isMobile ? 32 : 40;
+
+  const panelStyle = isMobile
+    ? {
+        position: 'fixed', left: 12, right: 12, bottom: 12,
+        maxHeight: '80vh', borderRadius: 8,
+      }
+    : {
+        position: 'fixed',
+        top: anchor ? anchor.bottom + 6 : 64,
+        right: anchor ? Math.max(12, window.innerWidth - anchor.right) : 24,
+        width: 'min(420px, calc(100vw - 24px))',
+        maxHeight: 'min(72vh, 640px)',
+        borderRadius: 6,
+      };
 
   return (
     <div
       className={themeClass}
       style={{
         position: 'fixed', inset: 0, zIndex: 100,
-        background: 'rgba(0,0,0,0.55)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 18,
+        background: isMobile ? 'rgba(0,0,0,0.35)' : 'transparent',
       }}
       onClick={onClose}
     >
@@ -482,14 +593,12 @@ function PackManager({ lang, dark, theme, open, onClose, onOpenImport }) {
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: 'min(560px, 100%)',
-          maxHeight: '80vh',
+          ...panelStyle,
           display: 'flex',
           flexDirection: 'column',
-          background: 'var(--base)',
+          background: 'var(--mantle)',
           color: 'var(--text)',
           border: '1px solid var(--surface1)',
-          borderRadius: 8,
           boxShadow: '0 24px 80px rgba(0,0,0,0.45)',
         }}
       >
@@ -499,46 +608,86 @@ function PackManager({ lang, dark, theme, open, onClose, onOpenImport }) {
           padding: 16,
           borderBottom: '1px solid var(--surface1)',
         }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.2, margin: 0 }}>{tt(lang, 'manager.title')}</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.2, margin: 0 }}>{tt(lang, 'manager.title')}</h2>
           <button type="button" className="hifi-btn-ghost" onClick={onClose}>{tt(lang, 'import.close')}</button>
         </header>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
-          {packs === null ? (
-            <div style={{ fontSize: 14, color: 'var(--subtext0)' }}>{tt(lang, 'manager.loading')}</div>
-          ) : isEmpty ? (
-            <div>
-              <h3 style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.2, margin: '0 0 8px' }}>
-                {tt(lang, 'manager.emptyHeading')}
-              </h3>
-              <p style={{ fontSize: 14, fontWeight: 400, lineHeight: 1.5, margin: '0 0 16px' }}>
-                {tt(lang, 'manager.emptyBody')}{' '}
-                {tt(lang, 'import.docsPrefix')}
-                <a href="pack-docs.html" target="_blank" rel="noopener" style={{ color: 'var(--accent)' }}>
-                  {tt(lang, 'import.docsLink')}
-                </a>.
-              </p>
-            </div>
-          ) : (
-            <div style={{ marginBottom: 8 }}>
-              <div className="hifi-section-label">{tt(lang, 'manager.sectionInstalled')}</div>
-              {installedRows.map((row) => (
-                <PackManagerRow
-                  key={row.id} lang={lang} row={row} dupCount={dupCounts[row.versionKey]}
+          <div>
+            <div className="hifi-section-label">{tt(lang, 'manager.sectionBuiltin')}</div>
+            {builtinRows.map((row) => (
+              <PackCard
+                key={row.id} lang={lang} row={row} size={thumbSize}
+                checked={selected.includes(row.versionKey)}
+                disabled={!!busyKey}
+                onToggle={handleToggle}
+                dupCount={dupCounts[row.versionKey]}
+              />
+            ))}
+          </div>
+
+          <div style={{ marginTop: 16 }}>
+            <div className="hifi-section-label">{tt(lang, 'manager.sectionInstalled')}</div>
+            {packs === null ? (
+              <div style={{ fontSize: 14, color: 'var(--subtext0)', marginTop: 8 }}>{tt(lang, 'manager.loading')}</div>
+            ) : isEmpty ? (
+              <div style={{ marginTop: 8 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.2, margin: '0 0 6px' }}>
+                  {tt(lang, 'manager.emptyHeading')}
+                </h3>
+                <p style={{ fontSize: 13, fontWeight: 400, lineHeight: 1.5, margin: 0 }}>
+                  {tt(lang, 'manager.emptyBody')}{' '}
+                  {tt(lang, 'import.docsPrefix')}
+                  <a href="pack-docs.html" target="_blank" rel="noopener" style={{ color: 'var(--accent)' }}>
+                    {tt(lang, 'import.docsLink')}
+                  </a>.
+                </p>
+              </div>
+            ) : (
+              installedRows.map((row) => (
+                <PackCard
+                  key={row.id} lang={lang} row={row} size={thumbSize}
+                  checked={selected.includes(row.versionKey)}
+                  disabled={busyKey === row.versionKey}
+                  onToggle={handleToggle}
+                  dupCount={dupCounts[row.versionKey]}
                   confirming={confirmingId === row.id}
                   impact={impact}
                   onRequestRemove={() => handleRequestRemove(row.id)}
                   onCancelRemove={handleCancelRemove}
                   onConfirmRemove={() => handleConfirmRemove(row)}
                 />
-              ))}
-            </div>
-          )}
-
-          <div style={{ marginTop: 16 }}>
-            <div className="hifi-section-label">{tt(lang, 'manager.sectionBuiltin')}</div>
-            {builtinRows.map((row) => <PackManagerRow key={row.id} lang={lang} row={row} dupCount={dupCounts[row.versionKey]} />)}
+              ))
+            )}
           </div>
+
+          <details style={{ marginTop: 16 }} onToggle={handleReservedToggle}>
+            <summary className="hifi-section-label" style={{ cursor: 'pointer' }}>{tt(lang, 'menu.sectionReserved')}</summary>
+            <div style={{ marginTop: 8 }}>
+              <p style={{ fontSize: 12, color: 'var(--subtext0)', margin: '0 0 8px' }}>{tt(lang, 'menu.reservedHint')}</p>
+              {reserved === null ? (
+                <div style={{ fontSize: 13, color: 'var(--subtext0)' }}>{tt(lang, 'manager.loading')}</div>
+              ) : reserved === 'error' ? (
+                <div style={{ fontSize: 13, color: 'var(--subtext0)' }}>{tt(lang, 'packErr.unknown')}</div>
+              ) : (
+                (reserved.slugs || []).map((entry) => (
+                  <div key={entry.slug} style={{ marginBottom: 8 }}>
+                    <div className="hifi-mono" style={{ fontSize: 12 }}>{entry.slug}</div>
+                    <ul style={{ margin: '2px 0 0', paddingLeft: 18 }}>
+                      {(entry.in || []).map((owner, i) => (
+                        <li key={i} style={{ fontSize: 12, color: 'var(--subtext0)', overflowWrap: 'anywhere' }}>
+                          {tt(lang, 'menu.reservedSubitem', {
+                            pack: String(reservedPackName.get(owner.source) || owner.source).slice(0, 64),
+                            name: String(owner.name || '').slice(0, 64),
+                          })}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))
+              )}
+            </div>
+          </details>
         </div>
 
         <footer style={{ flexShrink: 0, padding: 16, borderTop: '1px solid var(--surface1)' }}>
@@ -560,7 +709,8 @@ function PackManager({ lang, dark, theme, open, onClose, onOpenImport }) {
 
 function PackManagerRoot({ lang, dark, theme }) {
   // D-04/D-05: um só overlay visível por vez — 'manager' e 'import' são diálogos irmãos, nunca
-  // empilhados. Fechar o import volta para o gerenciador.
+  // empilhados. Fechar o import volta para o menu. PackMenuChip e as views 'menu'/'rename' com
+  // âncora/renomeação de verdade vêm na Task 3.
   const [view, setView] = React.useState('closed');
 
   React.useEffect(() => {
@@ -573,7 +723,7 @@ function PackManagerRoot({ lang, dark, theme }) {
 
   return (
     <>
-      <PackManager
+      <PackMenu
         lang={lang} dark={dark} theme={theme}
         open={view === 'manager'}
         onClose={() => setView('closed')}
@@ -588,4 +738,4 @@ function PackManagerRoot({ lang, dark, theme }) {
   );
 }
 
-Object.assign(window, { PackManager, PackManagerRoot });
+Object.assign(window, { PackMenu, PackManagerRoot });
