@@ -3,12 +3,16 @@
 //
 // Este módulo possui: leitura defensiva de texto JSON de pacote
 // (parsePackText), validação de schema escrita à mão (validatePack)
-// espelhando pack.schema.json, cálculo puro de identificador livre
-// (freeIdentifier, D-09), leitura de arquivo local e busca por URL com teto
+// espelhando pack.schema.json, cálculo puro de identificador livre de PACK
+// (freeIdentifier, D-09), identidade por slug de MAGIA (Fase 8, D-08:
+// slugKey/detectSlugConflicts/suggestSlug/validateSlugRename/
+// applySlugRenames, mais loadReservedSlugs/slugOwnersOf) com passo de colisão
+// no funil de instalação, leitura de arquivo local e busca por URL com teto
 // de tamanho nos dois caminhos (_readFileText, _fetchText, D-08),
 // sanitização de HTML com DOMPurify (sanitizePack, PKG-05) e o funil único de
-// instalação (installFromFile, installFromUrl) que lê, valida, sanitiza e
-// grava — nessa ordem, com uma única gravação.
+// instalação (installFromFile, installFromUrl) que lê, valida, sanitiza,
+// resolve colisão de slug (opts.onConflicts) e grava — nessa ordem, com uma
+// única gravação.
 //
 // Este módulo NÃO possui: não abre IndexedDB por conta própria — toda
 // gravação passa por window.pluginStore (plugin-store.jsx); não normaliza
@@ -38,6 +42,12 @@ const IMAGE_DATA_URI = /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/]+={
 // As três chaves proibidas de D-11 (poluição de protótipo, T-03-08).
 const BLOCKED_KEYS = Object.freeze(['__proto__', 'constructor', 'prototype']);
 
+// Identidade por slug (D-08, Fase 8): mesma forma usada por `meta.source` e
+// pelo `name` de uma magia — minúsculas, dígitos e hífen, sempre começando
+// por letra ou número. Uma regra só no arquivo: META_FIELDS.source reusa
+// esta mesma constante em vez de repetir o literal.
+const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/;
+
 // A camada de UI traduz código para texto bilíngue via i18n.jsx; este módulo
 // não conhece idioma.
 const PACK_ERROR_CODES = Object.freeze({
@@ -48,6 +58,8 @@ const PACK_ERROR_CODES = Object.freeze({
   FETCH_FAILED: 'fetch-failed',
   IMAGE_INVALID: 'image-invalid',
   IMAGE_TOO_LARGE: 'image-too-large',
+  SLUG_CONFLICT: 'slug-conflict',
+  CANCELLED: 'cancelled',
 });
 
 // ──────────────────────────────────────────────────────────────────
@@ -58,7 +70,7 @@ const PACK_ERROR_CODES = Object.freeze({
 // ──────────────────────────────────────────────────────────────────
 
 const META_FIELDS = [
-  { key: 'source', type: 'string', required: true, pattern: /^[a-z0-9][a-z0-9-]{0,63}$/ },
+  { key: 'source', type: 'string', required: true, pattern: SLUG_PATTERN },
   { key: 'name', type: 'string', required: true, minLength: 1 },
   { key: 'version', type: 'string', required: true, minLength: 1 },
   { key: 'author', type: 'string', required: true, minLength: 1 },
@@ -265,6 +277,149 @@ function freeIdentifier(base, existingIds) {
 }
 
 // ──────────────────────────────────────────────────────────────────
+// IDENTIDADE POR SLUG (D-08..D-14, Fase 8) — o `name` de uma magia (que vira
+// `en` e alimenta hifiSpellKey) é identidade única entre TODOS os pacotes
+// instalados + reservados; nenhuma colisão é resolvida por prioridade, merge
+// ou ocultação. `freeIdentifier` acima resolve colisão de ID DE PACK
+// (`meta.source`) — mecanismo diferente e intocado (RESEARCH Pitfall 4).
+// ──────────────────────────────────────────────────────────────────
+
+// Mesma normalização usada pelo índice byName de pack-manager.jsx: colisão de
+// slug é sempre comparada em minúsculas (A-10) — um homebrew "Fireball" colide
+// com o reservado "fireball".
+function slugKey(s) {
+  return String(s || '').toLowerCase();
+}
+
+// Pura: para cada alvo cujo slug (minúsculas) já tem dono em `owners`, uma
+// linha de conflito. `owners`: Map<slugKey, [{ label, name }]>. Dedupe por
+// slugKey — um pack com duas magias que compartilham o mesmo `name` gera 1
+// linha só.
+function detectSlugConflicts(targets, owners) {
+  const rows = [];
+  const seen = new Set();
+  (targets || []).forEach((t) => {
+    const key = slugKey(t && t.name);
+    if (!key || seen.has(key)) return;
+    if (owners && owners.has(key)) {
+      seen.add(key);
+      rows.push({
+        slug: t.name,
+        name: t.displayName || t.name,
+        oldKey: t.oldKey || null,
+        existing: owners.get(key),
+      });
+    }
+  });
+  return rows;
+}
+
+// Pura: só SUGERE — nunca aplicada sem confirmação do usuário (D-11). Base
+// `${slug}-${packSource}` em minúsculas, caracteres fora de [a-z0-9-] viram
+// hífen, hífens colapsados e cortados nas pontas, cortada em 64 caracteres
+// (sem hífen final); se ocupada, acrescenta -2, -3… cortando a base pra caber.
+function suggestSlug(slug, packSource, takenKeys) {
+  let base = `${slug}-${packSource}`
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  // ponytail: fallback só pra nunca devolver uma string vazia ou fora do
+  // padrão — na prática slug+packSource sempre sobra ao menos um caractere
+  // alfanumérico (packSource já passou por SLUG_PATTERN).
+  if (!base || !SLUG_PATTERN.test(base.slice(0, 1))) base = 'pack' + (base ? '-' + base : '');
+  base = base.slice(0, 64).replace(/-+$/g, '');
+  if (!base) base = 'pack';
+
+  if (!takenKeys || !takenKeys.has(base)) return base;
+  let n = 2;
+  let candidate;
+  do {
+    const suffix = `-${n}`;
+    candidate = base.slice(0, 64 - suffix.length).replace(/-+$/g, '') + suffix;
+    n += 1;
+  } while (takenKeys.has(candidate));
+  return candidate;
+}
+
+// Pura: 'format' (não bate SLUG_PATTERN) > 'reserved' (reservedKeys) >
+// 'duplicate' (takenKeys) > null (livre). A-13: takenKeys é um único conjunto
+// de slugs ocupados — cobre tanto "igual a outro pacote instalado" quanto
+// "igual à nova de outra linha"/"igual a outro slug do mesmo pack"; quem monta
+// esse conjunto é o chamador (pack-rename-dialog.jsx).
+function validateSlugRename(value, reservedKeys, takenKeys) {
+  if (!SLUG_PATTERN.test(value)) return 'format';
+  const key = slugKey(value);
+  if (reservedKeys && reservedKeys.has(key)) return 'reserved';
+  if (takenKeys && takenKeys.has(key)) return 'duplicate';
+  return null;
+}
+
+// Pura, não muta a entrada: aplica `renames` (Map nome-antigo → nome-novo) a
+// uma lista de magias, copiando cada uma rasamente. A-11: uma magia sem
+// `displayName` ganha o nome antigo ali antes de trocar `name` — a renomeação
+// muda a identidade, não o nome que o usuário lê.
+function applySlugRenames(spells, renames) {
+  return (spells || []).map((s) => {
+    const copy = { ...s };
+    if (renames && renames.has(s.name)) {
+      copy.name = renames.get(s.name);
+      if (!copy.displayName) copy.displayName = s.name;
+    }
+    return copy;
+  });
+}
+
+// Promise memoizada de srd-reserved-slugs.json (gerado no 08-02). Falha
+// (offline sem cache, file://) zera a memo — a próxima chamada tenta de novo —
+// e rejeita com um erro SEM .code reconhecido: A-12, o import falha fechado
+// e o diálogo mostra packErr.unknown (sem a lista não dá pra garantir D-09).
+let _reservedSlugsPromise = null;
+async function _loadReservedSlugsImpl() {
+  const res = await fetch('srd-reserved-slugs.json');
+  if (!res.ok) throw new Error(`packImport.loadReservedSlugs: HTTP ${res.status} ao buscar srd-reserved-slugs.json.`);
+  const data = await res.json();
+  const owners = new Map();
+  const keys = new Set();
+  const packNameBySource = new Map((data.packs || []).map((p) => [p.source, p.name]));
+  (data.slugs || []).forEach((entry) => {
+    const key = slugKey(entry.slug);
+    keys.add(key);
+    owners.set(key, (entry.in || []).map((o) => ({ label: packNameBySource.get(o.source) || o.source, name: o.name })));
+  });
+  return { packs: data.packs || [], slugs: data.slugs || [], owners, keys };
+}
+function loadReservedSlugs() {
+  if (!_reservedSlugsPromise) {
+    _reservedSlugsPromise = _loadReservedSlugsImpl().catch((err) => {
+      _reservedSlugsPromise = null;
+      throw err;
+    });
+  }
+  return _reservedSlugsPromise;
+}
+
+// Magias adaptadas via window.loadSpellVersion (packs `idb` já instalados,
+// window.SPELL_VERSIONS) → Map<slugKey, [{ label, name }]>. `versionKeys` são
+// chaves `plugin-*` — a versão builtin/SRD já está coberta por
+// loadReservedSlugs().
+async function slugOwnersOf(versionKeys) {
+  const owners = new Map();
+  for (const key of (versionKeys || [])) {
+    const version = (window.SPELL_VERSIONS || []).find((v) => v.key === key);
+    const spells = await window.loadSpellVersion(key);
+    (spells || []).forEach((s) => {
+      const oKey = slugKey(s.en);
+      if (!oKey) return;
+      const list = owners.get(oKey) || [];
+      list.push({ label: version ? version.labelEn : key, name: s.displayName || s.en });
+      owners.set(oKey, list);
+    });
+  }
+  return owners;
+}
+
+// ──────────────────────────────────────────────────────────────────
 // LEITURA — arquivo local e busca por URL, teto de bytes de D-08 nos dois
 // caminhos. Nenhuma das duas funções grava nem sanitiza; devolvem texto cru.
 // ──────────────────────────────────────────────────────────────────
@@ -418,7 +573,8 @@ function sanitizePack(pack) {
 // Nenhum passo pode ser reordenado: gravar antes de validar ou de sanitizar
 // é exatamente a falha que PKG-04/PKG-05 existem para impedir.
 // ──────────────────────────────────────────────────────────────────
-async function _install(text) {
+async function _install(text, opts) {
+  opts = opts || {};
   const parsed = parsePackText(text);
   validatePack(parsed);
   const { pack, changedFields } = sanitizePack(parsed);
@@ -428,8 +584,52 @@ async function _install(text) {
   const identifier = freeIdentifier(pack.meta.source, existingIds);
 
   // O identificador é sempre recalculado — qualquer chave `id` vinda do
-  // arquivo (ciclo exportar→reimportar, A-02) é descartada aqui.
+  // arquivo (ciclo exportar→reimportar, A-02) é descartada aqui. Mecanismo
+  // separado da identidade por slug abaixo (RESEARCH Pitfall 4).
   pack.meta.source = identifier;
+
+  // Identidade por slug (D-08..D-10): donos = reservados (SRD) + magias de
+  // TODOS os packs `idb` já instalados. Falha fechada se a lista de
+  // reservados não puder ser lida (A-12) — o catch de installFromFile/Url não
+  // reclassifica esse erro, ele sobe sem .code conhecido.
+  const reserved = await loadReservedSlugs();
+  const installedKeys = (window.SPELL_VERSIONS || [])
+    .filter((v) => v.source === 'idb')
+    .map((v) => v.key);
+  const installed = await slugOwnersOf(installedKeys);
+  const owners = new Map(reserved.owners);
+  installed.forEach((list, key) => {
+    owners.set(key, (owners.get(key) || []).concat(list));
+  });
+
+  const buildTargets = () => pack.spells.map((sp) => ({
+    name: sp.name,
+    displayName: sp.displayName,
+    oldKey: (typeof window.hifiSpellKey === 'function' && typeof window.adaptSpell === 'function')
+      ? window.hifiSpellKey(window.adaptSpell(sp, pack.meta.lang, pack.meta.edition, ''))
+      : null,
+  }));
+
+  let rows = detectSlugConflicts(buildTargets(), owners).map((r) => ({ ...r, packId: identifier }));
+
+  if (rows.length > 0) {
+    if (typeof opts.onConflicts !== 'function') {
+      _fail(PACK_ERROR_CODES.SLUG_CONFLICT, 'packImport.install: pacote contém slugs reservados ou já instalados por outro pacote.');
+    }
+    const takenKeys = new Set([...installed.keys(), ...pack.spells.map((sp) => slugKey(sp.name))]);
+    const renames = await opts.onConflicts({ rows, packSource: identifier, reservedKeys: reserved.keys, takenKeys });
+    if (!renames) {
+      _fail(PACK_ERROR_CODES.CANCELLED, 'packImport.install: renomeação cancelada pelo usuário — nada foi gravado.');
+    }
+    pack.spells = applySlugRenames(pack.spells, renames);
+    // Redetecta contra os mesmos donos (falha fechada — D-10): sobrar
+    // colisão depois da renomeação aplicada rejeita o import inteiro.
+    rows = detectSlugConflicts(buildTargets(), owners);
+    if (rows.length > 0) {
+      _fail(PACK_ERROR_CODES.SLUG_CONFLICT, 'packImport.install: ainda há slugs em conflito depois da renomeação.');
+    }
+  }
+
   pack.meta.spellCount = pack.spells.length;
   const record = { id: identifier, meta: pack.meta, spells: pack.spells };
 
@@ -438,12 +638,12 @@ async function _install(text) {
   return { identifier, spellCount: pack.spells.length, changedFields };
 }
 
-async function installFromFile(file) {
-  return _install(await _readFileText(file));
+async function installFromFile(file, opts) {
+  return _install(await _readFileText(file), opts);
 }
 
-async function installFromUrl(url) {
-  return _install(await _fetchText(url));
+async function installFromUrl(url, opts) {
+  return _install(await _fetchText(url), opts);
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -460,4 +660,12 @@ window.packImport = {
   sanitizePack,
   installFromFile,
   installFromUrl,
+  SLUG_PATTERN,
+  slugKey,
+  detectSlugConflicts,
+  suggestSlug,
+  validateSlugRename,
+  applySlugRenames,
+  loadReservedSlugs,
+  slugOwnersOf,
 };

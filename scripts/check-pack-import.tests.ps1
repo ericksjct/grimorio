@@ -32,9 +32,9 @@ foreach ($needle in @(
 # gravar antes de validar ou de sanitizar é exatamente a falha que
 # PKG-04/PKG-05 existem para impedir.
 
-$installMatch = [regex]::Match($packImport, 'async function _install\(text\)\s*\{[\s\S]*?\r?\n\}\r?\n')
+$installMatch = [regex]::Match($packImport, 'async function _install\(text, opts\)\s*\{[\s\S]*?\r?\n\}\r?\n')
 if (-not $installMatch.Success) {
-  throw 'Could not locate the _install function block.'
+  throw 'Could not locate the _install(text, opts) function block.'
 }
 $installBlock = $installMatch.Value
 
@@ -48,12 +48,14 @@ $idxParse = $installBlock.IndexOf('parsePackText(')
 $idxValidate = $installBlock.IndexOf('validatePack(')
 $idxSanitize = $installBlock.IndexOf('sanitizePack(')
 $idxFree = $installBlock.IndexOf('freeIdentifier(')
+$idxConflicts = $installBlock.IndexOf('detectSlugConflicts(')
 $idxPut = $installBlock.IndexOf('putPack(')
 
 Assert-FunnelOrder $installBlock $idxParse 'parsePackText' $idxValidate 'validatePack'
 Assert-FunnelOrder $installBlock $idxValidate 'validatePack' $idxSanitize 'sanitizePack'
 Assert-FunnelOrder $installBlock $idxSanitize 'sanitizePack' $idxFree 'freeIdentifier'
-Assert-FunnelOrder $installBlock $idxFree 'freeIdentifier' $idxPut 'putPack'
+Assert-FunnelOrder $installBlock $idxFree 'freeIdentifier' $idxConflicts 'detectSlugConflicts'
+Assert-FunnelOrder $installBlock $idxConflicts 'detectSlugConflicts' $idxPut 'putPack'
 
 # ── Gravação única ──
 # Conta chamadas reais a pluginStore.putPack( (não menções em comentário -
@@ -105,7 +107,10 @@ if (-not $exposedMatch.Success) {
   throw 'Could not locate the window.packImport assignment block.'
 }
 $exposedBlock = $exposedMatch.Value
-foreach ($fn in @('MAX_PACK_BYTES', 'PACK_ERROR_CODES', 'parsePackText', 'validatePack', 'freeIdentifier', 'sanitizePack', 'installFromFile', 'installFromUrl')) {
+foreach ($fn in @(
+  'MAX_PACK_BYTES', 'PACK_ERROR_CODES', 'parsePackText', 'validatePack', 'freeIdentifier', 'sanitizePack', 'installFromFile', 'installFromUrl',
+  'SLUG_PATTERN', 'slugKey', 'detectSlugConflicts', 'suggestSlug', 'validateSlugRename', 'applySlugRenames', 'loadReservedSlugs', 'slugOwnersOf'
+)) {
   if ($exposedBlock -notlike "*$fn*") {
     throw "window.packImport block is missing exposed member: $fn"
   }
