@@ -93,9 +93,13 @@ if ($aliasCount -ne 2) {
   throw "Expected exactly 2 occurrences of 'const uiLang = lang;' (HifiDesktop + HifiMobile) - found $aliasCount."
 }
 
-# 9. VersionSelector fala o idioma da interface (D-02).
-if ($ui -notmatch 'window\.VersionSelector[\s\S]{0,300}?lang=\{uiLang\}') {
-  throw 'window.VersionSelector mount must receive lang={uiLang} (D-02).'
+# 9. O chip do menu de pacotes fala o idioma da interface (D-02); o antigo
+#    VersionSelector nao pode ter sobrevivido a fase 08-06.
+if ($ui -notmatch 'window\.PackMenuChip[\s\S]{0,120}?lang=\{uiLang\}') {
+  throw 'window.PackMenuChip mount must receive lang={uiLang} (D-02).'
+}
+if ($ui -match 'window\.VersionSelector') {
+  throw 'window.VersionSelector must not appear in v10-hifi.jsx anymore (08-06 removes the old selector).'
 }
 
 Write-Output 'HifiLangToggle controls the interface language, mounts in both screens, and does not consult the version registry.'

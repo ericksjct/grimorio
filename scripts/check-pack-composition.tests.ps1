@@ -257,3 +257,37 @@ if ($cardMatch.Value -match 'alsoIn' -or $cardMatch.Value -match 'packSpellIndex
 }
 
 Write-Output "Also-in note and edition comparator anchor on each spell's own package (_versionKey); no new badge on the card."
+
+# ── Fase 8 plano 06 (D-16/D-18/D-21/D-24): o chip do menu de pacotes fica na
+# barra e no drawer; o link de compartilhar leva a seleção inteira em lista;
+# nenhum filtro por pacote aparece na barra de filtros. ──────────────────
+$chipMounts = [regex]::Matches($ui, '<window\.PackMenuChip\b[^>]*lang=\{uiLang\}')
+if ($chipMounts.Count -ne 2) {
+  throw "v10-hifi.jsx must mount <window.PackMenuChip lang={uiLang} exactly twice (desktop bar + mobile drawer, D-16/D-18) - found $($chipMounts.Count)."
+}
+
+$shareFnMatch = [regex]::Match($ui, 'function hifiShareViewUrl\([\s\S]{0,600}?\n\}')
+if (-not $shareFnMatch.Success) {
+  throw 'Could not locate hifiShareViewUrl in v10-hifi.jsx.'
+}
+if ($shareFnMatch.Value -notmatch "versionKeys\.join\(','\)") {
+  throw "hifiShareViewUrl must emit ?v= from versionKeys.join(',') - the shared link must carry the whole list selection (D-24, MIGR-04)."
+}
+
+foreach ($forbidden in @('switchVersion', 'VersionSelector', 'toast.versionShort')) {
+  if ($ui.Contains($forbidden)) {
+    throw "v10-hifi.jsx must not reference $forbidden anymore - the old single-active-version selector and its compatibility shims are removed in 08-06."
+  }
+}
+
+$filterCfgMatch = [regex]::Match($ui, 'function hifiFilterConfig\(lang\)[\s\S]{0,2000}?return Object\.assign\(Object\.create\(null\), \{([\s\S]{0,2200}?)\}\);')
+if (-not $filterCfgMatch.Success) {
+  throw 'Could not locate hifiFilterConfig(lang) body in v10-hifi.jsx.'
+}
+$filterKeys = [regex]::Matches($filterCfgMatch.Groups[1].Value, '(?m)^\s*([a-zA-Z]+):\s*\{') | ForEach-Object { $_.Groups[1].Value }
+$expectedFilterKeys = @('level', 'school', 'class', 'comp', 'conc', 'rit', 'time', 'dur', 'range', 'src')
+if (($filterKeys -join ',') -ne ($expectedFilterKeys -join ',')) {
+  throw "hifiFilterConfig must keep exactly the 10 keys level,school,class,comp,conc,rit,time,dur,range,src (D-21, no pack filter) - found: $($filterKeys -join ',')."
+}
+
+Write-Output 'Pack menu chip mounted twice (bar + drawer); share link emits ?v= as a list; no pack filter added; old single-version selector fully gone.'
