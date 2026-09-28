@@ -148,14 +148,16 @@ function hifiPrintList(spells, uiLang, versionLang, show, opts = {}) {
 // Print N spells in compact "pack" mode — multiple spells per A4 page,
 // browser packs them naturally with break-inside: avoid. Spells are
 // sorted by level (low → high) before packing.
-function hifiPrintPrepared(spells, uiLang, versionLang, show, opts = {}) {
+function hifiPrintPrepared(spells, uiLang, show, opts = {}) {
   if (!spells || !spells.length) {
     show(tt(uiLang, 'print.noPrepared'), 'err');
     return;
   }
-  const sorted = [...spells].sort((a, b) => (a.lvl - b.lvl) || (spellName(a, versionLang) || '').localeCompare(spellName(b, versionLang) || ''));
+  // Cada magia impressa fala o idioma do SEU pacote (s.lang) — sem idioma de
+  // conteúdo global pra ordenar/imprimir (composição aditiva, 08-01/08-03).
+  const sorted = [...spells].sort((a, b) => (a.lvl - b.lvl) || (spellName(a, a.lang) || '').localeCompare(spellName(b, b.lang) || ''));
   show(tt(uiLang, 'print.printing', { n: spells.length, nounSpell: tt(uiLang, 'noun.spell.' + i18nPlural(spells.length)) }));
-  window.dispatchEvent(new CustomEvent('hifi-print-request', { detail: { spells: sorted, uiLang, versionLang, mode: 'pack', ...opts } }));
+  window.dispatchEvent(new CustomEvent('hifi-print-request', { detail: { spells: sorted, uiLang, mode: 'pack', ...opts } }));
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -184,7 +186,10 @@ function HifiPrintRoot() {
   // e cair no ramo inglês por acidente.
   const { spell, spells, uiLang: uiLangIn, versionLang: versionLangIn, lang: legacyLang, character, mode: explicitMode } = payload;
   const uiLang = uiLangIn || legacyLang;
-  const versionLang = versionLangIn || legacyLang;
+  // Fallback só pro caminho de magia única (hifiShare/hifiPrint/hifiPrintList,
+  // sem call site hoje, ainda levam versionLang no payload): cada card usa o
+  // idioma do SEU pacote (s.lang); isso aqui nunca é a fonte de verdade.
+  const fallbackLang = versionLangIn || legacyLang;
   const list = spells || (spell ? [spell] : []);
   const mode = explicitMode || (spells ? 'list' : 'single');
   if (!list.length) return null;
@@ -194,7 +199,7 @@ function HifiPrintRoot() {
   const cards = [];
   if (mode === 'single' || mode === 'pack') {
     for (const s of list) {
-      const chunks = chunkSpellForPrint(s, versionLang);
+      const chunks = chunkSpellForPrint(s, s.lang || fallbackLang);
       chunks.forEach((chunk, i) => cards.push({ s, chunk, key: `${s.en}-${i}` }));
     }
   } else {
@@ -235,7 +240,7 @@ function HifiPrintRoot() {
         </div>
       )}
       <div className={`hifi-print-flow${mode === 'list' && cards.length > 1 ? ' is-two-col' : ''}`}>
-        {cards.map((c, i) => <HifiPrintCard key={i} s={c.s} chunk={c.chunk} uiLang={uiLang} versionLang={versionLang}/>)}
+        {cards.map((c, i) => <HifiPrintCard key={i} s={c.s} chunk={c.chunk} uiLang={uiLang} versionLang={c.s.lang || fallbackLang}/>)}
       </div>
     </div>,
     document.body
@@ -813,18 +818,13 @@ function hifiClassFilterLabel(value, uiLang) {
   return hifiTitleCaseFilterLabel(translated);
 }
 
-function useHifiAppState(preparedKeys, initialFilters, character) {
+function useHifiAppState(preparedKeys, initialFilters, character, uiLang) {
   const spellVersions = window.useSpellVersions ? window.useSpellVersions() : null;
   const allSpells = spellVersions?.spells || [];
   const versionKey = spellVersions?.current || '';
   const switchVersion = spellVersions?.switchVersion || (() => {});
   const versions = spellVersions?.versions || [];
   const loaded = spellVersions?.loaded || false;
-
-  const versionLang = React.useMemo(() => {
-    const v = versions.find(v => v.key === versionKey);
-    return v?.lang || 'ptbr';
-  }, [versionKey, versions]);
 
   // Começa sem nenhum filtro aplicado (mostra todas as magias) — o usuário
   // refina a partir do conjunto completo. Exceção: um link compartilhado
@@ -934,9 +934,11 @@ function useHifiAppState(preparedKeys, initialFilters, character) {
     setOnlyPrepared(false);
     setFilters(prev => { const next = {}; Object.keys(prev).forEach(k => { next[k] = new Set(); }); return next; });
     // Replica a ordenação do `filtered` sem filtros pra achar o índice certo.
-    const collator = versionLang === 'ptbr' ? 'pt' : 'en';
+    // Idêntica à ordenação de `filtered` abaixo (mesmo collator/nomes) — senão
+    // o índice do `?spell=` aponta pra magia errada.
+    const collator = uiLang === 'ptbr' ? 'pt' : 'en';
     const sorted = [...allSpells].sort((a, b) =>
-      (a.lvl - b.lvl) || (spellName(a, versionLang) || '').localeCompare(spellName(b, versionLang) || '', collator)
+      (a.lvl - b.lvl) || (spellName(a, a.lang) || '').localeCompare(spellName(b, b.lang) || '', collator)
     );
     setSelectedIdx(sorted.findIndex(s => hifiSpellSlug(s) === slug));
   }, [allSpells]);
@@ -946,13 +948,13 @@ function useHifiAppState(preparedKeys, initialFilters, character) {
     if (query.trim()) {
       const q = hifiNorm(query.trim());
       out = out.filter(s =>
-        hifiNorm(spellName(s, versionLang)).includes(q) || hifiNorm(s.en).includes(q)
+        hifiNorm(spellName(s, s.lang)).includes(q) || hifiNorm(s.en).includes(q)
       );
     }
     // Aplica todo filtro ativo genericamente: a magia passa se algum dos seus
     // valores (def.get) estiver na seleção. Cobre os filtros base (classe/nível/
     // escola) e quaisquer filtros extras adicionados via "+ mais".
-    const cfg = hifiFilterConfig(versionLang);
+    const cfg = hifiFilterConfig(uiLang);
     Object.keys(filters).forEach(key => {
       const sel = filters[key];
       const def = cfg[key];
@@ -964,18 +966,20 @@ function useHifiAppState(preparedKeys, initialFilters, character) {
       out = out.filter(s => preparedKeys.has(hifiSpellKey(s)));
     }
     // Ordena por nível (truque→9) e, dentro do nível, por nome. Cópia antes de
-    // ordenar pra não mutar o array de magias em cache (allSpells).
-    const collator = versionLang === 'ptbr' ? 'pt' : 'en';
+    // ordenar pra não mutar o array de magias em cache (allSpells). O nome de
+    // cada magia segue o idioma do SEU pacote (s.lang) — a composição aditiva
+    // (08-01) mistura pacotes de idiomas diferentes na mesma lista.
+    const collator = uiLang === 'ptbr' ? 'pt' : 'en';
     out = [...out].sort((a, b) =>
-      (a.lvl - b.lvl) || (spellName(a, versionLang) || '').localeCompare(spellName(b, versionLang) || '', collator)
+      (a.lvl - b.lvl) || (spellName(a, a.lang) || '').localeCompare(spellName(b, b.lang) || '', collator)
     );
     return out;
-  }, [allSpells, query, filters, versionLang, onlyPrepared, preparedKeys]);
+  }, [allSpells, query, filters, uiLang, onlyPrepared, preparedKeys]);
 
   return {
     allSpells, filtered, filters, setFilters, query, setQuery,
     selectedIdx, setSelectedIdx, onlyPrepared, setOnlyPrepared,
-    versionKey, switchVersion, versions, loaded, versionLang,
+    versionKey, switchVersion, versions, loaded,
   };
 }
 
@@ -1168,10 +1172,11 @@ function HifiStat({ label, value }) {
 // DESKTOP
 // ──────────────────────────────────────────────────────────────────
 function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', character, width = 1280, height = 820 }) {
-  // `lang` é o idioma da INTERFACE (chrome), vindo de index.html; `versionLang`
-  // (abaixo, via useHifiAppState) é o idioma do PACK ativo. `uiLang` é um alias
-  // de legibilidade para os call sites que precisam ser explícitos sobre qual
-  // dos dois idiomas estão lendo.
+  // `lang` é o idioma da INTERFACE (chrome), vindo de index.html; o idioma de
+  // CONTEÚDO de cada magia vem do seu próprio pacote (`s.lang`) — não existe
+  // mais uma "versão ativa" única (composição aditiva, 08-01). `uiLang` é um
+  // alias de legibilidade para os call sites que precisam ser explícitos sobre
+  // qual idioma estão lendo.
   const uiLang = lang;
   const { chars, update } = useCharacters();
   const { bookmarks } = useBookmarks();
@@ -1191,10 +1196,10 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
   const prepared = React.useMemo(() => new Set(liveChar?.prepared || []), [liveChar]);
   const bookmarked = React.useMemo(() => new Set(bookmarks), [bookmarks]);
 
-  const state = useHifiAppState(prepared, undefined, liveChar);
+  const state = useHifiAppState(prepared, undefined, liveChar, uiLang);
   const { allSpells, filtered, filters, setFilters, query, setQuery,
     selectedIdx, setSelectedIdx, onlyPrepared, setOnlyPrepared,
-    versionKey, switchVersion, versions, versionLang } = state;
+    versionKey, switchVersion, versions } = state;
   const { toast, show: showToast } = useHifiToast();
 
   const [charMenuOpen, setCharMenuOpen] = React.useState(false);
@@ -1311,10 +1316,10 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
   const [extraFilters, setExtraFilters] = React.useState([]);
   const filterCfg = React.useMemo(() => hifiFilterConfig(uiLang), [uiLang]);
   const filterCats = React.useMemo(() => ([
-    { key: 'level',  label: tt(lang, 'spell.level'),  values: hifiFilterValues('level', allSpells, versionLang) },
-    { key: 'school', label: tt(lang, 'spell.school'), values: hifiFilterValues('school', allSpells, versionLang), formatValue: v => hifiSchoolFilterLabel(v, uiLang) },
-    { key: 'class',  label: tt(lang, 'spell.class'),  values: hifiFilterValues('class', allSpells, versionLang), formatValue: v => hifiClassFilterLabel(v, uiLang) },
-  ]), [lang, uiLang, allSpells, versionLang]);
+    { key: 'level',  label: tt(lang, 'spell.level'),  values: hifiFilterValues('level', allSpells, uiLang) },
+    { key: 'school', label: tt(lang, 'spell.school'), values: hifiFilterValues('school', allSpells, uiLang), formatValue: v => hifiSchoolFilterLabel(v, uiLang) },
+    { key: 'class',  label: tt(lang, 'spell.class'),  values: hifiFilterValues('class', allSpells, uiLang), formatValue: v => hifiClassFilterLabel(v, uiLang) },
+  ]), [lang, uiLang, allSpells]);
   // Valores selecionáveis de cada extra: estáticos (config) ou derivados
   // (distintos + ordenados) dos próprios dados quando `derive`.
   const extraValues = React.useMemo(() => {
@@ -1326,11 +1331,11 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
       else if (def.derive) {
         const set = new Set();
         (allSpells || []).forEach(s => def.get(s).forEach(v => v && set.add(v)));
-        out[key] = [...set].sort((a, b) => String(a).localeCompare(String(b), versionLang === 'ptbr' ? 'pt' : 'en', { numeric: true }));
+        out[key] = [...set].sort((a, b) => String(a).localeCompare(String(b), uiLang === 'ptbr' ? 'pt' : 'en', { numeric: true }));
       }
     });
     return out;
-  }, [filterCfg, allSpells, versionLang]);
+  }, [filterCfg, allSpells, uiLang]);
   const addExtraFilter = (key) => {
     setExtraFilters(list => list.includes(key) ? list : [...list, key]);
     setFilters(p => (p[key] ? p : { ...p, [key]: new Set() }));
@@ -1432,7 +1437,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
           onClick={() => {
             const preparedSet = new Set(liveChar?.prepared || []);
             const preparedSpells = allSpells.filter(s => preparedSet.has(hifiSpellKey(s)));
-            hifiPrintPrepared(preparedSpells, uiLang, versionLang, showToast, { character: liveChar });
+            hifiPrintPrepared(preparedSpells, uiLang, showToast, { character: liveChar });
           }}
           className="hifi-link-action"
           title={tt(lang, 'action.printPreparedTitle')}
@@ -1548,7 +1553,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
           }}>
             {filtered.map((s, i) => (
               <HifiSpellCard
-                key={hifiSpellKey(s)} s={s} lang={lang} versionLang={versionLang}
+                key={hifiSpellKey(s)} s={s} lang={lang} versionLang={s.lang}
                 prepared={prepared.has(hifiSpellKey(s))}
                 bookmarked={bookmarked.has(hifiSpellKey(s))}
                 selected={i === selectedIdx}
@@ -1584,7 +1589,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
               <>
                 <div className="hifi-panel-header">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <HifiSpellName size={26} lang={hifiHtmlLang(versionLang)}>{spellName(shownSpell, versionLang)}</HifiSpellName>
+                    <HifiSpellName size={26} lang={hifiHtmlLang(shownSpell.lang)}>{spellName(shownSpell, shownSpell.lang)}</HifiSpellName>
                     <div style={{ flex: 1 }}/>
                     {/* Botões deslocados ~6px pra baixo: alinhamento óptico com o
                         título serifado (o centro matemático fica visualmente alto). */}
@@ -1621,7 +1626,7 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
                   <HifiCompareButton compare={compare} lang={lang} style={{ marginTop: 6 }}/>
                 </div>
                 <div style={{ flex: 1, overflow: 'auto' }}>
-                  <HifiDetailContent s={shownSpell} lang={lang} versionLang={versionLang}/>
+                  <HifiDetailContent s={shownSpell} lang={lang} versionLang={shownSpell.lang}/>
                 </div>
                 {/* Rodapé: marcador de posição da magia na lista filtrada. */}
                 <div style={{
@@ -1867,13 +1872,15 @@ function hifiCastPulse(btnEl) {
 const HIFI_ROMAN = [null, 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
 function hifiFmtMod(n) { return (n >= 0 ? '+' : '') + n; }
 
-function HifiSessionMode({ character, update, lang, versionLang, allSpells, onExit }) {
+function HifiSessionMode({ character, update, lang, allSpells, onExit }) {
   const prepared = React.useMemo(() => new Set(character?.prepared || []), [character]);
   const spells = React.useMemo(() => {
     const list = allSpells.filter(s => prepared.has(hifiSpellKey(s)));
+    // Nome de cada magia no idioma do SEU pacote (s.lang); a ordenação usa o
+    // idioma da INTERFACE (lang) como collator — não o de nenhuma magia.
     return list.sort((a, b) => (a.lvl - b.lvl)
-      || spellName(a, versionLang).localeCompare(spellName(b, versionLang), versionLang === 'ptbr' ? 'pt' : 'en'));
-  }, [allSpells, prepared, versionLang]);
+      || spellName(a, a.lang).localeCompare(spellName(b, b.lang), lang === 'ptbr' ? 'pt' : 'en'));
+  }, [allSpells, prepared, lang]);
 
   const [view, setViewState] = React.useState(() => {
     try { return localStorage.getItem(HIFI_SESSION_VIEW_KEY) === 'list' ? 'list' : 'cards'; } catch (e) { return 'cards'; }
@@ -1906,7 +1913,7 @@ function HifiSessionMode({ character, update, lang, versionLang, allSpells, onEx
   function availFor(circle) { return Math.max(0, (slots.total[circle] || 0) - (slots.used[circle] || 0)); }
 
   function castSpell(s, circle, ev, btnEl) {
-    const name = spellName(s, versionLang);
+    const name = spellName(s, s.lang);
     if (circle > 0) {
       if (!availFor(circle)) { showToast(tt(lang, 'session.noSlots', { circle }), 'err'); return; }
       setSlotUsedFor(character.id, circle, (slots.used[circle] || 0) + 1, update);
@@ -1940,7 +1947,7 @@ function HifiSessionMode({ character, update, lang, versionLang, allSpells, onEx
   );
 
   const castRow = (s, mini) => {
-    const name = spellName(s, versionLang);
+    const name = spellName(s, s.lang);
     const isCantrip = s.lvl === 0;
     const primaryStyle = isCantrip ? { background: 'transparent', color: 'var(--accent)' } : {};
     return (
@@ -2090,7 +2097,7 @@ function HifiSessionMode({ character, update, lang, versionLang, allSpells, onEx
             return (
               <div key={k} className="hifi-card compact" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', cursor: 'pointer', flexShrink: 0 }} onClick={() => setDetail(s)}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <HifiSpellName size={14} lang={hifiHtmlLang(versionLang)} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{spellName(s, versionLang)}</HifiSpellName>
+                  <HifiSpellName size={14} lang={hifiHtmlLang(s.lang)} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{spellName(s, s.lang)}</HifiSpellName>
                   <div style={{ fontSize: 11, color: 'var(--subtext0)', fontStyle: 'italic', fontFamily: "'Marauder Text', Georgia, serif" }}>
                     {schoolKey(s.school)} · {s.lvl === 0 ? tt(lang, 'spell.cantrip') : tt(lang, 'session.groupCircle', { n: s.lvl })}
                     {s.conc && <span style={{ color: 'var(--yellow)' }}> · C</span>}
@@ -2101,11 +2108,11 @@ function HifiSessionMode({ character, update, lang, versionLang, allSpells, onEx
               </div>
             );
           }
-          const desc = window.v8Description ? window.v8Description(s, versionLang) : '';
+          const desc = window.v8Description ? window.v8Description(s, s.lang) : '';
           return (
             <div key={k} className="hifi-card compact" style={{ padding: '12px 13px', display: 'flex', flexDirection: 'column', gap: 4, cursor: 'pointer', flexShrink: 0, position: 'relative', overflow: 'hidden' }} onClick={() => setDetail(s)}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, minWidth: 0 }}>
-                <HifiSpellName size={16} lang={hifiHtmlLang(versionLang)} style={{ display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{spellName(s, versionLang)}</HifiSpellName>
+                <HifiSpellName size={16} lang={hifiHtmlLang(s.lang)} style={{ display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{spellName(s, s.lang)}</HifiSpellName>
               </div>
               <div style={{ fontStyle: 'italic', fontSize: 12, color: 'var(--subtext0)', fontFamily: "'Marauder Text', Georgia, serif", display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span>{schoolKey(s.school)}</span>
@@ -2141,14 +2148,14 @@ function HifiSessionMode({ character, update, lang, versionLang, allSpells, onEx
           </header>
           <div style={{ flex: 1, overflow: 'auto' }}>
             <div style={{ padding: '20px 18px 14px' }}>
-              <HifiSpellName size={32} lang={hifiHtmlLang(versionLang)}>{spellName(detailSpell, versionLang)}</HifiSpellName>
+              <HifiSpellName size={32} lang={hifiHtmlLang(detailSpell.lang)}>{spellName(detailSpell, detailSpell.lang)}</HifiSpellName>
               <div style={{ marginTop: 6, fontSize: 14, color: 'var(--subtext0)', fontStyle: 'italic' }}>
                 {schoolName(detailSpell.school, lang)} · {detailSpell.lvl === 0 ? tt(lang, 'spell.cantrip') : `${tt(lang, 'spell.level')} ${detailSpell.lvl}`}
                 {detailSpell.conc && <span> · <span style={{ color: 'var(--yellow)' }}>conc.</span></span>}
                 {detailSpell.rit && <span> · <span style={{ color: 'var(--peach)' }}>ritual</span></span>}
               </div>
             </div>
-            <HifiDetailContent s={detailSpell} lang={lang} versionLang={versionLang}/>
+            <HifiDetailContent s={detailSpell} lang={lang} versionLang={detailSpell.lang}/>
           </div>
           <div style={{ padding: '12px 16px', borderTop: '1px solid var(--surface1)' }}>
             {castRow(detailSpell, false)}
@@ -2169,7 +2176,7 @@ function HifiSessionMode({ character, update, lang, versionLang, allSpells, onEx
           >
             {upcastFor ? (
               <>
-                <div style={{ fontSize: 13, color: 'var(--subtext1)', marginBottom: 12 }}>{tt(lang, 'session.upcastTitle', { name: spellName(upcastFor, versionLang) })}</div>
+                <div style={{ fontSize: 13, color: 'var(--subtext1)', marginBottom: 12 }}>{tt(lang, 'session.upcastTitle', { name: spellName(upcastFor, upcastFor.lang) })}</div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {[1,2,3,4,5,6,7,8,9].filter(c => c >= upcastFor.lvl && (slots.total[c] || 0) > 0).map(c => {
                     const avail = availFor(c);
@@ -2222,9 +2229,10 @@ function HifiSessionMode({ character, update, lang, versionLang, allSpells, onEx
 // MOBILE
 // ──────────────────────────────────────────────────────────────────
 function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', character, drawerOpen: initialDrawerOpen = false, detailIdx = null }) {
-  // `lang` é o idioma da INTERFACE (chrome), vindo de index.html; `versionLang`
-  // (abaixo, via useHifiAppState) é o idioma do PACK ativo. `uiLang` é um alias
-  // de legibilidade para os call sites que precisam ser explícitos sobre qual
+  // `lang` é o idioma da INTERFACE (chrome), vindo de index.html; o idioma de
+  // CONTEÚDO de cada magia vem do seu próprio pacote (`s.lang`) — não existe
+  // mais uma "versão ativa" única (composição aditiva, 08-01). `uiLang` é um
+  // alias de legibilidade para os call sites que precisam ser explícitos sobre qual
   // dos dois idiomas estão lendo.
   const uiLang = lang;
   const { chars, update } = useCharacters();
@@ -2239,15 +2247,15 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
   const accent = dark ? charWithAccent.accent_dark : charWithAccent.accent;
   const prepared = React.useMemo(() => new Set(liveChar?.prepared || []), [liveChar]);
   const bookmarked = React.useMemo(() => new Set(bookmarks), [bookmarks]); // favoritas globais
-  const state = useHifiAppState(prepared, undefined, liveChar);
+  const state = useHifiAppState(prepared, undefined, liveChar, uiLang);
   const { allSpells, filtered, filters, setFilters, query, setQuery,
     selectedIdx, setSelectedIdx, onlyPrepared, setOnlyPrepared,
-    versionKey, switchVersion, versions, versionLang } = state;
+    versionKey, switchVersion, versions } = state;
   const mobileFilterValues = React.useMemo(() => ({
-    level: hifiFilterValues('level', allSpells, versionLang),
-    school: hifiFilterValues('school', allSpells, versionLang),
-    class: hifiFilterValues('class', allSpells, versionLang),
-  }), [allSpells, versionLang]);
+    level: hifiFilterValues('level', allSpells, uiLang),
+    school: hifiFilterValues('school', allSpells, uiLang),
+    class: hifiFilterValues('class', allSpells, uiLang),
+  }), [allSpells, uiLang]);
   const filterCfg = React.useMemo(() => hifiFilterConfig(uiLang), [uiLang]);
   const [extraFilters, setExtraFilters] = React.useState([]);
   const extraValues = React.useMemo(() => {
@@ -2259,11 +2267,11 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
       else if (def.derive) {
         const set = new Set();
         (allSpells || []).forEach(s => def.get(s).forEach(v => v && set.add(v)));
-        out[key] = [...set].sort((a, b) => String(a).localeCompare(String(b), versionLang === 'ptbr' ? 'pt' : 'en', { numeric: true }));
+        out[key] = [...set].sort((a, b) => String(a).localeCompare(String(b), uiLang === 'ptbr' ? 'pt' : 'en', { numeric: true }));
       }
     });
     return out;
-  }, [filterCfg, allSpells, versionLang]);
+  }, [filterCfg, allSpells, uiLang]);
   const addExtraFilter = (key) => {
     setExtraFilters(list => list.includes(key) ? list : [...list, key]);
     setFilters(p => (p[key] ? p : { ...p, [key]: new Set() }));
@@ -2392,7 +2400,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
           </header>
           <div style={{ flex: 1, overflow: 'auto' }}>
             <div style={{ padding: '20px 18px 14px' }}>
-              <HifiSpellName size={32} lang={hifiHtmlLang(versionLang)}>{spellName(shownSpell, versionLang)}</HifiSpellName>
+              <HifiSpellName size={32} lang={hifiHtmlLang(shownSpell.lang)}>{spellName(shownSpell, shownSpell.lang)}</HifiSpellName>
               <div style={{ marginTop: 6, fontSize: 14, color: 'var(--subtext0)', fontStyle: 'italic' }}>
                 {schoolName(shownSpell.school, lang)} · {shownSpell.lvl === 0 ? (tt(lang, 'spell.cantrip')) : `${tt(lang, 'spell.level')} ${shownSpell.lvl}`}
                 {shownSpell.conc && <span> · <span style={{ color: 'var(--yellow)' }}>conc.</span></span>}
@@ -2400,7 +2408,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
               </div>
               <HifiCompareButton compare={compare} lang={lang} style={{ marginTop: 8 }}/>
             </div>
-            <HifiDetailContent s={shownSpell} lang={lang} versionLang={versionLang}/>
+            <HifiDetailContent s={shownSpell} lang={lang} versionLang={shownSpell.lang}/>
           </div>
           <div style={{ padding: '12px 16px', borderTop: '1px solid var(--surface1)', display: 'flex', gap: 8 }}>
             <button
@@ -2474,7 +2482,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
           {filtered.map((s, i) => (
             <HifiSpellCard
-              key={hifiSpellKey(s)} s={s} lang={lang} versionLang={versionLang}
+              key={hifiSpellKey(s)} s={s} lang={lang} versionLang={s.lang}
               prepared={prepared.has(hifiSpellKey(s))}
               bookmarked={bookmarked.has(hifiSpellKey(s))}
               onClick={onCardOpen}
@@ -2636,7 +2644,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
                   onClick={() => {
                     const preparedSet = new Set(liveChar?.prepared || []);
                     const preparedSpells = allSpells.filter(s => preparedSet.has(hifiSpellKey(s)));
-                    hifiPrintPrepared(preparedSpells, uiLang, versionLang, showToast, { character: liveChar });
+                    hifiPrintPrepared(preparedSpells, uiLang, showToast, { character: liveChar });
                   }}
                   className="hifi-icon-btn"
                   title={tt(lang, 'action.printPrepared')}
@@ -2748,7 +2756,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
       {sessionTransition.mounted && (
         <div className={sessionOpen ? 'hifi-slide-in-right' : 'hifi-slide-out-right'} style={{ position: 'absolute', inset: 0, zIndex: 25, background: 'var(--base)' }}>
           <HifiSessionMode
-            character={liveChar} update={update} lang={lang} versionLang={versionLang}
+            character={liveChar} update={update} lang={lang}
             allSpells={allSpells}
             onExit={() => openSession(false)}
           />

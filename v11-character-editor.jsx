@@ -609,15 +609,12 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
     window.addEventListener('hifi-spells-source-changed', onChange);
     return () => window.removeEventListener('hifi-spells-source-changed', onChange);
   }, []);
+  // Nome de cada magia segue o idioma do SEU pacote (s.lang) - não existe mais
+  // uma "versão ativa" única (composição aditiva, 08-01/08-03). `lang` (a
+  // interface) só decide o desempate EN×PT da união, igual à grade.
   const allSpells = React.useMemo(
-    () => (window.v7BuildSpells ? window.v7BuildSpells() : []),
-    [spellVersion]
-  );
-  // Idioma do PACK ativo (nao da interface) - deriva do mesmo contador
-  // spellVersion que ja reage a hifi-spells-source-changed, sem listener novo.
-  const versionLang = React.useMemo(
-    () => window.getCurrentSpellVersion?.()?.lang || 'ptbr',
-    [spellVersion]
+    () => (window.v7BuildSpells ? window.v7BuildSpells(lang) : []),
+    [spellVersion, lang]
   );
 
   const filteredSpells = React.useMemo(() => {
@@ -627,11 +624,11 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
     if (query.trim()) {
       const q = hifiNorm(query.trim());
       out = out.filter(s =>
-        hifiNorm(spellName(s, versionLang)).includes(q) || hifiNorm(s.en).includes(q)
+        hifiNorm(spellName(s, s.lang)).includes(q) || hifiNorm(s.en).includes(q)
       );
     }
     return out;
-  }, [allSpells, query, tab, prepared, bookmarked, versionLang]);
+  }, [allSpells, query, tab, prepared, bookmarked]);
 
   // MIGR-01: chaves preparadas/favoritadas que já não resolvem contra nenhuma
   // SPELL_VERSIONS — sinalizadas, nunca descartadas. `filteredSpells` acima não
@@ -1058,7 +1055,7 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
                   <div className={`hifi-level-bar hifi-level-${s.lvl}`} style={{ position: 'static', width: 3 }}/>
                   <div style={{ flex: 1, minWidth: 0, padding: '8px 12px' }}>
                     <div style={{ fontFamily: "'Texturina', 'Marauder Display', Georgia, serif", fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>
-                      {spellName(s, versionLang)}
+                      {spellName(s, s.lang)}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--subtext0)', fontStyle: 'italic' }}>
                       {schoolKey(s.school)} · {s.lvl === 0 ? T('truque', 'cantrip') : `${T('círc.', 'lvl')} ${s.lvl}`}
