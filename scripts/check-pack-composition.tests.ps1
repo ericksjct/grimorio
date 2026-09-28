@@ -23,7 +23,7 @@ foreach ($needle in @(
   }
 }
 
-$adaptSpellMatch = [regex]::Match($loader, 'function adaptSpell\(s, versionLang, edition, versionKey\)[\s\S]{0,3000}?\r?\n\}')
+$adaptSpellMatch = [regex]::Match($loader, 'function adaptSpell\(s, versionLang, edition, versionKey\)[\s\S]{0,8000}?\r?\n\}')
 if (-not $adaptSpellMatch.Success) {
   throw 'adaptSpell(s, versionLang, edition, versionKey) not found with the new 4th parameter.'
 }
