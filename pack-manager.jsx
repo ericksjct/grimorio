@@ -524,17 +524,33 @@ function PackMenu({ lang, dark, theme, open, isMobile, anchor, onClose, onOpenIm
 
   // Toggle de seleção (D-02/D-03/D-04): desmarcar tira a chave; marcar acrescenta
   // no FIM da lista, então normalizeSelection() aplica a exclusividade de edição
-  // SRD no MESMO update de estado (D-03). A checagem de colisão de slug antes de
-  // marcar entra na Task 3, neste mesmo handler.
-  const handleToggle = React.useCallback((row, checked) => {
+  // SRD no MESMO update de estado (D-03). Antes de marcar de fato, checa colisão
+  // de slug (D-10/A-14): sem conflito, marca direto; com conflito, delega pro
+  // prompt de renomear (onRequestRename) e NÃO marca aqui.
+  const handleToggle = React.useCallback(async (row, checked) => {
     const current = window.getSelectedVersionKeys();
     if (!checked) {
       window.setSelectedVersionKeys(current.filter((k) => k !== row.versionKey));
       return;
     }
     const next = window.normalizeSelection([...current.filter((k) => k !== row.versionKey), row.versionKey]);
-    window.setSelectedVersionKeys(next);
-  }, []);
+    const version = (window.SPELL_VERSIONS || []).find((v) => v.key === row.versionKey);
+    if (!version) return;
+    setBusyKey(row.versionKey);
+    try {
+      const conflict = await _selectionConflicts(version, next);
+      if (!conflict.rows.length) {
+        window.setSelectedVersionKeys(next);
+      } else if (typeof onRequestRename === 'function') {
+        onRequestRename({ ...conflict, next });
+      }
+    } catch (e) {
+      console.warn('[pack-manager] falha ao checar conflito de slug na seleção:', e);
+      window.dispatchEvent(new CustomEvent('hifi-toast', { detail: { msg: tt(lang, 'packErr.unknown'), kind: 'err' } }));
+    } finally {
+      setBusyKey(null);
+    }
+  }, [lang, onRequestRename]);
 
   // Slugs reservados (D-15): carrega só na primeira abertura do <details>.
   const handleReservedToggle = React.useCallback((e) => {
@@ -704,38 +720,190 @@ function PackMenu({ lang, dark, theme, open, isMobile, anchor, onClose, onOpenIm
 }
 
 // ──────────────────────────────────────────────────────────────────
+// CHIP DO TOPO (D-18)
+// ──────────────────────────────────────────────────────────────────
+
+// Rótulo do chip: primeiro pacote RESOLVIDO + contagem dos demais (D-18/D-19).
+// Chave desconhecida ou seleção vazia nunca desreferencia nada — devolve ''.
+function _chipLabel(resolvedKeys, versions) {
+  const keys = resolvedKeys || [];
+  if (!keys.length) return '';
+  const first = (versions || []).find((v) => v.key === keys[0]);
+  if (!first) return '';
+  const n = keys.length;
+  return first.short + (n > 1 ? ' +' + (n - 1) : '');
+}
+
+function PackMenuChip({ lang, style, onOpen }) {
+  const [resolved, setResolved] = React.useState(() => window.getResolvedVersionKeys());
+  const [versions, setVersions] = React.useState(() => (window.SPELL_VERSIONS || []).slice());
+
+  React.useEffect(() => {
+    const onSourceChanged = () => setResolved(window.getResolvedVersionKeys());
+    const onPluginsChanged = () => {
+      setVersions((window.SPELL_VERSIONS || []).slice());
+      setResolved(window.getResolvedVersionKeys());
+    };
+    window.addEventListener('hifi-spells-source-changed', onSourceChanged);
+    window.addEventListener('hifi-plugins-changed', onPluginsChanged);
+    return () => {
+      window.removeEventListener('hifi-spells-source-changed', onSourceChanged);
+      window.removeEventListener('hifi-plugins-changed', onPluginsChanged);
+    };
+  }, []);
+
+  const first = versions.find((v) => v.key === resolved[0]);
+  const langDot = {
+    width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+    background: first && first.lang === 'ptbr' ? 'var(--green)' : 'var(--blue)',
+  };
+
+  return (
+    <button
+      type="button"
+      className="hifi-filter-chip"
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, ...style }}
+      aria-haspopup="dialog"
+      title={tt(lang, 'manager.title')}
+      onClick={(e) => {
+        onOpen && onOpen();
+        window.__openPackManager && window.__openPackManager({ anchor: e.currentTarget.getBoundingClientRect() });
+      }}
+    >
+      <span style={langDot} />
+      <span>{_chipLabel(resolved, versions)}</span>
+      <span style={{ color: 'var(--subtext0)', fontSize: 10 }}>▾</span>
+    </button>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// SELEÇÃO POR SLUG (D-08..D-14, A-14) — colisão ao marcar SRD/homebrew
+// ──────────────────────────────────────────────────────────────────
+
+// Conflitos de slug ao marcar `version` na próxima seleção `nextKeys` (Fase 8):
+// SRD embutido entrando checa os homebrews já marcados contra as PRÓPRIAS
+// magias do SRD (A-14 — o homebrew é quem é renomeado, o SRD nunca é); homebrew
+// entrando checa as próprias magias contra os donos das outras versões já
+// marcadas (SRD e homebrews, D-03 nunca compara SRD×SRD). Qualquer falha
+// (loadSpellVersion, loadReservedSlugs, slugOwnersOf) propaga pro chamador —
+// o PackMenu mostra packErr.unknown e não marca nada.
+async function _selectionConflicts(version, nextKeys) {
+  const byKey = (k) => (window.SPELL_VERSIONS || []).find((v) => v.key === k);
+  const others = (nextKeys || []).filter((k) => k !== version.key && byKey(k));
+  const isSrdBuiltin = version.source === 'fetch' && version.corpus === 'srd';
+
+  let rows;
+  if (isSrdBuiltin) {
+    const donos = await window.packImport.slugOwnersOf([version.key]);
+    const homebrews = others.map(byKey).filter((v) => v && v.source === 'idb');
+    rows = [];
+    for (const h of homebrews) {
+      const spells = await window.loadSpellVersion(h.key);
+      const targets = (spells || []).map((s) => ({ name: s.en, displayName: s.displayName, oldKey: window.hifiSpellKey(s) }));
+      window.packImport.detectSlugConflicts(targets, donos).forEach((r) => rows.push({ ...r, packId: h.packId }));
+    }
+  } else {
+    const donos = await window.packImport.slugOwnersOf(others);
+    const spells = await window.loadSpellVersion(version.key);
+    const targets = (spells || []).map((s) => ({ name: s.en, displayName: s.displayName, oldKey: window.hifiSpellKey(s) }));
+    rows = window.packImport.detectSlugConflicts(targets, donos).map((r) => ({ ...r, packId: version.packId }));
+  }
+
+  const reservedData = await window.packImport.loadReservedSlugs();
+  const allIdbKeys = (window.SPELL_VERSIONS || []).filter((v) => v.source === 'idb').map((v) => v.key);
+  const takenKeys = new Set((await window.packImport.slugOwnersOf(allIdbKeys)).keys());
+
+  let impact = 0;
+  if (rows.length) {
+    const index = await packSpellIndex();
+    const alvos = new Set(rows.map((r) => 'plugin-' + r.packId));
+    impact = window.renameImpact(new Set(rows.map((r) => r.oldKey)), (k) => {
+      const src = index.byKey.get(k);
+      return !!src && [...src].some((x) => !alvos.has(x));
+    });
+  }
+
+  return { rows, reservedKeys: reservedData.keys, takenKeys, impact };
+}
+
+// ──────────────────────────────────────────────────────────────────
 // PACK MANAGER ROOT
 // ──────────────────────────────────────────────────────────────────
 
 function PackManagerRoot({ lang, dark, theme }) {
-  // D-04/D-05: um só overlay visível por vez — 'manager' e 'import' são diálogos irmãos, nunca
-  // empilhados. Fechar o import volta para o menu. PackMenuChip e as views 'menu'/'rename' com
-  // âncora/renomeação de verdade vêm na Task 3.
+  // D-04/D-05: um só overlay visível por vez — 'menu', 'import' e 'rename' nunca
+  // ficam empilhados. Fechar o import volta pro menu; cancelar a renomeação também
+  // (D-12: nada é marcado quando o usuário cancela).
   const [view, setView] = React.useState('closed');
+  const [anchor, setAnchor] = React.useState(null);
+  const [isMobile, setIsMobile] = React.useState(false);
+  const [renameCtx, setRenameCtx] = React.useState(null);
 
   React.useEffect(() => {
-    const open = () => setView('manager');
+    const open = (opts) => {
+      setAnchor((opts && opts.anchor) || null);
+      setIsMobile(Math.min(window.innerWidth, window.innerHeight) < 768);
+      setView('menu');
+    };
     window.__openPackManager = open;
     return () => {
       if (window.__openPackManager === open) delete window.__openPackManager;
     };
   }, []);
 
+  // Renomear e continuar (D-14): agrupa as linhas por pack, regrava cada pack
+  // já instalado com renameInstalledPackSlugs, e só então aplica a seleção
+  // pendente (renameCtx.next) — a marca acontece DEPOIS da renomeação resolver.
+  const handleRenameSubmit = React.useCallback(async (list) => {
+    try {
+      const byPack = new Map();
+      list.forEach((r) => {
+        if (!byPack.has(r.packId)) byPack.set(r.packId, new Map());
+        byPack.get(r.packId).set(r.slug, r.newSlug);
+      });
+      for (const [packId, renames] of byPack) {
+        await window.renameInstalledPackSlugs(packId, renames);
+      }
+      if (renameCtx) window.setSelectedVersionKeys(renameCtx.next);
+      setView('menu');
+    } catch (e) {
+      console.warn('[pack-manager] falha ao renomear slugs em conflito:', e);
+      window.dispatchEvent(new CustomEvent('hifi-toast', { detail: { msg: tt(lang, 'packErr.unknown'), kind: 'err' } }));
+      setView('menu');
+    }
+  }, [lang, renameCtx]);
+
   return (
     <>
       <PackMenu
         lang={lang} dark={dark} theme={theme}
-        open={view === 'manager'}
+        open={view === 'menu'}
+        isMobile={isMobile}
+        anchor={anchor}
         onClose={() => setView('closed')}
         onOpenImport={() => setView('import')}
+        onRequestRename={(ctx) => { setRenameCtx(ctx); setView('rename'); }}
       />
       <PackImportDialog
         lang={lang} dark={dark} theme={theme}
         open={view === 'import'}
-        onClose={() => setView('manager')}
+        onClose={() => setView('menu')}
       />
+      {window.PackRenameDialog && (
+        <window.PackRenameDialog
+          lang={lang} dark={dark} theme={theme}
+          open={view === 'rename'}
+          rows={renameCtx ? renameCtx.rows : []}
+          reservedKeys={renameCtx ? renameCtx.reservedKeys : new Set()}
+          takenKeys={renameCtx ? renameCtx.takenKeys : new Set()}
+          impact={renameCtx ? renameCtx.impact : 0}
+          onCancel={() => setView('menu')}
+          onSubmit={handleRenameSubmit}
+        />
+      )}
     </>
   );
 }
 
-Object.assign(window, { PackMenu, PackManagerRoot });
+Object.assign(window, { PackMenu, PackMenuChip, PackManagerRoot });

@@ -309,6 +309,29 @@ if ($manager -like '*function PackManager(*') {
   throw "pack-manager.jsx must not keep the old function PackManager( - the single pack menu (PackMenu) replaces it entirely (D-16)."
 }
 
+# ── 27. Chip do topo, raiz com âncora/sheet e renomeação disparada na seleção (D-10/D-12/D-13/D-18) ──
+
+foreach ($needle in @(
+  'function PackMenuChip(',
+  'aria-haspopup="dialog"',
+  'getBoundingClientRect',
+  '▾',
+  'async function _selectionConflicts(',
+  'detectSlugConflicts',
+  'slugOwnersOf',
+  'renameInstalledPackSlugs',
+  'window.PackRenameDialog',
+  'renameImpact',
+  "'rename'"
+)) {
+  if ($manager -notlike "*$needle*") {
+    throw "Missing PackMenuChip/rename wiring in pack-manager.jsx: $needle"
+  }
+}
+if ($manager -notmatch 'opts\s*&&\s*opts\.anchor') {
+  throw "MGMT-09/D-18: window.__openPackManager must keep accepting a call with no argument (opts && opts.anchor guard) - transition-banner.jsx calls it with zero args."
+}
+
 $node = Get-Command node -ErrorAction SilentlyContinue
 if (-not $node) {
   Write-Warning 'node nao encontrado - provas de execucao puladas.'
@@ -412,6 +435,21 @@ check("_cardMetaVars lang vira 'EN' pra en", vars2.lang === 'EN');
 const vars3 = _cardMetaVars({ author: 'Fulano', version: '2.0', lang: 'en', count: 'not-a-number' }, 'en');
 check("_cardMetaVars count nao numerico vira n = '?'", vars3.n === '?');
 check('_cardMetaVars count nao numerico usa nounSpell plural', vars3.nounSpell === tt('en', 'noun.spell.other'));
+
+// ── _chipLabel (Task 3, D-18) — contra o BUILTIN_VERSIONS real do loader ──
+const loaderSrc = fs.readFileSync('spells-data-loader.jsx', 'utf8');
+const builtinMatch = loaderSrc.match(/const BUILTIN_VERSIONS = (\[[\s\S]*?\n\]);/);
+if (!builtinMatch) { console.error('nao encontrei BUILTIN_VERSIONS em spells-data-loader.jsx'); process.exit(1); }
+const BUILTIN_VERSIONS = eval(builtinMatch[1]);
+
+vm.runInContext(extractFn('_chipLabel') + '\nthis.__chipLabel = _chipLabel;', fnSandbox);
+const _chipLabel = fnSandbox.__chipLabel;
+
+check("_chipLabel(['srd-2024-en'], versions) === 'SRD 5.2'", _chipLabel(['srd-2024-en'], BUILTIN_VERSIONS) === 'SRD 5.2');
+check("_chipLabel(['srd-2024-en','srd-2024-ptbr','plugin-x'], versions) === 'SRD 5.2 +2'",
+  _chipLabel(['srd-2024-en', 'srd-2024-ptbr', 'plugin-x'], BUILTIN_VERSIONS) === 'SRD 5.2 +2');
+check("_chipLabel([], versions) === ''", _chipLabel([], BUILTIN_VERSIONS) === '');
+check("_chipLabel(['chave-desconhecida'], versions) === '' (D-19, sem desreferenciar undefined)", _chipLabel(['chave-desconhecida'], BUILTIN_VERSIONS) === '');
 
 // ── i18n.jsx: chaves novas de pluralizacao (behavior do Plano 05 Task 1) ──
 const i18nSandbox = { console };
