@@ -369,7 +369,7 @@ function mdToHtml(html) {
 // ──────────────────────────────────────────────────────────────────
 // ADAPTADOR: JSON raw → formato do app
 // ──────────────────────────────────────────────────────────────────
-function adaptSpell(s, versionLang, edition) {
+function adaptSpell(s, versionLang, edition, versionKey) {
   const schoolKey = (s.school || '').toLowerCase();
   const schoolIdx = SCHOOL_INDEX[schoolKey];
 
@@ -449,6 +449,14 @@ function adaptSpell(s, versionLang, edition) {
     // `edition` declarada nao e "5e 2014" por padrao, e useEditionCompare ja
     // sabe se esconder quando `!cur.edition`.
     edition: edition || '',
+    // Fase 8 (D-06, Pattern 2): cada magia carrega o próprio idioma de
+    // conteúdo e a chave do pacote de origem — a composição aditiva permite
+    // pacotes de idiomas diferentes selecionados ao mesmo tempo, então um
+    // `versionLang` único no nível do hook deixou de fazer sentido pra
+    // renderização por magia (só concerns agregados, como locale de
+    // ordenação, continuam usando o idioma da interface).
+    lang: versionLang === 'ptbr' ? 'ptbr' : 'en',
+    _versionKey: versionKey || '',
     url: s.url || '',
     ritual: !!s.ritual,
     concentration: !!s.concentration,
@@ -456,9 +464,9 @@ function adaptSpell(s, versionLang, edition) {
   };
 }
 
-function adaptSpells(json, versionLang, edition) {
+function adaptSpells(json, versionLang, edition, versionKey) {
   const list = Array.isArray(json) ? json : (json?.spells || []);
-  return list.map(s => adaptSpell(s, versionLang, edition));
+  return list.map(s => adaptSpell(s, versionLang, edition, versionKey));
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -592,7 +600,7 @@ async function loadVersion(key) {
       if (json && !Array.isArray(json) && typeof json.meta === 'object' && json.meta) {
         _metaCache[key] = json.meta;
       }
-      const adapted = adaptSpells(json, ver.lang, ver.edition);
+      const adapted = adaptSpells(json, ver.lang, ver.edition, ver.key);
       // WR-03: refreshPluginVersions() pode ter removido `key` do registro
       // enquanto este load estava em voo (pack apagado no meio do fetch). Sem
       // este guard, a escrita abaixo resuscitaria no _cache uma entrada que a
@@ -668,6 +676,130 @@ function resolvableSpellKeys() {
 // invalidação que pack-manager.jsx usa pra _indexPromise.
 window.addEventListener('hifi-plugins-changed', () => { _resolvableKeysPromise = null; });
 window.resolvableSpellKeys = resolvableSpellKeys;
+
+// ──────────────────────────────────────────────────────────────────
+// SELEÇÃO DE PACOTES — composição aditiva (Fase 8, D-01..D-06)
+// ──────────────────────────────────────────────────────────────────
+// A partir daqui a grade deixa de ser "uma versão ativa" e passa a ser a
+// UNIÃO de qualquer número de pacotes marcados. As funções abaixo são puras
+// (sem estado próprio, sem I/O) — a próxima tarefa desta fase introduz o
+// estado (`_selectedKeys`) que as consome.
+
+// `source: 'fetch'` + `corpus: 'srd'` identifica um dos 3 SRD embutidos
+// (BUILTIN_VERSIONS). Um pack de terceiro nunca casa aqui, mesmo declarando
+// `meta.edition` (D-05: edition de homebrew é só informativa).
+function _isSrdBuiltin(v) {
+  return !!(v && v.source === 'fetch' && v.corpus === 'srd');
+}
+
+// Resolução "pacote padrão" (D-04): mesma detecção de idioma do navegador que
+// _initialVersionKey() já usa, devolvendo a primeira entrada de SPELL_VERSIONS
+// nesse idioma, senão a raiz da cadeia de fallback (_defaultVersion()).
+function _browserDefaultKey() {
+  try {
+    const candidates = [
+      ...Array.from(navigator.languages || []),
+      navigator.language,
+      navigator.userLanguage,
+      navigator.browserLanguage,
+    ].filter(Boolean).map(l => String(l).toLowerCase());
+    const lang = candidates.some(l => l.startsWith('pt')) ? 'ptbr' : 'en';
+    const v = SPELL_VERSIONS.find(x => x.lang === lang);
+    if (v) return v.key;
+  } catch (e) {}
+  return _defaultVersion().key;
+}
+
+// Normaliza a lista CRUA de chaves selecionadas: só strings não vazias
+// (trim), teto de 64 itens, dedupe mantendo a primeira ocorrência. D-03: os
+// SRD embutidos são mutuamente exclusivos POR EDIÇÃO — vence a edição da
+// última chave SRD da lista (A-01: a mesma regra que o clique no menu e o
+// `?v=` aplicam); SRD da mesma edição em idiomas diferentes (ex.: srd-2024-en
+// e srd-2024-ptbr) sobrevivem juntas porque compartilham a edição vencedora.
+// Uma chave não registrada (plugin-x) ou com qualquer outro `corpus` nunca é
+// removida por esta regra (D-05).
+function normalizeSelection(keys) {
+  const arr = Array.isArray(keys) ? keys : [];
+  const seen = new Set();
+  let out = [];
+  for (const k of arr) {
+    if (typeof k !== 'string') continue;
+    const trimmed = k.trim();
+    if (!trimmed || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    out.push(trimmed);
+    if (out.length >= 64) break;
+  }
+  let lastSrdEdition = null;
+  for (let i = out.length - 1; i >= 0; i--) {
+    const v = _versionByKey(out[i]);
+    if (v && _isSrdBuiltin(v)) { lastSrdEdition = v.edition; break; }
+  }
+  if (lastSrdEdition !== null) {
+    out = out.filter((k) => {
+      const v = _versionByKey(k);
+      return !v || !_isSrdBuiltin(v) || v.edition === lastSrdEdition;
+    });
+  }
+  return out;
+}
+
+// Lista normalizada, restrita às chaves que resolvem no registro atual.
+// Vazia (seleção com nada resolvível, inclusive `[]`) cai no pacote padrão —
+// a grade nunca fica vazia por falta de seleção (D-04, F5 D-17).
+function resolveSelection(keys) {
+  const resolved = normalizeSelection(keys).filter(k => _versionByKey(k));
+  return resolved.length ? resolved : [_browserDefaultKey()];
+}
+
+// Verdadeiro quando NENHUMA chave da seleção crua resolve mais — é o sinal
+// que dispara o toast de D-04 (consumido ao redor de uma mudança explícita ou
+// de refreshPluginVersions() na próxima tarefa desta fase).
+function _isFallback(keys) {
+  return normalizeSelection(keys).filter(k => _versionByKey(k)).length === 0;
+}
+
+// União das magias de todos os pacotes resolvidos, na ordem da seleção.
+// `entries` = [{ version, spells }]. Sem `keyOf`, é concatenação pura (uso
+// interno/teste). Com `keyOf` (produção: window.hifiSpellKey), colisão de
+// chave é resolvida assim: SUBSTITUI a existente só quando as duas entradas
+// são SRD da MESMA edição e a que está entrando casa com `uiLang` enquanto a
+// existente não (D-03 — desempate por idioma da interface, não da ordem da
+// lista); qualquer outra colisão MANTÉM a existente, sem duplicar (A-04: rede
+// de segurança determinística contra chave React duplicada entre homebrews).
+// Nunca muta os arrays de `entries`.
+function unionSpells(entries, uiLang, keyOf) {
+  const list = Array.isArray(entries) ? entries : [];
+  if (typeof keyOf !== 'function') {
+    const out = [];
+    list.forEach((entry) => {
+      (entry && Array.isArray(entry.spells) ? entry.spells : []).forEach(s => out.push(s));
+    });
+    return out;
+  }
+  const out = [];
+  const indexByKey = new Map();
+  list.forEach((entry) => {
+    const ver = entry && entry.version;
+    const spells = entry && Array.isArray(entry.spells) ? entry.spells : [];
+    spells.forEach((s) => {
+      const k = keyOf(s);
+      if (!indexByKey.has(k)) {
+        indexByKey.set(k, out.length);
+        out.push(s);
+        return;
+      }
+      const idx = indexByKey.get(k);
+      const existing = out[idx];
+      const existingVer = existing && existing._versionKey ? _versionByKey(existing._versionKey) : null;
+      const sameEditionSrd = !!(ver && existingVer && ver.corpus === 'srd' && existingVer.corpus === 'srd' && ver.edition === existingVer.edition);
+      if (sameEditionSrd && s.lang === uiLang && existing.lang !== uiLang) {
+        out[idx] = s;
+      }
+    });
+  });
+  return out;
+}
 
 // ──────────────────────────────────────────────────────────────────
 // API PÚBLICA — substitui v7BuildSpells
