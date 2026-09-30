@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: Plugins BYOD
 current_phase: 08
 current_phase_name: composicao-aditiva-de-pacotes
-current_plan: 1
+current_plan: 2
 status: executing
-stopped_at: Phase 8 UI-SPEC approved
-last_updated: "2026-09-28T00:14:48.178Z"
+stopped_at: Checkpoint 08-07 reprovado — gaps GAP-1..GAP-4 documentados, aguardando /gsd-plan-phase 8 --gaps
+last_updated: "2026-09-30T23:16:32.843Z"
 last_activity: 2026-09-27
 last_activity_desc: Phase 08 execution started
 progress:
   total_phases: 8
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 43
-  completed_plans: 36
+  completed_plans: 43
 ---
 
 # Project State
@@ -29,9 +29,9 @@ See: .planning/PROJECT.md (updated 2026-07-17)
 ## Current Position
 
 Phase: 08 (composicao-aditiva-de-pacotes) — EXECUTING
-Current Plan: 1
+Current Plan: 2
 Total Plans in Phase: 7
-Status: Executing Phase 08
+Status: Ready to execute
 Last activity: 2026-09-27 — Phase 08 execution started
 
 Progress: [██████████] 100%
@@ -75,6 +75,7 @@ Progress: [██████████] 100%
 | Phase 07 P04 | 15min | 3 tasks | 8 files |
 | Phase 07 P05 | 25min | 2 tasks | 0 files |
 | Phase 06 P06 | ~15min | 2 tasks | 3 files |
+| Phase 08 P07 | ~15min (continuação; Task 1 rodou em sessão anterior) | 2 de 3 (Task 3 não executada por gate próprio) tasks | 0 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,8 @@ Decisions are logged in PROJECT.md Key Decisions table. Four decisions locked fo
 - [Phase ?]: [Rule 1 - Phase 07-05] mdTableToHtml empilha tabela de atributo de criatura (>8 celulas/linha) em 4 colunas - achado de overflow (450px em painel de 350px) no checkpoint humano D-15, corrigido no mesmo commit com gate reforcado
 - [Phase ?]: [Phase 06-06] Checkpoint humano aprovado: os 4 criterios de sucesso do ROADMAP (MIGR-01/02/03) confirmados via 06-UAT.md 7/7; banner reaprovado pelo usuario apos ajuste visual do botao Entendi (45c6570)
 - [Phase ?]: [Phase 06-06] Fase 6 encerrada (7/7 plans); todo srd-pack-nomes-slug-e-markdown-cru fechado (todos/completed/), review-05-warnings WR-01 marcada resolvida (todo continua pending por WR-02 e demais)
+- [Phase ?]: Checkpoint 08-07 (Fase 8) reprovado: item 8 (menu de pacotes) falhou, 8/10 itens do roteiro ficaram sem verificação visual, item 5 passou parcialmente. 4 gaps (GAP-1..GAP-4) abertos para /gsd-plan-phase 8 --gaps.
+- [Phase ?]: Todo dobrado i18n-toast-versao-e-pluralizacao NÃO foi movido para completed — seu gate (itens 4 e 8 do checkpoint 08-07) não foi satisfeito.
 
 ### Pending Todos
 
@@ -112,6 +115,7 @@ None yet. `.planning/codebase/CONCERNS.md` holds candidate future maintenance it
 - Research flags Phase 6 (Decommissioning & Migration) as needing a deeper pass during planning: the migration-detection logic for existing `localStorage` character data is novel to this codebase (no prior versioned-migration pattern to copy).
 - Research flags Phase 3 as needing a concrete file-size cap decided during planning (no byte threshold proposed yet) and a scoping call on whether to add a CSP as defense-in-depth alongside DOMPurify.
 - No automated frontend test suite exists — all phase verification will be manual browser QA, consistent with the rest of the project.
+- Fase 8 bloqueada até resolver GAP-1..GAP-4 (checkpoint 08-07 reprovado): rodar /gsd-plan-phase 8 --gaps antes de considerar a fase 8 encerrada. PKG-06 já está marcado [x] Complete em REQUIREMENTS.md mas GAP-3 contradiz seu texto vigente ('nunca URL externa').
 
 ### Roadmap Evolution
 
@@ -134,6 +138,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-27T20:59:15.206Z
-Stopped at: Phase 8 UI-SPEC approved
-Resume file: .planning/phases/08-composicao-aditiva-de-pacotes/08-UI-SPEC.md
+Last session: 2026-09-30T23:16:32.830Z
+Stopped at: Checkpoint 08-07 reprovado — gaps GAP-1..GAP-4 documentados, aguardando /gsd-plan-phase 8 --gaps
+Resume file: None
