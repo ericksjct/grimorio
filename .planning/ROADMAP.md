@@ -335,16 +335,19 @@ Plans:
 **Wave 6** *(gap closure — checkpoint 08-07 reprovado: GAP-1..GAP-4; o roteiro de 10 itens é refeito no 08-12)*
 
 - [ ] 08-08-PLAN.md — Wave 6: emendas datadas E-01..E-05 no `08-CONTEXT.md` (import sem prompt, seleção com prompt por decisão do usuário, `meta.image` https, origem da magia, copy de imagem) e PKG-06/MGMT-07 reescritos e `Pending` (MGMT-07, PKG-06)
-- [ ] 08-09-PLAN.md — Wave 6: GAP-1 — magia sem `source` herda o nome do pacote em `adaptSpell` (ponto único), FONTE do detalhe sem separador órfão (MGMT-06)
-- [ ] 08-10-PLAN.md — Wave 6: GAP-3 + GAP-4 — allowlist única `IMAGE_SRC` (`data:` raster ≤ 200 KB ou `https://`), `<img>` sem referrer com fallback ao placeholder, docs com aviso de privacidade, mensagens de imagem reescritas (PKG-06, MGMT-09)
 
-**Wave 7** *(blocked on Wave 6 completion — compartilha `pack-import.jsx`/`i18n.jsx` com o 08-10)*
+**Wave 7** *(blocked on Wave 6 completion — o registro das decisões entra antes do código que as implementa)*
 
-- [ ] 08-11-PLAN.md — Wave 7: GAP-2 — import renomeia slug em colisão sozinho e avisa (toast + tela de sucesso), seleção mantém o prompt, código do prompt no import removido, `sw.js` `grimorio-v6` (MGMT-07)
+- [ ] 08-09-PLAN.md — Wave 7: GAP-1 — magia sem `source` herda o nome do pacote em `adaptSpell` (ponto único), FONTE do detalhe sem separador órfão (MGMT-06)
+- [ ] 08-10-PLAN.md — Wave 7: GAP-3 + GAP-4 — allowlist única `IMAGE_SRC` (`data:` raster ≤ 200 KB ou `https://`), `<img>` sem referrer com fallback ao placeholder, docs com aviso de privacidade, mensagens de imagem reescritas (PKG-06, MGMT-09)
 
-**Wave 8** *(blocked on Wave 7 completion)*
+**Wave 8** *(blocked on Wave 7 completion — compartilha `pack-import.jsx`/`i18n.jsx` com o 08-10)*
 
-- [ ] 08-12-PLAN.md — Wave 8: checkpoint humano refeito (10 itens ajustados aos gaps, cobrindo os UNVERIFIED 1, 2, 3, 4, 6, 7, 9, 10); fecha o todo dobrado só se itens 4 e 8 passarem e marca só os requisitos aprovados (MGMT-06..09, PKG-06, SRD-05, MIGR-04)
+- [ ] 08-11-PLAN.md — Wave 8: GAP-2 — import renomeia slug em colisão sozinho e avisa (toast + tela de sucesso), seleção mantém o prompt, código do prompt no import removido, `sw.js` `grimorio-v6` (MGMT-07)
+
+**Wave 9** *(blocked on Wave 8 completion)*
+
+- [ ] 08-12-PLAN.md — Wave 9: checkpoint humano refeito (10 itens ajustados aos gaps, cobrindo os UNVERIFIED 1, 2, 3, 4, 6, 7, 9, 10); fecha o todo dobrado só se itens 4 e 8 passarem e marca só os requisitos aprovados (MGMT-06..09, PKG-06, SRD-05, MIGR-04)
 
 ## Planning Routes (resumo)
 
