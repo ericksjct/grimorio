@@ -60,6 +60,19 @@ created: 2026-09-27
 | 08-07-T1 | 08-07 | 4 | todos | T-08-31 | nada de artefato de QA no repo | suite + fumaça playwright (temp) | `npm test` | ✅ | ⬜ pending |
 | 08-07-T2 | 08-07 | 4 | todos | T-08-32 | veredito humano por item | manual (checkpoint) | — | n/a | ⬜ pending |
 | 08-07-T3 | 08-07 | 4 | — | — | todo dobrado fechado | node check | `node -e` (ver plano) | n/a | ⬜ pending |
+| 08-08-T1 | 08-08 | 6 | MGMT-07, PKG-06 | T-08-33 | emendas anexadas, original intacto | node check | `node -e` (ver plano) | n/a | ⬜ pending |
+| 08-08-T2 | 08-08 | 6 | MGMT-07, PKG-06 | — | PKG-06/MGMT-07 revisados e Pending | node check | `node -e` (ver plano) | n/a | ⬜ pending |
+| 08-09-T1 | 08-09 | 6 | MGMT-06 | T-08-34 | fonte = nome do pacote só na ausência | node proof (vm) | `pwsh -NoProfile -File scripts/check-pack-composition.tests.ps1` | ✅ (estendido) | ⬜ pending |
+| 08-09-T2 | 08-09 | 6 | MGMT-06 | — | FONTE sem separador órfão | static + suite | `pwsh -NoProfile -File scripts/check-pack-composition.tests.ps1` + `npm test` | ✅ (estendido) | ⬜ pending |
+| 08-10-T1 | 08-10 | 6 | PKG-06 | T-08-36, T-08-39, T-08-42 | allowlist única `IMAGE_SRC` no import, no render e no schema | node proof (validatePack + paridade schema) | `pwsh -NoProfile -File scripts/check-pack-validator.tests.ps1` + `check-pack-menu` | ✅ (realinhados) | ⬜ pending |
+| 08-10-T2 | 08-10 | 6 | PKG-06 | T-08-37, T-08-38, T-08-40 | `<img>` no-referrer + fallback; CSP sem img-src; docs de privacidade | static | `pwsh -NoProfile -File scripts/check-pack-menu.tests.ps1` + `check-pack-format` + `check-csp` | ✅ (estendidos) | ⬜ pending |
+| 08-10-T3 | 08-10 | 6 | MGMT-09, PKG-06 | — | mensagens de imagem claras, PT/EN | node proof (vm i18n) | `pwsh -NoProfile -File scripts/check-i18n-pack-menu.tests.ps1` + `npm test` | ✅ (estendido) | ⬜ pending |
+| 08-11-T1 | 08-11 | 7 | MGMT-07 | T-08-44, T-08-45, T-08-46 | auto-renomeação só do pack que entra, falha fechada | node proof (funil com stubs) | `pwsh -NoProfile -File scripts/check-slug-rename.tests.ps1` + `check-pack-import` | ✅ (realinhados) | ⬜ pending |
+| 08-11-T2 | 08-11 | 7 | MGMT-07 | T-08-43, T-08-47 | aviso de renomeação no idioma da interface | node proof (`_renamedNotice` + i18n) | `pwsh -NoProfile -File scripts/check-pack-import-dialog.tests.ps1` + `check-i18n-pack-menu` | ✅ (realinhados) | ⬜ pending |
+| 08-11-T3 | 08-11 | 7 | MGMT-07 | T-08-48 | prompt só na seleção; SW v6 | static + suite | `pwsh -NoProfile -File scripts/check-slug-rename.tests.ps1` + `check-pack-wiring` + `npm test` | ✅ (realinhados) | ⬜ pending |
+| 08-12-T1 | 08-12 | 8 | todos | T-08-49 | nada de artefato de QA no repo | suite + fumaça playwright (temp) | `npm test` | ✅ | ⬜ pending |
+| 08-12-T2 | 08-12 | 8 | todos | T-08-50 | veredito humano por item (refeito) | manual (checkpoint) | — | n/a | ⬜ pending |
+| 08-12-T3 | 08-12 | 8 | todos | T-08-50 | todo e requisitos só com aprovação | node check | `node -e` (ver plano) | n/a | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -89,6 +102,7 @@ primeira tarefa que o usa e fica GREEN na mesma tarefa (ou na seguinte do mesmo 
 | Grid shows union with per-spell language (`lang`) and `src` footer | MGMT-06 (D-01, D-06, D-20) | Rendered output across languages | 08-07 checkpoint items 1-3 |
 | Empty selection keeps grid full + toast in UI language | MGMT-08 (D-04) | Toast + grid state | 08-07 checkpoint item 4 |
 | Saved `versionKey` and `?v=a,b` open the right selection | MIGR-04 (D-23, D-24) | Boot-time behavior on a real profile | 08-07 checkpoint item 9 |
+| Gap re-verification (08-07 NOT APPROVED): origin in card/FONTE, import auto-rename + notice, selection prompt, https image + no Referer + offline fallback, new image messages, `grimorio-v6` | MGMT-06..09, PKG-06, SRD-05, MIGR-04 (E-01..E-05) | Rendered output, network headers, offline behavior | 08-12 checkpoint items 1-10 |
 
 ---
 
