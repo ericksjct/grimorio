@@ -220,6 +220,21 @@ if ($hifi -notlike '*packSpellIndex*') {
   throw "MGMT-04/D-09: v10-hifi.jsx's spell detail does not consume window.packSpellIndex() for the duplicate note."
 }
 
+# ── 21b. PackThumb — imagem sem referrer, com fallback ao marcador (E-03) ──
+
+$thumbMatch = [regex]::Match($manager, 'function PackThumb\([\s\S]*?\r?\n\}')
+if (-not $thumbMatch.Success) {
+  throw "Could not locate PackThumb's body in pack-manager.jsx."
+}
+foreach ($needle in @('referrerPolicy="no-referrer"', 'onError=', 'setFailedSrc')) {
+  if ($thumbMatch.Value -notlike "*$needle*") {
+    throw "E-03: PackThumb must contain $needle - a remote meta.image must load without Referer and fall back to the colored marker (D-19) when it fails."
+  }
+}
+if ($manager -match 'backgroundImage' -or $manager -match 'url\(') {
+  throw 'E-03: pack-manager.jsx must never use a CSS background image / url() - the card image can only come out as an <img> (referrerPolicy + onError fallback).'
+}
+
 # ── 22. Sem sink novo de HTML bruto (contagem travada em 5) ──
 # planner-discipline-allow: dangerouslySetInnerHTML
 

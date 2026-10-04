@@ -69,7 +69,10 @@ foreach ($needle in @(
   'spellbook-ui-prefs',
   'overflow-x: auto',
   'srd-reserved-slugs.json',
-  'id="pd-reserved"'
+  'id="pd-reserved"',
+  'no-referrer',
+  'endereço IP',
+  'IP address'
 )) {
   if ($docs -notlike "*$needle*") {
     throw "pack-docs.html is missing required content: $needle"

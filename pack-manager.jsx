@@ -286,14 +286,27 @@ function _removalImpact(versionKey, index) {
 // Miniatura do pacote (D-17/D-19): imagem revalidada por _safeImage, senão um
 // marcador com a inicial do título sobre a cor de hash do pacote. Nunca tinge
 // nada fora do menu — a grade principal não consome _packColorIndex.
+// E-03: a imagem pode ser URL https://. Sem Referer (referrerPolicy) e, se não
+// carregar (offline, 404, host bloqueado), cai no marcador do D-19 — nunca o
+// ícone de imagem quebrada. failedSrc guarda a src que falhou: comparar com
+// `safe` faz uma imagem nova ser tentada de novo sem efeito colateral. A
+// imagem nunca vira fundo CSS.
 function PackThumb({ row, size }) {
+  const [failedSrc, setFailedSrc] = React.useState(null);
   const safe = _safeImage(row.image);
   const boxStyle = {
     width: size, height: size, flexShrink: 0,
     borderRadius: 8, border: '1px solid var(--surface1)',
   };
-  if (safe) {
-    return <img src={safe} alt="" width={size} height={size} style={{ ...boxStyle, objectFit: 'cover' }} />;
+  if (safe && failedSrc !== safe) {
+    return (
+      <img
+        src={safe} alt="" width={size} height={size}
+        referrerPolicy="no-referrer"
+        onError={() => setFailedSrc(safe)}
+        style={{ ...boxStyle, objectFit: 'cover' }}
+      />
+    );
   }
   const initial = String(row.name || '?').trim().charAt(0).toUpperCase() || '?';
   return (

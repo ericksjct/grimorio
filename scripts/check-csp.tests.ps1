@@ -47,6 +47,14 @@ foreach ($name in $policies.Keys) {
   }
 }
 
+# 4b. Sem img-src - restringir imagens quebraria meta.image https:// (GAP-3,
+# E-03): o cartao do menu carrega a URL escolhida pelo autor do pacote.
+foreach ($name in $policies.Keys) {
+  if ($policies[$name] -like '*img-src*') {
+    throw "$name CSP declares img-src - meta.image accepts https:// URLs (GAP-3, E-03) that the pack card loads, restricting img-src would break them."
+  }
+}
+
 # 5. Scripts existentes intactos - D-10 proibe remover o Babel standalone para
 # acomodar a CSP.
 foreach ($needle in @('purify.min.js', 'babel.min.js', 'react.production.min.js', 'react-dom.production.min.js', 'pack-import.jsx', 'pack-import-dialog.jsx')) {
