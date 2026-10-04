@@ -20,7 +20,7 @@
 // aconteceu ao regenerar srd-2014-en.json com as listas de classe (v2 → v3).
 // A lista de slugs reservados (srd-reserved-slugs.json) também é pré-cacheada —
 // o import a exige pra validar slugs offline.
-const CACHE_VERSION = 'grimorio-v5';
+const CACHE_VERSION = 'grimorio-v6';
 
 // Extensões do app shell (código que muda a cada deploy) → network-first.
 const SHELL_RE = /\.(html|css|jsx)$/;

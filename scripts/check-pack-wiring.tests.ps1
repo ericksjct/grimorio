@@ -81,14 +81,16 @@ if ($sw -notlike "*$purifyUrl*") {
   throw "sw.js does not contain the exact DOMPurify URL from index.html. index.html: $purifyUrl"
 }
 
-# 6. CACHE_VERSION: pós-08-06 o piso esperado é grimorio-v5 (o bump é
+# 6. CACHE_VERSION: pós-08-11 o piso esperado é grimorio-v6 (o bump é
 #    obrigatorio ali, RESEARCH Pitfall 2 - mudar conteudo de arquivo ja
-#    pre-cacheado exige apagar o cache antigo).
+#    pre-cacheado exige apagar o cache antigo; os gaps 08-09..08-11 mudaram
+#    pack-import/pack-manager/dialogos/i18n/index.html e sem o bump o cache v5
+#    serviria o prompt e o validador antigos offline).
 if ($sw -notmatch "const CACHE_VERSION = 'grimorio-v(\d+)';") {
   throw "sw.js nao declara um CACHE_VERSION no formato 'grimorio-vN'."
 }
-if ([int]$Matches[1] -lt 5) {
-  throw "sw.js CACHE_VERSION e 'grimorio-v$($Matches[1])' - o bump da fase 08-06 deveria ja ter acontecido."
+if ([int]$Matches[1] -lt 6) {
+  throw "sw.js CACHE_VERSION e 'grimorio-v$($Matches[1])' - o bump dos gaps 08-09..08-11 deveria ja ter acontecido (piso grimorio-v6)."
 }
 
 # 7. Pacotes SRD agora obrigatorios no PRECACHE (Fase 4, SRD-03).

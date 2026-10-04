@@ -109,6 +109,14 @@ if (Test-Path -LiteralPath $dialogModulePath) {
   if ($idxEditor -lt 0 -or $idxRename -lt 0 -or $idxManager -lt 0 -or -not ($idxEditor -lt $idxRename -and $idxRename -lt $idxManager)) {
     throw 'index.html must load pack-rename-dialog.jsx after v11-character-editor.jsx and before pack-manager.jsx (uses window.useDialogA11y/peek*; PackManagerRoot mounts PackRenameDialog).'
   }
+  # E-02: so a selecao usa o prompt - o formulario fica interno ao arquivo.
+  $assignMatch = [regex]::Match($dialogModule, 'Object\.assign\(window,\s*\{([\s\S]*?)\}\);')
+  if (-not $assignMatch.Success) { throw 'Could not locate Object.assign(window, {...}) in pack-rename-dialog.jsx.' }
+  $exposedNames = ($assignMatch.Groups[1].Value -split ',') | ForEach-Object { $_.Trim() } | Where-Object { $_ } | Sort-Object
+  $expectedNames = @('PackRenameDialog', 'renameImpact', 'renameInstalledPackSlugs') | Sort-Object
+  if (($exposedNames -join '|') -ne ($expectedNames -join '|')) {
+    throw "pack-rename-dialog.jsx must expose exactly PackRenameDialog, renameInstalledPackSlugs and renameImpact on window (E-02); found: $($exposedNames -join ', ')"
+  }
 }
 
 # ── Prova de execução real (Node) — pack-import.jsx inteiro (sem JSX) ──

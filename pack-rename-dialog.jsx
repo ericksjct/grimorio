@@ -1,11 +1,14 @@
 // Pack Rename Dialog — prompt reutilizável de renomear slugs em conflito
-// (Fase 8, D-09..D-14). Usado pelo import (pack-import-dialog.jsx, plano
-// 08-04) e pela seleção do menu de pacotes (plano 08-05).
+// (Fase 8, D-09..D-14). Usado só pela seleção do menu de pacotes (plano 08-05,
+// E-02): renomear pack já instalado exige o prompt e a confirmação do usuário.
+// O import não usa este módulo — resolve colisão sozinho no funil de
+// pack-import.jsx e só avisa o que renomeou (E-01).
 //
 // Este módulo possui: `PackRenameForm` (formulário — linhas de conflito,
 // sugestão, validação ao vivo, barra de ação), `PackRenameDialog` (shell modal
 // que envolve o formulário com cabeçalho, no mesmo padrão de
-// pack-import-dialog.jsx), `renameInstalledPackSlugs` (regrava um pack já
+// pack-import-dialog.jsx; o formulário é interno ao arquivo, não vai para
+// `window`), `renameInstalledPackSlugs` (regrava um pack já
 // instalado com os slugs renomeados) e `renameImpact` (contagem só-leitura de
 // quantas preparadas/favoritas apontam pros slugs antigos).
 //
@@ -19,8 +22,8 @@
 //
 // Uso: incluir este arquivo no HTML depois de v11-character-editor.jsx (usa
 // window.useDialogA11y e os acessores só-leitura de personagem/favoritas
-// expostos por ele) e antes de pack-import-dialog.jsx (que monta
-// PackRenameForm no lugar do próprio corpo/rodapé quando há conflito).
+// expostos por ele) e antes de pack-manager.jsx (cujo PackManagerRoot monta
+// window.PackRenameDialog).
 
 // ──────────────────────────────────────────────────────────────────
 // IMPACTO (só-leitura) — quantas preparadas/favoritas apontam pro slug antigo
@@ -287,7 +290,6 @@ function PackRenameDialog({ lang, dark, theme, open, rows, reservedKeys, takenKe
 // EXPOSIÇÃO
 // ──────────────────────────────────────────────────────────────────
 Object.assign(window, {
-  PackRenameForm,
   PackRenameDialog,
   renameInstalledPackSlugs,
   renameImpact,

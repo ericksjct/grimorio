@@ -121,9 +121,9 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
      pack-import.jsx needs window.pluginStore and the DOMPurify script above, so
      it loads right after the plugin store script; pack-rename-dialog.jsx (Fase
      8) uses window.useDialogA11y and the peek*() accessors from the v11
-     editor, so it loads right after it; pack-import-dialog.jsx wires
-     window.PackRenameForm into its own conflict flow, so it loads right after
-     pack-rename-dialog.jsx.
+     editor, so it loads right after it, and exposes window.PackRenameDialog
+     for PackManagerRoot in pack-manager.jsx (the import dialog does not use
+     it: import auto-renames and only shows a notice).
      The transition-banner module (06-04) consumes window.__openPackManager
      (exposed above) and window.peekBookmarks (exposed by the v11 editor), so it
      loads right after the pack manager script and before the hi-fi shell. -->
