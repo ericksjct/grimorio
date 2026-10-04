@@ -13,7 +13,7 @@
 - [x] **PKG-03**: Usuário pode instalar um pacote a partir de uma URL, com a limitação de CORS explicada na própria UI (hosts compatíveis: raw.githubusercontent, Gist, jsDelivr)
 - [x] **PKG-04**: Import valida o pacote antes de gravar: conformidade com o schema, JSON malformado, tamanho máximo, bloqueio de chaves `__proto__`/`constructor`/`prototype`, unicidade do `source` contra os packs já instalados
 - [x] **PKG-05**: Import sanitiza o HTML das descrições (DOMPurify via CDN+SRI, whitelist explícita de tags) — nenhum conteúdo não-sanitizado chega aos 4 render sinks (`dangerouslySetInnerHTML`) existentes
-- [x] **PKG-06**: `meta.image` é campo opcional do schema de pack, aceito só como `data:` URI de imagem raster (PNG/JPEG/WebP/GIF) de até 200 KB — nunca URL externa; o import valida formato e tamanho e rejeita com mensagem própria antes de qualquer gravação
+- [ ] **PKG-06**: `meta.image` é campo opcional do schema de pack, aceito como `data:` URI de imagem raster (PNG/JPEG/WebP/GIF) de até 200 KB ou como URL `https://` absoluta de até 2048 caracteres; o import valida formato e tamanho sem buscar a URL e rejeita, antes de qualquer gravação, com mensagem própria em linguagem simples e no idioma da interface dizendo o que é aceito; a imagem só é exibida por `<img>`, sem enviar referrer, e nunca por `http://` ou outro esquema; imagem externa que não carrega (offline, 404, host bloqueado) cai no placeholder gerado
 
 ### STOR — Armazenamento
 
@@ -29,7 +29,7 @@
 - [x] **MGMT-04**: Duplicatas entre pacotes são nota informativa ("2 versões de Bola de Fogo: SRD, MeuPack"), não conflito bloqueante — identidade de magia é `(source, name)`
 - [x] **MGMT-05**: Estado vazio (zero pacotes instalados) explica o que é um pacote e aponta para o import
 - [ ] **MGMT-06**: Usuário pode marcar quantos pacotes quiser (SRD embutidos e homebrew) ao mesmo tempo; a grade mostra a união das magias de todos os marcados, cada magia no idioma do seu pacote, sem prioridade nem ocultação silenciosa entre homebrews
-- [ ] **MGMT-07**: O slug (`name`) de magia é identidade única entre os pacotes selecionados; o import (contra os slugs reservados do SRD e os pacotes instalados) e a seleção (contra os pacotes marcados) detectam colisão e abrem um prompt de renomeação do pacote que entra — cancelar aborta sem gravar nem marcar, e nenhuma preparada/favorita é reescrita; a lista de slugs reservados é publicada (JSON gerado + `pack-docs.html`) e consultável no menu
+- [ ] **MGMT-07**: O slug (`name`) de magia é identidade única entre os pacotes selecionados; o import detecta colisão contra os slugs reservados do SRD e os pacotes instalados, renomeia automaticamente os slugs conflitantes do pacote que entra com o sufixo do pack (`slug-<pack>`, `-2`/`-3` se ocupado), instala sem prompt e avisa no idioma da interface (toast e tela de sucesso) quais slugs foram renomeados; a seleção detecta colisão contra os pacotes marcados e abre um prompt de renomeação do pacote que entra — cancelar aborta sem marcar; nenhuma preparada/favorita é reescrita; o export devolve o pacote renomeado; a lista de slugs reservados é publicada (JSON gerado + `pack-docs.html`) e consultável no menu
 - [ ] **MGMT-08**: Seleção vazia é permitida no menu; com ela a grade mostra o pacote padrão (SRD 5.2 no idioma do navegador) e nunca fica vazia, e um aviso no idioma da interface explica a troca
 - [ ] **MGMT-09**: Um menu de pacotes único — cartões com imagem, título e descrição derivada, seleção por checkbox, import, remoção, licença/atribuição e seção de slugs reservados — substitui o seletor de versão e absorve o gerenciador de pacotes, aberto por um chip que mostra o primeiro pacote + contagem
 
@@ -44,6 +44,7 @@
 
 *SRD-01 reescrito em 2026-07 pela decisão D-05 da Fase 3 — ver `.planning/phases/03-srd-pack-import-pipeline/03-CONTEXT.md`.*
 *SRD-04 promovido de Future Requirements (v2.x) em 2026-09-26 — a fonte deixou de ser tradução própria e passou a ser a tradução CC-BY do Heróis Anônimos recortada ao SRD 5.2; ver .planning/phases/07-traducao-srd-ptbr/07-CONTEXT.md.*
+*PKG-06 e MGMT-07 revisados em 2026-09-30 depois do checkpoint 08-07 (GAP-2/GAP-3) — ver emendas E-01..E-03 em `.planning/phases/08-composicao-aditiva-de-pacotes/08-CONTEXT.md`; os dois ficam Pending até o checkpoint 08-12.*
 
 ### MIGR — Descomissionamento
 
@@ -109,7 +110,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MGMT-07 | Phase 8 | Pending |
 | MGMT-08 | Phase 8 | Pending |
 | MGMT-09 | Phase 8 | Pending |
-| PKG-06 | Phase 8 | Complete |
+| PKG-06 | Phase 8 | Pending |
 | SRD-05 | Phase 8 | Pending |
 | MIGR-04 | Phase 8 | Pending |
 
