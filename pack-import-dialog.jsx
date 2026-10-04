@@ -89,22 +89,19 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
 
   const themeClass = `hifi ${dark ? 'hifi-dark' : 'hifi-light'}${theme && theme !== 'catppuccin' ? ' hifi-theme-' + theme : ''}`;
 
-  function switchMode(next) {
-    if (busy) return;
-    setMode(next);
-    setError('');
-    if (next === 'file') setUrl('');
-    else setFile(null);
-  }
-
+  // Arquivo e URL aparecem juntos; o último que o usuário mexeu é o que instala
+  // (os dois são exclusivos: escolher um limpa o outro).
   function onFileChange(e) {
-    setFile((e.target.files && e.target.files[0]) || null);
-    setError('');
+    const f = (e.target.files && e.target.files[0]) || null;
+    setFile(f);
+    if (f) { setMode(file); setUrl(); }
+    setError();
   }
 
   function onUrlChange(e) {
     setUrl(e.target.value);
-    setError('');
+    if (e.target.value) { setMode(url); setFile(null); }
+    setError();
   }
 
   async function handleSubmit() {
@@ -227,60 +224,45 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
                 </a>.
               </p>
 
-              <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  onChange={onFileChange}
+                  disabled={busy}
+                  style={{ display: 'none' }}
+                />
                 <button
                   type="button"
-                  className={mode === 'file' ? 'hifi-btn-primary' : 'hifi-btn-secondary'}
-                  onClick={() => switchMode('file')}
+                  className="hifi-btn-secondary"
+                  onClick={() => fileInputRef.current?.click()}
                   disabled={busy}
-                >{tt(lang, 'import.modeFile')}</button>
-                <button
-                  type="button"
-                  className={mode === 'url' ? 'hifi-btn-primary' : 'hifi-btn-secondary'}
-                  onClick={() => switchMode('url')}
-                  disabled={busy}
-                >{tt(lang, 'import.modeUrl')}</button>
+                >{tt(lang, 'import.chooseFile')}</button>
+                {file && (
+                  <div
+                    className="hifi-mono"
+                    title={file.name}
+                    style={{ marginTop: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                  >{file.name}</div>
+                )}
               </div>
 
-              {mode === 'file' ? (
-                <div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="application/json,.json"
-                    onChange={onFileChange}
-                    disabled={busy}
-                    style={{ display: 'none' }}
-                  />
-                  <button
-                    type="button"
-                    className="hifi-btn-secondary"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={busy}
-                  >{tt(lang, 'import.chooseFile')}</button>
-                  {file && (
-                    <div
-                      className="hifi-mono"
-                      title={file.name}
-                      style={{ marginTop: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                    >{file.name}</div>
-                  )}
-                </div>
-              ) : (
-                <div>
-                  <label className="hifi-section-label" htmlFor="pack-import-url">{tt(lang, 'import.urlLabel')}</label>
-                  <input
-                    id="pack-import-url"
-                    className="hifi-input"
-                    type="url"
-                    value={url}
-                    onChange={onUrlChange}
-                    placeholder={tt(lang, 'import.urlPlaceholder')}
-                    disabled={busy}
-                    style={{ display: 'block', width: '100%', marginTop: 4 }}
-                  />
-                </div>
-              )}
+              <div className="hifi-section-label" style={{ margin: '16px 0', textAlign: 'center' }}>{tt(lang, 'import.or')}</div>
+
+              <div>
+                <label className="hifi-section-label" htmlFor="pack-import-url">{tt(lang, 'import.urlLabel')}</label>
+                <input
+                  id="pack-import-url"
+                  className="hifi-input"
+                  type="url"
+                  value={url}
+                  onChange={onUrlChange}
+                  placeholder={tt(lang, 'import.urlPlaceholder')}
+                  disabled={busy}
+                  style={{ display: 'block', width: '100%', marginTop: 4 }}
+                />
+              </div>
 
               {error && (
                 <div style={{ marginTop: 8, color: 'var(--red)', fontSize: 12, lineHeight: 1.4 }}>{error}</div>

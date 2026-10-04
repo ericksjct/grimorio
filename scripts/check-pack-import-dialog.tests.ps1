@@ -92,7 +92,7 @@ foreach ($key in $packErrKeys) {
 
 $importKeys = @(
   'import.open', 'import.title', 'import.close', 'import.emptyHeading', 'import.emptyBody',
-  'import.docsPrefix', 'import.docsLink', 'import.modeFile', 'import.modeUrl', 'import.chooseFile',
+  'import.docsPrefix', 'import.docsLink', 'import.or', 'import.chooseFile',
   'import.urlLabel', 'import.urlPlaceholder', 'import.sizeHint', 'import.installPack',
   'import.installing', 'import.success', 'import.successCount', 'import.sanitizedNote',
   'import.renamed.one', 'import.renamed.other', 'import.renamedMore'
@@ -127,10 +127,10 @@ if ($offenders.Count -gt 0) {
   throw "pack-import-dialog.jsx has visible text outside tt(...): $($offenders -join ' | ')"
 }
 
-# ── Exclusividade de modo ──
+# ── Exclusividade de modo (arquivo OU url, sem botoes de alternar) ──
 
-if ($dialog -notlike '*import.modeFile*' -or $dialog -notlike '*import.modeUrl*') {
-  throw 'pack-import-dialog.jsx is missing the file/URL mode toggle strings.'
+if ($dialog -match 'import.mode(File|Url)') {
+  throw 'pack-import-dialog.jsx still has the file/URL toggle strings - both options are shown at once now.'
 }
 if ($dialog -notmatch 'setMode\(') {
   throw 'pack-import-dialog.jsx has no mode-state assignment (setMode) - file/URL mode exclusivity requires one.'
