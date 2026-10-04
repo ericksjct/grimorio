@@ -240,6 +240,19 @@ None — discussion stayed within phase scope.
 
 </deferred>
 
+<amendments>
+## Emendas pós-checkpoint 08-07 (2026-09-30)
+
+As decisões D-01..D-24 acima ficam como estavam. As emendas abaixo valem no lugar das partes que citam; o que elas não citam continua valendo.
+
+- **E-01 (GAP-2 — substitui, SÓ no caminho de import, a frase "abre um prompt na UI para renomear" de D-09, o 1º item de D-10, D-11 e D-12):** no import, slug em colisão (reservado do SRD ou de pack instalado) é renomeado automaticamente com `suggestSlug` (`<slug>-<identificador do pack>`, `-2`/`-3` se ocupado, sempre `SLUG_PATTERN`). O pack é instalado sem prompt e o usuário vê, no idioma da interface, um toast e uma linha na tela de sucesso com as renomeações (até 3, depois "e mais N"). D-08 (identidade por slug), D-13 (nenhuma escrita em `prepared`/`bookmarked`/`hifi_bookmarks_v1`) e D-14 (export devolve o renomeado) continuam valendo. O aviso de impacto do D-13 sai do import: o pacote que entra ainda não está instalado, então renomear os slugs dele não deixa nenhuma preparada/favorita órfã nova; órfãs que já existiam continuam na seção de órfãs (F6 D-10/D-11).
+- **E-02 (decisão do usuário, 2026-09-30 — caminho de SELEÇÃO mantém o prompt):** `pack-manager._selectionConflicts` → `PackRenameDialog` fica como está; D-10 2º item, A-14 (o SRD nunca é renomeado), D-11 (sugestão e validação ao vivo), D-12 (cancelar não marca) e D-13 (aviso de impacto) seguem valendo ali. Motivo: o import já compara contra TODOS os instalados + reservados, então colisão na seleção só acontece com pack instalado antes da Fase 8; renomear pack já instalado pode deixar preparadas órfãs e por isso exige consentimento explícito.
+- **E-03 (GAP-3 — substitui a cláusula de imagem de D-17 e o texto "nunca URL externa" de PKG-06):** `meta.image` aceita `data:` URI raster (PNG/JPEG/WebP/GIF, base64) de até 204800 caracteres OU URL absoluta `https://` de até 2048 caracteres; `http:`, `javascript:`, protocolo relativo e qualquer outro esquema são rejeitados. Uma allowlist só, a constante `IMAGE_SRC` de `pack-import.jsx`, usada pelo validador do import e pela revalidação de render (T-08-23) — nada de segunda regex. O import não busca a URL. O cartão usa `<img>` (nunca fundo CSS) com `referrerPolicy="no-referrer"` e cai no placeholder do D-19 quando a imagem não carrega (offline, 404, host bloqueado). O `sw.js` já ignora requisição de outra origem (exceto unpkg), então imagem externa não é cacheada; a CSP não declara `img-src` e continua sem declarar. Privacidade: o host da imagem vê o IP de quem abre o menu; `pack-docs.html` documenta isso e recomenda `data:` para uso offline e privacidade.
+- **E-04 (GAP-1 — esclarece D-20):** magia sem `source` próprio herda o nome do pacote (`meta.name`, ou `meta.source` sem nome) como fonte, no ponto único de derivação (`adaptSpell`). O campo FONTE do detalhe mostra o nome completo; o rodapé do card continua com o código curto (`src`); o separador ` · ` só aparece entre partes não vazias. Efeito colateral aceito: o filtro extra "Fonte" passa a listar o código desses pacotes, como já lista o de packs com `source` por magia — não é o filtro por pacote vetado pelo D-21. Nenhum selo novo (D-20 segue).
+- **E-05 (GAP-4 — substitui a copy de `packErr.imageInvalid`/`packErr.imageTooLarge` do UI-SPEC):** a mensagem diz, em linguagem simples, que o pacote não foi instalado e o que é aceito (link `https://` ou imagem PNG/JPEG/WebP/GIF embutida de até 200 KB), com paridade PT/EN. A fonte da copy passa a ser `i18n.jsx`.
+
+</amendments>
+
 ---
 
 *Phase: 08-composicao-aditiva-de-pacotes*
