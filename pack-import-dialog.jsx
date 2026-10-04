@@ -292,13 +292,15 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
         </div>
 
         <footer style={{ flexShrink: 0, padding: 16, borderTop: '1px solid var(--surface1)' }}>
+          {/* Pós-sucesso o botão vira "Fechar": reinstalar o mesmo file/url
+              duplicaria o pack (WR-04/WR-08), então não há ação de instalar aqui. */}
           <button
             type="button"
             className="hifi-btn-primary"
-            onClick={handleSubmit}
-            disabled={submitDisabled}
+            onClick={result ? onClose : handleSubmit}
+            disabled={result ? false : submitDisabled}
             style={{ width: '100%', justifyContent: 'center' }}
-          >{busy ? tt(lang, 'import.installing') : tt(lang, 'import.installPack')}</button>
+          >{result ? tt(lang, 'import.close') : busy ? tt(lang, 'import.installing') : tt(lang, 'import.installPack')}</button>
         </footer>
       </section>
     </div>
