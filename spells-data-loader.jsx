@@ -356,7 +356,12 @@ function mdToHtml(html) {
 // ──────────────────────────────────────────────────────────────────
 // ADAPTADOR: JSON raw → formato do app
 // ──────────────────────────────────────────────────────────────────
-function adaptSpell(s, versionLang, edition, versionKey) {
+function adaptSpell(s, versionLang, edition, versionKey, packName) {
+  // GAP-1/E-04: ponto único de derivação da origem. O nome do pacote só
+  // preenche ausência de `source`, nunca troca uma fonte declarada pela magia;
+  // todos os leitores (v10-hifi.jsx) herdam a correção.
+  const source = (typeof s.source === 'string' && s.source) ? s.source
+    : (typeof packName === 'string' ? packName : '');
   const schoolKey = (s.school || '').toLowerCase();
   const schoolIdx = SCHOOL_INDEX[schoolKey];
 
@@ -430,8 +435,8 @@ function adaptSpell(s, versionLang, edition, versionKey) {
     classes: versionLang === 'ptbr' ? classesPt : classesEn,
     classesPt,
     classesEn,
-    src: SOURCE_CODE[s.source] || (s.source || '').slice(0, 4).toUpperCase().trim(),
-    sourceFull: s.source || '',
+    src: SOURCE_CODE[source] || source.slice(0, 4).toUpperCase().trim(),
+    sourceFull: source,
     // WR-05: propaga ausencia em vez de inventar uma edicao — um pack sem
     // `edition` declarada nao e "5e 2014" por padrao, e useEditionCompare ja
     // sabe se esconder quando `!cur.edition`.
@@ -451,9 +456,9 @@ function adaptSpell(s, versionLang, edition, versionKey) {
   };
 }
 
-function adaptSpells(json, versionLang, edition, versionKey) {
+function adaptSpells(json, versionLang, edition, versionKey, packName) {
   const list = Array.isArray(json) ? json : (json?.spells || []);
-  return list.map(s => adaptSpell(s, versionLang, edition, versionKey));
+  return list.map(s => adaptSpell(s, versionLang, edition, versionKey, packName));
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -641,7 +646,7 @@ async function loadVersion(key) {
       if (json && !Array.isArray(json) && typeof json.meta === 'object' && json.meta) {
         _metaCache[key] = json.meta;
       }
-      const adapted = adaptSpells(json, ver.lang, ver.edition, ver.key);
+      const adapted = adaptSpells(json, ver.lang, ver.edition, ver.key, ver.labelEn);
       // WR-03: refreshPluginVersions() pode ter removido `key` do registro
       // enquanto este load estava em voo (pack apagado no meio do fetch). Sem
       // este guard, a escrita abaixo resuscitaria no _cache uma entrada que a

@@ -23,9 +23,9 @@ foreach ($needle in @(
   }
 }
 
-$adaptSpellMatch = [regex]::Match($loader, 'function adaptSpell\(s, versionLang, edition, versionKey\)[\s\S]{0,8000}?\r?\n\}')
+$adaptSpellMatch = [regex]::Match($loader, 'function adaptSpell\(s, versionLang, edition, versionKey, packName\)[\s\S]{0,8000}?\r?\n\}')
 if (-not $adaptSpellMatch.Success) {
-  throw 'adaptSpell(s, versionLang, edition, versionKey) not found with the new 4th parameter.'
+  throw 'adaptSpell(s, versionLang, edition, versionKey, packName) not found with the 5th parameter packName (GAP-1, E-04).'
 }
 if ($adaptSpellMatch.Value -notmatch "lang:\s*versionLang === 'ptbr' \? 'ptbr' : 'en'") {
   throw "adaptSpell()'s returned object must contain lang: versionLang === 'ptbr' ? 'ptbr' : 'en' (D-06)."
@@ -34,8 +34,8 @@ if ($adaptSpellMatch.Value -notmatch "_versionKey:\s*versionKey \|\| ''") {
   throw "adaptSpell()'s returned object must contain _versionKey: versionKey || ''."
 }
 
-if (-not $loader.Contains('adaptSpells(json, ver.lang, ver.edition, ver.key)')) {
-  throw 'loadVersion() must call adaptSpells(json, ver.lang, ver.edition, ver.key) - the 4th argument (ver.key) stamps _versionKey onto every adapted spell.'
+if (-not $loader.Contains('adaptSpells(json, ver.lang, ver.edition, ver.key, ver.labelEn)')) {
+  throw 'loadVersion() must call adaptSpells(json, ver.lang, ver.edition, ver.key, ver.labelEn) - ver.key stamps _versionKey and ver.labelEn (5th argument) is the pack-name fallback for spells without a source (GAP-1, E-04).'
 }
 
 foreach ($forbidden in @('hifi_chars_v1', 'hifi_bookmarks_v1', 'persistCharacters', 'persistBookmarks')) {
@@ -194,6 +194,27 @@ function arrEq(a, b) {
   ], 'en', keyOf);
   check('union of two homebrews sharing the same slug keeps the first entry, no duplicate (A-04)',
     unionHomebrewCollision.length === 1 && unionHomebrewCollision[0]._versionKey === 'plugin-a');
+}
+
+// ── fonte: fallback para o nome do pacote (GAP-1, E-04) ──
+{
+  const { x } = makeSandbox();
+  const noSrc = { spells: [{ name: 'qa-raio-unico', level: 1, school: 'evocation', description: '<p>x</p>' }] };
+  const a = x.adaptSpells(noSrc, 'ptbr', '2024', 'plugin-qa-ptbr', 'QA PT-BR')[0];
+  check("magia sem source + packName 'QA PT-BR' -> sourceFull 'QA PT-BR' e src 'QA P'",
+    a.sourceFull === 'QA PT-BR' && a.src === 'QA P');
+
+  const srd = x.adaptSpells({ spells: [{ name: 'a', level: 1, source: 'SRD 5.2', description: 'x' }] }, 'en', '', 'k', 'Outro Pack')[0];
+  check("source declarada 'SRD 5.2' nao e trocada pelo packName", srd.sourceFull === 'SRD 5.2' && srd.src === 'SRD');
+
+  const phb = x.adaptSpells({ spells: [{ name: 'a', level: 1, source: "Player's Handbook", description: 'x' }] }, 'en', '', 'k', 'X')[0];
+  check("source Player's Handbook continua 'PHB'", phb.src === 'PHB');
+
+  const none = x.adaptSpells(noSrc, 'en', '', 'k')[0];
+  check('sem source e sem packName -> src e sourceFull vazios', none.src === '' && none.sourceFull === '');
+
+  const ctor = x.adaptSpells(noSrc, 'en', '', 'k', 'constructor')[0];
+  check("packName 'constructor' -> src 'CONS' (tabela sem prototipo)", ctor.src === 'CONS' && ctor.sourceFull === 'constructor');
 }
 
 if (failures > 0) {
