@@ -512,6 +512,11 @@
 }
 .hifi-btn-primary:hover { opacity: 0.92; box-shadow: 0 2px 4px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
 .hifi-btn-primary.active { background: var(--accent, var(--mauve)); color: var(--base); }
+.hifi-btn-primary:disabled,
+.hifi-btn-primary:disabled:hover {
+  background: var(--surface1); border-color: var(--surface1); color: var(--overlay0);
+  opacity: 1; box-shadow: none; transform: none; cursor: not-allowed;
+}
 
 .hifi-btn-secondary {
   padding: 7px 16px; border-radius: 999px;
