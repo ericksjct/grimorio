@@ -336,3 +336,20 @@ if ($useSpellVersionsMatch.Value -match '\bcurrent\b') {
 }
 
 Write-Output 'No reader of a single active version remains anywhere in the app; useSpellVersions() no longer exposes current/switchVersion.'
+
+# ── Fase 8 plano 09 (GAP-1, E-04): a linha FONTE do detalhe mostra o nome
+# completo e só junta com ' · ' as partes presentes — nunca separador órfão. ──
+$srcBlockMatch = [regex]::Match($ui, '\{/\* Source \*/\}[\s\S]*?alsoIn\.length')
+if (-not $srcBlockMatch.Success) {
+  throw 'Could not locate the {/* Source */} block of the detail panel in v10-hifi.jsx.'
+}
+foreach ($needle in @('s.sourceFull', ".filter(Boolean).join(' · ')", "'—'")) {
+  if (-not $srcBlockMatch.Value.Contains($needle)) {
+    throw "The detail FONTE block must contain $needle - only non-empty parts joined, '—' when empty (GAP-1)."
+  }
+}
+if ($ui -match '\{s\.src\}\{s\.edition \?') {
+  throw 'v10-hifi.jsx still concatenates {s.src}{s.edition ? ...} without a guard - orphan separator (GAP-1).'
+}
+
+Write-Output 'Detail FONTE line shows the full source name and never an orphan separator.'

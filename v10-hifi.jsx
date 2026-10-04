@@ -1114,8 +1114,10 @@ function HifiDetailContent({ s, lang, versionLang }) {
         <HifiSectionLabel>{tt(lang, 'spell.source')}</HifiSectionLabel>
         <div style={{ marginTop: 6, fontSize: 13, color: 'var(--subtext0)', fontStyle: 'italic' }}>
           {/* WR-05: sem edicao declarada nao inventamos "5e 2014" — um pack
-              BYOD sem `edition` é honestamente "sem edição", não uma versão. */}
-          {s.src}{s.edition ? ` · ${s.edition}` : ''}
+              BYOD sem `edition` é honestamente "sem edição", não uma versão.
+              GAP-1: o separador só aparece entre partes presentes (nome
+              completo da fonte e edição), nunca solto; vazio vira '—'. */}
+          {[s.sourceFull || s.src, s.edition].filter(Boolean).join(' · ') || '—'}
         </div>
         {alsoIn.length > 0 && (
           <div style={{ marginTop: 4, fontSize: 12, color: 'var(--subtext0)' }}>
