@@ -36,10 +36,10 @@ const MAX_PACK_BYTES = 10 * 1024 * 1024;
 const MAX_IMAGE_CHARS = 200 * 1024;
 
 // Allowlist ÚNICA de meta.image (E-03), ancorada com ^...$: data: URI raster em
-// base64 OU URL https://. SVG em data: fica de fora de propósito (pode carregar
+// base64 OU URL https. SVG em data: fica de fora de propósito (pode carregar
 // script) — mesmo raciocínio de allowlist estrita de ALLOWED_TAGS. A URL não é
 // buscada no import (só formato); o teto de 2048 caracteres da URL está na
-// própria regex (1 + 2039 depois de "https://"). Host começa por letra/dígito;
+// própria regex (1 + 2039 depois do esquema https). Host começa por letra/dígito;
 // controle, espaço, aspas, <, > e barra invertida são proibidos. O render
 // (_safeImage) e o pattern do schema usam esta mesma regra.
 const IMAGE_SRC = /^(?:data:image\/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/]+={0,2}|https:\/\/[A-Za-z0-9][^\x00-\x20\x7f"'<>\\]{0,2039})$/;
@@ -222,14 +222,14 @@ function _checkObject(path, fields, obj) {
 // Valida meta.image (D-17, PKG-06, E-03): undefined passa (compatível com todo
 // pack já publicado); o teto de 204800 caracteres vale para qualquer valor e é
 // checado ANTES da regex (T-08-11, T-08-42); depois só IMAGE_SRC (data: raster
-// ou https://) passa — http:, SVG e outros esquemas nunca chegam a <img src>.
+// ou URL https) passa — http:, SVG e outros esquemas nunca chegam a <img src>.
 function _checkImage(image) {
   if (image === undefined) return;
   if (image.length > MAX_IMAGE_CHARS) {
     _fail(PACK_ERROR_CODES.IMAGE_TOO_LARGE, `packImport.validate: meta.image excede o teto de ${MAX_IMAGE_CHARS} caracteres.`);
   }
   if (!IMAGE_SRC.test(image)) {
-    _fail(PACK_ERROR_CODES.IMAGE_INVALID, 'packImport.validate: meta.image precisa ser um data: URI raster (PNG/JPEG/WebP/GIF) em base64 ou uma URL https://.');
+    _fail(PACK_ERROR_CODES.IMAGE_INVALID, 'packImport.validate: meta.image precisa ser um data: URI raster (PNG/JPEG/WebP/GIF) em base64 ou uma URL https.');
   }
 }
 

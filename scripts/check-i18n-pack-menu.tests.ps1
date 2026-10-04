@@ -69,6 +69,7 @@ const PLACEHOLDERS = {
   'rename.impactWarning.one': ['n'],
   'rename.impactWarning.other': ['n'],
   'packErr.imageTooLarge': ['kb'],
+  'packErr.imageInvalid': ['kb'],
 };
 
 let failures = 0;
@@ -133,6 +134,17 @@ const lossWords = /perder|perdida|perdidas|lose|lost/i;
   ['rename.impactWarning.one', 'rename.impactWarning.other'].forEach((key) => {
     check(`STRINGS.${lang}['${key}'] nao usa tom de perda (perder/perdida/lose/lost)`, !lossWords.test(STRINGS[lang][key]));
   });
+});
+
+// GAP-4/E-05: mensagens de imagem em linguagem simples — dizem o que e aceito
+// (link https:// ou imagem PNG) e nunca o jargao "data: URI".
+['ptbr', 'en'].forEach((lang) => {
+  ['packErr.imageInvalid', 'packErr.imageTooLarge'].forEach((key) => {
+    const val = STRINGS[lang][key];
+    check(`STRINGS.${lang}['${key}'] cita https://`, val.includes('https://'));
+    check(`STRINGS.${lang}['${key}'] nao usa o jargao "data: URI"`, !val.includes('data: URI'));
+  });
+  check(`STRINGS.${lang}['packErr.imageInvalid'] cita PNG`, STRINGS[lang]['packErr.imageInvalid'].includes('PNG'));
 });
 
 if (failures > 0) {
