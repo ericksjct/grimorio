@@ -304,7 +304,7 @@ Plans:
 **Goal:** O usuário mantém um pacote base ativo (ex.: SRD 5.2) e empilha pacotes homebrew por cima: as magias dos pacotes empilhados SOMAM à lista da versão ativa em vez de substituí-la, com a origem de cada magia visível e sem quebrar preparadas/favoritas.
 **Requirements**: MGMT-06, MGMT-07, MGMT-08, MGMT-09, PKG-06, SRD-05, MIGR-04
 **Depends on:** Phase 7
-**Plans:** 8/12 plans executed
+**Plans:** 9/12 plans executed
 
 **Nota:** o objetivo acima foi escrito antes do discuss; o `08-CONTEXT.md` (D-01) tirou a
 ideia de "pacote base" — todo pacote marcado soma, e seleção vazia cai no pacote padrão (D-04).
@@ -338,7 +338,7 @@ Plans:
 
 **Wave 7** *(blocked on Wave 6 completion — o registro das decisões entra antes do código que as implementa)*
 
-- [ ] 08-09-PLAN.md — Wave 7: GAP-1 — magia sem `source` herda o nome do pacote em `adaptSpell` (ponto único), FONTE do detalhe sem separador órfão (MGMT-06)
+- [x] 08-09-PLAN.md — Wave 7: GAP-1 — magia sem `source` herda o nome do pacote em `adaptSpell` (ponto único), FONTE do detalhe sem separador órfão (MGMT-06)
 - [ ] 08-10-PLAN.md — Wave 7: GAP-3 + GAP-4 — allowlist única `IMAGE_SRC` (`data:` raster ≤ 200 KB ou `https://`), `<img>` sem referrer com fallback ao placeholder, docs com aviso de privacidade, mensagens de imagem reescritas (PKG-06, MGMT-09)
 
 **Wave 8** *(blocked on Wave 7 completion — compartilha `pack-import.jsx`/`i18n.jsx` com o 08-10)*
@@ -378,4 +378,4 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 5. Plugin Manager UI & Version Selector | v2.0 | 5/5 | Complete    | 2026-08-30 |
 | 6. Decommissioning & Migration | v2.0 | 7/7 | Complete    | 2026-09-27 |
 | 7. Tradução dos SRDs para pt-BR | v2.0 | 5/5 | Complete    | 2026-09-27 |
-| 8. Composição aditiva de pacotes | v2.0 | 8/12 | In Progress|  |
+| 8. Composição aditiva de pacotes | v2.0 | 9/12 | In Progress|  |

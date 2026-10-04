@@ -28,7 +28,7 @@
 - [x] **MGMT-03**: Seletor de versões enumera os pacotes instalados dinamicamente (substitui as 4 entradas fixas de `SPELL_VERSIONS`)
 - [x] **MGMT-04**: Duplicatas entre pacotes são nota informativa ("2 versões de Bola de Fogo: SRD, MeuPack"), não conflito bloqueante — identidade de magia é `(source, name)`
 - [x] **MGMT-05**: Estado vazio (zero pacotes instalados) explica o que é um pacote e aponta para o import
-- [ ] **MGMT-06**: Usuário pode marcar quantos pacotes quiser (SRD embutidos e homebrew) ao mesmo tempo; a grade mostra a união das magias de todos os marcados, cada magia no idioma do seu pacote, sem prioridade nem ocultação silenciosa entre homebrews
+- [x] **MGMT-06**: Usuário pode marcar quantos pacotes quiser (SRD embutidos e homebrew) ao mesmo tempo; a grade mostra a união das magias de todos os marcados, cada magia no idioma do seu pacote, sem prioridade nem ocultação silenciosa entre homebrews
 - [ ] **MGMT-07**: O slug (`name`) de magia é identidade única entre os pacotes selecionados; o import detecta colisão contra os slugs reservados do SRD e os pacotes instalados, renomeia automaticamente os slugs conflitantes do pacote que entra com o sufixo do pack (`slug-<pack>`, `-2`/`-3` se ocupado), instala sem prompt e avisa no idioma da interface (toast e tela de sucesso) quais slugs foram renomeados; a seleção detecta colisão contra os pacotes marcados e abre um prompt de renomeação do pacote que entra — cancelar aborta sem marcar; nenhuma preparada/favorita é reescrita; o export devolve o pacote renomeado; a lista de slugs reservados é publicada (JSON gerado + `pack-docs.html`) e consultável no menu
 - [ ] **MGMT-08**: Seleção vazia é permitida no menu; com ela a grade mostra o pacote padrão (SRD 5.2 no idioma do navegador) e nunca fica vazia, e um aviso no idioma da interface explica a troca
 - [ ] **MGMT-09**: Um menu de pacotes único — cartões com imagem, título e descrição derivada, seleção por checkbox, import, remoção, licença/atribuição e seção de slugs reservados — substitui o seletor de versão e absorve o gerenciador de pacotes, aberto por um chip que mostra o primeiro pacote + contagem
@@ -106,7 +106,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | I18N-02 | Phase 04.1 | Complete |
 | I18N-03 | Phase 04.1 | Complete |
 | SRD-04 | Phase 7 | Complete |
-| MGMT-06 | Phase 8 | Pending |
+| MGMT-06 | Phase 8 | Complete |
 | MGMT-07 | Phase 8 | Pending |
 | MGMT-08 | Phase 8 | Pending |
 | MGMT-09 | Phase 8 | Pending |

@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: Plugins BYOD
 current_phase: 08
 current_phase_name: composicao-aditiva-de-pacotes
-current_plan: 1
+current_plan: 2
 status: executing
-stopped_at: Phase 08 gap-closure plans criados (08-08..08-12, GAP-1..GAP-4 + re-checkpoint) — pronto para /gsd-execute-phase 8
-last_updated: "2026-10-04T18:38:58.043Z"
+stopped_at: Completed 08-09-PLAN.md
+last_updated: "2026-10-04T22:25:00.793Z"
 last_activity: 2026-10-04
 last_activity_desc: Phase 08 execution started
 progress:
   total_phases: 8
   completed_phases: 7
   total_plans: 48
-  completed_plans: 43
+  completed_plans: 45
 ---
 
 # Project State
@@ -29,12 +29,12 @@ See: .planning/PROJECT.md (updated 2026-07-17)
 ## Current Position
 
 Phase: 08 (composicao-aditiva-de-pacotes) — EXECUTING
-Current Plan: 1
+Current Plan: 2
 Total Plans in Phase: 12
-Status: Executing Phase 08
+Status: Ready to execute
 Last activity: 2026-10-04 — Phase 08 execution started
 
-Progress: [█████████░] 90%
+Progress: [█████████░] 94%
 
 ## Performance Metrics
 
@@ -76,6 +76,7 @@ Progress: [█████████░] 90%
 | Phase 07 P05 | 25min | 2 tasks | 0 files |
 | Phase 06 P06 | ~15min | 2 tasks | 3 files |
 | Phase 08 P07 | ~15min (continuação; Task 1 rodou em sessão anterior) | 2 de 3 (Task 3 não executada por gate próprio) tasks | 0 files |
+| Phase 08 P09 | ~10min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Four decisions locked fo
 - [Phase ?]: [Phase 06-06] Fase 6 encerrada (7/7 plans); todo srd-pack-nomes-slug-e-markdown-cru fechado (todos/completed/), review-05-warnings WR-01 marcada resolvida (todo continua pending por WR-02 e demais)
 - [Phase ?]: Checkpoint 08-07 (Fase 8) reprovado: item 8 (menu de pacotes) falhou, 8/10 itens do roteiro ficaram sem verificação visual, item 5 passou parcialmente. 4 gaps (GAP-1..GAP-4) abertos para /gsd-plan-phase 8 --gaps.
 - [Phase ?]: Todo dobrado i18n-toast-versao-e-pluralizacao NÃO foi movido para completed — seu gate (itens 4 e 8 do checkpoint 08-07) não foi satisfeito.
+- [Phase ?]: [Phase 08-09] GAP-1: fallback de fonte em adaptSpell via ver.labelEn (packName); so preenche ausencia, FONTE do detalhe mostra sourceFull sem separador orfao (E-04)
 
 ### Pending Todos
 
@@ -138,6 +140,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-01T00:50:21.287Z
-Stopped at: Phase 08 gap-closure plans criados (08-08..08-12, GAP-1..GAP-4 + re-checkpoint) — pronto para /gsd-execute-phase 8
-Resume file: .planning/phases/08-composicao-aditiva-de-pacotes/08-08-PLAN.md
+Last session: 2026-10-04T22:25:00.781Z
+Stopped at: Completed 08-09-PLAN.md
+Resume file: .planning/phases/08-composicao-aditiva-de-pacotes/08-10-PLAN.md
