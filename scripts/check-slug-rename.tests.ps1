@@ -20,8 +20,7 @@ foreach ($needle in @(
   'function applySlugRenames(',
   'function loadReservedSlugs(',
   'function slugOwnersOf(',
-  "SLUG_CONFLICT: 'slug-conflict'",
-  "CANCELLED: 'cancelled'"
+  "SLUG_CONFLICT: 'slug-conflict'"
 )) {
   if ($packImport -notlike "*$needle*") {
     throw "Missing pack-import.jsx slug-identity implementation detail: $needle"
@@ -36,6 +35,14 @@ $exposedBlock = $exposedMatch.Value
 foreach ($fn in @('SLUG_PATTERN', 'slugKey', 'detectSlugConflicts', 'suggestSlug', 'validateSlugRename', 'applySlugRenames', 'loadReservedSlugs', 'slugOwnersOf')) {
   if ($exposedBlock -notlike "*$fn*") {
     throw "window.packImport block is missing exposed slug-identity member: $fn"
+  }
+}
+
+# E-01: o import resolve colisão sozinho — nada do prompt nem de dado de
+# personagem pode sobrar em pack-import.jsx (D-13).
+foreach ($gone in @('CANCELLED', 'cancelled', 'onConflicts', 'window.adaptSpell', 'window.hifiSpellKey', 'localStorage', 'persistCharacters', 'persistBookmarks', 'hifi_chars_v1', 'hifi_bookmarks_v1')) {
+  if ($packImport -match [regex]::Escape($gone)) {
+    throw "pack-import.jsx must not contain $gone after E-01 (import auto-renames, no prompt, no character/bookmark storage)."
   }
 }
 
@@ -93,32 +100,14 @@ if (Test-Path -LiteralPath $dialogModulePath) {
     }
   }
 
-  # ── index.html: pack-rename-dialog.jsx entre v11-character-editor.jsx e pack-import-dialog.jsx ──
+  # ── index.html: pack-rename-dialog.jsx entre v11-character-editor.jsx e pack-manager.jsx ──
   $indexPath = Join-Path $repoRoot 'index.html'
   $indexHtml = Get-Content -Raw -LiteralPath $indexPath
   $idxEditor = $indexHtml.IndexOf('src="v11-character-editor.jsx"')
   $idxRename = $indexHtml.IndexOf('src="pack-rename-dialog.jsx"')
-  $idxImportDialog = $indexHtml.IndexOf('src="pack-import-dialog.jsx"')
-  if ($idxEditor -lt 0 -or $idxRename -lt 0 -or $idxImportDialog -lt 0 -or -not ($idxEditor -lt $idxRename -and $idxRename -lt $idxImportDialog)) {
-    throw 'index.html must load pack-rename-dialog.jsx after v11-character-editor.jsx and before pack-import-dialog.jsx (uses window.useDialogA11y/peek*; PackImportDialog wires PackRenameForm).'
-  }
-}
-
-# ── Task 3: pack-import-dialog.jsx integrado ao prompt ──
-
-$importDialogPath = Join-Path $repoRoot 'pack-import-dialog.jsx'
-$importDialog = Get-Content -Raw -LiteralPath $importDialogPath
-if ($importDialog -match 'onConflicts') {
-  foreach ($needle in @('onConflicts', 'window.PackRenameForm', "'cancelled'", 'window.renameImpact', 'setConflictCtx(null)')) {
-    if ($importDialog -notlike "*$needle*") {
-      throw "Missing pack-import-dialog.jsx rename-conflict wiring detail: $needle"
-    }
-  }
-  if ($importDialog -notmatch 'installFromFile\([\s\S]*?\{\s*onConflicts') {
-    throw 'pack-import-dialog.jsx must pass { onConflicts } to window.packImport.installFromFile.'
-  }
-  if ($importDialog -notmatch 'installFromUrl\([\s\S]*?\{\s*onConflicts') {
-    throw 'pack-import-dialog.jsx must pass { onConflicts } to window.packImport.installFromUrl.'
+  $idxManager = $indexHtml.IndexOf('src="pack-manager.jsx"')
+  if ($idxEditor -lt 0 -or $idxRename -lt 0 -or $idxManager -lt 0 -or -not ($idxEditor -lt $idxRename -and $idxRename -lt $idxManager)) {
+    throw 'index.html must load pack-rename-dialog.jsx after v11-character-editor.jsx and before pack-manager.jsx (uses window.useDialogA11y/peek*; PackManagerRoot mounts PackRenameDialog).'
   }
 }
 
@@ -220,75 +209,119 @@ function makeSandbox(stubs) {
   check('applySlugRenames keeps an existing displayName', withDisplay[0].displayName === 'Raio Custom');
 }
 
-// ── funil: _install via installFromFile stub-free (usa _fail interno) ──
+// ── funil: _install via installFromFile — auto-renomeacao (E-01) ──
 async function runFunnel() {
-  function makeInstallSandbox() {
+  const RESERVED_DEFAULT = ['fireball'];
+  function makeInstallSandbox(opts) {
+    opts = opts || {};
     const putCalls = [];
     const pluginStore = {
-      listPacks: async () => [],
+      listPacks: async () => opts.packs || [],
       putPack: async (record) => { putCalls.push(record); },
     };
-    const reservedJson = { packs: [{ source: 'srd-2024-en', name: 'SRD 5.2 (EN)' }], slugs: [{ slug: 'fireball', in: [{ source: 'srd-2024-en', name: 'Fireball' }] }] };
-    const fetchStub = () => Promise.resolve({ ok: true, json: async () => reservedJson });
-    const { window: w } = makeSandbox({
-      fetch: fetchStub,
-      window: { SPELL_VERSIONS: [], pluginStore },
-    });
+    const reservedJson = {
+      packs: [{ source: 'srd-2024-en', name: 'SRD 5.2 (EN)' }],
+      slugs: (opts.reserved || RESERVED_DEFAULT).map((slug) => ({ slug, in: [{ source: 'srd-2024-en', name: slug }] })),
+    };
+    const fetchStub = opts.fetch || (() => Promise.resolve({ ok: true, json: async () => reservedJson }));
+    const win = { SPELL_VERSIONS: opts.versions || [], pluginStore };
+    if (opts.loadSpellVersion) win.loadSpellVersion = opts.loadSpellVersion;
+    const { window: w } = makeSandbox({ fetch: fetchStub, window: win });
     return { w, putCalls };
   }
 
-  function fixturePack(spellName) {
+  function fixturePack(names) {
+    names = Array.isArray(names) ? names : [names];
     return JSON.stringify({
       meta: { source: 'meu-homebrew', name: 'Meu Pacote', version: '1.0.0', author: 'Autor', lang: 'ptbr', license: { id: 'CC-BY-4.0', attribution: 'Atribuição.' } },
-      spells: [{ name: spellName, level: 1, school: 'evocation', description: 'ok' }],
+      spells: names.map((n) => ({ name: n, level: 1, school: 'evocation', description: 'ok' })),
     });
   }
+  const file = (names) => ({ size: 10, text: async () => fixturePack(names) });
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
-  // Colisão + onConflicts devolve null (cancela) -> rejeita 'cancelled', putPack 0 vezes.
+  // 1. colisao com reservado: renomeia com o sufixo do pack, sem prompt, 1 gravacao.
   {
     const { w, putCalls } = makeInstallSandbox();
-    let code = null;
-    try {
-      await w.packImport.installFromFile({ size: 10, text: async () => fixturePack('fireball') }, { onConflicts: async () => null });
-    } catch (err) { code = err && err.code; }
-    check('funil: onConflicts->null rejeita com cancelled', code === 'cancelled', 'got ' + code);
-    check('funil: onConflicts->null nao grava', putCalls.length === 0);
+    const res = await w.packImport.installFromFile(file('fireball'));
+    check('funil: colisao grava exatamente 1 vez', putCalls.length === 1, 'got ' + putCalls.length);
+    check('funil: slug renomeado para fireball-meu-homebrew', putCalls.length === 1 && putCalls[0].spells[0].name === 'fireball-meu-homebrew');
+    check('funil: displayName guarda o nome antigo', putCalls.length === 1 && putCalls[0].spells[0].displayName === 'fireball');
+    check('funil: renamed lista a renomeacao', same(res.renamed, [{ from: 'fireball', to: 'fireball-meu-homebrew' }]), JSON.stringify(res.renamed));
+    check('funil: resultado mantem identifier/spellCount', res.identifier === 'meu-homebrew' && res.spellCount === 1);
   }
 
-  // Colisão sem onConflicts -> rejeita 'slug-conflict', putPack 0 vezes.
+  // 2. sem colisao: renamed vazio, nome intacto, 1 gravacao.
   {
     const { w, putCalls } = makeInstallSandbox();
-    let code = null;
-    try {
-      await w.packImport.installFromFile({ size: 10, text: async () => fixturePack('fireball') }, {});
-    } catch (err) { code = err && err.code; }
-    check('funil: sem onConflicts rejeita com slug-conflict', code === 'slug-conflict', 'got ' + code);
-    check('funil: sem onConflicts nao grava', putCalls.length === 0);
+    const res = await w.packImport.installFromFile(file('raio-livre'));
+    check('funil: sem colisao renamed === []', Array.isArray(res.renamed) && res.renamed.length === 0);
+    check('funil: sem colisao grava 1 vez e nome intacto', putCalls.length === 1 && putCalls[0].spells[0].name === 'raio-livre');
   }
 
-  // Colisão + onConflicts devolve Map fireball->fireball-x -> grava 1 vez com name fireball-x.
+  // 3. o proprio pack ocupa o sufixo: fireball -> -2, a outra fica.
   {
     const { w, putCalls } = makeInstallSandbox();
-    let onConflictsArgs = null;
-    const result = await w.packImport.installFromFile({ size: 10, text: async () => fixturePack('fireball') }, {
-      onConflicts: async (ctx) => { onConflictsArgs = ctx; return new Map([['fireball', 'fireball-x']]); },
+    const res = await w.packImport.installFromFile(file(['fireball', 'fireball-meu-homebrew']));
+    const names = putCalls[0].spells.map((s) => s.name);
+    check('funil: slug do proprio pack ocupado vira -2', same(names, ['fireball-meu-homebrew-2', 'fireball-meu-homebrew']), JSON.stringify(names));
+    check('funil: renamed aponta para -2', same(res.renamed, [{ from: 'fireball', to: 'fireball-meu-homebrew-2' }]));
+  }
+
+  // 4. maiuscula: igualdade em minusculas, displayName preserva o original.
+  {
+    const { w, putCalls } = makeInstallSandbox();
+    const res = await w.packImport.installFromFile(file('Fireball'));
+    check('funil: Fireball colide com o reservado fireball', putCalls[0].spells[0].name === 'fireball-meu-homebrew');
+    check("funil: displayName === 'Fireball'", putCalls[0].spells[0].displayName === 'Fireball');
+    check('funil: renamed.from guarda o nome original', res.renamed[0].from === 'Fireball');
+  }
+
+  // 5. identificador FINAL do pack (freeIdentifier) entra no sufixo.
+  {
+    const { w } = makeInstallSandbox({ packs: [{ source: 'meu-homebrew' }] });
+    const res = await w.packImport.installFromFile(file('fireball'));
+    check('funil: identifier final meu-homebrew-2', res.identifier === 'meu-homebrew-2');
+    check('funil: sufixo usa o identificador final', res.renamed[0] && res.renamed[0].to === 'fireball-meu-homebrew-2', JSON.stringify(res.renamed));
+  }
+
+  // 6. colisao com pack ja instalado (nunca e tocado).
+  {
+    const { w, putCalls } = makeInstallSandbox({
+      versions: [{ key: 'plugin-outro', source: 'idb', labelEn: 'Outro' }],
+      loadSpellVersion: async (key) => (key === 'plugin-outro' ? [{ en: 'meu-raio', displayName: 'Meu Raio' }] : []),
     });
-    check('funil: onConflicts->Map grava exatamente 1 vez', putCalls.length === 1, 'got ' + putCalls.length);
-    check('funil: pack gravado tem o spell renomeado', putCalls.length === 1 && putCalls[0].spells[0].name === 'fireball-x');
-    check('funil: onConflicts recebe rows com packId === packSource', onConflictsArgs && onConflictsArgs.rows[0].packId === onConflictsArgs.packSource);
-    check('funil: onConflicts recebe takenKeys contendo o slug do proprio pack', onConflictsArgs && onConflictsArgs.takenKeys.has('fireball'));
-    check('funil: install devolve identifier', result && typeof result.identifier === 'string');
+    const res = await w.packImport.installFromFile(file('meu-raio'));
+    check('funil: colisao com instalado renomeia o que entra', res.renamed[0] && res.renamed[0].to === 'meu-raio-meu-homebrew', JSON.stringify(res.renamed));
+    check('funil: so o pack que entra e gravado', putCalls.length === 1 && putCalls[0].id === 'meu-homebrew');
   }
 
-  // Sem colisão: nunca chama onConflicts, grava 1 vez.
+  // 7. 5 colisoes: 5 slugs distintos, todos SLUG_PATTERN <= 64 (mesmo com maiuscula).
   {
-    const { w, putCalls } = makeInstallSandbox();
-    let onConflictsCalled = false;
-    await w.packImport.installFromFile({ size: 10, text: async () => fixturePack('raio-livre') }, {
-      onConflicts: async () => { onConflictsCalled = true; return null; },
-    });
-    check('funil: sem colisao nunca chama onConflicts', onConflictsCalled === false);
-    check('funil: sem colisao grava exatamente 1 vez', putCalls.length === 1, 'got ' + putCalls.length);
+    const reserved = ['fireball', 'magic-missile', 'bola-de-fogo', 'raio', 'cura'];
+    const { w, putCalls } = makeInstallSandbox({ reserved });
+    const res = await w.packImport.installFromFile(file(['Fireball', 'MAGIC-missile', 'bola-de-fogo', 'raio', 'cura']));
+    const tos = res.renamed.map((r) => r.to);
+    check('funil: 5 colisoes geram 5 renamed', res.renamed.length === 5, 'got ' + res.renamed.length);
+    check('funil: 5 slugs distintos', new Set(tos).size === 5, JSON.stringify(tos));
+    check('funil: todo slug gerado casa SLUG_PATTERN e <= 64', tos.every((t) => w.packImport.SLUG_PATTERN.test(t) && t.length <= 64), JSON.stringify(tos));
+    check('funil: 1 gravacao', putCalls.length === 1);
+  }
+
+  // 8. nome com espaco no original vira slug valido.
+  {
+    const { w } = makeInstallSandbox({ reserved: ['bola de fogo'] });
+    const res = await w.packImport.installFromFile(file('Bola de Fogo'));
+    check('funil: nome com espaco gera slug valido', res.renamed.length === 1 && w.packImport.SLUG_PATTERN.test(res.renamed[0].to), JSON.stringify(res.renamed));
+  }
+
+  // 9. falha fechada: sem srd-reserved-slugs.json nao grava.
+  {
+    const { w, putCalls } = makeInstallSandbox({ fetch: () => Promise.reject(new Error('offline')) });
+    let rejected = false;
+    try { await w.packImport.installFromFile(file('fireball')); } catch (err) { rejected = true; }
+    check('funil: sem lista de reservados rejeita', rejected === true);
+    check('funil: sem lista de reservados nao grava', putCalls.length === 0);
   }
 }
 
@@ -297,7 +330,7 @@ runFunnel().then(() => {
     console.error(failures + ' verificacao(oes) de identidade por slug falharam.');
     process.exit(1);
   }
-  console.log('Slug identity: detectSlugConflicts/suggestSlug/validateSlugRename/applySlugRenames provados puros; funil _install resolve colisao via onConflicts, falha fechada sem onConflicts, cancela sem gravar, grava uma vez com o slug renomeado.');
+  console.log('Slug identity: detectSlugConflicts/suggestSlug/validateSlugRename/applySlugRenames provados puros; funil _install renomeia sozinho o slug em colisao (reservado/instalado/proprio pack), devolve renamed, grava uma vez e falha fechada sem a lista de reservados.');
 }).catch((err) => {
   console.error('runFunnel threw: ' + (err && err.stack || err));
   process.exit(1);

@@ -11,8 +11,10 @@
 // de tamanho nos dois caminhos (_readFileText, _fetchText, D-08),
 // sanitização de HTML com DOMPurify (sanitizePack, PKG-05) e o funil único de
 // instalação (installFromFile, installFromUrl) que lê, valida, sanitiza,
-// resolve colisão de slug (opts.onConflicts) e grava — nessa ordem, com uma
-// única gravação.
+// renomeia sozinho o slug em colisão, só do pack que entra, com o sufixo dele
+// (E-01) e grava — nessa ordem, com uma única gravação; devolve `renamed` com
+// a lista { from, to } do que mudou. O prompt de renomear mora só na seleção do
+// menu de pacotes (E-02).
 //
 // Este módulo NÃO possui: não abre IndexedDB por conta própria — toda
 // gravação passa por window.pluginStore (plugin-store.jsx); não normaliza
@@ -64,7 +66,6 @@ const PACK_ERROR_CODES = Object.freeze({
   IMAGE_INVALID: 'image-invalid',
   IMAGE_TOO_LARGE: 'image-too-large',
   SLUG_CONFLICT: 'slug-conflict',
-  CANCELLED: 'cancelled',
 });
 
 // ──────────────────────────────────────────────────────────────────
@@ -319,7 +320,8 @@ function detectSlugConflicts(targets, owners) {
   return rows;
 }
 
-// Pura: só SUGERE — nunca aplicada sem confirmação do usuário (D-11). Base
+// Pura: devolve um slug livre. O import aplica a sugestão direto (E-01); a
+// seleção do menu só sugere, quem aplica é o usuário no prompt (E-02). Base
 // `${slug}-${packSource}` em minúsculas, caracteres fora de [a-z0-9-] viram
 // hífen, hífens colapsados e cortados nas pontas, cortada em 64 caracteres
 // (sem hífen final); se ocupada, acrescenta -2, -3… cortando a base pra caber.
@@ -574,12 +576,11 @@ function sanitizePack(pack) {
 }
 
 // ──────────────────────────────────────────────────────────────────
-// INSTALAÇÃO — funil único: ler → validar → sanitizar → gravar, nessa ordem.
+// INSTALAÇÃO — funil único: ler → validar → sanitizar → resolver slug → gravar, nessa ordem.
 // Nenhum passo pode ser reordenado: gravar antes de validar ou de sanitizar
 // é exatamente a falha que PKG-04/PKG-05 existem para impedir.
 // ──────────────────────────────────────────────────────────────────
-async function _install(text, opts) {
-  opts = opts || {};
+async function _install(text) {
   const parsed = parsePackText(text);
   validatePack(parsed);
   const { pack, changedFields } = sanitizePack(parsed);
@@ -593,7 +594,7 @@ async function _install(text, opts) {
   // separado da identidade por slug abaixo (RESEARCH Pitfall 4).
   pack.meta.source = identifier;
 
-  // Identidade por slug (D-08..D-10): donos = reservados (SRD) + magias de
+  // Identidade por slug (D-08..D-10, E-01): donos = reservados (SRD) + magias de
   // TODOS os packs `idb` já instalados. Falha fechada se a lista de
   // reservados não puder ser lida (A-12) — o catch de installFromFile/Url não
   // reclassifica esse erro, ele sobe sem .code conhecido.
@@ -607,30 +608,27 @@ async function _install(text, opts) {
     owners.set(key, (owners.get(key) || []).concat(list));
   });
 
-  const buildTargets = () => pack.spells.map((sp) => ({
-    name: sp.name,
-    displayName: sp.displayName,
-    oldKey: (typeof window.hifiSpellKey === 'function' && typeof window.adaptSpell === 'function')
-      ? window.hifiSpellKey(window.adaptSpell(sp, pack.meta.lang, pack.meta.edition, ''))
-      : null,
-  }));
-
-  let rows = detectSlugConflicts(buildTargets(), owners).map((r) => ({ ...r, packId: identifier }));
-
+  // E-01: slug em colisão é renomeado sozinho — só o pack que ENTRA, com o
+  // sufixo do identificador final dele. Nenhum prompt: o usuário vê a lista em
+  // `renamed`. O pack instalado dono do slug nunca é tocado, e como o pack que
+  // entra ainda não está instalado, nenhuma preparada/favorita vira órfã nova.
+  const renamed = [];
+  const rows = detectSlugConflicts(pack.spells, owners);
   if (rows.length > 0) {
-    if (typeof opts.onConflicts !== 'function') {
-      _fail(PACK_ERROR_CODES.SLUG_CONFLICT, 'packImport.install: pacote contém slugs reservados ou já instalados por outro pacote.');
-    }
-    const takenKeys = new Set([...installed.keys(), ...pack.spells.map((sp) => slugKey(sp.name))]);
-    const renames = await opts.onConflicts({ rows, packSource: identifier, reservedKeys: reserved.keys, takenKeys });
-    if (!renames) {
-      _fail(PACK_ERROR_CODES.CANCELLED, 'packImport.install: renomeação cancelada pelo usuário — nada foi gravado.');
-    }
+    // Ocupados = reservados + instalados + slugs do próprio pack + sugestões já
+    // escolhidas (acumuladas abaixo) — duas colisões nunca ganham o mesmo slug.
+    const taken = new Set([...reserved.keys, ...installed.keys(), ...pack.spells.map((sp) => slugKey(sp.name))]);
+    const renames = new Map();
+    rows.forEach((row) => {
+      const to = suggestSlug(row.slug, identifier, taken);
+      taken.add(to);
+      renames.set(row.slug, to);
+      renamed.push({ from: row.slug, to });
+    });
     pack.spells = applySlugRenames(pack.spells, renames);
     // Redetecta contra os mesmos donos (falha fechada — D-10): sobrar
     // colisão depois da renomeação aplicada rejeita o import inteiro.
-    rows = detectSlugConflicts(buildTargets(), owners);
-    if (rows.length > 0) {
+    if (detectSlugConflicts(pack.spells, owners).length > 0) {
       _fail(PACK_ERROR_CODES.SLUG_CONFLICT, 'packImport.install: ainda há slugs em conflito depois da renomeação.');
     }
   }
@@ -640,15 +638,15 @@ async function _install(text, opts) {
 
   await window.pluginStore.putPack(record);
 
-  return { identifier, spellCount: pack.spells.length, changedFields };
+  return { identifier, spellCount: pack.spells.length, changedFields, renamed };
 }
 
-async function installFromFile(file, opts) {
-  return _install(await _readFileText(file), opts);
+async function installFromFile(file) {
+  return _install(await _readFileText(file));
 }
 
-async function installFromUrl(url, opts) {
-  return _install(await _fetchText(url), opts);
+async function installFromUrl(url) {
+  return _install(await _fetchText(url));
 }
 
 // ──────────────────────────────────────────────────────────────────
