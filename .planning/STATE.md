@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: Plugins BYOD
 current_phase: 08
 current_phase_name: composicao-aditiva-de-pacotes
-current_plan: 3
+current_plan: 4
 status: executing
-stopped_at: Completed 08-10-PLAN.md
-last_updated: "2026-10-04T22:30:14.213Z"
+stopped_at: Completed 08-11-PLAN.md
+last_updated: "2026-10-04T22:38:01.161Z"
 last_activity: 2026-10-04
 last_activity_desc: Phase 08 execution started
 progress:
   total_phases: 8
   completed_phases: 7
   total_plans: 48
-  completed_plans: 46
+  completed_plans: 47
 ---
 
 # Project State
@@ -29,12 +29,12 @@ See: .planning/PROJECT.md (updated 2026-07-17)
 ## Current Position
 
 Phase: 08 (composicao-aditiva-de-pacotes) — EXECUTING
-Current Plan: 3
+Current Plan: 4
 Total Plans in Phase: 12
 Status: Ready to execute
 Last activity: 2026-10-04 — Phase 08 execution started
 
-Progress: [██████████] 96%
+Progress: [██████████] 98%
 
 ## Performance Metrics
 
@@ -78,6 +78,7 @@ Progress: [██████████] 96%
 | Phase 08 P07 | ~15min (continuação; Task 1 rodou em sessão anterior) | 2 de 3 (Task 3 não executada por gate próprio) tasks | 0 files |
 | Phase 08 P09 | ~10min | 2 tasks | 3 files |
 | Phase 08 P10 | ~25min | 3 tasks | 10 files |
+| Phase 08 P11 | 25min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Four decisions locked fo
 - [Phase ?]: Todo dobrado i18n-toast-versao-e-pluralizacao NÃO foi movido para completed — seu gate (itens 4 e 8 do checkpoint 08-07) não foi satisfeito.
 - [Phase ?]: [Phase 08-09] GAP-1: fallback de fonte em adaptSpell via ver.labelEn (packName); so preenche ausencia, FONTE do detalhe mostra sourceFull sem separador orfao (E-04)
 - [Phase ?]: [Phase 08-10] GAP-3/GAP-4: meta.image aceita data: raster ou https:// por uma allowlist so (IMAGE_SRC) usada no import, render e schema; img com no-referrer e fallback ao marcador; mensagens em linguagem simples
+- [Phase ?]: 08-11: import auto-renomeia slug em colisao (suffix do pack final, ocupados acumulados) e avisa por toast + tela de sucesso; selecao mantem prompt (E-01/E-02)
 
 ### Pending Todos
 
@@ -142,6 +144,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-04T22:30:14.199Z
-Stopped at: Completed 08-10-PLAN.md
+Last session: 2026-10-04T22:38:01.147Z
+Stopped at: Completed 08-11-PLAN.md
 Resume file: None
