@@ -47,8 +47,8 @@
         "image": {
           "type": "string",
           "maxLength": 204800,
-          "pattern": "^data:image/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/]+={0,2}$",
-          "description": "Opcional. Imagem do cartão do pacote no menu, SÓ como data: URI de PNG/JPEG/WebP/GIF em base64, até 204800 caracteres (200 KB). URL externa é rejeitada: o app funciona offline e não consulta host de terceiro. Sem imagem, o menu desenha um marcador com cor derivada do pacote."
+          "pattern": "^(?:data:image/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/]+={0,2}|https://[A-Za-z0-9][^\\x00-\\x20\\x7f\"'<>\\\\]{0,2039})$",
+          "description": "Opcional. Imagem do cartão do pacote no menu. Aceita data: URI de PNG/JPEG/WebP/GIF em base64 até 204800 caracteres (200 KB) OU URL https:// até 2048 caracteres; http:// e outros esquemas são rejeitados. A URL não é buscada no import; carrega no menu sem referrer e, se falhar, o menu mostra o marcador de cor. O host da imagem vê o IP de quem abre o menu — para uso offline e privacidade, prefira data:."
         },
         "spellCount": {
           "type": "integer",

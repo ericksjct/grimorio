@@ -360,13 +360,13 @@ function check(label, cond) {
 
 // Constantes reais de pack-import.jsx — nunca reimplementadas aqui.
 const maxImageMatch = importSrc.match(/const MAX_IMAGE_CHARS = ([^;]+);/);
-const imageUriMatch = importSrc.match(/const IMAGE_DATA_URI = (\/[\s\S]*?\/);/);
+const imageUriMatch = importSrc.match(/const IMAGE_SRC = (\/[\s\S]*?\/);/);
 if (!maxImageMatch || !imageUriMatch) {
-  console.error('nao encontrei MAX_IMAGE_CHARS/IMAGE_DATA_URI em pack-import.jsx');
+  console.error('nao encontrei MAX_IMAGE_CHARS/IMAGE_SRC em pack-import.jsx');
   process.exit(1);
 }
 const MAX_IMAGE_CHARS = eval(maxImageMatch[1]);
-const IMAGE_DATA_URI = eval(imageUriMatch[1]);
+const IMAGE_SRC = eval(imageUriMatch[1]);
 
 // i18n real, rodado em vm — captura tt() e window.i18nPlural (plural).
 const sandbox = { console };
@@ -391,7 +391,7 @@ function extractFn(name) {
 }
 
 const fnSandbox = {
-  window: { packImport: { MAX_IMAGE_CHARS, IMAGE_DATA_URI }, i18nPlural },
+  window: { packImport: { MAX_IMAGE_CHARS, IMAGE_SRC }, i18nPlural },
   tt,
   console,
 };
@@ -414,7 +414,9 @@ check("_packColorIndex('') e 0..9", Number.isInteger(idxEmpty) && idxEmpty >= 0 
 // ── _safeImage ──
 const validPng = 'data:image/png;base64,iVBORw0KGgo=';
 check('_safeImage aceita data: URI raster valido', _safeImage(validPng) === validPng);
-check('_safeImage rejeita URL externa', _safeImage('https://x/a.png') === null);
+check('_safeImage aceita URL https://', _safeImage('https://example.com/a.png') === 'https://example.com/a.png');
+check('_safeImage rejeita http://', _safeImage('http://example.com/a.png') === null);
+check('_safeImage rejeita javascript:', _safeImage('javascript:alert(1)') === null);
 check('_safeImage rejeita SVG', _safeImage('data:image/svg+xml;base64,PHN2Zz4=') === null);
 check('_safeImage rejeita nao-string', _safeImage(42) === null);
 const tooLong = 'data:image/png;base64,' + 'A'.repeat(MAX_IMAGE_CHARS);

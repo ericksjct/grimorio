@@ -223,8 +223,24 @@ expectPass('data:image/jpeg;base64,... passa', 'data:image/jpeg;base64,iVBORw0KG
 expectPass('data:image/webp;base64,... passa', 'data:image/webp;base64,iVBORw0KGgo=');
 expectPass('data:image/gif;base64,... passa', 'data:image/gif;base64,iVBORw0KGgo=');
 
-expectFail('URL externa https rejeita com image-invalid', 'https://example.com/a.png', 'image-invalid');
+expectPass('URL https simples passa (E-03)', 'https://example.com/a.png');
+expectPass('URL https com query e fragmento passa', 'https://raw.githubusercontent.com/x/y/main/a.png?x=1#f');
+const url2048 = 'https://a' + 'b'.repeat(2039);
+expectPass('URL https de 2048 caracteres passa', url2048);
+
+expectFail('http:// rejeita com image-invalid', 'http://example.com/a.png', 'image-invalid');
 expectFail('URL protocol-relative rejeita com image-invalid', '//cdn/x.png', 'image-invalid');
+expectFail('javascript: rejeita com image-invalid', 'javascript:alert(1)', 'image-invalid');
+expectFail('HTTPS:// em maiusculas rejeita com image-invalid', 'HTTPS://example.com/a.png', 'image-invalid');
+expectFail('https:// sem host rejeita com image-invalid', 'https://', 'image-invalid');
+expectFail('https:/// sem host rejeita com image-invalid', 'https:///a', 'image-invalid');
+expectFail('URL com espaco rejeita com image-invalid', 'https://exa mple.com/a.png', 'image-invalid');
+expectFail('URL com aspas duplas rejeita com image-invalid', 'https://a.com/"x', 'image-invalid');
+expectFail('URL com aspas simples rejeita com image-invalid', "https://a.com/'x", 'image-invalid');
+expectFail('URL com < rejeita com image-invalid', 'https://a.com/<x', 'image-invalid');
+expectFail('URL com barra invertida rejeita com image-invalid', 'https://a.com/\\x', 'image-invalid');
+expectFail('URL com quebra de linha rejeita com image-invalid', 'https://a.com/\nx', 'image-invalid');
+expectFail('URL https de 2049 caracteres rejeita com image-invalid', 'https://a' + 'b'.repeat(2040), 'image-invalid');
 expectFail('data:image/svg+xml rejeita com image-invalid (SVG carrega script)', 'data:image/svg+xml;base64,PHN2Zz4=', 'image-invalid');
 expectFail('data:text/html rejeita com image-invalid', 'data:text/html;base64,PGI+', 'image-invalid');
 expectFail('data:image/png sem base64 rejeita com image-invalid', 'data:image/png,raw', 'image-invalid');
@@ -232,14 +248,34 @@ expectFail('base64 invalido rejeita com image-invalid', 'data:image/png;base64,@
 
 const huge = 'data:image/png;base64,' + 'A'.repeat(204800);
 expectFail('204800+ caracteres rejeita com image-too-large', huge, 'image-too-large');
+expectFail('URL https gigante rejeita com image-too-large (teto antes da regex)', 'https://a' + 'b'.repeat(204800), 'image-too-large');
 
 expectFail('meta.image = 42 (tipo errado) rejeita com schema-invalid', 42, 'schema-invalid');
+
+// Paridade schema <-> validador: o pattern do schema, compilado, tem de dar o
+// mesmo veredito que window.packImport.IMAGE_SRC (uma allowlist so, E-03).
+const IMAGE_SRC = sandbox.window.packImport.IMAGE_SRC;
+const schema = JSON.parse(fs.readFileSync('pack.schema.json', 'utf8'));
+const schemaRe = new RegExp(schema.properties.meta.properties.image.pattern);
+check('IMAGE_SRC exposta em window.packImport', Object.prototype.toString.call(IMAGE_SRC) === '[object RegExp]');
+for (const x of [
+  'data:image/png;base64,iVBORw0KGgo=', 'data:image/jpeg;base64,iVBORw0KGgo=',
+  'data:image/webp;base64,iVBORw0KGgo=', 'data:image/gif;base64,iVBORw0KGgo=',
+  'https://example.com/a.png', 'https://raw.githubusercontent.com/x/y/main/a.png?x=1#f', url2048,
+  'http://example.com/a.png', '//cdn/x.png', 'javascript:alert(1)', 'HTTPS://example.com/a.png',
+  'https://', 'https:///a', 'https://exa mple.com/a.png', 'https://a.com/"x', "https://a.com/'x",
+  'https://a.com/<x', 'https://a.com/\\x', 'https://a.com/\nx',
+  'data:image/svg+xml;base64,PHN2Zz4=', 'data:text/html;base64,PGI+', 'data:image/png,raw',
+  'data:image/png;base64,@@@', 'https://a' + 'b'.repeat(2040),
+]) {
+  check('paridade schema <-> IMAGE_SRC: ' + JSON.stringify(x.slice(0, 40)), schemaRe.test(x) === IMAGE_SRC.test(x));
+}
 
 if (failures > 0) {
   console.error(failures + ' verificacao(oes) de meta.image falharam.');
   process.exit(1);
 }
-console.log('meta.image: compativel sem o campo, aceita data: URI raster valido (png/jpeg/webp/gif), rejeita URL externa/SVG/base64 invalido (image-invalid), rejeita >200KB (image-too-large), rejeita tipo errado (schema-invalid).');
+console.log('meta.image: compativel sem o campo, aceita data: URI raster (png/jpeg/webp/gif) e URL https://, rejeita http/protocol-relative/javascript/SVG/base64 invalido/URL malformada (image-invalid), rejeita >200KB (image-too-large), rejeita tipo errado (schema-invalid), pattern do schema em paridade com IMAGE_SRC.');
 '@
 
   $tmp = Join-Path ([System.IO.Path]::GetTempPath()) "check-pack-validator-image-$([guid]::NewGuid()).cjs"

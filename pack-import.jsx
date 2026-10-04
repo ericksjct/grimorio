@@ -35,9 +35,14 @@ const MAX_PACK_BYTES = 10 * 1024 * 1024;
 // não em bytes decodificados (A-08) — é um thumbnail, não conteúdo do pacote.
 const MAX_IMAGE_CHARS = 200 * 1024;
 
-// Só raster em base64, ancorada com ^...$. SVG fica de fora de propósito (pode
-// carregar script) — mesmo raciocínio de allowlist estrita de ALLOWED_TAGS.
-const IMAGE_DATA_URI = /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/]+={0,2}$/;
+// Allowlist ÚNICA de meta.image (E-03), ancorada com ^...$: data: URI raster em
+// base64 OU URL https://. SVG em data: fica de fora de propósito (pode carregar
+// script) — mesmo raciocínio de allowlist estrita de ALLOWED_TAGS. A URL não é
+// buscada no import (só formato); o teto de 2048 caracteres da URL está na
+// própria regex (1 + 2039 depois de "https://"). Host começa por letra/dígito;
+// controle, espaço, aspas, <, > e barra invertida são proibidos. O render
+// (_safeImage) e o pattern do schema usam esta mesma regra.
+const IMAGE_SRC = /^(?:data:image\/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/]+={0,2}|https:\/\/[A-Za-z0-9][^\x00-\x20\x7f"'<>\\]{0,2039})$/;
 
 // As três chaves proibidas de D-11 (poluição de protótipo, T-03-08).
 const BLOCKED_KEYS = Object.freeze(['__proto__', 'constructor', 'prototype']);
@@ -214,17 +219,17 @@ function _checkObject(path, fields, obj) {
   }
 }
 
-// Valida meta.image (D-17, PKG-06): undefined passa (compatível com todo pack
-// já publicado); comprimento checado ANTES da regex (T-08-11, teto barato);
-// só data: URI raster em base64 passa a allowlist ancorada (T-08-09/T-08-10 —
-// URL externa e SVG são rejeitados aqui, nunca chegam a <img src>).
+// Valida meta.image (D-17, PKG-06, E-03): undefined passa (compatível com todo
+// pack já publicado); o teto de 204800 caracteres vale para qualquer valor e é
+// checado ANTES da regex (T-08-11, T-08-42); depois só IMAGE_SRC (data: raster
+// ou https://) passa — http:, SVG e outros esquemas nunca chegam a <img src>.
 function _checkImage(image) {
   if (image === undefined) return;
   if (image.length > MAX_IMAGE_CHARS) {
     _fail(PACK_ERROR_CODES.IMAGE_TOO_LARGE, `packImport.validate: meta.image excede o teto de ${MAX_IMAGE_CHARS} caracteres.`);
   }
-  if (!IMAGE_DATA_URI.test(image)) {
-    _fail(PACK_ERROR_CODES.IMAGE_INVALID, 'packImport.validate: meta.image precisa ser um data: URI de imagem PNG/JPEG/WebP/GIF em base64.');
+  if (!IMAGE_SRC.test(image)) {
+    _fail(PACK_ERROR_CODES.IMAGE_INVALID, 'packImport.validate: meta.image precisa ser um data: URI raster (PNG/JPEG/WebP/GIF) em base64 ou uma URL https://.');
   }
 }
 
@@ -652,7 +657,7 @@ async function installFromUrl(url, opts) {
 window.packImport = {
   MAX_PACK_BYTES,
   MAX_IMAGE_CHARS,
-  IMAGE_DATA_URI,
+  IMAGE_SRC,
   PACK_ERROR_CODES,
   parsePackText,
   validatePack,

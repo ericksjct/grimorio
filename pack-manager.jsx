@@ -29,14 +29,15 @@ function _packColorIndex(source) {
   return Math.abs(Array.from(String(source || '')).reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0)) % 10;
 }
 
-// Defesa em profundidade (T-08-23): revalida `meta.image` com a MESMA regex e
-// o MESMO teto que o import já checou antes de deixar chegar a um `<img
-// src>` — qualquer coisa que não seja um data: URI raster dentro do teto
-// devolve null, e o chamador cai pro marcador de cor (D-17).
+// Defesa em profundidade (T-08-23): revalida `meta.image` com a MESMA allowlist
+// (window.packImport.IMAGE_SRC, sem regex local) e o MESMO teto que o import já
+// checou antes de deixar chegar a um `<img src>` — qualquer coisa fora de
+// data: raster / https:// dentro do teto devolve null, e o chamador cai pro
+// marcador de cor (D-17).
 function _safeImage(image) {
   if (typeof image !== 'string') return null;
   if (image.length > window.packImport.MAX_IMAGE_CHARS) return null;
-  if (!window.packImport.IMAGE_DATA_URI.test(image)) return null;
+  if (!window.packImport.IMAGE_SRC.test(image)) return null;
   return image;
 }
 
