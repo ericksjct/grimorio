@@ -46,18 +46,26 @@ foreach ($needle in @('packImport.installFromFile', 'packImport.installFromUrl')
   }
 }
 
-# ── Fase 8 (D-09..D-14): conflito de slug abre o prompt dentro do próprio diálogo ──
+# ── Fase 8 (E-01): colisao de slug e resolvida pelo funil; o dialogo so mostra o aviso ──
 
-foreach ($needle in @('onConflicts', 'window.PackRenameForm', "'cancelled'", 'window.renameImpact', 'setConflictCtx(null)')) {
+foreach ($needle in @('function _renamedNotice(', 'RENAMED_NOTICE_CAP', "'import.renamed.'", "'import.renamedMore'", '.slice(0, 64)')) {
   if ($dialog -notlike "*$needle*") {
-    throw "Missing rename-conflict wiring detail in pack-import-dialog.jsx: $needle"
+    throw "Missing renamed-notice detail in pack-import-dialog.jsx: $needle"
   }
 }
-if ($dialog -notmatch 'installFromFile\([\s\S]*?\{\s*onConflicts') {
-  throw 'pack-import-dialog.jsx must pass { onConflicts } to window.packImport.installFromFile.'
+$submitMatch = [regex]::Match($dialog, 'async function handleSubmit\(\)[\s\S]*?\r?\n  \}\r?\n')
+if (-not $submitMatch.Success -or $submitMatch.Value -notlike '*_renamedNotice(*') {
+  throw 'handleSubmit must call _renamedNotice( for the toast (E-01).'
 }
-if ($dialog -notmatch 'installFromUrl\([\s\S]*?\{\s*onConflicts') {
-  throw 'pack-import-dialog.jsx must pass { onConflicts } to window.packImport.installFromUrl.'
+foreach ($gone in @('conflictCtx', 'setConflictCtx', 'onConflicts', 'PackRenameForm', "'cancelled'", 'renameImpact', 'resolvableSpellKeys')) {
+  if ($dialog -like "*$gone*") {
+    throw "pack-import-dialog.jsx must not contain $gone after E-01 (import has no rename prompt)."
+  }
+}
+foreach ($forbidden in @('localStorage', 'persistCharacters', 'persistBookmarks', 'hifi_bookmarks_v1', 'hifi_chars_v1')) {
+  if ($dialog -like "*$forbidden*") {
+    throw "pack-import-dialog.jsx must never touch character/bookmark storage - found $forbidden (D-13)."
+  }
 }
 
 # ── Cobertura dos seis motivos de rejeicao (5 codigos de PACK_ERROR_CODES + unknown) ──
@@ -86,7 +94,8 @@ $importKeys = @(
   'import.open', 'import.title', 'import.close', 'import.emptyHeading', 'import.emptyBody',
   'import.docsPrefix', 'import.docsLink', 'import.modeFile', 'import.modeUrl', 'import.chooseFile',
   'import.urlLabel', 'import.urlPlaceholder', 'import.sizeHint', 'import.installPack',
-  'import.installing', 'import.success', 'import.successCount', 'import.sanitizedNote'
+  'import.installing', 'import.success', 'import.successCount', 'import.sanitizedNote',
+  'import.renamed.one', 'import.renamed.other', 'import.renamedMore'
 )
 foreach ($key in $importKeys) {
   $count = ([regex]::Matches($i18n, [regex]::Escape("'$key'"))).Count
@@ -205,6 +214,71 @@ console.log('IN-08 ok: makeT() dict lookup does not leak inherited prototype val
   }
 } else {
   Write-Warning 'node nao encontrado - prova de execucao do IN-08 pulada (assercoes estruturais ja rodaram).'
+}
+
+# ── Prova de execucao do aviso de renomeacao (E-01): _renamedNotice extraida do
+# arquivo real e rodada contra tt/i18nPlural reais de i18n.jsx.
+if ($node) {
+  $nodeScript2 = @'
+const fs = require('fs');
+const vm = require('vm');
+const dialogSrc = fs.readFileSync('pack-import-dialog.jsx', 'utf8');
+const i18nSrc = fs.readFileSync('i18n.jsx', 'utf8');
+
+const capMatch = dialogSrc.match(/const RENAMED_NOTICE_CAP = \d+;/);
+const fnMatch = dialogSrc.match(/function _renamedNotice\(lang, renamed\)[\s\S]*?\n\}/);
+if (!capMatch || !fnMatch) { console.error('nao achei RENAMED_NOTICE_CAP/_renamedNotice em pack-import-dialog.jsx'); process.exit(1); }
+
+const sandbox = { console };
+sandbox.globalThis = sandbox;
+sandbox.window = sandbox;
+vm.createContext(sandbox);
+vm.runInContext(i18nSrc, sandbox);
+vm.runInContext(capMatch[0] + '\n' + fnMatch[0] + '\nthis.__notice = _renamedNotice;', sandbox);
+const notice = sandbox.__notice;
+const tt = sandbox.tt;
+
+let failures = 0;
+function check(label, cond, detail) {
+  if (!cond) { console.error('FAIL: ' + label + (detail ? ' - ' + detail : '')); failures++; }
+}
+
+check('_renamedNotice([]) vazio', notice('ptbr', []) === '');
+check('_renamedNotice(undefined) vazio', notice('ptbr', undefined) === '');
+
+const one = notice('ptbr', [{ from: 'fireball', to: 'fireball-qa' }]);
+check('1 item usa import.renamed.one', one === tt('ptbr', 'import.renamed.one', { n: 1, list: 'fireball → fireball-qa' }), one);
+
+const five = Array.from({ length: 5 }, (_, i) => ({ from: 'a' + i, to: 'b' + i }));
+const noticePt = notice('ptbr', five);
+check('5 itens: exatamente 3 setas', noticePt.split(' → ').length - 1 === 3, noticePt);
+check('5 itens (ptbr): termina com import.renamedMore n=2', noticePt.endsWith(tt('ptbr', 'import.renamedMore', { n: 2 })), noticePt);
+check('5 itens (en): termina com "and 2 more"', notice('en', five).endsWith('and 2 more'), notice('en', five));
+const list5 = 'a0 → b0, a1 → b1, a2 → b2 ' + tt('ptbr', 'import.renamedMore', { n: 2 });
+check('5 itens usa import.renamed.other com n=5 e a lista cortada', noticePt === tt('ptbr', 'import.renamed.other', { n: 5, list: list5 }), noticePt);
+
+const long = notice('ptbr', [{ from: 'x'.repeat(100), to: 'y' }]);
+check('nome antigo cortado em 64', long.includes('x'.repeat(64)) && !long.includes('x'.repeat(65)), long);
+
+if (failures > 0) { console.error(failures + ' verificacao(oes) do aviso falharam.'); process.exit(1); }
+console.log('_renamedNotice: vazio/1/muitos, teto de 3 + "e mais N", corte em 64, PT/EN.');
+'@
+  $tmp2 = Join-Path ([System.IO.Path]::GetTempPath()) "check-pack-import-dialog-notice-$([guid]::NewGuid()).cjs"
+  try {
+    Set-Content -LiteralPath $tmp2 -Value $nodeScript2 -Encoding utf8NoBOM
+    Push-Location $repoRoot
+    try {
+      $nodeOut2 = & node $tmp2 2>&1
+      $nodeExit2 = $LASTEXITCODE
+    } finally {
+      Pop-Location
+    }
+    if ($nodeExit2 -ne 0) {
+      throw "Renamed-notice runtime proof failed: $nodeOut2"
+    }
+  } finally {
+    if (Test-Path -LiteralPath $tmp2) { Remove-Item -LiteralPath $tmp2 -Force }
+  }
 }
 
 # ── Sem catch vazio ──

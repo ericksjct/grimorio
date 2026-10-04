@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 
-# Fase 8 (08-02): as 25 chaves novas do menu de pacotes e do prompt de renomear
+# Fase 8 (08-02): as 28 chaves novas do menu de pacotes, do prompt de renomear e do aviso de renomeacao no import (08-11)
 # existem em ptbr/en com paridade total, os placeholders certos, plural correto
 # em n = 1 (rename.impactWarning.one/.other, D-04/A-05) e nenhum "(ns)"/"(s)"/"(es)"
 # de contorno (todo dobrado i18n-toast-versao-e-pluralizacao, item 2).
@@ -46,6 +46,7 @@ const NEW_KEYS = [
   'rename.submitDisabledHint', 'rename.errorFormat', 'rename.errorReserved',
   'rename.errorDuplicate', 'packErr.imageTooLarge', 'packErr.imageInvalid',
   'noun.character.one', 'noun.character.other',
+  'import.renamed.one', 'import.renamed.other', 'import.renamedMore',
 ];
 
 const OLD_KEYS = [
@@ -70,6 +71,9 @@ const PLACEHOLDERS = {
   'rename.impactWarning.other': ['n'],
   'packErr.imageTooLarge': ['kb'],
   'packErr.imageInvalid': ['kb'],
+  'import.renamed.one': ['n', 'list'],
+  'import.renamed.other': ['n', 'list'],
+  'import.renamedMore': ['n'],
 };
 
 let failures = 0;
@@ -77,8 +81,8 @@ function check(label, cond) {
   if (!cond) { console.error('FAIL: ' + label); failures++; }
 }
 
-if (NEW_KEYS.length !== 25) {
-  console.error('FAIL: NEW_KEYS deveria ter 25 entradas, tem ' + NEW_KEYS.length);
+if (NEW_KEYS.length !== 28) {
+  console.error('FAIL: NEW_KEYS deveria ter 28 entradas, tem ' + NEW_KEYS.length);
   failures++;
 }
 
@@ -151,7 +155,7 @@ if (failures > 0) {
   console.error(failures + ' verificacao(oes) falharam.');
   process.exit(1);
 }
-console.log('25 chaves novas da Fase 8 presentes em ptbr/en, paridade total, placeholders corretos, plurais sem "(ns)/(s)/(es)", sem tom de perda, chaves antigas intactas.');
+console.log('28 chaves novas da Fase 8 presentes em ptbr/en, paridade total, placeholders corretos, plurais sem "(ns)/(s)/(es)", sem tom de perda, chaves antigas intactas.');
 '@
 
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) "check-i18n-pack-menu-$([guid]::NewGuid()).cjs"
