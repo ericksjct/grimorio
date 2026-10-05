@@ -132,7 +132,7 @@ if ($offenders.Count -gt 0) {
 if ($dialog -match 'import.mode(File|Url)') {
   throw 'pack-import-dialog.jsx still has the file/URL toggle strings - both options are shown at once now.'
 }
-if ($dialog -notmatch 'setMode\(') {
+if ($dialog -notmatch "setMode\('file'\)" -or $dialog -notmatch "setMode\('url'\)") {
   throw 'pack-import-dialog.jsx has no mode-state assignment (setMode) - file/URL mode exclusivity requires one.'
 }
 

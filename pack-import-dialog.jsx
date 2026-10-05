@@ -94,14 +94,14 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
   function onFileChange(e) {
     const f = (e.target.files && e.target.files[0]) || null;
     setFile(f);
-    if (f) { setMode(file); setUrl(); }
-    setError();
+    if (f) { setMode('file'); setUrl(''); }
+    setError('');
   }
 
   function onUrlChange(e) {
     setUrl(e.target.value);
-    if (e.target.value) { setMode(url); setFile(null); }
-    setError();
+    if (e.target.value) { setMode('url'); setFile(null); }
+    setError('');
   }
 
   async function handleSubmit() {
