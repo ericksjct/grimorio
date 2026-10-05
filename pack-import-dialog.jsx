@@ -233,11 +233,13 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
                   disabled={busy}
                   style={{ display: 'none' }}
                 />
+                <div className="hifi-section-label">{tt(lang, 'import.fileLabel')}</div>
                 <button
                   type="button"
                   className="hifi-btn-secondary"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={busy}
+                  style={{ display: 'block', width: '100%', height: 'auto', marginTop: 4, padding: '7px 14px', fontSize: 14, lineHeight: 'normal' }}
                 >{tt(lang, 'import.chooseFile')}</button>
                 {file && (
                   <div
@@ -248,7 +250,7 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
                 )}
               </div>
 
-              <div className="hifi-section-label" style={{ margin: '16px 0', textAlign: 'center' }}>{tt(lang, 'import.or')}</div>
+              <div className="hifi-section-label" style={{ margin: '16px 0', textAlign: 'left' }}>{tt(lang, 'import.or')}</div>
 
               <div>
                 <label className="hifi-section-label" htmlFor="pack-import-url">{tt(lang, 'import.urlLabel')}</label>

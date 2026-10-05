@@ -92,7 +92,7 @@ foreach ($key in $packErrKeys) {
 
 $importKeys = @(
   'import.open', 'import.title', 'import.close', 'import.emptyHeading', 'import.emptyBody',
-  'import.docsPrefix', 'import.docsLink', 'import.or', 'import.chooseFile',
+  'import.docsPrefix', 'import.docsLink', 'import.or', 'import.chooseFile', 'import.fileLabel',
   'import.urlLabel', 'import.urlPlaceholder', 'import.sizeHint', 'import.installPack',
   'import.installing', 'import.success', 'import.successCount', 'import.sanitizedNote',
   'import.renamed.one', 'import.renamed.other', 'import.renamedMore'

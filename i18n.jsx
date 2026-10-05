@@ -170,7 +170,8 @@ const STRINGS = {
     'ability.wis': 'SAB',
     'ability.cha': 'CAR',
     // Import de pacotes (PKG-02/PKG-03), chaves e copy de .planning/phases/03-srd-pack-import-pipeline/03-UI-SPEC.md
-    'import.chooseFile': 'Escolher arquivo',
+    'import.chooseFile': 'Fazer upload',
+    'import.fileLabel': 'Escolher arquivo externo',
     'import.close': 'Fechar',
     'import.docsLink': 'página de docs',
     'import.docsPrefix': 'Veja o formato do pacote na ',
@@ -408,7 +409,8 @@ const STRINGS = {
     'ability.wis': 'WIS',
     'ability.cha': 'CHA',
     // Pack import (PKG-02/PKG-03) keys and copy from .planning/phases/03-srd-pack-import-pipeline/03-UI-SPEC.md
-    'import.chooseFile': 'Choose file',
+    'import.chooseFile': 'Upload',
+    'import.fileLabel': 'Choose external file',
     'import.close': 'Close',
     'import.docsLink': 'docs page',
     'import.docsPrefix': 'See the pack format on the ',
