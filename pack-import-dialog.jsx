@@ -239,7 +239,7 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
                   className="hifi-btn-secondary"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={busy}
-                  style={{ display: 'block', width: '100%', height: 'auto', marginTop: 4, padding: '7px 14px', fontSize: 14, lineHeight: 'normal' }}
+                  style={{ display: 'inline-flex', height: 'auto', marginTop: 4, padding: '7px 14px', fontSize: 14, lineHeight: 'normal' }}
                 >{tt(lang, 'import.chooseFile')}</button>
                 {file && (
                   <div
@@ -275,7 +275,7 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
           )}
         </div>
 
-        <footer style={{ flexShrink: 0, padding: 16, borderTop: '1px solid var(--surface1)' }}>
+        <footer style={{ flexShrink: 0, padding: 16, borderTop: '1px solid var(--surface1)', display: 'flex', justifyContent: 'flex-end' }}>
           {/* Pós-sucesso o botão vira "Fechar": reinstalar o mesmo file/url
               duplicaria o pack (WR-04/WR-08), então não há ação de instalar aqui. */}
           <button
@@ -283,7 +283,6 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
             className="hifi-btn-primary"
             onClick={result ? onClose : handleSubmit}
             disabled={result ? false : submitDisabled}
-            style={{ width: '100%', justifyContent: 'center' }}
           >{result ? tt(lang, 'import.close') : busy ? tt(lang, 'import.installing') : tt(lang, 'import.installPack')}</button>
         </footer>
       </section>
