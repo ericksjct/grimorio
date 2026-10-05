@@ -283,6 +283,7 @@ function PackImportDialog({ lang, dark, theme, open, onClose }) {
             className="hifi-btn-primary"
             onClick={result ? onClose : handleSubmit}
             disabled={result ? false : submitDisabled}
+            style={{ display: 'inline-flex', height: 'auto', padding: '7px 14px', fontSize: 14, lineHeight: 'normal' }}
           >{result ? tt(lang, 'import.close') : busy ? tt(lang, 'import.installing') : tt(lang, 'import.installPack')}</button>
         </footer>
       </section>
