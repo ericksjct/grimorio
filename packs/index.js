@@ -1,4 +1,5 @@
 // GERADO por scripts/build-packs-index.mjs — não editar à mão.
+// para rodar: npm run packs
 globalThis.BUILTIN_PACKS = [
   {
     "key": "srd-2024-en",
@@ -38,5 +39,18 @@ globalThis.BUILTIN_PACKS = [
     "labelEn": "SRD 5.2 (PT-BR)",
     "image": "srd-2024-ptbr.png",
     "short": "SRD 5.2 PT"
+  },
+  {
+    "key": "srd-2024-ptbr-adicionais",
+    "source": "fetch",
+    "file": "packs/srd-2024-adicionais.json",
+    "lang": "ptbr",
+    "edition": "5e 2024",
+    "corpus": "pack",
+    "role": "additional",
+    "base": "srd-2024-ptbr",
+    "labelPt": "PHB 2024 (PT-BR) - adicionais",
+    "labelEn": "PHB 2024 (PT-BR) - adicionais",
+    "short": "PHB 2024 - adicionais PT"
   }
 ];
