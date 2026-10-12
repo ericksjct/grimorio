@@ -44,6 +44,11 @@
           "type": "string",
           "description": "Ex.: \"2014\", \"2024\". Opcional."
         },
+        "base": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+          "description": "Opcional, só faz sentido com role \"additional\": o meta.source do pacote base ao qual este adicional pertence. Um adicional com base só pode ficar marcado junto desse base (as magias dele costumam repetir slugs de outros bases); sem o campo, o adicional serve a qualquer base."
+        },
         "role": {
           "type": "string",
           "enum": ["base", "additional"],

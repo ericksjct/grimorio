@@ -83,6 +83,7 @@ const META_FIELDS = [
   { key: 'lang', type: 'string', required: true, enum: ['ptbr', 'en'] },
   { key: 'edition', type: 'string', required: false },
   { key: 'role', type: 'string', required: false, enum: ['base', 'additional'] },
+  { key: 'base', type: 'string', required: false, pattern: SLUG_PATTERN },
   { key: 'spellCount', type: 'integer', required: false },
   { key: 'image', type: 'string', required: false },
   { key: 'license', type: 'object', required: true },

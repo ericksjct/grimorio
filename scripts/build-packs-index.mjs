@@ -26,8 +26,10 @@ for (const f of files) {
     file: 'packs/' + f,
     lang: meta.lang,
     edition: meta.edition ? '5e ' + meta.edition : '',
-    corpus: 'srd',
+    // corpus 'srd' = bases embutidos (comparador de edicao); adicional embutido e 'pack'.
+    corpus: meta.role === 'additional' ? 'pack' : 'srd',
     role: meta.role === 'additional' ? 'additional' : 'base',
+    base: meta.base,
     labelPt: meta.name,
     labelEn: meta.name,
     // Miniatura opcional: packs/<mesmo-nome>.png (ou .webp/.jpg) ao lado do JSON.
@@ -36,8 +38,9 @@ for (const f of files) {
   });
 }
 // Ordem é semântica no loader: índice 0 = fallback; 1º 'en' = default de navegador EN.
-// EN antes de PT, edição mais nova primeiro.
-entries.sort((a, b) => (a.lang === 'en' ? 0 : 1) - (b.lang === 'en' ? 0 : 1)
+// Bases antes de adicionais, EN antes de PT, edição mais nova primeiro.
+entries.sort((a, b) => (a.role === 'base' ? 0 : 1) - (b.role === 'base' ? 0 : 1)
+  || (a.lang === 'en' ? 0 : 1) - (b.lang === 'en' ? 0 : 1)
   || b.edition.localeCompare(a.edition) || a.key.localeCompare(b.key));
 
 const out = '// GERADO por scripts/build-packs-index.mjs — não editar à mão.\n'

@@ -19,13 +19,13 @@ foreach ($needle in @(
 
 $builtinIdx = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'packs/index.js')
 $fetchSourceCount = ([regex]::Matches($builtinIdx, '"source": "fetch"')).Count
-if ($fetchSourceCount -ne 3) {
-  throw "Expected 3 occurrences of source: 'fetch' (3 SRD embutidos em packs/index.js: 5.2 EN, 5.1 EN, 5.2 PT-BR), found $fetchSourceCount."
+if ($fetchSourceCount -lt 3) {
+  throw "Expected at least 3 occurrences of source: 'fetch' (3 SRD embutidos em packs/index.js: 5.2 EN, 5.1 EN, 5.2 PT-BR), found $fetchSourceCount."
 }
 
 $editionCount = ([regex]::Matches($builtinIdx, '"edition": "5e 20')).Count
-if ($editionCount -ne 3) {
-  throw "Expected 3 occurrences of edition: '5e 20...', found $editionCount."
+if ($editionCount -lt 3) {
+  throw "Expected at least 3 occurrences of edition: '5e 20...', found $editionCount."
 }
 
 # Nenhuma reatribuição do registro: a única linha com "SPELL_VERSIONS =" que não

@@ -113,6 +113,7 @@ function _packToVersion(meta) {
     lang: meta.lang === 'ptbr' ? 'ptbr' : 'en',
     edition: String(meta.edition || '').slice(0, 24),
     role: meta.role === 'base' ? 'base' : 'additional',
+    base: typeof meta.base === 'string' ? meta.base : undefined,
     corpus: 'pack', // WR-07: nunca compete pelo par preferencial do comparador de edição
     labelPt: name.slice(0, 48),
     labelEn: name.slice(0, 48),
@@ -741,6 +742,11 @@ function _isBase(v) {
   return !!(v && v.role === 'base');
 }
 
+// Id do pacote como um adicional o referencia em meta.base (= meta.source).
+function _baseIdOf(v) {
+  return v.source === 'idb' ? v.packId : v.key;
+}
+
 function _isSrdBuiltin(v) {
   return !!(v && v.source === 'fetch' && v.corpus === 'srd');
 }
@@ -757,7 +763,7 @@ function _browserDefaultKey() {
       navigator.browserLanguage,
     ].filter(Boolean).map(l => String(l).toLowerCase());
     const lang = candidates.some(l => l.startsWith('pt')) ? 'ptbr' : 'en';
-    const v = SPELL_VERSIONS.find(x => x.lang === lang);
+    const v = SPELL_VERSIONS.find(x => x.lang === lang && _isBase(x));
     if (v) return v.key;
   } catch (e) {}
   return _defaultVersion().key;
@@ -790,7 +796,12 @@ function normalizeSelection(keys) {
     if (_isBase(_versionByKey(out[i]))) { lastBase = out[i]; break; }
   }
   if (lastBase !== null) {
-    out = out.filter((k) => k === lastBase || !_isBase(_versionByKey(k)));
+    const baseId = _baseIdOf(_versionByKey(lastBase));
+    // Adicional com `base` só convive com esse base; os outros saem da seleção.
+    out = out.filter((k) => {
+      const v = _versionByKey(k);
+      return k === lastBase || !_isBase(v) && !(v && v.base && v.base !== baseId);
+    });
   }
   return out;
 }

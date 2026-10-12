@@ -81,6 +81,7 @@ function _installedRows(metas) {
     image: meta.image,
     count: meta.spellCount,
     role: meta.role === 'base' ? 'base' : 'additional',
+    base: meta.base,
     origin: 'installed',
     license: meta.license || null,
   }));
@@ -93,7 +94,7 @@ function _installedRows(metas) {
 // JSON builtin já carregou (mesmo efeito que hoje carrega a licença).
 function _builtinRows(versions, licenses) {
   return (versions || [])
-    .filter((v) => v.source === 'fetch' && v.corpus === 'srd')
+    .filter((v) => v.source === 'fetch')
     .map((v) => {
       const license = licenses && licenses[v.key] ? licenses[v.key] : null;
       const meta = window.getVersionMeta ? window.getVersionMeta(v.key) : null;
@@ -107,7 +108,8 @@ function _builtinRows(versions, licenses) {
         lang: v.lang,
         edition: meta ? meta.edition : null,
         count: meta && typeof meta.spellCount === 'number' ? meta.spellCount : null,
-        role: 'base',
+        role: v.role === 'additional' ? 'additional' : 'base',
+        base: v.base,
         // Embutido: imagem vem do manifesto (packs/*.png, código nosso) — não passa pelo _safeImage de terceiros.
         image: v.image ? 'packs/' + v.image : undefined,
         origin: 'builtin',
@@ -329,13 +331,13 @@ function PackThumb({ row, size }) {
 
 // Um cartão marcável: checkbox + miniatura + título/descrição derivada, com
 // remoção inline (só instalados) e licença (só quem tem manifesto).
-function PackCard({ lang, row, size, checked, disabled, onToggle, dupCount, confirming, impact, onRequestRemove, onCancelRemove, onConfirmRemove }) {
+function PackCard({ lang, row, size, checked, disabled, requiresBase, onToggle, dupCount, confirming, impact, onRequestRemove, onCancelRemove, onConfirmRemove }) {
   const inputId = 'hifi-pack-card-' + row.versionKey;
   // Nome vem de arquivo de terceiro (T-08-24): sempre filho de texto React, recortado.
   const title = String(row.name || '').slice(0, 64);
   const desc = tt(lang, 'menu.cardMeta', _cardMetaVars(row, lang));
   return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid var(--surface1)' }}>
+    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid var(--surface1)', ...(requiresBase && { opacity: 0.45, filter: 'grayscale(1)' }) }}>
       <input
         id={inputId}
         type="checkbox"
@@ -348,7 +350,7 @@ function PackCard({ lang, row, size, checked, disabled, onToggle, dupCount, conf
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <label htmlFor={inputId} style={{ display: 'block', fontWeight: 700, fontSize: 14, overflowWrap: 'anywhere', cursor: 'pointer' }}>
+            <label htmlFor={inputId} style={{ display: 'block', fontWeight: 700, fontSize: 14, overflowWrap: 'anywhere', cursor: requiresBase ? 'not-allowed' : 'pointer' }}>
               {title}
             </label>
             <div
@@ -366,6 +368,12 @@ function PackCard({ lang, row, size, checked, disabled, onToggle, dupCount, conf
             >✕</button>
           )}
         </div>
+
+        {requiresBase && (
+          <div style={{ marginTop: 4, fontSize: 12, color: 'var(--subtext0)' }}>
+            {tt(lang, 'manager.requiresBase', { name: String(requiresBase).slice(0, 64) })}
+          </div>
+        )}
 
         {typeof dupCount === 'number' && dupCount > 0 && (
           <div style={{ marginTop: 4, fontSize: 12, color: 'var(--subtext0)' }}>
@@ -534,7 +542,7 @@ function PackMenu({ lang, dark, theme, open, isMobile, anchor, onClose, onOpenIm
   // sob o primeiro toggle do bloco de licença, não no efeito de abertura.
   React.useEffect(() => {
     if (!open) return;
-    const srdVersions = (window.SPELL_VERSIONS || []).filter((v) => v.source === 'fetch' && v.corpus === 'srd');
+    const srdVersions = (window.SPELL_VERSIONS || []).filter((v) => v.source === 'fetch');
     srdVersions.forEach((v) => {
       window.loadSpellVersion(v.key)
         .then(() => {
@@ -598,8 +606,17 @@ function PackMenu({ lang, dark, theme, open, isMobile, anchor, onClose, onOpenIm
   const builtinRows = _builtinRows(window.SPELL_VERSIONS, licenses);
   // D-19: zero pacotes instalados pelo usuário — nunca "zero versões" (a seção
   // SRD continua presente abaixo, sempre).
-  const baseRows = [...builtinRows, ...installedRows.filter((r) => r.role === 'base')];
-  const additionalRows = installedRows.filter((r) => r.role !== 'base');
+  const allRows = [...builtinRows, ...installedRows];
+  const baseRows = allRows.filter((r) => r.role === 'base');
+  const additionalRows = allRows.filter((r) => r.role !== 'base');
+  // Base marcado agora (se houver) — adicional atrelado a OUTRO base fica desabilitado.
+  const selBase = (window.SPELL_VERSIONS || []).find((v) => selected.includes(v.key) && v.role === 'base');
+  const selBaseId = selBase ? (selBase.source === 'idb' ? selBase.packId : selBase.key) : null;
+  const requiredBaseName = (row) => {
+    if (!row.base || !selBaseId || row.base === selBaseId) return null;
+    const b = baseRows.find((r) => r.id === row.base);
+    return b ? b.name : row.base;
+  };
   const isEmpty = packs !== null && additionalRows.length === 0;
   const thumbSize = isMobile ? 32 : 40;
 
@@ -696,7 +713,8 @@ function PackMenu({ lang, dark, theme, open, isMobile, anchor, onClose, onOpenIm
                 <PackCard
                   key={row.id} lang={lang} row={row} size={thumbSize}
                   checked={selected.includes(row.versionKey)}
-                  disabled={busyKey === row.versionKey}
+                  disabled={busyKey === row.versionKey || !!requiredBaseName(row)}
+                  requiresBase={requiredBaseName(row)}
                   onToggle={handleToggle}
                   dupCount={dupCounts[row.versionKey]}
                   confirming={confirmingId === row.id}

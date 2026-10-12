@@ -109,12 +109,12 @@ const path = require("path");
 const m = fs.readFileSync("packs/index.js", "utf8").match(/BUILTIN_PACKS = (\[[\s\S]*?\n\]);/);
 if (!m) { console.error("nao achei BUILTIN_PACKS em packs/index.js"); process.exit(1); }
 const BUILTIN_VERSIONS = eval(m[1]);
-if (BUILTIN_VERSIONS.length !== 3) {
-  console.error("Esperava 3 entradas em BUILTIN_VERSIONS, achei " + BUILTIN_VERSIONS.length);
+if (BUILTIN_VERSIONS.length < 3) {
+  console.error("Esperava ao menos 3 entradas em BUILTIN_VERSIONS, achei " + BUILTIN_VERSIONS.length);
   process.exit(1);
 }
 for (const v of BUILTIN_VERSIONS) {
-  if (v.corpus !== "srd") { console.error("Entrada " + v.key + " nao tem corpus srd"); process.exit(1); }
+  if (v.role === "base" && v.corpus !== "srd") { console.error("Entrada " + v.key + " nao tem corpus srd"); process.exit(1); }
   if (v.source !== "fetch") { console.error("Entrada " + v.key + " nao tem source fetch"); process.exit(1); }
   if (!v.file || !fs.existsSync(path.join(process.cwd(), v.file))) {
     console.error("Entrada " + v.key + " aponta para arquivo inexistente: " + v.file);

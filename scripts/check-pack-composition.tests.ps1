@@ -89,7 +89,7 @@ function makeSandbox(opts) {
   vm.createContext(sandbox);
   vm.runInContext(fs.readFileSync('packs/index.js', 'utf8'), sandbox);
   vm.runInContext(
-    body + '\nthis.__x = { normalizeSelection, resolveSelection, unionSpells, _browserDefaultKey, adaptSpells, _isSrdBuiltin, _isFallback };',
+    body + '\nthis.__x = { normalizeSelection, resolveSelection, unionSpells, _browserDefaultKey, adaptSpells, _isSrdBuiltin, _isFallback, SPELL_VERSIONS };',
     sandbox
   );
   return { x: sandbox.__x, events, store };
@@ -114,6 +114,16 @@ function arrEq(a, b) {
     arrEq(x.normalizeSelection(['srd-2024-en', 'srd-2024-ptbr']), ['srd-2024-ptbr']));
   check("normalizeSelection(['srd-2014-en','srd-2024-ptbr','srd-2024-en']) === ['srd-2024-en']",
     arrEq(x.normalizeSelection(['srd-2014-en', 'srd-2024-ptbr', 'srd-2024-en']), ['srd-2024-en']));
+  // Registro sintetico: dois bases e um adicional atrelado a um deles.
+  x.SPELL_VERSIONS.push(
+    { key: 'qa-base-a', source: 'fetch', role: 'base', corpus: 'srd', lang: 'en', edition: '5e 2024' },
+    { key: 'qa-base-b', source: 'fetch', role: 'base', corpus: 'srd', lang: 'en', edition: '5e 2014' },
+    { key: 'qa-add-a', source: 'fetch', role: 'additional', corpus: 'pack', base: 'qa-base-a', lang: 'en' }
+  );
+  check("adicional com meta.base fica com o base dele",
+    arrEq(x.normalizeSelection(['qa-base-a', 'qa-add-a']), ['qa-base-a', 'qa-add-a']));
+  check("adicional com meta.base sai quando outro base e marcado",
+    arrEq(x.normalizeSelection(['qa-base-b', 'qa-add-a']), ['qa-base-b']));
   check("normalizeSelection(['a','a',' b ', 7, null, '']) === ['a','b']",
     arrEq(x.normalizeSelection(['a', 'a', ' b ', 7, null, '']), ['a', 'b']));
   check('normalizeSelection never removes an unregistered/plugin key even mixed with an SRD edition switch (D-05)',
