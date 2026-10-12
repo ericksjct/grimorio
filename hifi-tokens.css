@@ -1091,7 +1091,11 @@ input.hifi-input[type='number']::-webkit-outer-spin-button { -webkit-appearance:
     flex-shrink: 0;
     box-sizing: border-box;
     display: inline-flex; align-items: center; justify-content: center;
-    min-width: 22px; height: 22px; padding: 0 4px;
+    min-width: 22px; height: 22px; padding: 0 4px 0.15em;
+    /* Texturina usa algarismos antigos (1/2 baixos, 5/9 descendo) e o corpo da
+       fonte deixa o glifo ~1,25px abaixo do centro: lining-nums + 0.15em de
+       padding inferior centram T, 1, 2... (medido no Chromium). */
+    font-variant-numeric: lining-nums;
     border-radius: 4px;
     background: #fff; color: #111; border: 1.5px solid #111;
     font-family: 'Texturina', serif; font-weight: 700;
