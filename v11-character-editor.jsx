@@ -973,7 +973,7 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
                   <label key={lvl} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                     <span className="hifi-mono" style={{ fontSize: 10, color: `var(--level-${lvl})` }}>{lvl}</span>
                     <input
-                      type="number" min={0} max={9} inputMode="numeric"
+                      type="number" min={0} max={4} inputMode="numeric"
                       value={slotTotals[lvl] ?? 0}
                       // Digitação livre; clampa no blur (mesma razão do nível de classe).
                       onChange={(e) => {
@@ -983,14 +983,14 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
                       onBlur={() => {
                         setSlotTotals(prev => {
                           const next = { ...prev };
-                          const n = Math.max(0, Math.min(9, parseInt(next[lvl], 10) || 0));
+                          const n = Math.max(0, Math.min(4, parseInt(next[lvl], 10) || 0));
                           if (n > 0) next[lvl] = n; else delete next[lvl];
                           return next;
                         });
                       }}
                       aria-label={T(`espaços do ${lvl}º círculo`, `level ${lvl} slots`)}
                       className="hifi-input"
-                      style={{ width: '100%', textAlign: 'center', padding: '4px 2px', fontSize: 13 }}
+                      style={{ width: 30, height: 30, boxSizing: 'border-box', borderRadius: '50%', textAlign: 'center', padding: 0, fontSize: 13 }}
                     />
                   </label>
                 ))}

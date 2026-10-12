@@ -1767,19 +1767,6 @@ function FilterChipDropdown({ label, count, values, selected, formatValue = v =>
             minWidth: 200, maxHeight: 360, overflowY: 'auto', padding: '6px 0', zIndex: 12,
             boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
           }}>
-            {count > 0 && (
-              <button onClick={onClear} className="hifi-btn-ghost"
-                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 12px', color: 'var(--subtext0)', fontSize: 12 }}>
-                {tt(lang, 'filter.clear')}
-              </button>
-            )}
-            {onRemove && (
-              <button onClick={() => { onRemove(); setOpen(false); }} className="hifi-btn-ghost"
-                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 12px', color: 'var(--red)', fontSize: 12 }}>
-                {tt(lang, 'filter.removeFilter')}
-              </button>
-            )}
-            {(count > 0 || onRemove) && <div style={{ height: 1, background: 'var(--surface1)', margin: '4px 0' }}/>}
             {values.map(v => {
               const sel = selected.has(v);
               return (
@@ -1796,6 +1783,22 @@ function FilterChipDropdown({ label, count, values, selected, formatValue = v =>
                 </button>
               );
             })}
+            {(count > 0 || onRemove) && (
+              <div style={{ position: 'sticky', bottom: 0, background: 'var(--mantle)', borderTop: '1px solid var(--surface1)', marginTop: 4, paddingTop: 4 }}>
+                {count > 0 && (
+                  <button onClick={onClear} className="hifi-btn-ghost"
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 12px', color: 'var(--subtext0)', fontSize: 12 }}>
+                    {tt(lang, 'filter.clear')}
+                  </button>
+                )}
+                {onRemove && (
+                  <button onClick={() => { onRemove(); setOpen(false); }} className="hifi-btn-ghost"
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 12px', color: 'var(--red)', fontSize: 12 }}>
+                    {tt(lang, 'filter.removeFilter')}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </>
       )}
