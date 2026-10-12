@@ -1,5 +1,4 @@
 // GERADO por scripts/build-packs-index.mjs — não editar à mão.
-// para rodar: npm run packs
 globalThis.BUILTIN_PACKS = [
   {
     "key": "srd-2024-en",
