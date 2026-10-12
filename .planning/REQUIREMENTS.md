@@ -28,22 +28,25 @@
 - [x] **MGMT-03**: Seletor de versões enumera os pacotes instalados dinamicamente (substitui as 4 entradas fixas de `SPELL_VERSIONS`)
 - [x] **MGMT-04**: Duplicatas entre pacotes são nota informativa ("2 versões de Bola de Fogo: SRD, MeuPack"), não conflito bloqueante — identidade de magia é `(source, name)`
 - [x] **MGMT-05**: Estado vazio (zero pacotes instalados) explica o que é um pacote e aponta para o import
-- [ ] **MGMT-06**: Usuário pode marcar quantos pacotes quiser (SRD embutidos e homebrew) ao mesmo tempo; a grade mostra a união das magias de todos os marcados, cada magia no idioma do seu pacote, sem prioridade nem ocultação silenciosa entre homebrews
+- [ ] **MGMT-06**: Usuário marca **um pacote base** (SRD embutido ou base próprio com `meta.role: "base"`) e quantos **pacotes adicionais** quiser ao mesmo tempo; a grade mostra a união das magias do base e dos adicionais marcados, cada magia no idioma do seu pacote, sem prioridade nem ocultação silenciosa entre adicionais (emenda E-06, 2026-10-12)
 - [ ] **MGMT-07**: O slug (`name`) de magia é identidade única entre os pacotes selecionados; o import detecta colisão contra os slugs reservados do SRD e os pacotes instalados, renomeia automaticamente os slugs conflitantes do pacote que entra com o sufixo do pack (`slug-<pack>`, `-2`/`-3` se ocupado), instala sem prompt e avisa no idioma da interface (toast e tela de sucesso) quais slugs foram renomeados; a seleção detecta colisão contra os pacotes marcados e abre um prompt de renomeação do pacote que entra — cancelar aborta sem marcar; nenhuma preparada/favorita é reescrita; o export devolve o pacote renomeado; a lista de slugs reservados é publicada (JSON gerado + `pack-docs.html`) e consultável no menu
 - [ ] **MGMT-08**: Seleção vazia é permitida no menu; com ela a grade mostra o pacote padrão (SRD 5.2 no idioma do navegador) e nunca fica vazia, e um aviso no idioma da interface explica a troca
-- [ ] **MGMT-09**: Um menu de pacotes único — cartões com imagem, título e descrição derivada, seleção por checkbox, import, remoção, licença/atribuição e seção de slugs reservados — substitui o seletor de versão e absorve o gerenciador de pacotes, aberto por um chip que mostra o primeiro pacote + contagem
+- [ ] **MGMT-09**: Um menu de pacotes único — cartões com imagem, título e descrição derivada, seleção por checkbox, seções "Pacotes base" e "Pacotes adicionais", import, remoção, licença/atribuição e seção de slugs reservados — substitui o seletor de versão e absorve o gerenciador de pacotes, aberto por um chip que mostra o primeiro pacote + contagem
 
 ### SRD — Pacote embutido
 
 - [x] **SRD-01**: Dois pacotes SRD EN embutidos, um por edição (5.1/2014 e 5.2/2024), com conteúdo vindo de fonte com licença verificada e registrada — nunca dos arquivos `spells-5E-*.json` atuais; cada pacote carrega em `meta.license` o texto de atribuição verbatim da sua edição mais a nota de modificação
 - [x] **SRD-02**: Atribuição CC-BY visível no app, com o texto verbatim exato da versão de SRD usada (5.1 e 5.2 têm textos distintos; modificações ao texto-fonte anotadas)
+- [x] **SRD-06**: Os pacotes embutidos vivem na pasta `packs/` (fonte única): o menu só mostra o que está nela + o que o usuário instala; `packs/index.js` é o manifesto gerado (`npm run packs`, gate `check-packs-index`), e adicionar um embutido é copiar o JSON (e opcionalmente uma miniatura de mesmo nome) para a pasta e regenerar o manifesto (emenda E-08, 2026-10-12)
+- [x] **PKG-07**: `meta.role` (`base` | `additional`, padrão `additional`) é campo opcional do schema; é como o usuário instala um pacote base próprio, que não tem slugs renomeados no import (emenda E-07, 2026-10-12)
 - [x] **SRD-03**: Pacote SRD vem pré-instalado — primeira abertura nunca é vazia
 - [x] **SRD-04**: Pacote SRD 5.2 embutido em pt-BR (`srd-2024-ptbr.json`), com as 339 magias do SRD 5.2 na tradução CC-BY-4.0 do Heróis Anônimos — recorte que nunca inclui magia ou conteúdo fora do SRD 5.2 nem byte dos `spells-5E-*.json`; `name` é o slug EN (preparadas/favoritas continuam resolvendo), atribuição dupla verbatim (WotC + Heróis Anônimos) com nota de modificação própria; é o padrão para navegador em português e o destino das chaves legadas `*-PTBR`
 
-- [ ] **SRD-05**: SRD 5.1 e SRD 5.2 são mutuamente exclusivos na seleção (marcar um desmarca o outro; num `?v=` com os dois, vence o que vem por último na lista); SRD da mesma edição em idiomas diferentes coexistem, e numa colisão de slug entre eles vence o pacote no idioma da interface, sem prompt de renomear
+- [ ] **SRD-05**: Pacotes base são mutuamente exclusivos na seleção — marcar um desmarca o outro, inclusive SRD 5.1 × 5.2 e SRD EN × PT-BR da mesma edição; num `?v=` com mais de um base vence o último da lista; adicionais nunca são desmarcados por essa regra (emenda E-06, 2026-10-12; antes: exclusão só por edição)
 
 *SRD-01 reescrito em 2026-07 pela decisão D-05 da Fase 3 — ver `.planning/phases/03-srd-pack-import-pipeline/03-CONTEXT.md`.*
 *SRD-04 promovido de Future Requirements (v2.x) em 2026-09-26 — a fonte deixou de ser tradução própria e passou a ser a tradução CC-BY do Heróis Anônimos recortada ao SRD 5.2; ver .planning/phases/07-traducao-srd-ptbr/07-CONTEXT.md.*
+*MGMT-06, MGMT-09 e SRD-05 reescritos em 2026-10-12 pela emenda E-06 da Fase 8 (pacotes base × adicionais); SRD-06 e PKG-07 acrescentados pelas emendas E-07/E-08 — ver `08-CONTEXT.md`.*
 *PKG-06 e MGMT-07 revisados em 2026-09-30 depois do checkpoint 08-07 (GAP-2/GAP-3) — ver emendas E-01..E-03 em `.planning/phases/08-composicao-aditiva-de-pacotes/08-CONTEXT.md`; os dois ficam Pending até o checkpoint 08-12.*
 
 ### MIGR — Descomissionamento

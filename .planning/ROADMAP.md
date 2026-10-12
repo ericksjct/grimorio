@@ -308,6 +308,7 @@ Plans:
 
 **Nota:** o objetivo acima foi escrito antes do discuss; o `08-CONTEXT.md` (D-01) tirou a
 ideia de "pacote base" — todo pacote marcado soma, e seleção vazia cai no pacote padrão (D-04).
+**Emenda 2026-10-12 (E-06..E-08):** voltou o conceito de base — o menu separa "Pacotes base" (concorrem, um por vez; `meta.role`) de "Pacotes adicionais" (somam), e os embutidos passaram a viver na pasta `packs/` com manifesto gerado. Ver `08-CONTEXT.md`.
 
 Plans:
 **Wave 1**

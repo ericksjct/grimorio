@@ -251,6 +251,15 @@ As decisões D-01..D-24 acima ficam como estavam. As emendas abaixo valem no lug
 - **E-04 (GAP-1 — esclarece D-20):** magia sem `source` próprio herda o nome do pacote (`meta.name`, ou `meta.source` sem nome) como fonte, no ponto único de derivação (`adaptSpell`). O campo FONTE do detalhe mostra o nome completo; o rodapé do card continua com o código curto (`src`); o separador ` · ` só aparece entre partes não vazias. Efeito colateral aceito: o filtro extra "Fonte" passa a listar o código desses pacotes, como já lista o de packs com `source` por magia — não é o filtro por pacote vetado pelo D-21. Nenhum selo novo (D-20 segue).
 - **E-05 (GAP-4 — substitui a copy de `packErr.imageInvalid`/`packErr.imageTooLarge` do UI-SPEC):** a mensagem diz, em linguagem simples, que o pacote não foi instalado e o que é aceito (link `https://` ou imagem PNG/JPEG/WebP/GIF embutida de até 200 KB), com paridade PT/EN. A fonte da copy passa a ser `i18n.jsx`.
 
+## Emenda pós-fase: pacotes base e adicionais (2026-10-12)
+
+Decisão do usuário depois do checkpoint 08-07; vale no lugar de D-01, D-03, D-05 e D-22 onde eles dizem "não existe base", "SRD mutuamente exclusivos por edição" e "SRD EN + PT coexistem". O resto continua valendo.
+
+- **E-06 (volta o conceito de "base"):** o menu separa **Pacotes base** e **Pacotes adicionais**. Bases concorrem entre si — **só um base fica marcado por vez** (marcar outro desmarca o anterior, mesmo da mesma edição; SRD 5.2 EN + PT-BR deixam de poder coexistir; num `?v=` com vários bases vence o último da lista). Adicionais somam magias ao base marcado, em qualquer número. Seleção só com adicionais continua válida; seleção vazia continua caindo no pacote padrão (D-04).
+- **E-07 (`meta.role`):** campo opcional do schema do pacote, `"base"` | `"additional"` (padrão `additional`), validado em `pack-import.jsx` e documentado em `pack-docs.html`. É assim que o usuário traz um pacote base próprio. Na instalação, pacote `base` NÃO tem slugs renomeados contra o SRD/instalados (repetir slug do SRD é esperado); a colisão é resolvida na seleção, onde o adicional é quem cede (`_selectionConflicts`, A-14 generalizado de "o SRD nunca é renomeado" para "o base nunca é renomeado").
+- **E-08 (pasta `packs/` é a fonte dos embutidos):** os 3 SRD saíram da raiz para `packs/`. O menu só mostra o que está em `packs/` + o que o usuário instala. `packs/index.js` (manifesto gerado por `scripts/build-packs-index.mjs`, `npm run packs`; teste `check-packs-index`) define `globalThis.BUILTIN_PACKS`, lido de forma síncrona pelo loader e via `importScripts` pelo `sw.js` (PRECACHE derivado dele; `CACHE_VERSION` `grimorio-v7`). Cada embutido é base por padrão; papel, edição, idioma e rótulo saem do `meta` do JSON; miniatura opcional = `packs/<mesmo-nome>.png|webp|jpg`.
+- Texto do menu: seções `manager.sectionBuiltin` = "pacotes base" e `manager.sectionInstalled` = "pacotes adicionais", com dicas `manager.baseHint`/`manager.additionalHint`.
+
 </amendments>
 
 ---
