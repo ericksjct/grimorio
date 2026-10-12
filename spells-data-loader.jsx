@@ -33,6 +33,17 @@
 // carregado antes deste script), gerado a partir dos JSONs da pasta packs/ por
 // scripts/build-packs-index.mjs. O menu só mostra o que está em packs/ + o que o
 // usuário instala.
+// Rede de segurança: um index.html antigo (cache do navegador/SW logo após um deploy)
+// não carrega packs/index.js — sem isto o registro ficaria vazio e a página quebraria.
+// XHR síncrono é aceitável aqui: só roda nesse caso raro e o arquivo tem ~1 KB.
+if (!globalThis.BUILTIN_PACKS) {
+  try {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', 'packs/index.js', false);
+    xhr.send();
+    if (xhr.status === 200) (0, eval)(xhr.responseText);
+  } catch (e) { console.warn('[spells-data-loader] packs/index.js não carregou:', e); }
+}
 const BUILTIN_VERSIONS = (globalThis.BUILTIN_PACKS || []).slice();
 
 // SPELL_VERSIONS é o registro VIVO — extensível em runtime (packs de

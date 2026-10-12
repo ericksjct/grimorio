@@ -4,10 +4,10 @@
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $indexPath = Join-Path $repoRoot 'packs/index.js'
-$before = Get-Content -Raw -LiteralPath $indexPath
+$before = (Get-Content -Raw -LiteralPath $indexPath) -replace "`r`n", "`n"
 Push-Location $repoRoot
 try { node scripts/build-packs-index.mjs | Out-Null } finally { Pop-Location }
-$after = Get-Content -Raw -LiteralPath $indexPath
+$after = (Get-Content -Raw -LiteralPath $indexPath) -replace "`r`n", "`n"
 if ($before -ne $after) {
   throw 'packs/index.js estava desatualizado (ja foi regenerado agora) - commite o novo packs/index.js.'
 }
