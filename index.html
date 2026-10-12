@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <title>Grimório · Magias de D&D 5e</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"/>
 <meta name="description" content="Grimório de magias de D&D 5e — prepare, marque como favorita, filtre por classe / nível / escola e imprima a lista de magias do seu personagem. PT-BR e EN, edições 2014 e 2024."/>
 <meta name="theme-color" content="#f8f7f3"/>
 <meta name="color-scheme" content="light"/>
@@ -465,6 +465,10 @@ function App() {
       const base = getComputedStyle(document.body).getPropertyValue('--base').trim();
       const tc = document.querySelector('meta[name="theme-color"]');
       if (tc && base) tc.setAttribute('content', base);
+      // O <html> fica atrás de tudo: aparece em folgas (teclado do Android,
+      // overscroll). Pinta com o fundo da tab bar pra nunca surgir faixa clara.
+      const mantle = getComputedStyle(document.body).getPropertyValue('--mantle').trim();
+      if (mantle) document.documentElement.style.background = mantle;
       document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
     } catch (e) {}
   }, [dark, theme]);
