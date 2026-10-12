@@ -25,6 +25,9 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
 - [x] **Phase 6: Decommissioning & Migration** - Remove the 4 protected JSONs from site/repo; migrate existing users without silently dropping references (completed 2026-09-27)
 - [x] **Phase 7: Tradução dos SRDs para pt-BR** - Pacote SRD 5.2 pt-BR embutido, a partir da tradução CC-BY do Heróis Anônimos recortada às 339 magias do SRD (completed 2026-09-27)
 - [ ] **Phase 8: Composição aditiva de pacotes** - Pacote base + pacotes homebrew empilhados que adicionam magias em vez de substituir a versão ativa
+- [x] **Phase 9: Mobile: toque e safe-area** - Alvos de toque >=44px, pílulas acessíveis, gaveta clicável, safe-area (auditoria mobile, alta) (completed 2026-10-12, via protótipo: drawer virou tab bar)
+- [x] **Phase 10: Mobile: legibilidade e hover em touch** - Hover só em mouse, título, tamanhos de fonte, contraste, paisagem (auditoria mobile, média) (completed 2026-10-12)
+- [x] **Phase 11: Mobile: acabamento** - Modo sessão, copy, escola por extenso, ícones (auditoria mobile, baixa) (completed 2026-10-12)
 
 ## Phase Details
 
@@ -380,3 +383,61 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 6. Decommissioning & Migration | v2.0 | 7/7 | Complete    | 2026-09-27 |
 | 7. Tradução dos SRDs para pt-BR | v2.0 | 5/5 | Complete    | 2026-09-27 |
 | 8. Composição aditiva de pacotes | v2.0 | 11/12 | In Progress|  |
+
+### Phase 9: Mobile: toque e safe-area (auditoria alta prioridade)
+
+**Status:** Done 2026-10-12. Implemented outside /gsd-plan-phase, from the prototype in ../grimorio-prototipo-mobile, together with phases 9-11: the drawer was replaced by a bottom tab bar (Buscar, Filtros, Preparadas, Sessão, Mais) with an expanding search field, and a single mobile control canon (44/40px, radius 10-12, system sans) replaced the 25px canon. See design.md sections 4 and 6.
+
+**Goal:** Every primary mobile control is reachable by touch and assistive tech, and the layout respects device safe areas.
+**Source:** `docs/audits/2026-10-12-auditoria-mobile.md` (itens 1-4)
+**Scope:**
+  1. Collapsed search drawer: whole 56px bar opens it (today only the 390x12 handle does)
+  2. `HifiPill` becomes `<button type="button" aria-pressed>` with a touch-sized hit area
+  3. Icon buttons keep the 25px visual but get a >=44px hit area on coarse pointers (header, detail, drawer tools, "preparar", prepared ribbon)
+  4. `env(safe-area-inset-*)` applied: top/side padding of the mobile shell, drawer height + bottom inset
+**Success criteria:** Playwright pass at 390x844 / 320x568 / 844x390 reports no interactive target < 44px on its short side (except documented exceptions); filters operable with keyboard/VoiceOver; no content under notch/home indicator.
+**Requirements**: TBD
+**Depends on:** Nothing (independent of Phase 8; mobile UI only)
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 9 to break down)
+
+### Phase 10: Mobile: legibilidade e hover em touch (auditoria media prioridade)
+
+**Goal:** Mobile reading is comfortable and touch interactions leave no stuck visual state.
+**Source:** `docs/audits/2026-10-12-auditoria-mobile.md` (itens 5-10)
+**Scope:**
+  5. All `:hover` rules gated by `@media (hover: hover)`
+  6. Mobile header title: character name on one line (ellipsis, ~18px), caret never orphaned
+  7. Mobile type sizes up: card description 14-15px, V/S/M and level chips legible
+  8. Mobile card description clamped (~4 lines + fade) - confirm with user, it reverses a deliberate choice
+  9. WCAG AA contrast: cantrip "○" and "·" >= 3:1, drawer placeholder >= 4.5:1 in light and dark
+  10. Landscape: card text max ~70ch or 2 columns above ~700px
+**Success criteria:** contrast script reports no AA failures on meaningful text; header fits in 1-2 clean lines at 320px; no stuck hover after tap.
+**Requirements**: TBD
+**Depends on:** Phase 9
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 10 to break down)
+
+### Phase 11: Mobile: acabamento (auditoria baixa prioridade)
+
+**Goal:** Finishing touches on mobile-only surfaces.
+**Source:** `docs/audits/2026-10-12-auditoria-mobile.md` (itens 11-14)
+**Scope:**
+  11. Session mode stat row fits 390px without clipping the info icon
+  12. Remove em-dash from session empty-state copy (PT and EN)
+  13. Mobile list shows full school name instead of abbreviation
+  14. Replace 🎲/☀️ emoji icons with a single SVG icon family
+**Success criteria:** session mode screenshot at 390/320 shows no clipping; i18n parity check passes.
+**Requirements**: TBD
+**Depends on:** Phase 10
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 11 to break down)
