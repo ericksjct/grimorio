@@ -513,70 +513,6 @@ function HifiLangToggle({ uiLang = 'ptbr', style }) {
 // A troca claro/escuro é feita pelo HifiThemeToggle (☀️ / 🌙).
 
 // ──────────────────────────────────────────────────────────────────
-// SLOT TRACKER — espaços de magia do personagem ativo (desktop + mobile)
-// Pip cheio = disponível; vazio = gasto. Clicar num pip gasta/restaura até ele.
-// Totais são configurados no editor de personagem; sem totais → não renderiza.
-// ──────────────────────────────────────────────────────────────────
-function HifiSlotTracker({ character, update, lang, style }) {
-  const slots = character?.slots || { total: {}, used: {} };
-  const levels = [1,2,3,4,5,6,7,8,9].filter(l => (slots.total[l] || 0) > 0);
-  if (!character || !levels.length) return null;
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, ...style }}>
-      <span className="hifi-section-label" style={{ flexShrink: 0 }}>{tt(lang, 'print.spellSlots')}</span>
-      {/* Só os pips rolam; label e "descanso longo" ficam sempre visíveis
-          (antes o botão sumia no fim do scroll horizontal do mobile). */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', flex: 1, minWidth: 0 }}>
-        {levels.map(lvl => {
-          const total = slots.total[lvl];
-          const used = slots.used[lvl] || 0;
-          return (
-            <span key={lvl} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
-              <span className="hifi-mono" style={{ fontSize: 10, fontWeight: 600, color: `var(--level-${lvl})`, marginRight: 2 }}>{lvl}</span>
-              {Array.from({ length: total }, (_, i) => {
-                const spent = i < used;
-                return (
-                  <button
-                    key={i}
-                    onClick={() => setSlotUsedFor(character.id, lvl, spent ? i : i + 1, update)}
-                    aria-pressed={spent}
-                    aria-label={tt(lang, 'slots.slotAria', { lvl, i: i + 1, n: total })}
-                    title={spent ? tt(lang, 'slots.restore') : tt(lang, 'slots.spend')}
-                    // Botão 24px (alvo de toque decente) com o pip de 13px
-                    // desenhado dentro — o visual não muda.
-                    style={{
-                      width: 24, height: 24, padding: 0, border: 'none', background: 'transparent',
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', flexShrink: 0,
-                    }}
-                  >
-                    <span aria-hidden="true" style={{
-                      width: 13, height: 13, borderRadius: '50%',
-                      border: `1.5px solid ${spent ? 'var(--surface2)' : 'var(--accent)'}`,
-                      background: spent ? 'transparent' : 'var(--accent)',
-                      transition: 'background 120ms, border-color 120ms',
-                    }}/>
-                  </button>
-                );
-              })}
-            </span>
-          );
-        })}
-      </div>
-      <button
-        className="hifi-btn-ghost"
-        onClick={() => {
-          longRestFor(character.id, update);
-          window.dispatchEvent(new CustomEvent('hifi-toast', { detail: { msg: tt(lang, 'slots.rested') } }));
-        }}
-        title={tt(lang, 'slots.longRestTitle')}
-        style={{ fontSize: 11, color: 'var(--subtext0)', padding: '2px 8px', flexShrink: 0 }}
-      >🌙 {tt(lang, 'slots.longRest')}</button>
-    </div>
-  );
-}
-
-// ──────────────────────────────────────────────────────────────────
 // SPELL CARD (shared)
 // ──────────────────────────────────────────────────────────────────
 const HifiSpellCard = React.memo(function HifiSpellCard({ s, lang, versionLang, prepared, bookmarked, selected, onClick, onTogglePrepared, compact }) {
@@ -1544,12 +1480,6 @@ function HifiDesktop({ lang = 'ptbr', dark = false, theme = 'catppuccin', charac
         </span>
       </div>
 
-      {/* Espaços de magia do personagem ativo (some quando não configurados) */}
-      <HifiSlotTracker
-        character={liveChar} update={update} lang={lang}
-        style={{ padding: '8px 28px', borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}
-      />
-
       {/* Grid + panel */}
       <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
         <div style={{ flex: 1, overflow: 'auto', padding: '20px 28px' }}>
@@ -2495,12 +2425,6 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
           </div>
         </div>
       </header>
-
-      {/* Espaços de magia — pips rolam; label e descanso longo ficam fixos */}
-      <HifiSlotTracker
-        character={liveChar} update={update} lang={lang}
-        style={{ padding: '6px 16px', borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}
-      />
 
       <div style={{ flex: 1, overflow: 'auto', padding: '12px 12px 16px' }}>
         {filtered.length === 0 ? (
