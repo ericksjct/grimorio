@@ -3,8 +3,8 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 
 $editions = @(
-  @{ file = 'srd-2014-en.json'; source = 'srd-2014-en' },
-  @{ file = 'srd-2024-en.json'; source = 'srd-2024-en' }
+  @{ file = 'packs/srd-2014-en.json'; source = 'srd-2014-en' },
+  @{ file = 'packs/srd-2024-en.json'; source = 'srd-2024-en' }
 )
 
 $packs = @{}
@@ -25,8 +25,8 @@ foreach ($ed in $editions) {
 }
 
 # ── Atribuições distintas: 5.1 e 5.2 têm textos legais diferentes ──
-$attr1 = $packs['srd-2014-en.json'].meta.license.attribution
-$attr2 = $packs['srd-2024-en.json'].meta.license.attribution
+$attr1 = $packs['packs/srd-2014-en.json'].meta.license.attribution
+$attr2 = $packs['packs/srd-2024-en.json'].meta.license.attribution
 if ($attr1 -eq $attr2) {
   throw "srd-2014-en.json and srd-2024-en.json have identical meta.license.attribution - SRD 5.1 and 5.2 carry different legal text, equality means extraction is wrong."
 }
@@ -90,7 +90,7 @@ if ($genSrc -notmatch 'function\s+applyClassLists') {
   throw 'generate-srd-pack.mjs lost applyClassLists() — the 5.1 pack would regenerate with no class data.'
 }
 
-foreach ($pack in @('srd-2014-en.json', 'srd-2024-en.json')) {
+foreach ($pack in @('packs/srd-2014-en.json', 'packs/srd-2024-en.json')) {
   $j = Get-Content -Raw -LiteralPath (Join-Path $repoRoot $pack) | ConvertFrom-Json
   $total = $j.spells.Count
   $sem = @($j.spells | Where-Object { -not $_.class -or $_.class.Count -eq 0 }).Count
@@ -101,7 +101,7 @@ foreach ($pack in @('srd-2014-en.json', 'srd-2024-en.json')) {
 }
 
 # Fatos conhecidos: um join que casa nomes errados passaria na contagem acima.
-$p51 = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'srd-2014-en.json') | ConvertFrom-Json
+$p51 = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'packs/srd-2014-en.json') | ConvertFrom-Json
 $esperado = @{
   'Fireball'        = @('Sorcerer', 'Wizard')
   'Cure Wounds'     = @('Bard', 'Cleric', 'Druid', 'Paladin', 'Ranger')
@@ -141,7 +141,7 @@ if (-not $node) {
   $nodeScript = @'
 const fs = require('fs');
 
-const FILES = ['srd-2014-en.json', 'srd-2024-en.json', 'srd-2024-ptbr.json'];
+const FILES = ['packs/srd-2014-en.json', 'packs/srd-2024-en.json', 'packs/srd-2024-ptbr.json'];
 const packs = FILES.map((f) => JSON.parse(fs.readFileSync(f, 'utf8')));
 
 let reserved;

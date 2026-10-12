@@ -44,6 +44,11 @@
           "type": "string",
           "description": "Ex.: \"2014\", \"2024\". Opcional."
         },
+        "role": {
+          "type": "string",
+          "enum": ["base", "additional"],
+          "description": "Opcional (padrão: \"additional\"). Um pacote \"base\" concorre com os outros pacotes base (só um fica marcado por vez) e é a fonte principal das magias; um \"additional\" soma magias ao base marcado."
+        },
         "image": {
           "type": "string",
           "maxLength": 204800,

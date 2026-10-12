@@ -613,7 +613,7 @@ function stripLicenseMarkdown(md) {
 
 const EDITIONS = [
   {
-    file: 'srd-2014-en.json',
+    file: 'packs/srd-2014-en.json',
     source: 'srd-2014-en',
     edition: '2014',
     srdVersion: '5.1',
@@ -640,7 +640,7 @@ const EDITIONS = [
     classListUrl: 'https://raw.githubusercontent.com/5e-bits/5e-database/main/src/2014/en/5e-SRD-Spells.json',
   },
   {
-    file: 'srd-2024-en.json',
+    file: 'packs/srd-2024-en.json',
     source: 'srd-2024-en',
     edition: '2024',
     srdVersion: '5.2',
@@ -655,7 +655,7 @@ const EDITIONS = [
     // CC-BY-4.0), recortada às 339 magias do SRD 5.2 pelo extrator one-shot
     // scripts/extract-ptbr-source.mjs (fase 07-01). D-03: nenhuma entrada
     // pt-BR para o 5.1 — não existe fonte com licença compatível para ele.
-    file: 'srd-2024-ptbr.json',
+    file: 'packs/srd-2024-ptbr.json',
     source: 'srd-2024-ptbr',
     edition: '2024',
     srdVersion: '5.2',
@@ -667,7 +667,7 @@ const EDITIONS = [
     // D-14: círculo/escola/classes vêm do SRD EN recém-gerado, por slug —
     // nunca do texto traduzido. Resolve resilient-sphere (a tradução diz
     // Abjuração; o SRD diz evocation) por construção.
-    factsFrom: 'srd-2024-en.json',
+    factsFrom: 'packs/srd-2024-en.json',
     // D-02: atribuição dupla verbatim — o texto WotC do SRD 5.2 seguido da
     // seção "Licença" do Heróis Anônimos, ambos ipsis litteris (a Licença sem
     // os marcadores Markdown, ver stripLicenseMarkdown).

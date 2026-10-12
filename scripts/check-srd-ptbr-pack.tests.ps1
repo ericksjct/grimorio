@@ -24,7 +24,7 @@ $ErrorActionPreference = 'Stop'
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 
-$packPath = Join-Path $repoRoot 'srd-2024-ptbr.json'
+$packPath = Join-Path $repoRoot 'packs/srd-2024-ptbr.json'
 $sourcePath = Join-Path $repoRoot 'scripts\srd-sources\srd-5.2-ptbr-source.json'
 $pairingPath = Join-Path $repoRoot 'scripts\srd-sources\srd-5.2-ptbr-pairing.json'
 
@@ -76,8 +76,8 @@ if (-not $node) {
 $nodeScript = @'
 const fs = require("fs");
 
-const ptbr = JSON.parse(fs.readFileSync("srd-2024-ptbr.json", "utf8"));
-const en = JSON.parse(fs.readFileSync("srd-2024-en.json", "utf8"));
+const ptbr = JSON.parse(fs.readFileSync("packs/srd-2024-ptbr.json", "utf8"));
+const en = JSON.parse(fs.readFileSync("packs/srd-2024-en.json", "utf8"));
 const recorte = JSON.parse(fs.readFileSync("scripts/srd-sources/srd-5.2-ptbr-source.json", "utf8"));
 const pairing = JSON.parse(fs.readFileSync("scripts/srd-sources/srd-5.2-ptbr-pairing.json", "utf8"));
 

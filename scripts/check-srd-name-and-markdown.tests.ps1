@@ -121,7 +121,7 @@ if (out.includes('<strong') || out.includes('<em')) {
 
 // Corpus real: as descricoes de srd-2024-en.json com ** nao podem sobreviver
 // com ** depois da conversao.
-const data = JSON.parse(fs.readFileSync('srd-2024-en.json', 'utf8'));
+const data = JSON.parse(fs.readFileSync('packs/srd-2024-en.json', 'utf8'));
 const spells = Array.isArray(data) ? data : (data.spells || []);
 const withMd = spells.filter((sp) => (sp.description || '').includes('**'));
 if (withMd.length < 1) {
@@ -137,7 +137,7 @@ if (survivors.length > 0) {
 // Slug de identidade: apostrofo tipografico ou titulo quebrado da fonte nao
 // podem gerar "hunter-s-mark"/"see-i-nvisibility" (a chave das preparadas
 // e school-lvl-slug; tem de casar com a das outras edicoes).
-for (const f of ['srd-2014-en.json', 'srd-2024-en.json', 'srd-2024-ptbr.json']) {
+for (const f of ['packs/srd-2014-en.json', 'packs/srd-2024-en.json', 'packs/srd-2024-ptbr.json']) {
   const bad = JSON.parse(fs.readFileSync(f, 'utf8')).spells.filter((sp) => /(^|-)[a-z]-/.test(sp.name) && !/^(a|i)-/.test(sp.name));
   if (bad.length) { console.error('FAIL: ' + f + ' tem slug quebrado: ' + bad.map((sp) => sp.name).join(', ')); process.exit(1); }
 }

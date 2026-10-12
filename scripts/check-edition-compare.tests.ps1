@@ -67,23 +67,23 @@ if ($ui -match 'getCurrentSpellVersion') {
 
 # 3. Cross-check: every builtin entry in the loader must declare `edition`, or
 #    the comparator silently breaks for whichever entry forgets it.
-$builtinMatch = [regex]::Match($loader, 'const BUILTIN_VERSIONS = \[[\s\S]{0,2000}?\n\];')
+$builtinMatch = [regex]::Match((Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'packs/index.js')), 'BUILTIN_PACKS = \[[\s\S]*?\n\];')
 if (-not $builtinMatch.Success) {
   throw 'Could not locate BUILTIN_VERSIONS in spells-data-loader.jsx.'
 }
-$entryLines = [regex]::Matches($builtinMatch.Value, '\{\s*key:[\s\S]*?\}')
+$entryLines = [regex]::Matches($builtinMatch.Value, '\{\s*"key":[\s\S]*?\}')
 if ($entryLines.Count -lt 1) {
   throw 'Could not parse any BUILTIN_VERSIONS entries.'
 }
 foreach ($entry in $entryLines) {
-  if ($entry.Value -notmatch "edition:\s*'[^']+'") {
+  if ($entry.Value -notmatch "`"edition`":\s*`"[^`"]+`"") {
     throw "A BUILTIN_VERSIONS entry is missing a non-empty `edition` field: $($entry.Value)"
   }
 }
 
 # ── WR-07: PHB deve comparar com PHB, não com a SRD que ordena primeiro ────
 foreach ($entry in $entryLines) {
-  if ($entry.Value -notmatch "corpus:\s*'[^']+'") {
+  if ($entry.Value -notmatch "`"corpus`":\s*`"[^`"]+`"") {
     throw "WR-07: a BUILTIN_VERSIONS entry is missing a non-empty `corpus` field (used to prefer SRD<->SRD / PHB<->PHB pairs): $($entry.Value)"
   }
 }
@@ -131,8 +131,7 @@ $node = Get-Command node -ErrorAction SilentlyContinue
 if ($node) {
   $nodeScript = @'
 const fs = require('fs');
-const src = fs.readFileSync('spells-data-loader.jsx', 'utf8');
-const m = src.match(/const BUILTIN_VERSIONS = (\[[\s\S]*?\n\]);/);
+const m = fs.readFileSync('packs/index.js', 'utf8').match(/BUILTIN_PACKS = (\[[\s\S]*?\n\]);/);
 if (!m) { console.error('nao achei BUILTIN_VERSIONS'); process.exit(1); }
 const BUILTIN_VERSIONS = eval(m[1]);
 

@@ -94,8 +94,8 @@ if ([int]$Matches[1] -lt 6) {
 }
 
 # 7. Pacotes SRD agora obrigatorios no PRECACHE (Fase 4, SRD-03).
-if ($sw -notlike '*srd-2014-en.json*' -or $sw -notlike '*srd-2024-en.json*') {
-  throw 'sw.js must precache srd-2014-en.json and srd-2024-en.json - a ausencia quebra o modo offline do pack embutido (SRD-03).'
+if ($sw -notlike '*packs/index.js*' -or $sw -notlike '*self.BUILTIN_PACKS*') {
+  throw 'sw.js must precache packs/index.js and derive the embedded pack JSONs from self.BUILTIN_PACKS - a ausencia quebra o modo offline do pack embutido (SRD-03).'
 }
 
 # 8. Fixtures de QA nunca entram no app shell offline.

@@ -6,6 +6,7 @@
     "openspec-playwright": "^0.3.51"
   },
   "scripts": {
-    "test": "pwsh -NoProfile -File scripts/run-tests.ps1"
+    "test": "pwsh -NoProfile -File scripts/run-tests.ps1",
+    "packs": "node scripts/build-packs-index.mjs"
   }
 }

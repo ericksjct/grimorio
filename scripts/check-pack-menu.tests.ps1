@@ -74,8 +74,8 @@ if ($manager -like '*dangerouslySetInnerHTML*') {
 
 # ── 6. Prova de fidelidade legal — 5.1 e 5.2 carregam textos distintos ──
 
-$srd2014 = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'srd-2014-en.json') | ConvertFrom-Json
-$srd2024 = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'srd-2024-en.json') | ConvertFrom-Json
+$srd2014 = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'packs/srd-2014-en.json') | ConvertFrom-Json
+$srd2024 = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'packs/srd-2024-en.json') | ConvertFrom-Json
 $attr2014 = $srd2014.meta.license.attribution
 $attr2024 = $srd2024.meta.license.attribution
 if ([string]::IsNullOrWhiteSpace($attr2014)) {
@@ -454,8 +454,7 @@ check("_cardMetaVars count nao numerico vira n = '?'", vars3.n === '?');
 check('_cardMetaVars count nao numerico usa nounSpell plural', vars3.nounSpell === tt('en', 'noun.spell.other'));
 
 // ── _chipLabel (Task 3, D-18) — contra o BUILTIN_VERSIONS real do loader ──
-const loaderSrc = fs.readFileSync('spells-data-loader.jsx', 'utf8');
-const builtinMatch = loaderSrc.match(/const BUILTIN_VERSIONS = (\[[\s\S]*?\n\]);/);
+const builtinMatch = fs.readFileSync('packs/index.js', 'utf8').match(/BUILTIN_PACKS = (\[[\s\S]*?\n\]);/);
 if (!builtinMatch) { console.error('nao encontrei BUILTIN_VERSIONS em spells-data-loader.jsx'); process.exit(1); }
 const BUILTIN_VERSIONS = eval(builtinMatch[1]);
 

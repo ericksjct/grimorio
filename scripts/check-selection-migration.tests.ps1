@@ -89,6 +89,7 @@ function makeSandbox(opts) {
   };
   sandbox.globalThis = sandbox;
   vm.createContext(sandbox);
+  vm.runInContext(fs.readFileSync('packs/index.js', 'utf8'), sandbox);
   vm.runInContext(
     body + '\nthis.__x = { getSelectedVersionKeys, getResolvedVersionKeys, setSelectedVersionKeys, refreshPluginVersions, resolveSelection, normalizeSelection, _isFallback, _readPrefs, _browserDefaultKey };',
     sandbox

@@ -38,7 +38,7 @@ if ($loader -match 'upgrade(Html)?:\s*\{[^}]*(pt|en):\s*(stripHtml\()?s\.upgrade
 
 # O rótulo pt-BR ("Usando um Espaço de Magia de Círculo Superior.", 46
 # caracteres) não cabe em {1,40}; por isso o limite é por pack.
-foreach ($entry in @(@('srd-2024-en.json', 40), @('srd-2014-en.json', 40), @('srd-2024-ptbr.json', 60))) {
+foreach ($entry in @(@('packs/srd-2024-en.json', 40), @('packs/srd-2014-en.json', 40), @('packs/srd-2024-ptbr.json', 60))) {
   $pack, $max = $entry
   $raw = Get-Content -Raw -LiteralPath (Join-Path $repoRoot $pack)
   if ($raw -notmatch "<strong><em>[^<]{1,$max}[.:]</em></strong>") {
@@ -95,7 +95,7 @@ if (strip(legit) !== legit) {
 }
 
 // Dados reais: nenhuma magia dos 3 SRD pode sobrar com o cabecalho.
-for (const f of ['srd-2024-en.json', 'srd-2014-en.json', 'srd-2024-ptbr.json']) {
+for (const f of ['packs/srd-2024-en.json', 'packs/srd-2014-en.json', 'packs/srd-2024-ptbr.json']) {
   const j = JSON.parse(fs.readFileSync(process.argv[3] + '/' + f, 'utf8'));
   const arr = Array.isArray(j) ? j : (j.spells || j.data || []);
   const ruins = arr.filter(s => s.upgradeDescription &&

@@ -7,10 +7,7 @@ $lines = Get-Content -LiteralPath $loaderPath
 
 # ── Registro declarativo, discriminado por origem (Task 1) ─────────
 foreach ($needle in @(
-  'const BUILTIN_VERSIONS = [',
-  "key: 'srd-2024-en'",
-  "key: 'srd-2014-en'",
-  "key: 'srd-2024-ptbr'",
+  'const BUILTIN_VERSIONS = (globalThis.BUILTIN_PACKS || []).slice();',
   'function _versionByKey(',
   'function _defaultVersion(',
   'const SPELL_VERSIONS = BUILTIN_VERSIONS.slice();'
@@ -20,12 +17,13 @@ foreach ($needle in @(
   }
 }
 
-$fetchSourceCount = ([regex]::Matches($loader, "source: 'fetch'")).Count
+$builtinIdx = Get-Content -Raw -LiteralPath (Join-Path $repoRoot 'packs/index.js')
+$fetchSourceCount = ([regex]::Matches($builtinIdx, '"source": "fetch"')).Count
 if ($fetchSourceCount -ne 3) {
-  throw "Expected 3 occurrences of source: 'fetch' (3 SRD embutidos: 5.2 EN, 5.1 EN, 5.2 PT-BR), found $fetchSourceCount."
+  throw "Expected 3 occurrences of source: 'fetch' (3 SRD embutidos em packs/index.js: 5.2 EN, 5.1 EN, 5.2 PT-BR), found $fetchSourceCount."
 }
 
-$editionCount = ([regex]::Matches($loader, "edition: '5e 20")).Count
+$editionCount = ([regex]::Matches($builtinIdx, '"edition": "5e 20')).Count
 if ($editionCount -ne 3) {
   throw "Expected 3 occurrences of edition: '5e 20...', found $editionCount."
 }
@@ -44,8 +42,8 @@ if ($reassignLines) {
 }
 
 # Ordem: srd-2024-en < srd-2014-en.
-$idxSrd2024 = $loader.IndexOf("key: 'srd-2024-en'")
-$idxSrd2014 = $loader.IndexOf("key: 'srd-2014-en'")
+$idxSrd2024 = $builtinIdx.IndexOf('"key": "srd-2024-en"')
+$idxSrd2014 = $builtinIdx.IndexOf('"key": "srd-2014-en"')
 if (-not ($idxSrd2024 -lt $idxSrd2014)) {
   throw 'BUILTIN_VERSIONS order is wrong: expected srd-2024-en before srd-2014-en.'
 }

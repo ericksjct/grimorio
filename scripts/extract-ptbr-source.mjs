@@ -34,7 +34,7 @@ const SOURCE_MD = path.join(
 );
 const FIXTURE_PATH = path.join(repoRoot, '.cache', 'legacy-fixtures', 'spells-5E-2024-PTBR.pack.json');
 const PAIRING_PATH = path.join(repoRoot, 'scripts', 'srd-sources', 'srd-5.2-ptbr-pairing.json');
-const EN_PACK_PATH = path.join(repoRoot, 'srd-2024-en.json');
+const EN_PACK_PATH = path.join(repoRoot, 'packs/srd-2024-en.json');
 const OUT_PATH = path.join(repoRoot, 'scripts', 'srd-sources', 'srd-5.2-ptbr-source.json');
 
 const BANNED_NAMES = [

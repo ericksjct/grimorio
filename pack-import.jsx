@@ -82,6 +82,7 @@ const META_FIELDS = [
   { key: 'author', type: 'string', required: true, minLength: 1 },
   { key: 'lang', type: 'string', required: true, enum: ['ptbr', 'en'] },
   { key: 'edition', type: 'string', required: false },
+  { key: 'role', type: 'string', required: false, enum: ['base', 'additional'] },
   { key: 'spellCount', type: 'integer', required: false },
   { key: 'image', type: 'string', required: false },
   { key: 'license', type: 'object', required: true },
@@ -613,7 +614,10 @@ async function _install(text) {
   // `renamed`. O pack instalado dono do slug nunca é tocado, e como o pack que
   // entra ainda não está instalado, nenhuma preparada/favorita vira órfã nova.
   const renamed = [];
-  const rows = detectSlugConflicts(pack.spells, owners);
+  // Pacote base é a fonte principal e concorre com os outros bases: repetir os
+  // slugs do SRD é esperado, então não renomeia nada (os adicionais é que cedem,
+  // na checagem de colisão ao marcar).
+  const rows = pack.meta.role === 'base' ? [] : detectSlugConflicts(pack.spells, owners);
   if (rows.length > 0) {
     // Ocupados = reservados + instalados + slugs do próprio pack + sugestões já
     // escolhidas (acumuladas abaixo) — duas colisões nunca ganham o mesmo slug.

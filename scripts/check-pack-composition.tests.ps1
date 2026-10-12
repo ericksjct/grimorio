@@ -87,6 +87,7 @@ function makeSandbox(opts) {
   };
   sandbox.globalThis = sandbox;
   vm.createContext(sandbox);
+  vm.runInContext(fs.readFileSync('packs/index.js', 'utf8'), sandbox);
   vm.runInContext(
     body + '\nthis.__x = { normalizeSelection, resolveSelection, unionSpells, _browserDefaultKey, adaptSpells, _isSrdBuiltin, _isFallback };',
     sandbox
@@ -109,10 +110,10 @@ function arrEq(a, b) {
     arrEq(x.normalizeSelection(['srd-2014-en', 'srd-2024-en']), ['srd-2024-en']));
   check("normalizeSelection(['srd-2024-en','srd-2014-en']) === ['srd-2014-en']",
     arrEq(x.normalizeSelection(['srd-2024-en', 'srd-2014-en']), ['srd-2014-en']));
-  check("normalizeSelection(['srd-2024-en','srd-2024-ptbr']) keeps both",
-    arrEq(x.normalizeSelection(['srd-2024-en', 'srd-2024-ptbr']), ['srd-2024-en', 'srd-2024-ptbr']));
-  check("normalizeSelection(['srd-2014-en','srd-2024-ptbr','srd-2024-en']) === ['srd-2024-ptbr','srd-2024-en']",
-    arrEq(x.normalizeSelection(['srd-2014-en', 'srd-2024-ptbr', 'srd-2024-en']), ['srd-2024-ptbr', 'srd-2024-en']));
+  check("normalizeSelection(['srd-2024-en','srd-2024-ptbr']) === ['srd-2024-ptbr'] (um base por vez)",
+    arrEq(x.normalizeSelection(['srd-2024-en', 'srd-2024-ptbr']), ['srd-2024-ptbr']));
+  check("normalizeSelection(['srd-2014-en','srd-2024-ptbr','srd-2024-en']) === ['srd-2024-en']",
+    arrEq(x.normalizeSelection(['srd-2014-en', 'srd-2024-ptbr', 'srd-2024-en']), ['srd-2024-en']));
   check("normalizeSelection(['a','a',' b ', 7, null, '']) === ['a','b']",
     arrEq(x.normalizeSelection(['a', 'a', ' b ', 7, null, '']), ['a', 'b']));
   check('normalizeSelection never removes an unregistered/plugin key even mixed with an SRD edition switch (D-05)',

@@ -80,6 +80,7 @@ function _installedRows(metas) {
     edition: meta.edition,
     image: meta.image,
     count: meta.spellCount,
+    role: meta.role === 'base' ? 'base' : 'additional',
     origin: 'installed',
     license: meta.license || null,
   }));
@@ -106,6 +107,9 @@ function _builtinRows(versions, licenses) {
         lang: v.lang,
         edition: meta ? meta.edition : null,
         count: meta && typeof meta.spellCount === 'number' ? meta.spellCount : null,
+        role: 'base',
+        // Embutido: imagem vem do manifesto (packs/*.png, código nosso) — não passa pelo _safeImage de terceiros.
+        image: v.image ? 'packs/' + v.image : undefined,
         origin: 'builtin',
         license,
       };
@@ -293,7 +297,7 @@ function _removalImpact(versionKey, index) {
 // imagem nunca vira fundo CSS.
 function PackThumb({ row, size }) {
   const [failedSrc, setFailedSrc] = React.useState(null);
-  const safe = _safeImage(row.image);
+  const safe = row.origin === 'builtin' ? row.image : _safeImage(row.image);
   const boxStyle = {
     width: size, height: size, flexShrink: 0,
     borderRadius: 8, border: '1px solid var(--surface1)',
@@ -594,7 +598,9 @@ function PackMenu({ lang, dark, theme, open, isMobile, anchor, onClose, onOpenIm
   const builtinRows = _builtinRows(window.SPELL_VERSIONS, licenses);
   // D-19: zero pacotes instalados pelo usuário — nunca "zero versões" (a seção
   // SRD continua presente abaixo, sempre).
-  const isEmpty = packs !== null && installedRows.length === 0;
+  const baseRows = [...builtinRows, ...installedRows.filter((r) => r.role === 'base')];
+  const additionalRows = installedRows.filter((r) => r.role !== 'base');
+  const isEmpty = packs !== null && additionalRows.length === 0;
   const thumbSize = isMobile ? 32 : 40;
 
   const panelStyle = isMobile
@@ -650,19 +656,26 @@ function PackMenu({ lang, dark, theme, open, isMobile, anchor, onClose, onOpenIm
         <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
           <div>
             <div className="hifi-section-label">{tt(lang, 'manager.sectionBuiltin')}</div>
-            {builtinRows.map((row) => (
+            <div style={{ fontSize: 12, color: 'var(--subtext0)', marginTop: 4 }}>{tt(lang, 'manager.baseHint')}</div>
+            {baseRows.map((row) => (
               <PackCard
                 key={row.id} lang={lang} row={row} size={thumbSize}
                 checked={selected.includes(row.versionKey)}
                 disabled={!!busyKey}
                 onToggle={handleToggle}
                 dupCount={dupCounts[row.versionKey]}
+                confirming={confirmingId === row.id}
+                impact={impact}
+                onRequestRemove={() => handleRequestRemove(row.id)}
+                onCancelRemove={handleCancelRemove}
+                onConfirmRemove={() => handleConfirmRemove(row)}
               />
             ))}
           </div>
 
           <div style={{ marginTop: 16 }}>
             <div className="hifi-section-label">{tt(lang, 'manager.sectionInstalled')}</div>
+            <div style={{ fontSize: 12, color: 'var(--subtext0)', marginTop: 4 }}>{tt(lang, 'manager.additionalHint')}</div>
             {packs === null ? (
               <div style={{ fontSize: 14, color: 'var(--subtext0)', marginTop: 8 }}>{tt(lang, 'manager.loading')}</div>
             ) : isEmpty ? (
@@ -679,7 +692,7 @@ function PackMenu({ lang, dark, theme, open, isMobile, anchor, onClose, onOpenIm
                 </p>
               </div>
             ) : (
-              installedRows.map((row) => (
+              additionalRows.map((row) => (
                 <PackCard
                   key={row.id} lang={lang} row={row} size={thumbSize}
                   checked={selected.includes(row.versionKey)}
@@ -810,12 +823,12 @@ function PackMenuChip({ lang, style, onOpen }) {
 async function _selectionConflicts(version, nextKeys) {
   const byKey = (k) => (window.SPELL_VERSIONS || []).find((v) => v.key === k);
   const others = (nextKeys || []).filter((k) => k !== version.key && byKey(k));
-  const isSrdBuiltin = version.source === 'fetch' && version.corpus === 'srd';
+  const isBase = version.role === 'base';
 
   let rows;
-  if (isSrdBuiltin) {
+  if (isBase) {
     const donos = await window.packImport.slugOwnersOf([version.key]);
-    const homebrews = others.map(byKey).filter((v) => v && v.source === 'idb');
+    const homebrews = others.map(byKey).filter((v) => v && v.source === 'idb' && v.role !== 'base');
     rows = [];
     for (const h of homebrews) {
       const spells = await window.loadSpellVersion(h.key);

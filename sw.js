@@ -5,7 +5,7 @@
 //    mais novo (inclusive em dev); offline cai pro cache.
 //  · Dados e vendors (JSONs de magias, fontes, unpkg): stale-while-revalidate —
 //    responde do cache na hora e atualiza em segundo plano (mudam raramente).
-// Os 3 JSONs de magias (SRD 5.2 EN, SRD 5.1 EN, SRD 5.2 PT-BR) são
+// Os JSONs de magias embutidos (a pasta packs/, listada em packs/index.js) são
 // pré-cacheados no install (em background, não bloqueia o boot), então o app
 // inteiro funciona offline já a partir da primeira visita.
 // ponytail: a dispensa de bump vale só pra ACRÉSCIMO em PRECACHE —
@@ -20,7 +20,10 @@
 // aconteceu ao regenerar srd-2014-en.json com as listas de classe (v2 → v3).
 // A lista de slugs reservados (srd-reserved-slugs.json) também é pré-cacheada —
 // o import a exige pra validar slugs offline.
-const CACHE_VERSION = 'grimorio-v6';
+// packs/index.js define self.BUILTIN_PACKS — o PRECACHE dos pacotes embutidos sai dele.
+importScripts('./packs/index.js');
+
+const CACHE_VERSION = 'grimorio-v7';
 
 // Extensões do app shell (código que muda a cada deploy) → network-first.
 const SHELL_RE = /\.(html|css|jsx)$/;
@@ -48,9 +51,8 @@ const PRECACHE = [
   './fonts/texturina-latin-ext.woff2',
   './fonts/jetbrainsmono-latin.woff2',
   './fonts/jetbrainsmono-latin-ext.woff2',
-  './srd-2024-en.json',
-  './srd-2014-en.json',
-  './srd-2024-ptbr.json',
+  './packs/index.js',
+  ...(self.BUILTIN_PACKS || []).flatMap((p) => [p.file, p.image && 'packs/' + p.image].filter(Boolean).map((f) => './' + f)),
   './srd-reserved-slugs.json',
   'https://unpkg.com/react@18.3.1/umd/react.production.min.js',
   'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js',

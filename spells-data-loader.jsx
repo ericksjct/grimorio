@@ -29,11 +29,11 @@
 // A entrada `lang: 'ptbr'` (Fase 7, D-06) é o default de primeira visita para
 // navegador em português via `_browserDefaultKey()`/`_initialSelection()`, sem
 // código novo — ela fica depois das duas EN pra não mexer no índice 0.
-const BUILTIN_VERSIONS = [
-  { key: 'srd-2024-en', source: 'fetch', file: 'srd-2024-en.json', lang: 'en', edition: '5e 2024', corpus: 'srd', labelPt: 'SRD 5.2 (EN)', labelEn: 'SRD 5.2 (EN)', short: 'SRD 5.2' },
-  { key: 'srd-2014-en', source: 'fetch', file: 'srd-2014-en.json', lang: 'en', edition: '5e 2014', corpus: 'srd', labelPt: 'SRD 5.1 (EN)', labelEn: 'SRD 5.1 (EN)', short: 'SRD 5.1' },
-  { key: 'srd-2024-ptbr', source: 'fetch', file: 'srd-2024-ptbr.json', lang: 'ptbr', edition: '5e 2024', corpus: 'srd', labelPt: 'SRD 5.2 (PT-BR)', labelEn: 'SRD 5.2 (PT-BR)', short: 'SRD 5.2 PT' },
-];
+// Os embutidos NÃO são listados aqui: vêm de packs/index.js (globalThis.BUILTIN_PACKS,
+// carregado antes deste script), gerado a partir dos JSONs da pasta packs/ por
+// scripts/build-packs-index.mjs. O menu só mostra o que está em packs/ + o que o
+// usuário instala.
+const BUILTIN_VERSIONS = (globalThis.BUILTIN_PACKS || []).slice();
 
 // SPELL_VERSIONS é o registro VIVO — extensível em runtime (packs de
 // IndexedDB, plano 04-02). REGRA DURA: só pode ser mutado IN PLACE
@@ -112,6 +112,7 @@ function _packToVersion(meta) {
     packId: source,
     lang: meta.lang === 'ptbr' ? 'ptbr' : 'en',
     edition: String(meta.edition || '').slice(0, 24),
+    role: meta.role === 'base' ? 'base' : 'additional',
     corpus: 'pack', // WR-07: nunca compete pelo par preferencial do comparador de edição
     labelPt: name.slice(0, 48),
     labelEn: name.slice(0, 48),
@@ -735,6 +736,11 @@ window.resolvableSpellKeys = resolvableSpellKeys;
 // Origem `fetch` + `corpus` igual a `srd` identifica um dos 3 SRD embutidos
 // (BUILTIN_VERSIONS). Um pack de terceiro nunca casa aqui, mesmo declarando
 // `meta.edition` (D-05: edition de homebrew é só informativa).
+// Base = concorre com os outros bases (um por vez); os demais são adicionais.
+function _isBase(v) {
+  return !!(v && v.role === 'base');
+}
+
 function _isSrdBuiltin(v) {
   return !!(v && v.source === 'fetch' && v.corpus === 'srd');
 }
@@ -777,16 +783,14 @@ function normalizeSelection(keys) {
     out.push(trimmed);
     if (out.length >= 64) break;
   }
-  let lastSrdEdition = null;
+  // Pacotes base concorrem entre si: só o ÚLTIMO base da lista sobrevive.
+  // Adicionais nunca são removidos por esta regra.
+  let lastBase = null;
   for (let i = out.length - 1; i >= 0; i--) {
-    const v = _versionByKey(out[i]);
-    if (v && _isSrdBuiltin(v)) { lastSrdEdition = v.edition; break; }
+    if (_isBase(_versionByKey(out[i]))) { lastBase = out[i]; break; }
   }
-  if (lastSrdEdition !== null) {
-    out = out.filter((k) => {
-      const v = _versionByKey(k);
-      return !v || !_isSrdBuiltin(v) || v.edition === lastSrdEdition;
-    });
+  if (lastBase !== null) {
+    out = out.filter((k) => k === lastBase || !_isBase(_versionByKey(k)));
   }
   return out;
 }

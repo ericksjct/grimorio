@@ -119,6 +119,7 @@ sandbox.globalThis = sandbox;
 
 const vm = require('vm');
 vm.createContext(sandbox);
+vm.runInContext(fs.readFileSync('packs/index.js', 'utf8'), sandbox);
 vm.runInContext(body + '\nthis.__adaptSpells = adaptSpells;', sandbox);
 const adaptSpells = sandbox.__adaptSpells;
 
