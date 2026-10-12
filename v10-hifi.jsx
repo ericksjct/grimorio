@@ -377,12 +377,14 @@ function HifiPrintCard({ s, uiLang, versionLang, chunk }) {
 // ──────────────────────────────────────────────────────────────────
 function HifiPill({ children, active, color, onClick, title, style }) {
   return (
-    <span
+    <button
+      type="button"
       onClick={onClick}
       title={title}
+      aria-pressed={active ? 'true' : 'false'}
       className={`hifi-pill${active ? ' active' : ''}`}
       style={color ? { borderColor: color, color: active ? 'var(--base)' : color, ...style } : style}
-    >{children}</span>
+    >{children}</button>
   );
 }
 
@@ -449,7 +451,7 @@ function HifiThemeToggle({ dark, lang = 'ptbr', style }) {
         : (tt(lang, 'theme.toDark'))}
       style={{ width: 25, height: 25, background: 'var(--surface1)', fontSize: 14, lineHeight: 1, ...style }}
     >
-      <span aria-hidden="true">{dark ? '🌙' : '☀️'}</span>
+      {dark ? <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="M13.5 9.5A5.5 5.5 0 0 1 6.5 2.5a5.5 5.5 0 1 0 7 7z"/></svg> : <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg>}
     </button>
   );
 }
@@ -657,12 +659,12 @@ const HifiSpellCard = React.memo(function HifiSpellCard({ s, lang, versionLang, 
         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
         flexShrink: 0,
       }}>
-        <span>{schoolKey(s.school)}</span>
-        <span style={{ color: 'var(--overlay0)' }}>·</span>
+        <span>{compact ? schoolName(s.school, lang) : schoolKey(s.school)}</span>
+        <span style={{ color: 'var(--subtext0)' }}>·</span>
         <span
           title={s.lvl === 0 ? (tt(lang, 'spell.cantrip')) : `${tt(lang, 'spell.level')} ${s.lvl}`}
           style={{
-            color: `var(--level-${s.lvl})`,
+            color: s.lvl === 0 ? 'var(--subtext0)' : `var(--level-${s.lvl})`,
             fontFamily: "'JetBrains Mono', ui-monospace, monospace",
             fontStyle: 'normal',
             letterSpacing: '0.06em',
@@ -674,8 +676,8 @@ const HifiSpellCard = React.memo(function HifiSpellCard({ s, lang, versionLang, 
         // Preenche todo o espaço livre entre o meta e o rodapé; o texto que
         // ultrapassa é clipado e dissolvido pelo fade-out (::after no CSS).
         <div className="hifi-card-desc" style={{
-          fontSize: compact ? 'calc(11.5px * var(--z, 1))' : 'calc(12.5px * var(--z, 1))',
-          lineHeight: 1.4,
+          fontSize: compact ? '14.5px' : 'calc(12.5px * var(--z, 1))',
+          lineHeight: compact ? 1.5 : 1.4,
           color: 'var(--subtext1)',
         }}>
           {descHtml
@@ -988,23 +990,23 @@ function useHifiAppState(preparedKeys, initialFilters, character, uiLang) {
 // EMPTY STATE (shared) — mostrado quando busca + filtros não retornam nada.
 // Composto (não só um vazio em branco) e indica como popular: limpar filtros.
 // ──────────────────────────────────────────────────────────────────
-function HifiEmptyState({ lang, onClear }) {
+function HifiEmptyState({ lang, onClear, title, body, actionLabel }) {
   return (
     <div style={{
       height: '100%', minHeight: 240,
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       textAlign: 'center', gap: 12, padding: '40px 24px',
     }}>
-      <div aria-hidden="true" style={{ fontSize: 32, lineHeight: 1, color: 'var(--overlay0)' }}>✦</div>
-      <div className="hifi-display" style={{ fontSize: 22, color: 'var(--subtext1)' }}>
-        {tt(lang, 'empty.title')}
+      <div aria-hidden="true" style={{ fontSize: 28, lineHeight: 1, color: 'var(--overlay0)' }}>✦</div>
+      <div className="hifi-display" style={{ fontSize: 19, color: 'var(--subtext1)', textWrap: 'balance' }}>
+        {title || tt(lang, 'empty.title')}
       </div>
-      <p style={{ margin: 0, fontSize: 14, maxWidth: '40ch', lineHeight: 1.5, color: 'var(--subtext0)' }}>
-        {tt(lang, 'empty.body')}
+      <p style={{ margin: 0, fontSize: 14, maxWidth: '34ch', lineHeight: 1.5, color: 'var(--subtext0)', textWrap: 'pretty' }}>
+        {body || tt(lang, 'empty.body')}
       </p>
       {onClear && (
-        <button className="hifi-btn-secondary" onClick={onClear}>
-          {tt(lang, 'filter.clearAll')}
+        <button className="hifi-btn-secondary" style={{ marginTop: 4 }} onClick={onClear}>
+          {actionLabel || tt(lang, 'filter.clearAll')}
         </button>
       )}
     </div>
@@ -1968,7 +1970,7 @@ function HifiSessionMode({ character, update, lang, allSpells, onExit }) {
 
   const statBox = (label, value, accented) => (
     <div style={{ flex: 1, background: 'var(--surface0)', border: '1px solid var(--surface1)', borderRadius: 12, padding: '8px 4px', textAlign: 'center', minWidth: 0 }}>
-      <div className="hifi-mono" style={{ fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--overlay1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
+      <div className="hifi-mono" style={{ fontSize: 9.5, letterSpacing: '0.02em', textTransform: 'uppercase', color: 'var(--overlay1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
       <div style={{ fontSize: 18, fontWeight: 700, marginTop: 1, color: accented ? 'var(--accent)' : 'var(--text)', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
     </div>
   );
@@ -2019,7 +2021,7 @@ function HifiSessionMode({ character, update, lang, allSpells, onExit }) {
   const comps = (s) => (s.comp || '').split(/\s+/).filter(Boolean);
 
   return (
-    <div ref={rootRef} className="hifi-flat-icons" style={{ height: '100%', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--base)', paddingTop: 24 }}>
+    <div ref={rootRef} className="hifi-flat-icons" style={{ height: '100%', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--base)', paddingTop: 'max(12px, env(safe-area-inset-top))', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
       {/* Header: sair · título/personagem · toggle cards/lista */}
       <header style={{ padding: '10px 16px', borderBottom: '1px solid var(--surface1)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
         <button className="hifi-icon-btn" onClick={onExit} aria-label={tt(lang, 'session.exit')} title={tt(lang, 'session.exit')}><span aria-hidden="true">‹</span></button>
@@ -2052,13 +2054,13 @@ function HifiSessionMode({ character, update, lang, allSpells, onExit }) {
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setInfoOpen(true); } }}
         aria-label={tt(lang, 'session.statsAria')}
         title={tt(lang, 'session.statsAria')}
-        style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 30px 8px 16px', cursor: 'pointer', flexShrink: 0 }}
+        style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px 8px 16px', cursor: 'pointer', flexShrink: 0 }}
       >
         {statBox(tt(lang, 'stats.dc'), stats ? stats.dc : '—', true)}
         {statBox(tt(lang, 'stats.atk'), stats ? hifiFmtMod(stats.atk) : '—')}
         {statBox(tt(lang, 'stats.cast'), stats ? `${tt(lang, 'ability.' + stats.ability)} ${hifiFmtMod(stats.mod)}` : '—')}
         {statBox(tt(lang, 'stats.prof'), stats ? hifiFmtMod(stats.prof) : '—')}
-        <span aria-hidden="true" style={{ position: 'absolute', top: '50%', right: 9, transform: 'translateY(-50%)', color: 'var(--overlay0)', fontSize: 13 }}>ⓘ</span>
+        <span aria-hidden="true" style={{ flexShrink: 0, color: 'var(--subtext0)', fontSize: 14 }}>ⓘ</span>
       </div>
 
       {/* Tracker compacto (BG3): numeral romano + slots em bloco 2x2. */}
@@ -2103,10 +2105,10 @@ function HifiSessionMode({ character, update, lang, allSpells, onExit }) {
       {/* Lista das preparadas, agrupada por círculo. */}
       <div style={{ flex: 1, overflow: 'auto', padding: '12px 12px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         {spells.length === 0 ? (
-          <div style={{ margin: 'auto', textAlign: 'center', padding: 24, maxWidth: 280 }}>
-            <p style={{ fontSize: 13, color: 'var(--subtext0)', lineHeight: 1.5 }}>{tt(lang, 'session.empty')}</p>
-            <button className="hifi-btn-secondary" style={{ marginTop: 14 }} onClick={onExit}>{tt(lang, 'session.exit')}</button>
-          </div>
+          <HifiEmptyState lang={lang} onClear={onExit}
+            title={tt(lang, 'empty.prepared.title')}
+            body={tt(lang, 'session.emptyBody')}
+            actionLabel={tt(lang, 'session.exit')}/>
         ) : grouped.map((item, idx) => {
           if (item.type === 'label') {
             return (
@@ -2169,7 +2171,7 @@ function HifiSessionMode({ character, update, lang, allSpells, onExit }) {
 
       {/* Detalhe da magia — tela deslizante (mesmo padrão do grimório mobile). */}
       {detailTransition.mounted && detailSpell && (
-        <div className={detail ? 'hifi-slide-in-right' : 'hifi-slide-out-right'} style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column', background: 'var(--base)', paddingTop: 24 }}>
+        <div className={detail ? 'hifi-slide-in-right' : 'hifi-slide-out-right'} style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column', background: 'var(--base)', paddingTop: 'max(12px, env(safe-area-inset-top))', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
           <header className="hifi-flat-icons" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}>
             <button className="hifi-icon-btn" onClick={() => setDetail(null)} aria-label={tt(lang, 'nav.back')} title={tt(lang, 'nav.back')}><span aria-hidden="true">‹</span></button>
           </header>
@@ -2309,7 +2311,27 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
   };
   const availableExtras = Object.keys(filterCfg).filter(k => !filterCfg[k].base && !extraFilters.includes(k));
   const { toast, show: showToast } = useHifiToast();
-  const [drawerOpen, setDrawerOpen] = React.useState(initialDrawerOpen);
+  // Protótipo: o drawer único virou uma tab bar (Buscar · Filtros · Preparadas ·
+  // Sessão · Mais). `sheet` diz qual folha está aberta; drawerOpen/setDrawerOpen
+  // continuam existindo pra a11y (useDialogA11y) e pro PackMenuChip fecharem.
+  const [sheet, setSheet] = React.useState(initialDrawerOpen ? 'filters' : null);
+  const drawerOpen = sheet === 'filters' || sheet === 'more';
+  const [searching, setSearching] = React.useState(false);
+  const searchInputRef = React.useRef(null);
+  const MORE_LABELS = {
+    packs: tt(lang, 'mobile.more.packs'), theme: tt(lang, 'mobile.more.theme'),
+    light: tt(lang, 'mobile.more.light'), dark: tt(lang, 'mobile.more.dark'),
+    language: tt(lang, 'mobile.more.language'),
+  };
+  const TAB_LABELS = {
+    nav: tt(lang, 'mobile.nav'), search: tt(lang, 'mobile.tab.search'),
+    filters: tt(lang, 'mobile.tab.filters'), prepared: tt(lang, 'mobile.tab.prepared'),
+    session: tt(lang, 'mobile.tab.session'), more: tt(lang, 'mobile.tab.more'),
+    closeSearch: tt(lang, 'mobile.closeSearch'),
+  };
+  const setDrawerOpen = (v) => setSheet(v ? 'filters' : null);
+  const toggleSheet = (name) => setSheet(cur => cur === name ? null : name);
+  const activeFilterCount = Object.values(filters).reduce((n, set) => n + (set?.size || 0), 0);
   const [charSheetOpen, setCharSheetOpen] = React.useState(false);
   const [editor, setEditor] = React.useState(null);
   // Modo sessão: persistido — recarregar no meio da sessão volta direto pra ele.
@@ -2405,7 +2427,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
   const shownSpell = compare.alt?.spell || detailSpell;
 
   return (
-    <div className={`hifi ${themeClass}`} style={{ ...containerStyle, height: '100%', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', paddingTop: 24, paddingBottom: 0 }}>
+    <div className={`hifi hifi-mobile ${themeClass}`} style={{ ...containerStyle, height: '100%', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', paddingTop: 'max(12px, env(safe-area-inset-top))', paddingBottom: 0, paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
       {detailScreenTransition.mounted && (
         <div className={showDetail ? 'hifi-slide-in-right' : (detailScreenTransition.mounted ? 'hifi-slide-out-right' : '')} style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column', background: 'var(--base)' }}>
           <header className="hifi-flat-icons" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}>
@@ -2437,11 +2459,11 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
             </div>
             <HifiDetailContent s={shownSpell} lang={lang} versionLang={shownSpell.lang}/>
           </div>
-          <div style={{ padding: '12px 16px', borderTop: '1px solid var(--surface1)', display: 'flex', gap: 8 }}>
+          <div style={{ padding: '12px 16px calc(12px + env(safe-area-inset-bottom))', borderTop: '1px solid var(--surface1)', display: 'flex', gap: 8 }}>
             <button
               className="hifi-btn-primary"
               onClick={() => togglePrep(detailSpell)}
-              style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, ...(prepared.has(hifiSpellKey(detailSpell)) ? {} : { background: 'transparent', color: 'var(--accent)' }) }}
+              style={{ flex: 1, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, ...(prepared.has(hifiSpellKey(detailSpell)) ? {} : { background: 'transparent', color: 'var(--accent)' }) }}
             >{prepared.has(hifiSpellKey(detailSpell))
               ? <><HifiBookmarkIcon size={13} filled/>{tt(lang, 'spell.prepared')}</>
               : (tt(lang, 'spell.prepareShort'))}</button>
@@ -2453,46 +2475,24 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, zIndex: 1 }}>
         {/* Header: título + botão de preparadas */}
         <header style={{ padding: '10px 16px', borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}>
-            {(() => {
-              const heroWord = window.makeT(lang)('title.spellbook');
-              const name = hifiCharName(liveChar, lang);
-              const heroSpan = <span className="hifi-display" style={{ fontSize: 22, color: 'var(--text)', lineHeight: 1 }}>{heroWord}</span>;
-              const charBtn = liveChar?.name && (
-                <button
-                  onClick={() => setCharSheetOpen(true)}
-                  className="hifi-char-title hifi-display"
-                  title={window.makeT(lang)('char.switchEdit')}
-                  style={{
-                    background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                    fontSize: 22, color: accent, letterSpacing: '0.04em', lineHeight: 1,
-                  }}
-                >{lang === 'ptbr' ? <>de {name} </> : <>{name}'s </>}<span style={{ fontSize: 13 }}>▾</span></button>
-              );
-              // PT: "Grimório de <nome>" · EN: "<nome>'s Spellbook" (ordem inverte)
-              return lang === 'ptbr' ? <>{heroSpan}{charBtn}</> : <>{charBtn}{heroSpan}</>;
-            })()}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* Protótipo F10.6: "Grimório" vira rótulo pequeno acima do nome (mesmo
+              padrão do header do modo sessão) — o nome ganha a linha inteira. */}
+          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
+            <span className="hifi-section-label" style={{ fontSize: 10 }}>{window.makeT(lang)('title.spellbook')}</span>
+            {liveChar?.name && (
+              <button
+                onClick={() => setCharSheetOpen(true)}
+                className="hifi-char-title hifi-display"
+                title={window.makeT(lang)('char.switchEdit')}
+                style={{
+                  background: 'none', border: 'none', padding: '6px 0', margin: '-6px 0', cursor: 'pointer',
+                  fontSize: 20, color: accent, letterSpacing: '0.04em', lineHeight: 1.15, textAlign: 'left',
+                  display: 'flex', alignItems: 'baseline', gap: 6, minWidth: 0, maxWidth: '100%',
+                }}
+              ><span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>{hifiCharName(liveChar, lang)}</span><span style={{ fontSize: 12, flexShrink: 0 }}>▾</span></button>
+            )}
           </div>
-          <button
-            onClick={() => setOnlyPrepared(v => !v)}
-            className={`hifi-icon-btn${onlyPrepared ? ' active' : ''}`}
-            title={tt(lang, 'action.onlyPreparedShort')}
-            aria-label={tt(lang, 'action.onlyPreparedShort')}
-            aria-pressed={onlyPrepared}
-            style={{
-              width: 25, height: 25, marginTop: 2,
-              color: onlyPrepared ? 'var(--base)' : 'var(--text)',
-              background: onlyPrepared ? 'var(--accent)' : 'var(--surface1)',
-              borderColor: onlyPrepared ? 'var(--accent)' : undefined }}
-          ><HifiBookmarkIcon size={14}/></button>
-          <button
-            onClick={() => openSession(true)}
-            className="hifi-icon-btn"
-            title={tt(lang, 'session.enter')}
-            aria-label={tt(lang, 'session.enter')}
-            style={{ width: 25, height: 25, marginTop: 2, background: 'var(--surface1)', fontSize: 13 }}
-          ><span aria-hidden="true">🎲</span></button>
         </div>
       </header>
 
@@ -2502,11 +2502,16 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
         style={{ padding: '6px 16px', borderBottom: '1px solid var(--surface1)', flexShrink: 0 }}
       />
 
-      <div style={{ flex: 1, overflow: 'auto', padding: '12px 12px 88px' }}>
+      <div style={{ flex: 1, overflow: 'auto', padding: '12px 12px 16px' }}>
         {filtered.length === 0 ? (
-          <HifiEmptyState lang={lang} onClear={() => { clearAllFilters(); setOnlyPrepared(false); }}/>
+          (onlyPrepared && prepared.size === 0)
+            ? <HifiEmptyState lang={lang} onClear={() => setOnlyPrepared(false)}
+                title={tt(lang, 'empty.prepared.title')}
+                body={tt(lang, 'empty.prepared.body')}
+                actionLabel={tt(lang, 'empty.prepared.action')}/>
+            : <HifiEmptyState lang={lang} onClear={() => { clearAllFilters(); setOnlyPrepared(false); setQuery(''); }}/>
         ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: 8, alignItems: 'start' }}>
           {filtered.map((s, i) => (
             <HifiSpellCard
               key={hifiSpellKey(s)} s={s} lang={lang} versionLang={s.lang}
@@ -2522,151 +2527,139 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
       </div>
       </div>
 
-      {/* Bottom drawer */}
+      {/* Protótipo: tab bar no lugar do drawer. Filtros e Mais abrem uma folha
+          acima da barra; Buscar estica a própria barra num campo de texto. */}
       {drawerOpen && (
-        <div onClick={() => setDrawerOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 4 }}/>
+        <div onClick={() => setSheet(null)} className="hifi-fade-in" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 'calc(60px + env(safe-area-inset-bottom))', background: 'rgba(0,0,0,0.45)', zIndex: 4 }}/>
       )}
-      <div
-        ref={drawerRef}
-        role={drawerOpen ? 'dialog' : undefined}
-        aria-modal={drawerOpen ? 'true' : undefined}
-        aria-label={drawerOpen ? (tt(lang, 'filter.searchFilterAria')) : undefined}
-        tabIndex={drawerOpen ? -1 : undefined}
-        onTouchStart={onDrawerTouchStart}
-        onTouchEnd={onDrawerTouchEnd}
-        style={{
-        position: 'absolute', left: 0, right: 0, bottom: 0,
-        // min(): em paisagem (~390px de altura) os 480 fixos estourariam a tela.
-        height: drawerOpen ? 'min(480px, calc(100% - 60px))' : 56,
-        background: 'var(--mantle)',
-        borderTop: '1px solid var(--surface1)',
-        borderTopLeftRadius: 16, borderTopRightRadius: 16,
-        boxShadow: '0 -8px 20px rgba(0,0,0,0.2)',
-        zIndex: 5,
-        transition: 'height 280ms cubic-bezier(.2,.7,.3,1)',
-        display: 'flex', flexDirection: 'column', overflow: 'hidden',
-      }}>
-        <button onClick={() => setDrawerOpen(o => !o)} style={{
-          padding: '5px 16px 4px', background: 'transparent', border: 'none', cursor: 'pointer',
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-        }}>
-          <div style={{ width: 28, height: 3, borderRadius: 2, background: 'var(--surface2)' }}/>
-        </button>
-        {!drawerOpen ? (
-          <div style={{ padding: '0 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: 'var(--overlay1)', fontSize: 14 }}>{tt(lang, 'filter.searchFilterShort')}</span>
-            <div style={{ flex: 1 }}/>
-            <HifiMono>{filtered.length} {tt(lang, 'noun.spell.other')}</HifiMono>
+      {drawerOpen && (
+        <div
+          ref={drawerRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={sheet === 'filters' ? TAB_LABELS.filters : TAB_LABELS.more}
+          tabIndex={-1}
+          onTouchStart={onDrawerTouchStart}
+          onTouchEnd={onDrawerTouchEnd}
+          className="hifi-slide-up"
+          style={{
+            position: 'absolute', left: 0, right: 0, bottom: 'calc(60px + env(safe-area-inset-bottom))',
+            maxHeight: 'min(540px, calc(100% - 140px))',
+            background: 'var(--mantle)', borderTop: '1px solid var(--surface1)',
+            borderTopLeftRadius: 16, borderTopRightRadius: 16,
+            boxShadow: '0 -8px 20px rgba(0,0,0,0.2)', zIndex: 5,
+            display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          }}>
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0 4px', flexShrink: 0 }}>
+            <div style={{ width: 32, height: 4, borderRadius: 2, background: 'var(--surface2)' }}/>
           </div>
-        ) : (
           <div style={{ flex: 1, overflow: 'auto', padding: '4px 16px 18px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={tt(lang, 'filter.spellName')}
-              className="hifi-input"
-              style={{ fontSize: 16 }}
-            />
-
-            <div>
-              <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'spell.level')}</HifiSectionLabel>
-              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
-                {mobileFilterValues.level.map(v => (
-                  <HifiPill key={v} active={filters.level?.has(v)} onClick={() => toggleFilter('level', v)}>{v === 'truque' ? (tt(lang, 'spell.cantrip')) : v}</HifiPill>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'spell.school')}</HifiSectionLabel>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {mobileFilterValues.school.map(v => (
-                  <HifiPill key={v} active={filters.school?.has(v)} onClick={() => toggleFilter('school', v)}>{hifiSchoolFilterLabel(v, uiLang)}</HifiPill>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'spell.class')}</HifiSectionLabel>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {mobileFilterValues.class.map(v => (
-                  <HifiPill key={v} active={filters.class?.has(v)} onClick={() => toggleFilter('class', v)}>{hifiClassFilterLabel(v, uiLang)}</HifiPill>
-                ))}
-              </div>
-            </div>
-
-            {extraFilters.map(key => (
-              <div key={key}>
-                <HifiSectionLabel style={{ marginBottom: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  {filterCfg[key].label}
-                  <button
-                    onClick={() => removeExtraFilter(key)}
-                    className="hifi-btn-ghost"
-                    style={{ fontSize: 11, color: 'var(--red)', padding: '2px 6px' }}
-                  >{tt(lang, 'filter.removeFilter')}</button>
-                </HifiSectionLabel>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {(extraValues[key] || []).map(v => (
-                    <HifiPill key={v} active={filters[key]?.has(v)} onClick={() => toggleFilter(key, v)}>{filterCfg[key].formatValue ? filterCfg[key].formatValue(v) : v}</HifiPill>
-                  ))}
-                </div>
-              </div>
-            ))}
-
-            {availableExtras.length > 0 && (
+            {sheet === 'filters' ? (<>
               <div>
-                <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'filter.add')}</HifiSectionLabel>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {availableExtras.map(key => (
-                    <HifiPill key={key} onClick={() => addExtraFilter(key)}>+ {filterCfg[key].label}</HifiPill>
+                <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'spell.level')}</HifiSectionLabel>
+                <div className="hifi-filter-grid cols-5">
+                  {mobileFilterValues.level.map(v => (
+                    <HifiPill key={v} active={filters.level?.has(v)} onClick={() => toggleFilter('level', v)}>{v === 'truque' ? (tt(lang, 'spell.cantrip')) : v}</HifiPill>
                   ))}
                 </div>
               </div>
-            )}
 
-            <div>
-              <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'manager.title')}</HifiSectionLabel>
-              {window.PackMenuChip && (
-                <window.PackMenuChip
-                  lang={uiLang}
-                  onOpen={() => setDrawerOpen(false)}
-                  style={{ width: '100%', justifyContent: 'center' }}
-                />
-              )}
-            </div>
-
-            <div>
-              <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'section.tools')}</HifiSectionLabel>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <HifiThemeToggle dark={dark} lang={lang}/>
-                <HifiLangToggle uiLang={uiLang}/>
-                <button
-                  onClick={() => {
-                    const preparedSet = new Set(liveChar?.prepared || []);
-                    const preparedSpells = allSpells.filter(s => preparedSet.has(hifiSpellKey(s)));
-                    hifiPrintPrepared(preparedSpells, uiLang, showToast, { character: liveChar });
-                  }}
-                  className="hifi-icon-btn"
-                  title={tt(lang, 'action.printPrepared')}
-                  style={{ fontSize: 13, background: 'var(--surface1)' }}
-                >⎙</button>
-                <button
-                  onClick={() => window.__shareBuild && window.__shareBuild()}
-                  className="hifi-icon-btn"
-                  title={tt(lang, 'action.shareBuild')}
-                  style={{ fontSize: 13, background: 'var(--surface1)' }}
-                >↗</button>
+              <div>
+                <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'spell.school')}</HifiSectionLabel>
+                <div className="hifi-filter-grid">
+                  {mobileFilterValues.school.map(v => (
+                    <HifiPill key={v} active={filters.school?.has(v)} onClick={() => toggleFilter('school', v)}>{hifiSchoolFilterLabel(v, uiLang)}</HifiPill>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div>
-              <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'section.actions')}</HifiSectionLabel>
-              {/* Um botão só: os antigos "copiar link" e "compartilhar filtro"
-                  copiavam a MESMA location crua (que não carrega estado nenhum).
-                  Este serializa busca + filtros + versão numa URL que restaura
-                  a visão em quem abrir. */}
-              <button className="hifi-btn-secondary" style={{ width: '100%' }}
-                onClick={() => {
+              <div>
+                <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'spell.class')}</HifiSectionLabel>
+                <div className="hifi-filter-grid">
+                  {mobileFilterValues.class.map(v => (
+                    <HifiPill key={v} active={filters.class?.has(v)} onClick={() => toggleFilter('class', v)}>{hifiClassFilterLabel(v, uiLang)}</HifiPill>
+                  ))}
+                </div>
+              </div>
+
+              {extraFilters.map(key => (
+                <div key={key}>
+                  <HifiSectionLabel style={{ marginBottom: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {filterCfg[key].label}
+                    <button
+                      onClick={() => removeExtraFilter(key)}
+                      className="hifi-btn-ghost"
+                      style={{ fontSize: 11, color: 'var(--red)', padding: '2px 6px' }}
+                    >{tt(lang, 'filter.removeFilter')}</button>
+                  </HifiSectionLabel>
+                  <div className="hifi-filter-grid">
+                    {(extraValues[key] || []).map(v => (
+                      <HifiPill key={v} active={filters[key]?.has(v)} onClick={() => toggleFilter(key, v)}>{filterCfg[key].formatValue ? filterCfg[key].formatValue(v) : v}</HifiPill>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {availableExtras.length > 0 && (
+                <div>
+                  <HifiSectionLabel style={{ marginBottom: 6 }}>{tt(lang, 'filter.add')}</HifiSectionLabel>
+                  <div className="hifi-filter-grid add">
+                    {availableExtras.map(key => (
+                      <HifiPill key={key} onClick={() => addExtraFilter(key)}>+ {filterCfg[key].label}</HifiPill>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            </>) : (<>
+              {/* Protótipo: "Mais" como lista agrupada — toda linha tem a mesma
+                  altura (48px), ícone à esquerda, rótulo, e valor/controle à direita. */}
+              <div className="hifi-more-group">
+                <div className="hifi-more-row">
+                  <svg className="hifi-more-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"><path d="M4 6.5 12 3l8 3.5-8 3.5z"/><path d="m4 12 8 3.5 8-3.5"/><path d="m4 17.5 8 3.5 8-3.5"/></svg>
+                  <span className="hifi-more-label">{MORE_LABELS.packs}</span>
+                  {window.PackMenuChip && (
+                    <window.PackMenuChip lang={uiLang} onOpen={() => setSheet(null)} style={{
+                      flex: 1, justifyContent: 'flex-end', minWidth: 0, height: 48,
+                      background: 'transparent', border: 0, boxShadow: 'none', padding: 0,
+                      font: '15px/1 ui-sans-serif, system-ui, sans-serif', color: 'var(--subtext0)',
+                    }}/>
+                  )}
+                </div>
+                <button type="button" className="hifi-more-row" onClick={() => window.__toggleDark && window.__toggleDark()}>
+                  {dark
+                    ? <svg className="hifi-more-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+                    : <svg className="hifi-more-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg>}
+                  <span className="hifi-more-label">{MORE_LABELS.theme}</span>
+                  <span className="hifi-more-value">{dark ? MORE_LABELS.dark : MORE_LABELS.light}</span>
+                </button>
+                <div className="hifi-more-row">
+                  <svg className="hifi-more-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/></svg>
+                  <span className="hifi-more-label">{MORE_LABELS.language}</span>
+                  <div className="hifi-segmented" role="group" aria-label={MORE_LABELS.language}>
+                    {[['ptbr', 'PT'], ['en', 'EN']].map(([v, l]) => (
+                      <button key={v} type="button" aria-pressed={uiLang === v}
+                        className={uiLang === v ? 'on' : ''}
+                        onClick={() => window.__setUiLang && window.__setUiLang(v)}>{l}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="hifi-more-group">
+                <button type="button" className="hifi-more-row" onClick={() => {
+                  const preparedSet = new Set(liveChar?.prepared || []);
+                  const preparedSpells = allSpells.filter(s => preparedSet.has(hifiSpellKey(s)));
+                  hifiPrintPrepared(preparedSpells, uiLang, showToast, { character: liveChar });
+                }}>
+                  <svg className="hifi-more-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"><path d="M7 8V3h10v5"/><rect x="3" y="8" width="18" height="9" rx="2"/><path d="M7 14h10v7H7z"/></svg>
+                  <span className="hifi-more-label">{tt(lang, 'action.printPrepared')}</span>
+                </button>
+                <button type="button" className="hifi-more-row" onClick={() => window.__shareBuild && window.__shareBuild()}>
+                  <svg className="hifi-more-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+                  <span className="hifi-more-label">{tt(lang, 'action.shareBuild')}</span>
+                </button>
+                <button type="button" className="hifi-more-row" onClick={() => {
                   const versionKeys = selectedKeys.filter(k => versions.some(v => v.key === k));
                   const url = hifiShareViewUrl({ query, filters, onlyPrepared, versionKeys });
                   const title = tt(lang, 'title.myGrimoire');
@@ -2679,14 +2672,101 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
                     );
                   } else { showToast(url); }
                 }}>
-                {tt(lang, 'action.shareView')}
+                  <svg className="hifi-more-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
+                  <span className="hifi-more-label">{tt(lang, 'action.shareView')}</span>
+                </button>
+              </div>
+            </>)}
+          </div>
+          {sheet === 'filters' && (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '10px 16px 12px', borderTop: '1px solid var(--surface1)', flexShrink: 0 }}>
+              <button onClick={clearAllFilters} className="hifi-btn-ghost" disabled={activeFilterCount === 0}>{tt(lang, 'filter.clearAll')}</button>
+              <div style={{ flex: 1 }}/>
+              <button className={filtered.length ? 'hifi-btn-primary' : 'hifi-btn-secondary'} onClick={() => setSheet(null)}>
+                {filtered.length
+                  ? tt(lang, 'mobile.showResults', { n: filtered.length, noun: tt(lang, filtered.length === 1 ? 'noun.spell.one' : 'noun.spell.other') })
+                  : tt(lang, 'mobile.noResults')}
               </button>
             </div>
+          )}
+        </div>
+      )}
 
-            <button onClick={clearAllFilters} className="hifi-btn-ghost" style={{ alignSelf: 'flex-start' }}>{tt(lang, 'filter.clearAll')}</button>
-          </div>
-        )}
-      </div>
+      <nav
+        aria-label={TAB_LABELS.nav}
+        style={{
+          position: 'relative', flexShrink: 0, zIndex: 6,
+          height: 'calc(60px + env(safe-area-inset-bottom))',
+          paddingBottom: 'env(safe-area-inset-bottom)', boxSizing: 'border-box',
+          background: 'var(--mantle)', borderTop: '1px solid var(--surface1)',
+        }}>
+        <div className={`hifi-tabbar-row${searching ? ' is-searching' : ''}`}>
+          <button type="button" className={`hifi-tab${query ? ' active' : ''}`}
+            aria-label={TAB_LABELS.search} aria-expanded={searching}
+            tabIndex={searching ? -1 : 0}
+            onClick={() => { setSheet(null); setSearching(true); searchInputRef.current?.focus(); }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg>
+            <span>{TAB_LABELS.search}</span>
+            {query && !searching && <span className="hifi-tab-dot" aria-hidden="true"/>}
+          </button>
+          <button type="button" className={`hifi-tab${sheet === 'filters' || activeFilterCount > 0 ? ' active' : ''}`}
+            aria-expanded={sheet === 'filters'} tabIndex={searching ? -1 : 0}
+            onClick={() => toggleSheet('filters')}>
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M4 7h16M7 12h10M10 17h4"/></svg>
+            <span>{TAB_LABELS.filters}</span>
+            {activeFilterCount > 0 && <span className="hifi-tab-badge" aria-label={`${activeFilterCount}`}>{activeFilterCount}</span>}
+          </button>
+          <button type="button" className={`hifi-tab${onlyPrepared ? ' active' : ''}`}
+            aria-pressed={onlyPrepared} tabIndex={searching ? -1 : 0}
+            title={tt(lang, 'action.onlyPreparedShort')}
+            onClick={() => setOnlyPrepared(v => !v)}>
+            <HifiBookmarkIcon size={18} filled={onlyPrepared}/>
+            <span>{TAB_LABELS.prepared}</span>
+          </button>
+          <button type="button" className="hifi-tab" tabIndex={searching ? -1 : 0}
+            title={tt(lang, 'session.enter')}
+            onClick={() => { setSheet(null); openSession(true); }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="9" cy="9" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg>
+            <span>{TAB_LABELS.session}</span>
+          </button>
+          <button type="button" className={`hifi-tab${sheet === 'more' ? ' active' : ''}`}
+            aria-expanded={sheet === 'more'} tabIndex={searching ? -1 : 0}
+            onClick={() => toggleSheet('more')}>
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>
+            <span>{TAB_LABELS.more}</span>
+          </button>
+        </div>
+
+        {/* Busca: o campo já existe (recortado no tamanho do botão da lupa) e o
+            clip-path abre até a largura toda. Estar sempre montado deixa o
+            focus() rodar no mesmo toque — no iOS é isso que levanta o teclado. */}
+        <div className={`hifi-tabbar-search${searching ? ' open' : ''}`} aria-hidden={!searching}>
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" style={{ flexShrink: 0, color: 'var(--subtext0)' }}><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg>
+          <input
+            ref={searchInputRef}
+            type="search"
+            enterKeyHint="search"
+            value={query}
+            tabIndex={searching ? 0 : -1}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') { setQuery(''); setSearching(false); e.currentTarget.blur(); }
+              if (e.key === 'Enter') e.currentTarget.blur();
+            }}
+            onBlur={() => { if (!query) setSearching(false); }}
+            placeholder={tt(lang, 'filter.spellName')}
+            aria-label={tt(lang, 'filter.spellName')}
+          />
+          {searching && <HifiMono style={{ flexShrink: 0 }}>{filtered.length}</HifiMono>}
+          <button type="button" className="hifi-tabbar-search-close"
+            tabIndex={searching ? 0 : -1}
+            aria-label={TAB_LABELS.closeSearch}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => { setQuery(''); setSearching(false); searchInputRef.current?.blur(); }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+      </nav>
 
       {/* Character sheet (switcher) */}
       {charSheetTransition.mounted && (
@@ -2786,7 +2866,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
       )}
 
       {/* bottom 70: acima do handle do drawer (56px), senão o toast some atrás dele */}
-      <HifiToast toast={toast} accent={accent} bottom={70}/>
+      <HifiToast toast={toast} accent={accent} bottom={76}/>
     </div>
   );
 }

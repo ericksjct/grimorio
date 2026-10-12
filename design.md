@@ -80,8 +80,17 @@ claro/escuro alterna pela vela (`HifiThemeToggle`) e é persistido em `localStor
   mensagem composta + botão "limpar filtros".
 
 ### Canon de tamanho
-Todos os controles da faixa (chips, filtros, botões, ícones) têm **altura fixa**:
-25px no mobile, 30px no desktop (`.hifi-desktop`). Exceção: a busca no mobile (maior, p/ toque).
+- **Desktop** (`.hifi-desktop`): todos os controles da faixa (chips, filtros, botões,
+  ícones, busca) têm altura fixa de 30px.
+- **Mobile** (`.hifi-mobile`, bloco "CANON MOBILE" no fim de `hifi-tokens.css`): três
+  tamanhos, todos em sans do sistema e com rótulo em frase com maiúscula inicial.
+  - **Ação** (primária / secundária / ghost): 44px, raio 12.
+  - **Campo e seleção** (input, pill, bloco de filtro, segmentado): 40–44px, raio 10–12.
+  - **Ícone de header**: 36px visíveis, área de toque de 44px (`::before` em `pointer: coarse`).
+
+  Filtros do mobile são grade de blocos iguais (`.hifi-filter-grid`), não pílulas de
+  largura variável. Estados vazios usam sempre `HifiEmptyState` (ícone, título, frase e
+  uma ação), com a mensagem do motivo real.
 
 ### Forma e elevação
 - Raio: pills `999px`; cards `6px`; dropdowns `4px`. (consistente)
@@ -103,8 +112,15 @@ Largura (coluna `minmax`) e altura escalam pelo mesmo fator → **aspect ratio p
 
 - Layout decidido pela **menor** dimensão da viewport (`Math.min(w, h) < 768` → mobile),
   pra um celular usar layout mobile em retrato E paisagem.
-- Desktop: grid de cards + painel lateral. Mobile: lista de 1 coluna + drawer inferior
-  (busca/filtros) + tela de detalhe full-screen.
+- Desktop: grid de cards + painel lateral. Mobile: lista (1 coluna; 2 em paisagem) +
+  **tab bar** fixa embaixo (Buscar · Filtros · Preparadas · Sessão · Mais) + tela de
+  detalhe full-screen.
+  - **Buscar** estica a própria barra num campo de texto (animação de `clip-path`); o
+    campo fica sempre montado para o `focus()` rodar no mesmo toque (teclado do iOS).
+  - **Filtros** e **Mais** abrem uma folha acima da barra; **Mais** é uma lista agrupada
+    de linhas de 48px (pacotes, tema, idioma, imprimir, compartilhar).
+  - Safe-area: shell, barra e barra de ação do detalhe usam `env(safe-area-inset-*)`.
+  - Hover só existe em `@media (hover: hover)` — no toque não "gruda".
 
 ---
 

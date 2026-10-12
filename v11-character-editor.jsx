@@ -840,7 +840,7 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
                   if (next) setClassLevels(prev => [...prev, { class: next, level: 1 }]);
                 }}
                 style={{ alignSelf: 'flex-start', color: 'var(--accent)' }}
-              >+ {T('adicionar classe', 'add class')}</button>
+              >+ {T('Adicionar classe', 'Add class')}</button>
             )}
           </div>
         </div>
@@ -990,7 +990,7 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
                       }}
                       aria-label={T(`espaços do ${lvl}º círculo`, `level ${lvl} slots`)}
                       className="hifi-input"
-                      style={{ width: 30, height: 30, boxSizing: 'border-box', borderRadius: '50%', textAlign: 'center', padding: 0, fontSize: 13 }}
+                      style={{ width: '100%', height: 44, boxSizing: 'border-box', borderRadius: 12, textAlign: 'center', padding: 0, fontSize: 15 }}
                     />
                   </label>
                 ))}
@@ -1014,9 +1014,9 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
           {/* Tab switcher */}
           <div style={{ marginTop: 8, display: 'flex', gap: 4, flexShrink: 0 }}>
             {[
-              { id: 'all',        label: T('todas', 'all') },
-              { id: 'prepared',   label: T('preparadas', 'prepared') },
-              { id: 'bookmarked', label: T('favoritas', 'bookmarks') },
+              { id: 'all',        label: T('Todas', 'All') },
+              { id: 'prepared',   label: T('Preparadas', 'Prepared') },
+              { id: 'bookmarked', label: T('Favoritas', 'Bookmarks') },
             ].map(t => (
               <button key={t.id} type="button"
                 onClick={() => setTab(t.id)}
@@ -1162,11 +1162,11 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
             <>
               <span style={{ fontSize: 13, color: 'var(--subtext0)' }}>{T('tem certeza?', 'sure?')}</span>
               <button className="hifi-btn-ghost" onClick={() => setConfirmDelete(false)}>
-                {T('cancelar', 'cancel')}
+                {T('Cancelar', 'Cancel')}
               </button>
               <button className="hifi-btn-secondary" onClick={remove}
                 style={{ color: 'var(--red)', borderColor: 'var(--red)' }}>
-                {T('excluir', 'delete')}
+                {T('Excluir', 'Delete')}
               </button>
             </>
           ) : (
@@ -1176,17 +1176,17 @@ function CharacterEditor({ lang = 'ptbr', dark = false, theme = 'catppuccin', ch
               title={chars.length <= 1
                 ? T('precisa de pelo menos um personagem', 'need at least one character')
                 : ''}>
-              {T('excluir', 'delete')}
+              {T('Excluir', 'Delete')}
             </button>
           )
         )}
         <div style={{ flex: 1 }}/>
         <button className="hifi-btn-ghost" onClick={() => onClose?.(null)}>
-          {T('cancelar', 'cancel')}
+          {T('Cancelar', 'Cancel')}
         </button>
         <button className="hifi-btn-primary" onClick={save} disabled={!canSave}
           style={!canSave ? { opacity: 0.45, cursor: 'not-allowed' } : {}}>
-          {isNew ? T('criar', 'create') : T('salvar', 'save')}
+          {isNew ? T('Criar', 'Create') : T('Salvar', 'Save')}
         </button>
       </div>
     </div>

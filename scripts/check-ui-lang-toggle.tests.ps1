@@ -75,11 +75,22 @@ if ($ui -notmatch 'function\s+useEditionCompare\([\s\S]{0,2000}?hifiSiblingVersi
   throw 'useEditionCompare must still call hifiSiblingVersion() - it must not have gone dead.'
 }
 
-# 7. Montagem: exatamente duas ocorrencias de <HifiLangToggle (desktop +
-#    mobile, D-10), e nenhuma delas passa onSwitch.
+# 7. Montagem: HifiLangToggle so no desktop; no mobile o idioma vive na folha
+#    "Mais" como seletor segmentado PT | EN (D-10 continua: os dois layouts tem
+#    seletor). Nenhum dos dois passa onSwitch nem le o registro de versoes.
 $mounts = [regex]::Matches($ui, '<HifiLangToggle\b[^/]*/>')
-if ($mounts.Count -ne 2) {
-  throw "HifiLangToggle must be mounted exactly twice (desktop + mobile, D-10) - found $($mounts.Count)."
+if ($mounts.Count -ne 1) {
+  throw "HifiLangToggle must be mounted exactly once (desktop; mobile uses the segmented control, D-10) - found $($mounts.Count)."
+}
+$segmented = [regex]::Match($ui, 'className="hifi-segmented"[\s\S]{0,600}?</div>')
+if (-not $segmented.Success) {
+  throw 'Mobile language selector (hifi-segmented) not found (D-10).'
+}
+if ($segmented.Value -notmatch 'window\.__setUiLang') {
+  throw 'Mobile language selector must switch only uiLang via window.__setUiLang (D-09).'
+}
+if ($segmented.Value -match 'versions|onSwitch') {
+  throw 'Mobile language selector must not touch the versions registry nor onSwitch (D-09).'
 }
 foreach ($mount in $mounts) {
   if ($mount.Value -match 'onSwitch') {

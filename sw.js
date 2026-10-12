@@ -23,7 +23,7 @@
 // packs/index.js define self.BUILTIN_PACKS — o PRECACHE dos pacotes embutidos sai dele.
 importScripts('./packs/index.js');
 
-const CACHE_VERSION = 'grimorio-v7';
+const CACHE_VERSION = 'grimorio-v8';
 
 // Extensões do app shell (código que muda a cada deploy) → network-first.
 const SHELL_RE = /\.(html|css|jsx)$/;
