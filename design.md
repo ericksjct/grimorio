@@ -121,6 +121,10 @@ Largura (coluna `minmax`) e altura escalam pelo mesmo fator → **aspect ratio p
     de linhas de 48px (pacotes, tema, idioma, imprimir, compartilhar).
   - Safe-area: shell, barra e barra de ação do detalhe usam `env(safe-area-inset-*)`.
   - Hover só existe em `@media (hover: hover)` — no toque não "gruda".
+  - Teclado (Android): o viewport usa `interactive-widget=resizes-content`, então o teclado
+    encolhe a página e a tab bar encosta nele. O `<html>` é pintado com `--mantle` do tema
+    ativo, então nenhuma folga (teclado, overscroll) aparece em outra cor.
+  - A tela principal não mostra espaços de magia; eles são gastos e recuperados no modo sessão.
 
 ---
 

@@ -1,6 +1,12 @@
 # Auditoria mobile — 2026-10-12
 
-Skill: `design-taste-frontend` (modo auditoria). Nenhum arquivo foi alterado.
+Skill: `design-taste-frontend` (modo auditoria).
+
+> **Status (2026-10-16): resolvida.** Os 14 itens foram implementados no commit `60f9b61`
+> (fases 9-11 do roadmap), a partir de um protótipo validado. O item 1 (gaveta) deixou de
+> existir: o drawer foi trocado por uma tab bar. A faixa clara entre a busca e o teclado do
+> Android foi corrigida em `145f620`. Teclado, notch e safe-area foram confirmados em
+> aparelho real. O texto abaixo é o registro original da auditoria.
 
 **Método:** site servido localmente e renderizado no Playwright (Chromium) em 390×844, 320×568
 e paisagem 844×390, nos temas claro e escuro. Alvos de toque e contraste WCAG medidos no DOM

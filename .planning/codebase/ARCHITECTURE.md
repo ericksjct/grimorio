@@ -57,7 +57,7 @@
 |-----------|----------------|------|
 | App | Root React component; manages dark/light mode, theme, character selection, language, version switching | `index.html` (lines 374-587) |
 | HifiDesktop | Desktop layout: grid of spell cards + side panel detail | `v10-hifi.jsx` |
-| HifiMobile | Mobile layout: single-column list + bottom drawer + full-screen detail | `v10-hifi.jsx` |
+| HifiMobile | Mobile layout: single-column list (2 columns in landscape) + bottom tab bar (Buscar, Filtros, Preparadas, Sessão, Mais) with expanding search + full-screen detail | `v10-hifi.jsx` |
 | HifiSpellCard | Reusable spell card; displays name, school, level, description snippet, ribbon toggle, bookmark star | `v10-hifi.jsx` (line 548+) |
 | HifiPrintRoot | Print sheet renderer; renders to portal, triggered by print events | `v10-hifi.jsx` (line 152+) |
 | CharacterEditor | Create/edit character panel; manages class levels, spellcasting stats, accent color | `v11-character-editor.jsx` |
