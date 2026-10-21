@@ -474,38 +474,18 @@ function hifiSiblingVersion(versions, cur, predicate) {
 // habilitados (D-09). Controla só `uiLang`, via `window.__setUiLang`; não lê
 // o registro de versões, então funciona mesmo sem nenhuma entrada `ptbr`
 // (pós-Fase 6). Trocar CONTEÚDO é papel exclusivo do menu de pacotes.
-function HifiLangToggle({ uiLang = 'ptbr', style }) {
-  const itemStyle = (active) => ({
-    ...hifiFooterLink,
-    background: 'none',
-    border: 'none',
-    padding: 0,
-    cursor: active ? 'default' : 'pointer',
-    font: 'inherit',
-    textTransform: 'uppercase',
-    opacity: active ? 1 : undefined,
-    textDecoration: active ? 'none' : hifiFooterLink.textDecoration,
-    color: active ? 'var(--text)' : hifiFooterLink.color,
-  });
-
+function HifiLangToggle({ uiLang = 'ptbr', ariaLabel, style }) {
+  // Controle segmentado PT | EN — o mesmo no desktop (rodapé) e no mobile
+  // (folha "Mais"). Só troca uiLang; não lê o registro de versões (D-09).
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, ...style }}>
-      <button
-        lang="pt-br"
-        onClick={() => uiLang !== 'ptbr' && window.__setUiLang && window.__setUiLang('ptbr')}
-        aria-label={uiLang === 'ptbr' ? 'português (atual)' : 'mudar para português'}
-        title={uiLang === 'ptbr' ? 'português (atual)' : 'mudar para português'}
-        style={itemStyle(uiLang === 'ptbr')}
-      >🇧🇷 PT</button>
-      <span style={{ color: 'var(--overlay0)' }}>/</span>
-      <button
-        lang="en"
-        onClick={() => uiLang !== 'en' && window.__setUiLang && window.__setUiLang('en')}
-        aria-label={uiLang === 'en' ? 'english (current)' : 'switch to english'}
-        title={uiLang === 'en' ? 'english (current)' : 'switch to english'}
-        style={itemStyle(uiLang === 'en')}
-      >🇺🇸 EN</button>
-    </span>
+    <div className="hifi-segmented" role="group" aria-label={ariaLabel || tt(uiLang, 'mobile.more.language')} style={style}>
+      <button type="button" lang="pt-br" title="português"
+        aria-pressed={uiLang === 'ptbr'} className={uiLang === 'ptbr' ? 'on' : ''}
+        onClick={() => uiLang !== 'ptbr' && window.__setUiLang && window.__setUiLang('ptbr')}>PT</button>
+      <button type="button" lang="en" title="english"
+        aria-pressed={uiLang === 'en'} className={uiLang === 'en' ? 'on' : ''}
+        onClick={() => uiLang !== 'en' && window.__setUiLang && window.__setUiLang('en')}>EN</button>
+    </div>
   );
 }
 
@@ -2560,13 +2540,7 @@ function HifiMobile({ lang = 'ptbr', dark = false, theme = 'catppuccin', charact
                 <div className="hifi-more-row">
                   <svg className="hifi-more-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/></svg>
                   <span className="hifi-more-label">{MORE_LABELS.language}</span>
-                  <div className="hifi-segmented" role="group" aria-label={MORE_LABELS.language}>
-                    {[['ptbr', 'PT'], ['en', 'EN']].map(([v, l]) => (
-                      <button key={v} type="button" aria-pressed={uiLang === v}
-                        className={uiLang === v ? 'on' : ''}
-                        onClick={() => window.__setUiLang && window.__setUiLang(v)}>{l}</button>
-                    ))}
-                  </div>
+                  <HifiLangToggle uiLang={uiLang} ariaLabel={MORE_LABELS.language}/>
                 </div>
               </div>
 

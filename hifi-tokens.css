@@ -1387,3 +1387,7 @@ input.hifi-input[type='number']::-webkit-outer-spin-button { -webkit-appearance:
   background: var(--surface0); box-shadow: none; font-size: 16px;
 }
 .hifi-mobile .hifi-flat-icons .hifi-icon-btn { background: transparent; }
+
+/* Seletor de idioma no rodapé do desktop: mesmo segmentado do mobile, na
+   altura do canon desktop (30px), alinhado ao botão de tema ao lado. */
+.hifi-desktop .hifi-segmented button { height: 26px; min-width: 38px; border-radius: 7px; font-size: 12px; }

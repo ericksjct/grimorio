@@ -46,14 +46,11 @@ if ($toggleBody -notmatch 'lang="en"') {
   throw 'HifiLangToggle EN button must carry lang="en" (D-13).'
 }
 
-# 4. Bandeiras preservadas (D-14 - escolha explicita do usuario).
-$brFlag = [System.Char]::ConvertFromUtf32(0x1F1E7) + [System.Char]::ConvertFromUtf32(0x1F1F7)
-$usFlag = [System.Char]::ConvertFromUtf32(0x1F1FA) + [System.Char]::ConvertFromUtf32(0x1F1F8)
-if ($toggleBody -notmatch [regex]::Escape($brFlag)) {
-  throw 'HifiLangToggle must keep the 🇧🇷 flag (D-14).'
-}
-if ($toggleBody -notmatch [regex]::Escape($usFlag)) {
-  throw 'HifiLangToggle must keep the 🇺🇸 flag (D-14).'
+# 4. Rotulos PT / EN em texto. D-14 (bandeiras) foi substituida em 2026-10-16
+#    a pedido do usuario: o seletor do desktop passou a ser o mesmo segmentado
+#    do mobile, sem emoji (bandeira vira "BR"/"US" em letras no Windows).
+if ($toggleBody -notmatch '>PT<' -or $toggleBody -notmatch '>EN<') {
+  throw 'HifiLangToggle must label its buttons PT and EN.'
 }
 
 # 5. Nenhuma chamada a hifiSiblingVersion nem find() cru por idioma DENTRO do
@@ -75,22 +72,20 @@ if ($ui -notmatch 'function\s+useEditionCompare\([\s\S]{0,2000}?hifiSiblingVersi
   throw 'useEditionCompare must still call hifiSiblingVersion() - it must not have gone dead.'
 }
 
-# 7. Montagem: HifiLangToggle so no desktop; no mobile o idioma vive na folha
-#    "Mais" como seletor segmentado PT | EN (D-10 continua: os dois layouts tem
-#    seletor). Nenhum dos dois passa onSwitch nem le o registro de versoes.
+# 7. Montagem: exatamente duas ocorrencias de <HifiLangToggle (desktop no
+#    rodape + mobile na folha "Mais", D-10), nenhuma passa onSwitch, e o
+#    componente e o segmentado PT | EN (mesmo controle nas duas telas).
 $mounts = [regex]::Matches($ui, '<HifiLangToggle\b[^/]*/>')
-if ($mounts.Count -ne 1) {
-  throw "HifiLangToggle must be mounted exactly once (desktop; mobile uses the segmented control, D-10) - found $($mounts.Count)."
+if ($mounts.Count -ne 2) {
+  throw "HifiLangToggle must be mounted exactly twice (desktop + mobile, D-10) - found $($mounts.Count)."
 }
-$segmented = [regex]::Match($ui, 'className="hifi-segmented"[\s\S]{0,600}?</div>')
-if (-not $segmented.Success) {
-  throw 'Mobile language selector (hifi-segmented) not found (D-10).'
+foreach ($mount in $mounts) {
+  if ($mount.Value -match 'onSwitch') {
+    throw 'No HifiLangToggle mount may pass onSwitch anymore (D-09).'
+  }
 }
-if ($segmented.Value -notmatch 'window\.__setUiLang') {
-  throw 'Mobile language selector must switch only uiLang via window.__setUiLang (D-09).'
-}
-if ($segmented.Value -match 'versions|onSwitch') {
-  throw 'Mobile language selector must not touch the versions registry nor onSwitch (D-09).'
+if ($toggleBody -notmatch 'className="hifi-segmented"') {
+  throw 'HifiLangToggle must render the segmented PT | EN control (same on desktop and mobile).'
 }
 foreach ($mount in $mounts) {
   if ($mount.Value -match 'onSwitch') {
