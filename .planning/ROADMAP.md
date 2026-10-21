@@ -24,7 +24,7 @@ v2.0 "Plugins BYOD" turns the app from "app with embedded data" into "shell + pl
 - [x] **Phase 5: Plugin Manager UI & Version Selector** - Install/list/remove UI, dynamic version selector, duplicate-spell notes, empty state, CC-BY attribution (completed 2026-08-30)
 - [x] **Phase 6: Decommissioning & Migration** - Remove the 4 protected JSONs from site/repo; migrate existing users without silently dropping references (completed 2026-09-27)
 - [x] **Phase 7: Tradução dos SRDs para pt-BR** - Pacote SRD 5.2 pt-BR embutido, a partir da tradução CC-BY do Heróis Anônimos recortada às 339 magias do SRD (completed 2026-09-27)
-- [ ] **Phase 8: Composição aditiva de pacotes** - Pacote base + pacotes homebrew empilhados que adicionam magias em vez de substituir a versão ativa
+- [x] **Phase 8: Composição aditiva de pacotes** - Pacote base + pacotes homebrew empilhados que adicionam magias em vez de substituir a versão ativa (completed 2026-10-21)
 - [x] **Phase 9: Mobile: toque e safe-area** - Alvos de toque >=44px, pílulas acessíveis, gaveta clicável, safe-area (auditoria mobile, alta) (completed 2026-10-12, via protótipo: drawer virou tab bar)
 - [x] **Phase 10: Mobile: legibilidade e hover em touch** - Hover só em mouse, título, tamanhos de fonte, contraste, paisagem (auditoria mobile, média) (completed 2026-10-12)
 - [x] **Phase 11: Mobile: acabamento** - Modo sessão, copy, escola por extenso, ícones (auditoria mobile, baixa) (completed 2026-10-12)
@@ -351,7 +351,7 @@ Plans:
 
 **Wave 9** *(blocked on Wave 8 completion)*
 
-- [ ] 08-12-PLAN.md — Wave 9: checkpoint humano refeito (10 itens ajustados aos gaps, cobrindo os UNVERIFIED 1, 2, 3, 4, 6, 7, 9, 10); fecha o todo dobrado só se itens 4 e 8 passarem e marca só os requisitos aprovados (MGMT-06..09, PKG-06, SRD-05, MIGR-04)
+- [x] 08-12-PLAN.md — Wave 9: checkpoint humano refeito (10 itens ajustados aos gaps, cobrindo os UNVERIFIED 1, 2, 3, 4, 6, 7, 9, 10); fecha o todo dobrado só se itens 4 e 8 passarem e marca só os requisitos aprovados (MGMT-06..09, PKG-06, SRD-05, MIGR-04)
 
 ## Planning Routes (resumo)
 
@@ -382,7 +382,7 @@ Phases execute in numeric order: 1 (done) → 2 → 3 → 4 → 5 → 6. Decommi
 | 5. Plugin Manager UI & Version Selector | v2.0 | 5/5 | Complete    | 2026-08-30 |
 | 6. Decommissioning & Migration | v2.0 | 7/7 | Complete    | 2026-09-27 |
 | 7. Tradução dos SRDs para pt-BR | v2.0 | 5/5 | Complete    | 2026-09-27 |
-| 8. Composição aditiva de pacotes | v2.0 | 11/12 | In Progress|  |
+| 8. Composição aditiva de pacotes | v2.0 | 12/12 | Complete    | 2026-10-21 |
 
 ### Phase 9: Mobile: toque e safe-area (auditoria alta prioridade)
 

@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: Plugins BYOD
 current_phase: 08
 current_phase_name: composicao-aditiva-de-pacotes
-current_plan: 4
-status: executing
-stopped_at: Completed 08-11-PLAN.md
-last_updated: "2026-10-04T22:38:01.161Z"
-last_activity: 2026-10-04
-last_activity_desc: Phase 08 execution started
+current_plan: 12
+status: milestone-complete
+stopped_at: Completed 08-12-PLAN.md (checkpoint aprovado)
+last_updated: "2026-10-21T00:00:00.000Z"
+last_activity: 2026-10-21
+last_activity_desc: Checkpoint 08-12 aprovado; Fase 8 concluida
 progress:
   total_phases: 11
-  completed_phases: 10
+  completed_phases: 11
   total_plans: 48
-  completed_plans: 47
+  completed_plans: 48
 ---
 
 # Project State
@@ -24,17 +24,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-17)
 
 **Core value:** Players can quickly find, prepare, and reference the right spells for their character, fully offline, with zero setup.
-**Current focus:** Phase 08 — composicao-aditiva-de-pacotes
+**Current focus:** Milestone v2.0 completo — próximo passo: /gsd-audit-milestone
 
 ## Current Position
 
-Phase: 08 (composicao-aditiva-de-pacotes) — EXECUTING
-Current Plan: 4
+Phase: 08 (composicao-aditiva-de-pacotes) — COMPLETE
+Current Plan: 12 of 12
 Total Plans in Phase: 12
-Status: Ready to execute
-Last activity: 2026-10-04 — Phase 08 execution started
+Status: Todas as fases do v2.0 concluídas
+Last activity: 2026-10-21 — checkpoint 08-12 aprovado (QA headless, 10/10 itens)
 
-Progress: [██████████] 98%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -79,6 +79,7 @@ Progress: [██████████] 98%
 | Phase 08 P09 | ~10min | 2 tasks | 3 files |
 | Phase 08 P10 | ~25min | 3 tasks | 10 files |
 | Phase 08 P11 | 25min | 3 tasks | 11 files |
+| Phase 08 P12 | ~40min (QA headless) | 3 tasks | 0 code files |
 
 ## Accumulated Context
 
@@ -109,11 +110,14 @@ Decisions are logged in PROJECT.md Key Decisions table. Four decisions locked fo
 - [Phase ?]: Todo dobrado i18n-toast-versao-e-pluralizacao NÃO foi movido para completed — seu gate (itens 4 e 8 do checkpoint 08-07) não foi satisfeito.
 - [Phase ?]: [Phase 08-09] GAP-1: fallback de fonte em adaptSpell via ver.labelEn (packName); so preenche ausencia, FONTE do detalhe mostra sourceFull sem separador orfao (E-04)
 - [Phase ?]: [Phase 08-10] GAP-3/GAP-4: meta.image aceita data: raster ou https:// por uma allowlist so (IMAGE_SRC) usada no import, render e schema; img com no-referrer e fallback ao marcador; mensagens em linguagem simples
+- [Phase 08-12]: Checkpoint refeito aprovado (10/10, QA headless no Chrome a pedido do usuario); MGMT-06..09, PKG-06, SRD-05, MIGR-04 Complete; todo i18n-toast-versao-e-pluralizacao fechado
 - [Phase ?]: 08-11: import auto-renomeia slug em colisao (suffix do pack final, ocupados acumulados) e avisa por toast + tela de sucesso; selecao mantem prompt (E-01/E-02)
 
 ### Pending Todos
 
-None yet. `.planning/codebase/CONCERNS.md` holds candidate future maintenance items not yet promoted to a requirement or phase.
+- `i18n-import-successcount-plural` — "1 magias." no import e ramo morto do "Também em" (achados do 08-12)
+
+`.planning/codebase/CONCERNS.md` holds candidate future maintenance items not yet promoted to a requirement or phase.
 
 ### Blockers/Concerns
 
@@ -121,7 +125,6 @@ None yet. `.planning/codebase/CONCERNS.md` holds candidate future maintenance it
 - Research flags Phase 6 (Decommissioning & Migration) as needing a deeper pass during planning: the migration-detection logic for existing `localStorage` character data is novel to this codebase (no prior versioned-migration pattern to copy).
 - Research flags Phase 3 as needing a concrete file-size cap decided during planning (no byte threshold proposed yet) and a scoping call on whether to add a CSP as defense-in-depth alongside DOMPurify.
 - No automated frontend test suite exists — all phase verification will be manual browser QA, consistent with the rest of the project.
-- Fase 8 bloqueada até resolver GAP-1..GAP-4 (checkpoint 08-07 reprovado): rodar /gsd-plan-phase 8 --gaps antes de considerar a fase 8 encerrada. PKG-06 já está marcado [x] Complete em REQUIREMENTS.md mas GAP-3 contradiz seu texto vigente ('nunca URL externa').
 
 ### Roadmap Evolution
 

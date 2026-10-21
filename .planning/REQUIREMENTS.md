@@ -13,7 +13,7 @@
 - [x] **PKG-03**: Usuário pode instalar um pacote a partir de uma URL, com a limitação de CORS explicada na própria UI (hosts compatíveis: raw.githubusercontent, Gist, jsDelivr)
 - [x] **PKG-04**: Import valida o pacote antes de gravar: conformidade com o schema, JSON malformado, tamanho máximo, bloqueio de chaves `__proto__`/`constructor`/`prototype`, unicidade do `source` contra os packs já instalados
 - [x] **PKG-05**: Import sanitiza o HTML das descrições (DOMPurify via CDN+SRI, whitelist explícita de tags) — nenhum conteúdo não-sanitizado chega aos 4 render sinks (`dangerouslySetInnerHTML`) existentes
-- [ ] **PKG-06**: `meta.image` é campo opcional do schema de pack, aceito como `data:` URI de imagem raster (PNG/JPEG/WebP/GIF) de até 200 KB ou como URL `https://` absoluta de até 2048 caracteres; o import valida formato e tamanho sem buscar a URL e rejeita, antes de qualquer gravação, com mensagem própria em linguagem simples e no idioma da interface dizendo o que é aceito; a imagem só é exibida por `<img>`, sem enviar referrer, e nunca por `http://` ou outro esquema; imagem externa que não carrega (offline, 404, host bloqueado) cai no placeholder gerado
+- [x] **PKG-06**: `meta.image` é campo opcional do schema de pack, aceito como `data:` URI de imagem raster (PNG/JPEG/WebP/GIF) de até 200 KB ou como URL `https://` absoluta de até 2048 caracteres; o import valida formato e tamanho sem buscar a URL e rejeita, antes de qualquer gravação, com mensagem própria em linguagem simples e no idioma da interface dizendo o que é aceito; a imagem só é exibida por `<img>`, sem enviar referrer, e nunca por `http://` ou outro esquema; imagem externa que não carrega (offline, 404, host bloqueado) cai no placeholder gerado
 
 ### STOR — Armazenamento
 
@@ -28,10 +28,10 @@
 - [x] **MGMT-03**: Seletor de versões enumera os pacotes instalados dinamicamente (substitui as 4 entradas fixas de `SPELL_VERSIONS`)
 - [x] **MGMT-04**: Duplicatas entre pacotes são nota informativa ("2 versões de Bola de Fogo: SRD, MeuPack"), não conflito bloqueante — identidade de magia é `(source, name)`
 - [x] **MGMT-05**: Estado vazio (zero pacotes instalados) explica o que é um pacote e aponta para o import
-- [ ] **MGMT-06**: Usuário marca **um pacote base** (SRD embutido ou base próprio com `meta.role: "base"`) e quantos **pacotes adicionais** quiser ao mesmo tempo; a grade mostra a união das magias do base e dos adicionais marcados, cada magia no idioma do seu pacote, sem prioridade nem ocultação silenciosa entre adicionais (emenda E-06, 2026-10-12)
-- [ ] **MGMT-07**: O slug (`name`) de magia é identidade única entre os pacotes selecionados; o import detecta colisão contra os slugs reservados do SRD e os pacotes instalados, renomeia automaticamente os slugs conflitantes do pacote que entra com o sufixo do pack (`slug-<pack>`, `-2`/`-3` se ocupado), instala sem prompt e avisa no idioma da interface (toast e tela de sucesso) quais slugs foram renomeados; a seleção detecta colisão contra os pacotes marcados e abre um prompt de renomeação do pacote que entra — cancelar aborta sem marcar; nenhuma preparada/favorita é reescrita; o export devolve o pacote renomeado; a lista de slugs reservados é publicada (JSON gerado + `pack-docs.html`) e consultável no menu
-- [ ] **MGMT-08**: Seleção vazia é permitida no menu; com ela a grade mostra o pacote padrão (SRD 5.2 no idioma do navegador) e nunca fica vazia, e um aviso no idioma da interface explica a troca
-- [ ] **MGMT-09**: Um menu de pacotes único — cartões com imagem, título e descrição derivada, seleção por checkbox, seções "Pacotes base" e "Pacotes adicionais", import, remoção, licença/atribuição e seção de slugs reservados — substitui o seletor de versão e absorve o gerenciador de pacotes, aberto por um chip que mostra o primeiro pacote + contagem
+- [x] **MGMT-06**: Usuário marca **um pacote base** (SRD embutido ou base próprio com `meta.role: "base"`) e quantos **pacotes adicionais** quiser ao mesmo tempo; a grade mostra a união das magias do base e dos adicionais marcados, cada magia no idioma do seu pacote, sem prioridade nem ocultação silenciosa entre adicionais (emenda E-06, 2026-10-12)
+- [x] **MGMT-07**: O slug (`name`) de magia é identidade única entre os pacotes selecionados; o import detecta colisão contra os slugs reservados do SRD e os pacotes instalados, renomeia automaticamente os slugs conflitantes do pacote que entra com o sufixo do pack (`slug-<pack>`, `-2`/`-3` se ocupado), instala sem prompt e avisa no idioma da interface (toast e tela de sucesso) quais slugs foram renomeados; a seleção detecta colisão contra os pacotes marcados e abre um prompt de renomeação do pacote que entra — cancelar aborta sem marcar; nenhuma preparada/favorita é reescrita; o export devolve o pacote renomeado; a lista de slugs reservados é publicada (JSON gerado + `pack-docs.html`) e consultável no menu
+- [x] **MGMT-08**: Seleção vazia é permitida no menu; com ela a grade mostra o pacote padrão (SRD 5.2 no idioma do navegador) e nunca fica vazia, e um aviso no idioma da interface explica a troca
+- [x] **MGMT-09**: Um menu de pacotes único — cartões com imagem, título e descrição derivada, seleção por checkbox, seções "Pacotes base" e "Pacotes adicionais", import, remoção, licença/atribuição e seção de slugs reservados — substitui o seletor de versão e absorve o gerenciador de pacotes, aberto por um chip que mostra o primeiro pacote + contagem
 
 ### SRD — Pacote embutido
 
@@ -42,19 +42,19 @@
 - [x] **SRD-03**: Pacote SRD vem pré-instalado — primeira abertura nunca é vazia
 - [x] **SRD-04**: Pacote SRD 5.2 embutido em pt-BR (`srd-2024-ptbr.json`), com as 339 magias do SRD 5.2 na tradução CC-BY-4.0 do Heróis Anônimos — recorte que nunca inclui magia ou conteúdo fora do SRD 5.2 nem byte dos `spells-5E-*.json`; `name` é o slug EN (preparadas/favoritas continuam resolvendo), atribuição dupla verbatim (WotC + Heróis Anônimos) com nota de modificação própria; é o padrão para navegador em português e o destino das chaves legadas `*-PTBR`
 
-- [ ] **SRD-05**: Pacotes base são mutuamente exclusivos na seleção — marcar um desmarca o outro, inclusive SRD 5.1 × 5.2 e SRD EN × PT-BR da mesma edição; num `?v=` com mais de um base vence o último da lista; adicionais nunca são desmarcados por essa regra (emenda E-06, 2026-10-12; antes: exclusão só por edição)
+- [x] **SRD-05**: Pacotes base são mutuamente exclusivos na seleção — marcar um desmarca o outro, inclusive SRD 5.1 × 5.2 e SRD EN × PT-BR da mesma edição; num `?v=` com mais de um base vence o último da lista; adicionais nunca são desmarcados por essa regra (emenda E-06, 2026-10-12; antes: exclusão só por edição)
 
 *SRD-01 reescrito em 2026-07 pela decisão D-05 da Fase 3 — ver `.planning/phases/03-srd-pack-import-pipeline/03-CONTEXT.md`.*
 *SRD-04 promovido de Future Requirements (v2.x) em 2026-09-26 — a fonte deixou de ser tradução própria e passou a ser a tradução CC-BY do Heróis Anônimos recortada ao SRD 5.2; ver .planning/phases/07-traducao-srd-ptbr/07-CONTEXT.md.*
 *MGMT-06, MGMT-09 e SRD-05 reescritos em 2026-10-12 pela emenda E-06 da Fase 8 (pacotes base × adicionais); SRD-06 e PKG-07 acrescentados pelas emendas E-07/E-08 — ver `08-CONTEXT.md`.*
-*PKG-06 e MGMT-07 revisados em 2026-09-30 depois do checkpoint 08-07 (GAP-2/GAP-3) — ver emendas E-01..E-03 em `.planning/phases/08-composicao-aditiva-de-pacotes/08-CONTEXT.md`; os dois ficam Pending até o checkpoint 08-12.*
+*PKG-06 e MGMT-07 revisados em 2026-09-30 depois do checkpoint 08-07 (GAP-2/GAP-3) — ver emendas E-01..E-03 em `.planning/phases/08-composicao-aditiva-de-pacotes/08-CONTEXT.md`; os dois ficaram Pending até o checkpoint 08-12, aprovado em 2026-10-21.*
 
 ### MIGR — Descomissionamento
 
 - [x] **MIGR-01**: Migração preserva referências de preparadas/favoritas de usuários existentes; referências que ficarem órfãs são sinalizadas, nunca descartadas em silêncio
 - [x] **MIGR-02**: Os 4 JSONs protegidos saem do site/repo (HEAD) e do precache do service worker (que passa a precachear só o SRD)
 - [x] **MIGR-03**: Usuário existente recebe orientação na primeira visita pós-migração de como importar o próprio pacote
-- [ ] **MIGR-04**: `spellbook-ui-prefs.versionKey` existente vira seleção de um item na primeira carga (fallback legado aplicado antes da conversão) e a seleção passa a persistir em `spellbook-ui-prefs.selectedVersionKeys`; `?v=` aceita lista separada por vírgula, retrocompatível com um único valor, e chave de pack ainda não enumerado fica pendente por item
+- [x] **MIGR-04**: `spellbook-ui-prefs.versionKey` existente vira seleção de um item na primeira carga (fallback legado aplicado antes da conversão) e a seleção passa a persistir em `spellbook-ui-prefs.selectedVersionKeys`; `?v=` aceita lista separada por vírgula, retrocompatível com um único valor, e chave de pack ainda não enumerado fica pendente por item
 
 ### I18N — Idioma da interface
 
@@ -109,18 +109,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 | I18N-02 | Phase 04.1 | Complete |
 | I18N-03 | Phase 04.1 | Complete |
 | SRD-04 | Phase 7 | Complete |
-| MGMT-06 | Phase 8 | Pending |
-| MGMT-07 | Phase 8 | Pending |
-| MGMT-08 | Phase 8 | Pending |
-| MGMT-09 | Phase 8 | Pending |
-| PKG-06 | Phase 8 | Pending |
-| SRD-05 | Phase 8 | Pending |
-| MIGR-04 | Phase 8 | Pending |
+| MGMT-06 | Phase 8 | Complete |
+| MGMT-07 | Phase 8 | Complete |
+| MGMT-08 | Phase 8 | Complete |
+| MGMT-09 | Phase 8 | Complete |
+| PKG-06 | Phase 8 | Complete |
+| SRD-05 | Phase 8 | Complete |
+| MIGR-04 | Phase 8 | Complete |
+| PKG-07 | Phase 8 | Complete |
+| SRD-06 | Phase 8 | Complete |
 
 **Coverage:**
 
-- v2.0 requirements: 30 total (corrected from a stale "16 total" note in this file's initial draft — the requirement list itself had 5 PKG + 3 STOR + 5 MGMT + 3 SRD + 3 MIGR = 19 items before Phase 04.1 added 3 I18N items; Phase 7 promoted SRD-04 from Future Requirements, +1; Phase 8 added MGMT-06..09, PKG-06, SRD-05, MIGR-04, +7)
-- Mapped to phases: 30
+- v2.0 requirements: 32 total (corrected from a stale "16 total" note in this file's initial draft — the requirement list itself had 5 PKG + 3 STOR + 5 MGMT + 3 SRD + 3 MIGR = 19 items before Phase 04.1 added 3 I18N items; Phase 7 promoted SRD-04 from Future Requirements, +1; Phase 8 added MGMT-06..09, PKG-06, SRD-05, MIGR-04, +7; Phase 8 amendments E-07/E-08 added PKG-07 and SRD-06, +2 — missing from this table until the v2.0 milestone audit, 2026-10-21)
+- Mapped to phases: 32
 - Unmapped: 0
 
 ---
