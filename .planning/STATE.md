@@ -2,45 +2,42 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Plugins BYOD
-current_phase: 08
-current_phase_name: composicao-aditiva-de-pacotes
-current_plan: 12
-status: milestone-complete
-stopped_at: Completed 08-12-PLAN.md (checkpoint aprovado)
-last_updated: "2026-10-21T00:00:00.000Z"
+status: Awaiting next milestone
+stopped_at: Completed 08-11-PLAN.md
+last_updated: "2026-10-22T01:08:42.661Z"
 last_activity: 2026-10-21
-last_activity_desc: Checkpoint 08-12 aprovado; Fase 8 concluida
+last_activity_desc: Milestone v2.0 completed and archived
 progress:
   total_phases: 11
   completed_phases: 11
   total_plans: 48
   completed_plans: 48
+current_phase: 08
+current_phase_name: composicao-aditiva-de-pacotes
+current_plan: 12
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-17)
+See: .planning/PROJECT.md (updated 2026-10-21)
 
 **Core value:** Players can quickly find, prepare, and reference the right spells for their character, fully offline, with zero setup.
-**Current focus:** Milestone v2.0 completo — próximo passo: /gsd-audit-milestone
+**Current focus:** Planning next milestone (/gsd-new-milestone)
 
 ## Current Position
 
-Phase: 08 (composicao-aditiva-de-pacotes) — COMPLETE
-Current Plan: 12 of 12
-Total Plans in Phase: 12
-Status: Todas as fases do v2.0 concluídas
-Last activity: 2026-10-21 — checkpoint 08-12 aprovado (QA headless, 10/10 itens)
-
-Progress: [██████████] 100%
+Phase: Milestone v2.0 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-10-21 — Milestone v2.0 completed and archived
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 36
+- Total plans completed: 48 (v2.0)
 - Average duration: -
 - Total execution time: -
 
@@ -139,14 +136,24 @@ Decisions are logged in PROJECT.md Key Decisions table. Four decisions locked fo
 
 ## Deferred Items
 
-Items acknowledged and carried forward from previous milestone close:
+Items acknowledged and deferred at milestone close on 2026-10-21:
 
-| Category | Item | Status | Deferred At |
-|----------|------|--------|-------------|
-| *(none)* | | | |
+| Category | Item | Status |
+|----------|------|--------|
+| verification | Phase 08: 08-VERIFICATION.md | human_needed |
+| todo | bandeiras-do-toggle-nao-renderizam-no-windows | pending |
+| todo | i18n-import-successcount-plural | pending |
+| todo | review-04-1-warnings | pending |
+| todo | review-05-warnings | pending |
+
+Known verification overrides: 5. Phases 09-11 were done outside GSD (no PLAN/SUMMARY/VERIFICATION).
 
 ## Session Continuity
 
 Last session: 2026-10-04T22:38:01.147Z
 Stopped at: Completed 08-11-PLAN.md
 Resume file: None
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

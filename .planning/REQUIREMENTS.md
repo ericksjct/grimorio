@@ -77,7 +77,7 @@
 | UI de merge/overwrite estilo Foundry | Namespacing por `(source, name)` já evita colisões reais; merge dialog é complexidade sem benefício num app só de magias |
 | Plugins executáveis (JS em packs) | Superfície de segurança enorme para benefício zero — packs são estritamente dados |
 | Rewrite do histórico do git | Higiene, não compliance: forks/clones retêm os arquivos de qualquer forma; a proteção real é a mudança de arquitetura. Remoção é só do HEAD |
-| Embutir conteúdo não-livre "pra ajudar" | Recria exatamente o problema de copyright que este milestone existe pra resolver |
+| ~~Embutir conteúdo não-livre "pra ajudar"~~ | **Ajustado no fechamento do v2.0 (2026-10-21):** decisão do usuário de manter `packs/srd-2024-adicionais.json` (69 magias do Livro do Jogador 2024 fora do SRD, `license.id: "proprietary"`, uso pessoal) embutido e no precache. Os 4 JSONs protegidos originais continuam fora do HEAD. Ver Key Decisions em PROJECT.md |
 | Backend, database, ou contas de usuário | Restrição permanente do projeto (local-only, offline-first) |
 
 ## Traceability
