@@ -1,20 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Plugins BYOD
-status: Awaiting next milestone
-stopped_at: Completed 08-11-PLAN.md
-last_updated: "2026-10-22T01:08:42.661Z"
-last_activity: 2026-10-21
-last_activity_desc: Milestone v2.0 completed and archived
+milestone: v2.1
+milestone_name: Simplificação e Manutenção
+status: planning
+last_updated: "2026-10-24T00:19:20.075Z"
+last_activity: 2026-10-23
 progress:
-  total_phases: 11
-  completed_phases: 11
-  total_plans: 48
-  completed_plans: 48
-current_phase: 08
-current_phase_name: composicao-aditiva-de-pacotes
-current_plan: 12
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -28,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-10-21)
 
 ## Current Position
 
-Phase: Milestone v2.0 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-10-21 — Milestone v2.0 completed and archived
+Status: Defining requirements
+Last activity: 2026-10-23 — Milestone v2.1 started
 
 ## Performance Metrics
 

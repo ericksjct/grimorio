@@ -37,20 +37,37 @@ Players can quickly find, prepare, and reference the right spells for their char
 
 <!-- Next milestone scope. Defined by /gsd-new-milestone. -->
 
-Candidates (from v2.0 Future Requirements and deferred items):
-- [ ] Checagem manual de atualização de pack por URL (re-fetch + comparação de versão, confirmação explícita)
-- [ ] Conversor "formato 5etools → formato do app" no import
-- [ ] Página de docs listando packs conhecidos da comunidade
-- [ ] Todos pendentes: bandeiras do toggle no Windows, plural "1 magias", warnings dos reviews 04.1 e 05
-- [ ] Verificação humana pendente da Fase 8 (`08-VERIFICATION.md`, human_needed)
+v2.1 scope (requisitos detalhados em REQUIREMENTS.md):
+- [ ] Remover código morto do app (JS, CSS, chaves i18n, ramos sem uso)
+- [ ] Unificar código duplicado entre os módulos
+- [ ] Um arquivo = uma responsabilidade, com nomes intuitivos
+- [ ] Limpar arquivos sem uso do repositório
+- [ ] Consolidar os scripts de teste
+- [ ] Fechar os 4 todos pendentes (bandeiras no Windows, plural "1 magias", warnings dos reviews 04.1 e 05)
+
+Adiados (candidatos de v2.0 fora deste marco):
+- Checagem manual de atualização de pack por URL (re-fetch + comparação de versão, confirmação explícita)
+- Conversor "formato 5etools → formato do app" no import
+- Página de docs listando packs conhecidos da comunidade
+- Verificação humana pendente da Fase 8 (`08-VERIFICATION.md`, human_needed)
+
+## Current Milestone: v2.1 Simplificação e Manutenção
+
+**Goal:** Deixar o projeto simples e fácil de manter — sem código morto, sem código duplicado, cada arquivo com uma única responsabilidade e um nome intuitivo — sem nenhuma mudança visível para o usuário.
+
+**Target features:**
+- Remover código morto do app (funções, componentes, CSS, chaves i18n e ramos sem uso)
+- Unificar código duplicado entre os JSX em helpers compartilhados
+- Reorganizar arquivos por responsabilidade única com nomes intuitivos (dividir `v10-hifi.jsx`, `hifi-tokens.css` e outros onde fizer sentido; trocar prefixos históricos `v10`/`v11`/`hifi`)
+- Limpar arquivos sem uso do repositório (`.claude/skills` versionado, fontes sem uso, `openspec`, scripts pessoais e de geração única)
+- Consolidar os scripts de teste (remover os que testam código apagado, juntar os repetidos)
+- Fechar os 4 todos pendentes
+
+**Key context:** Refatoração pura — o app deve ficar idêntico para o usuário. Sem build step: mover ou renomear arquivos exige atualizar a ordem de carga em `index.html` e o precache em `sw.js`. Verificação = `pwsh scripts/run-tests.ps1` passa + QA headless sem diferença visual.
 
 ## Current State
 
 **Shipped:** v2.0 Plugins BYOD (2026-10-21). O app é casca + pacotes: import por arquivo/URL com validação e sanitização, IndexedDB, menu único de pacotes com composição aditiva, SRD 5.1 EN / 5.2 EN / 5.2 pt-BR embutidos, idioma da interface independente, mobile com tab bar. Os 4 JSONs protegidos saíram do HEAD. `packs/srd-2024-adicionais.json` (conteúdo não-SRD, uso pessoal) segue embutido por decisão do usuário. 50 scripts de teste em `pwsh scripts/run-tests.ps1`, todos passam.
-
-## Next Milestone Goals
-
-Não definido. Rodar `/gsd-new-milestone`.
 
 <details>
 <summary>Previous milestone: v2.0 Plugins BYOD (shipped 2026-10-21)</summary>
@@ -118,4 +135,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-21 after v2.0 milestone*
+*Last updated: 2026-10-23 after starting v2.1 milestone*
