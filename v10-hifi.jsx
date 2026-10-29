@@ -496,6 +496,7 @@ function HifiLangToggle({ uiLang = 'ptbr', ariaLabel, style }) {
 // SPELL CARD (shared)
 // ──────────────────────────────────────────────────────────────────
 const HifiSpellCard = React.memo(function HifiSpellCard({ s, lang, versionLang, prepared, bookmarked, selected, onClick, onTogglePrepared, compact }) {
+  const ribbonGradientId = React.useId();
   const tier = tierSymbol(s.lvl);
   const desc = window.v8Description ? window.v8Description(s, versionLang) : '';
   // HTML cru da fonte (preserva parágrafos); '' quando só há texto puro.
@@ -541,11 +542,28 @@ const HifiSpellCard = React.memo(function HifiSpellCard({ s, lang, versionLang, 
           ? (tt(lang, 'spell.unprepare'))
           : (tt(lang, 'spell.prepare'))}
       >
-        <svg viewBox="0 0 20 28" preserveAspectRatio="xMidYMin meet" aria-hidden="true" strokeLinejoin="round">
+        <svg viewBox="0 0 18 26" preserveAspectRatio="xMidYMin meet" aria-hidden="true" strokeLinejoin="round">
+          <defs>
+            <linearGradient id={ribbonGradientId} x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0" className="hifi-ribbon-light" />
+              <stop offset="0.3" className="hifi-ribbon-base" />
+              <stop offset="1" className="hifi-ribbon-shade" />
+            </linearGradient>
+            <linearGradient id={`${ribbonGradientId}-sheen`} x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0" style={{ stopColor: '#000', stopOpacity: 0.06 }} />
+              <stop offset="0.18" style={{ stopColor: '#fff', stopOpacity: 0 }} />
+              <stop offset="0.42" style={{ stopColor: '#fff', stopOpacity: 0.1 }} />
+              <stop offset="0.72" style={{ stopColor: '#fff', stopOpacity: 0 }} />
+              <stop offset="1" style={{ stopColor: '#000', stopOpacity: 0.07 }} />
+            </linearGradient>
+          </defs>
           {/* Path ABERTO (sem o segmento do topo): o stroke desenha só os lados
              e o V — sem o traço que sobreporia a borda do card. O fill (estado
              "preparada") fecha o contorno sozinho, então a fita cheia fica igual. */}
-          <path d="M0 0 L0 27 L10 20 L20 27 L20 0"/>
+          <path d="M0 0 L0 26 L9 19 L18 26 L18 0" style={prepared ? { fill: `url(#${ribbonGradientId})` } : undefined}/>
+          {prepared && (
+            <path d="M0 0 L0 26 L9 19 L18 26 L18 0" style={{ fill: `url(#${ribbonGradientId}-sheen)` }} />
+          )}
         </svg>
         {/* Marca de "favorita": estrela centrada dentro do ribbon. É só
             indicador — o clique no ribbon continua sendo o toggle de preparada

@@ -419,7 +419,7 @@
    que vira acento no hover, indicando o ponto de clique). */
 .hifi-card-ribbon {
   position: absolute;
-  /* top: 0 alinha a fita com a borda interna do topo do card */
+  /* O contorno da fita vazia começa por dentro da borda do card. */
   top: 0; right: calc(16px * var(--z, 1));
   width: calc(18px * var(--z, 1)); height: calc(26px * var(--z, 1));
   line-height: 0;
@@ -432,7 +432,15 @@
 .hifi-card-ribbon svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .hifi-card-ribbon path { transition: fill 140ms, stroke 140ms; }
 /* Preparada: fita cheia na cor de acento. */
+.hifi-card-ribbon.on { top: -1px; }
+.hifi-card-ribbon.on svg { filter: drop-shadow(0.5px 1px 0.7px rgb(0 0 0 / 8%)); }
 .hifi-card-ribbon.on path { fill: var(--accent); stroke: none; }
+.hifi-card-ribbon stop { stop-color: var(--accent); }
+.hifi-card-ribbon .hifi-ribbon-light { stop-color: color-mix(in srgb, var(--accent), white 14%); }
+.hifi-card-ribbon .hifi-ribbon-shade {
+  stop-color: color-mix(in srgb, var(--accent), black 10%);
+  stop-color: oklch(from color-mix(in srgb, var(--accent), black 10%) l c calc(h - 22));
+}
 /* Não preparada: transparente (cor do card) com contorno pontilhado. */
 .hifi-card-ribbon.off path { fill: transparent; stroke: var(--surface1); stroke-width: 1; stroke-dasharray: 0 0; }
 @media (hover: hover) {
